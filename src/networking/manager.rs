@@ -12,13 +12,11 @@ use tokio::sync::{mpsc, RwLock};
 use tokio::time::{interval, Duration};
 
 use super::traits::{
-    ClusterMembership, HealthMonitor, LoadBalancer,
-    MessageHandler, NetworkTransport, ServiceDiscovery,
+    ClusterMembership, HealthMonitor, LoadBalancer, MessageHandler, NetworkTransport,
+    ServiceDiscovery,
 };
 use super::types::{
-    SelectionCriteria,
-    ClusterMessage, NetworkConfig, NetworkStats, NodeAddress,
-    NodeId, NodeInfo,
+    ClusterMessage, NetworkConfig, NetworkStats, NodeAddress, NodeId, NodeInfo, SelectionCriteria,
 };
 
 /// Central coordinator for all networking operations
@@ -177,7 +175,8 @@ impl NetworkManager {
         // Select a node using the load balancer
         let node_id = {
             let balancer = self.load_balancer.read().await;
-            balancer.select_node(criteria)
+            balancer
+                .select_node(criteria)
                 .ok_or_else(|| DbError::Network("No suitable node found".to_string()))?
         };
 
@@ -240,7 +239,9 @@ impl NetworkManager {
     /// * `seed_nodes` - Initial seed nodes to contact
     pub async fn join_cluster(&self, seed_nodes: Vec<NodeAddress>) -> Result<()> {
         let membership = self.membership.read().await;
-        membership.join_cluster(self.local_node.clone(), seed_nodes).await?;
+        membership
+            .join_cluster(self.local_node.clone(), seed_nodes)
+            .await?;
         Ok(())
     }
 
@@ -290,10 +291,13 @@ impl NetworkManager {
                         let node_id = NodeId::new(source.to_string());
 
                         // Send to event bus
-                        if let Err(e) = event_tx.send(NetworkEvent::MessageReceived {
-                            from: node_id,
-                            message,
-                        }).await {
+                        if let Err(e) = event_tx
+                            .send(NetworkEvent::MessageReceived {
+                                from: node_id,
+                                message,
+                            })
+                            .await
+                        {
                             eprintln!("Failed to send message to event bus: {}", e);
                         }
                     }
@@ -331,7 +335,10 @@ impl NetworkManager {
                                     eprintln!("Error handling message: {}", e);
                                 }
                             } else {
-                                eprintln!("No handler registered for message type: {}", message_type);
+                                eprintln!(
+                                    "No handler registered for message type: {}",
+                                    message_type
+                                );
                             }
                         }
                         NetworkEvent::NodeJoined(node) => {
@@ -442,10 +449,7 @@ impl Component for NetworkManager {
 /// # Note
 /// This is intended for testing, development, and API server integration where
 /// full networking functionality may not be required.
-pub fn create_default_manager(
-    config: NetworkConfig,
-    local_node: NodeInfo,
-) -> NetworkManager {
+pub fn create_default_manager(config: NetworkConfig, local_node: NodeInfo) -> NetworkManager {
     NetworkManager::new(
         config,
         local_node,
@@ -530,19 +534,26 @@ impl NetworkManagerBuilder {
 
     /// Build the NetworkManager
     pub fn build(self) -> Result<NetworkManager> {
-        let config = self.config
+        let config = self
+            .config
             .ok_or_else(|| DbError::Configuration("Network config required".to_string()))?;
-        let local_node = self.local_node
+        let local_node = self
+            .local_node
             .ok_or_else(|| DbError::Configuration("Local node info required".to_string()))?;
-        let transport = self.transport
+        let transport = self
+            .transport
             .ok_or_else(|| DbError::Configuration("Network transport required".to_string()))?;
-        let service_discovery = self.service_discovery
+        let service_discovery = self
+            .service_discovery
             .ok_or_else(|| DbError::Configuration("Service discovery required".to_string()))?;
-        let health_monitor = self.health_monitor
+        let health_monitor = self
+            .health_monitor
             .ok_or_else(|| DbError::Configuration("Health monitor required".to_string()))?;
-        let load_balancer = self.load_balancer
+        let load_balancer = self
+            .load_balancer
             .ok_or_else(|| DbError::Configuration("Load balancer required".to_string()))?;
-        let membership = self.membership
+        let membership = self
+            .membership
             .ok_or_else(|| DbError::Configuration("Cluster membership required".to_string()))?;
 
         Ok(NetworkManager::new(
@@ -573,8 +584,8 @@ impl Default for NetworkManagerBuilder {
 /// where full networking functionality is not required.
 pub(crate) mod mock {
     use super::*;
-    use async_trait::async_trait;
     use crate::networking::MembershipEvent;
+    use async_trait::async_trait;
 
     pub(crate) struct MockTransport {
         local_address: NodeAddress,
@@ -602,7 +613,9 @@ pub(crate) mod mock {
         async fn broadcast(&self, _msg: &ClusterMessage) -> Result<usize> {
             Ok(0)
         }
-        fn active_connections(&self) -> usize { 0 }
+        fn active_connections(&self) -> usize {
+            0
+        }
         fn local_address(&self) -> &NodeAddress {
             &self.local_address
         }
@@ -615,22 +628,38 @@ pub(crate) mod mock {
     }
 
     impl Component for MockTransport {
-        fn initialize(&mut self) -> Result<()> { Ok(()) }
-        fn shutdown(&mut self) -> Result<()> { Ok(()) }
-        fn health_check(&self) -> HealthStatus { HealthStatus::Healthy }
+        fn initialize(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn shutdown(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn health_check(&self) -> HealthStatus {
+            HealthStatus::Healthy
+        }
     }
 
     pub(crate) struct MockServiceDiscovery;
     impl MockServiceDiscovery {
-        pub(crate) fn new() -> Self { Self }
+        pub(crate) fn new() -> Self {
+            Self
+        }
     }
 
     #[async_trait]
     impl ServiceDiscovery for MockServiceDiscovery {
-        async fn register_node(&self, _node: &NodeInfo) -> Result<()> { Ok(()) }
-        async fn unregister_node(&self) -> Result<()> { Ok(()) }
-        async fn discover_nodes(&self) -> Result<Vec<NodeInfo>> { Ok(Vec::new()) }
-        async fn get_node(&self, _node_id: &NodeId) -> Result<Option<NodeInfo>> { Ok(None) }
+        async fn register_node(&self, _node: &NodeInfo) -> Result<()> {
+            Ok(())
+        }
+        async fn unregister_node(&self) -> Result<()> {
+            Ok(())
+        }
+        async fn discover_nodes(&self) -> Result<Vec<NodeInfo>> {
+            Ok(Vec::new())
+        }
+        async fn get_node(&self, _node_id: &NodeId) -> Result<Option<NodeInfo>> {
+            Ok(None)
+        }
         async fn watch_changes(&self) -> Result<mpsc::Receiver<MembershipEvent>> {
             let (_tx, rx) = mpsc::channel(1);
             Ok(rx)
@@ -641,48 +670,83 @@ pub(crate) mod mock {
     }
 
     impl Component for MockServiceDiscovery {
-        fn initialize(&mut self) -> Result<()> { Ok(()) }
-        fn shutdown(&mut self) -> Result<()> { Ok(()) }
-        fn health_check(&self) -> HealthStatus { HealthStatus::Healthy }
+        fn initialize(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn shutdown(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn health_check(&self) -> HealthStatus {
+            HealthStatus::Healthy
+        }
     }
 
     pub(crate) struct MockHealthMonitor;
     impl MockHealthMonitor {
-        pub(crate) fn new() -> Self { Self }
+        pub(crate) fn new() -> Self {
+            Self
+        }
     }
 
     #[async_trait]
     impl HealthMonitor for MockHealthMonitor {
-        async fn check_health(&self, _node_id: &NodeId) -> Result<crate::networking::types::HealthCheckResult> {
+        async fn check_health(
+            &self,
+            _node_id: &NodeId,
+        ) -> Result<crate::networking::types::HealthCheckResult> {
             Err(DbError::NotImplemented("Mock".to_string()))
         }
-        async fn check_all_nodes(&self) -> Result<HashMap<NodeId, crate::networking::types::HealthCheckResult>> {
+        async fn check_all_nodes(
+            &self,
+        ) -> Result<HashMap<NodeId, crate::networking::types::HealthCheckResult>> {
             Ok(HashMap::new())
         }
-        fn get_node_health(&self, _node_id: &NodeId) -> Option<HealthStatus> { None }
-        fn get_unhealthy_nodes(&self) -> Vec<NodeId> { Vec::new() }
-        fn get_healthy_nodes(&self) -> Vec<NodeId> { Vec::new() }
-        async fn start_monitoring(&self) -> Result<()> { Ok(()) }
-        async fn stop_monitoring(&self) -> Result<()> { Ok(()) }
-        async fn subscribe_health_changes(&self) -> Result<mpsc::Receiver<crate::networking::traits::HealthChangeEvent>> {
+        fn get_node_health(&self, _node_id: &NodeId) -> Option<HealthStatus> {
+            None
+        }
+        fn get_unhealthy_nodes(&self) -> Vec<NodeId> {
+            Vec::new()
+        }
+        fn get_healthy_nodes(&self) -> Vec<NodeId> {
+            Vec::new()
+        }
+        async fn start_monitoring(&self) -> Result<()> {
+            Ok(())
+        }
+        async fn stop_monitoring(&self) -> Result<()> {
+            Ok(())
+        }
+        async fn subscribe_health_changes(
+            &self,
+        ) -> Result<mpsc::Receiver<crate::networking::traits::HealthChangeEvent>> {
             let (_tx, rx) = mpsc::channel(1);
             Ok(rx)
         }
     }
 
     impl Component for MockHealthMonitor {
-        fn initialize(&mut self) -> Result<()> { Ok(()) }
-        fn shutdown(&mut self) -> Result<()> { Ok(()) }
-        fn health_check(&self) -> HealthStatus { HealthStatus::Healthy }
+        fn initialize(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn shutdown(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn health_check(&self) -> HealthStatus {
+            HealthStatus::Healthy
+        }
     }
 
     pub(crate) struct MockLoadBalancer;
     impl MockLoadBalancer {
-        pub(crate) fn new() -> Self { Self }
+        pub(crate) fn new() -> Self {
+            Self
+        }
     }
 
     impl LoadBalancer for MockLoadBalancer {
-        fn select_node(&self, _criteria: &SelectionCriteria) -> Option<NodeId> { None }
+        fn select_node(&self, _criteria: &SelectionCriteria) -> Option<NodeId> {
+            None
+        }
         fn select_nodes(&self, _criteria: &SelectionCriteria, _count: usize) -> Vec<NodeId> {
             Vec::new()
         }
@@ -690,14 +754,22 @@ pub(crate) mod mock {
         fn update_weights(&mut self, _weights: HashMap<NodeId, f64>) {}
         fn mark_node_unavailable(&mut self, _node_id: &NodeId) {}
         fn mark_node_available(&mut self, _node_id: &NodeId) {}
-        fn get_load_distribution(&self) -> HashMap<NodeId, usize> { HashMap::new() }
+        fn get_load_distribution(&self) -> HashMap<NodeId, usize> {
+            HashMap::new()
+        }
         fn record_request_completion(&mut self, _node_id: &NodeId) {}
     }
 
     impl Component for MockLoadBalancer {
-        fn initialize(&mut self) -> Result<()> { Ok(()) }
-        fn shutdown(&mut self) -> Result<()> { Ok(()) }
-        fn health_check(&self) -> HealthStatus { HealthStatus::Healthy }
+        fn initialize(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn shutdown(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn health_check(&self) -> HealthStatus {
+            HealthStatus::Healthy
+        }
     }
 
     pub(crate) struct MockClusterMembership {
@@ -713,30 +785,57 @@ pub(crate) mod mock {
 
     #[async_trait]
     impl ClusterMembership for MockClusterMembership {
-        fn get_members(&self) -> Vec<NodeInfo> { Vec::new() }
-        fn get_member(&self, _node_id: &NodeId) -> Option<NodeInfo> { None }
-        fn update_member_state(&mut self, _node_id: &NodeId, _state: crate::networking::types::NodeState) {}
-        async fn join_cluster(&self, _local_node: NodeInfo, _seed_nodes: Vec<NodeAddress>) -> Result<()> {
+        fn get_members(&self) -> Vec<NodeInfo> {
+            Vec::new()
+        }
+        fn get_member(&self, _node_id: &NodeId) -> Option<NodeInfo> {
+            None
+        }
+        fn update_member_state(
+            &mut self,
+            _node_id: &NodeId,
+            _state: crate::networking::types::NodeState,
+        ) {
+        }
+        async fn join_cluster(
+            &self,
+            _local_node: NodeInfo,
+            _seed_nodes: Vec<NodeAddress>,
+        ) -> Result<()> {
             Ok(())
         }
-        async fn leave_cluster(&self) -> Result<()> { Ok(()) }
+        async fn leave_cluster(&self) -> Result<()> {
+            Ok(())
+        }
         fn add_member(&mut self, _node: NodeInfo) {}
         fn remove_member(&mut self, _node_id: &NodeId) {}
         fn local_node_id(&self) -> &NodeId {
             &self.local_node_id
         }
-        fn member_count(&self) -> usize { 0 }
-        fn is_member(&self, _node_id: &NodeId) -> bool { false }
+        fn member_count(&self) -> usize {
+            0
+        }
+        fn is_member(&self, _node_id: &NodeId) -> bool {
+            false
+        }
         async fn subscribe_membership_changes(&self) -> Result<mpsc::Receiver<MembershipEvent>> {
             let (_tx, rx) = mpsc::channel(1);
             Ok(rx)
         }
-        async fn gossip_round(&self) -> Result<()> { Ok(()) }
+        async fn gossip_round(&self) -> Result<()> {
+            Ok(())
+        }
     }
 
     impl Component for MockClusterMembership {
-        fn initialize(&mut self) -> Result<()> { Ok(()) }
-        fn shutdown(&mut self) -> Result<()> { Ok(()) }
-        fn health_check(&self) -> HealthStatus { HealthStatus::Healthy }
+        fn initialize(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn shutdown(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn health_check(&self) -> HealthStatus {
+            HealthStatus::Healthy
+        }
     }
 }

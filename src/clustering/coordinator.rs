@@ -14,13 +14,13 @@
 // - Minimizing data movement
 // - Parallel execution optimization
 
-use std::time::{SystemTime};
-use std::collections::HashSet;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Query identifier
 pub type QueryId = u64;
@@ -266,7 +266,10 @@ impl ShardMap {
 
     // Add shard to node mapping
     pub fn add_shard_mapping(&self, shard_id: ShardId, node_id: NodeId) {
-        self.shard_to_node.write().unwrap().insert(shard_id, node_id);
+        self.shard_to_node
+            .write()
+            .unwrap()
+            .insert(shard_id, node_id);
     }
 
     // Get all shards for a node
@@ -352,7 +355,10 @@ impl QueryCoordinator {
         let query_id = plan.query_id;
 
         // Register query
-        self.active_queries.write().unwrap().insert(query_id, plan.clone());
+        self.active_queries
+            .write()
+            .unwrap()
+            .insert(query_id, plan.clone());
 
         // Create tasks for each shard
         let tasks = self.create_query_tasks(&plan)?;
@@ -364,7 +370,10 @@ impl QueryCoordinator {
         let result = self.merge_results(query_id, shard_results, plan.clone())?;
 
         // Cache result
-        self.result_cache.write().unwrap().insert(query_id, result.clone());
+        self.result_cache
+            .write()
+            .unwrap()
+            .insert(query_id, result.clone());
 
         // Cleanup active query
         self.active_queries.write().unwrap().remove(&query_id);
@@ -481,10 +490,8 @@ impl QueryCoordinator {
         node: &QueryPlanNode,
         shard_results: &[ShardResult],
     ) -> Result<Vec<Vec<u8>>, DbError> {
-        let mut all_rows: Vec<Vec<u8>> = shard_results
-            .iter()
-            .flat_map(|r| r.rows.clone())
-            .collect();
+        let mut all_rows: Vec<Vec<u8>> =
+            shard_results.iter().flat_map(|r| r.rows.clone()).collect();
 
         match node {
             QueryPlanNode::Sort { ascending, .. } => {
@@ -533,17 +540,12 @@ impl QueryCoordinator {
         strategy: JoinStrategy,
     ) -> Result<Vec<Vec<u8>>, DbError> {
         match strategy {
-            JoinStrategy::Broadcast => {
-                self.broadcast_join(left_table, right_table, join_key).await
-            }
-            JoinStrategy::Shuffle => {
-                self.shuffle_join(left_table, right_table, join_key).await
-            }
-            JoinStrategy::CoLocated => {
-                self.colocated_join(left_table, right_table, join_key).await
-            }
+            JoinStrategy::Broadcast => self.broadcast_join(left_table, right_table, join_key).await,
+            JoinStrategy::Shuffle => self.shuffle_join(left_table, right_table, join_key).await,
+            JoinStrategy::CoLocated => self.colocated_join(left_table, right_table, join_key).await,
             JoinStrategy::NestedLoop => {
-                self.nested_loop_join(left_table, right_table, join_key).await
+                self.nested_loop_join(left_table, right_table, join_key)
+                    .await
             }
         }
     }
@@ -614,10 +616,14 @@ impl QueryCoordinator {
         group_by: Option<Vec<String>>,
     ) -> Result<Vec<Vec<u8>>, DbError> {
         // Phase 1: Map - Local aggregation on each shard
-        let local_results = self.local_aggregate(&table, operation, group_by.clone()).await?;
+        let local_results = self
+            .local_aggregate(&table, operation, group_by.clone())
+            .await?;
 
         // Phase 2: Reduce - Global aggregation
-        let final_result = self.global_aggregate(local_results, operation, group_by).await?;
+        let final_result = self
+            .global_aggregate(local_results, operation, group_by)
+            .await?;
 
         Ok(final_result)
     }

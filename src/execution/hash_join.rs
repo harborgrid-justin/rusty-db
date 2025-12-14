@@ -24,12 +24,12 @@
 
 use crate::error::DbError;
 use crate::execution::QueryResult;
-use std::collections::HashMap;
-use std::sync::Arc;
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Write as IoWrite, BufWriter, BufReader};
+use std::io::{BufReader, BufWriter, Write as IoWrite};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 // Hash join configuration
 #[derive(Debug, Clone)]
@@ -119,7 +119,8 @@ impl HashJoinExecutor {
 
         for row in &build_side.rows {
             if let Some(key) = row.get(build_key_col) {
-                hash_table.entry(key.clone())
+                hash_table
+                    .entry(key.clone())
                     .or_insert_with(Vec::new)
                     .push(row.clone());
             }
@@ -166,18 +167,10 @@ impl HashJoinExecutor {
             .map_err(|e| DbError::IoError(e.to_string()))?;
 
         // Phase 1: Partition build side
-        let build_partitions = self.partition_to_disk(
-            &build_side,
-            build_key_col,
-            "build",
-        )?;
+        let build_partitions = self.partition_to_disk(&build_side, build_key_col, "build")?;
 
         // Phase 2: Partition probe side
-        let probe_partitions = self.partition_to_disk(
-            &probe_side,
-            probe_key_col,
-            "probe",
-        )?;
+        let probe_partitions = self.partition_to_disk(&probe_side, probe_key_col, "probe")?;
 
         // Phase 3: Join matching partitions
         let mut result_rows = Vec::new();
@@ -195,7 +188,8 @@ impl HashJoinExecutor {
 
                 for row in &build_data.rows {
                     if let Some(key) = row.get(build_key_col) {
-                        partition_hash_table.entry(key.clone())
+                        partition_hash_table
+                            .entry(key.clone())
                             .or_insert_with(Vec::new)
                             .push(row.clone());
                     }
@@ -251,7 +245,8 @@ impl HashJoinExecutor {
         }
 
         // Find largest partition to keep in memory
-        let hot_partition_id = partition_sizes.iter()
+        let hot_partition_id = partition_sizes
+            .iter()
             .enumerate()
             .max_by_key(|(_, &size)| size)
             .map(|(idx, _)| idx)
@@ -272,7 +267,8 @@ impl HashJoinExecutor {
             let mut table = HashMap::new();
             for row in &partitions[hot_partition_id] {
                 if let Some(key) = row.get(build_key_col) {
-                    table.entry(key.clone())
+                    table
+                        .entry(key.clone())
                         .or_insert_with(Vec::new)
                         .push(row.clone());
                 }
@@ -283,14 +279,20 @@ impl HashJoinExecutor {
         // Spill other partitions to disk
         for (partition_id, partition_data) in partitions.iter().enumerate() {
             if partition_id != hot_partition_id && !partition_data.is_empty() {
-                let path = self.spill_partition(partition_data, &build_side.columns, "build", partition_id)?;
+                let path = self.spill_partition(
+                    partition_data,
+                    &build_side.columns,
+                    "build",
+                    partition_id,
+                )?;
                 spilled_partitions.push((partition_id, path));
             }
         }
 
         // Phase 2: Probe
         let mut result_rows = Vec::new();
-        let mut probe_partitions: Vec<Vec<Vec<String>>> = vec![Vec::new(); self.config.num_partitions];
+        let mut probe_partitions: Vec<Vec<Vec<String>>> =
+            vec![Vec::new(); self.config.num_partitions];
 
         // Partition probe side
         for row in &probe_side.rows {
@@ -321,7 +323,8 @@ impl HashJoinExecutor {
             let mut partition_hash_table: HashMap<String, Vec<Vec<String>>> = HashMap::new();
             for row in &build_data.rows {
                 if let Some(key) = row.get(build_key_col) {
-                    partition_hash_table.entry(key.clone())
+                    partition_hash_table
+                        .entry(key.clone())
                         .or_insert_with(Vec::new)
                         .push(row.clone());
                 }
@@ -363,8 +366,7 @@ impl HashJoinExecutor {
         // Create partition files
         for i in 0..self.config.num_partitions {
             let path = self.config.temp_dir.join(format!("{}_{}.part", prefix, i));
-            let file = File::create(&path)
-                .map_err(|e| DbError::IoError(e.to_string()))?;
+            let file = File::create(&path).map_err(|e| DbError::IoError(e.to_string()))?;
             partition_writers.push(BufWriter::new(file));
             partition_files.push(path);
         }
@@ -377,14 +379,17 @@ impl HashJoinExecutor {
 
                 // Serialize row (simple CSV format)
                 let row_str = row.join(",") + "\n";
-                writer.write_all(row_str.as_bytes())
+                writer
+                    .write_all(row_str.as_bytes())
                     .map_err(|e| DbError::IoError(e.to_string()))?;
             }
         }
 
         // Flush all writers
         for writer in &mut partition_writers {
-            writer.flush().map_err(|e| DbError::IoError(e.to_string()))?;
+            writer
+                .flush()
+                .map_err(|e| DbError::IoError(e.to_string()))?;
         }
 
         Ok(partition_files)
@@ -392,8 +397,7 @@ impl HashJoinExecutor {
 
     // Load partition from disk
     fn load_partition(&self, path: &Path) -> Result<QueryResult, DbError> {
-        let file = File::open(path)
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+        let file = File::open(path).map_err(|e| DbError::IoError(e.to_string()))?;
         let reader = BufReader::new(file);
 
         let mut rows = Vec::new();
@@ -423,21 +427,24 @@ impl HashJoinExecutor {
         let spill_id = *counter;
         drop(counter);
 
-        let path = self.config.temp_dir.join(
-            format!("{}_{}_{}.spill", prefix, partition_id, spill_id)
-        );
+        let path = self
+            .config
+            .temp_dir
+            .join(format!("{}_{}_{}.spill", prefix, partition_id, spill_id));
 
-        let file = File::create(&path)
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+        let file = File::create(&path).map_err(|e| DbError::IoError(e.to_string()))?;
         let mut writer = BufWriter::new(file);
 
         for row in partition {
             let row_str = row.join(",") + "\n";
-            writer.write_all(row_str.as_bytes())
+            writer
+                .write_all(row_str.as_bytes())
                 .map_err(|e| DbError::IoError(e.to_string()))?;
         }
 
-        writer.flush().map_err(|e| DbError::IoError(e.to_string()))?;
+        writer
+            .flush()
+            .map_err(|e| DbError::IoError(e.to_string()))?;
 
         Ok(path)
     }
@@ -455,9 +462,12 @@ impl HashJoinExecutor {
     fn estimate_size(&self, result: &QueryResult) -> usize {
         let row_count = result.rows.len();
         let avg_row_size = if row_count > 0 {
-            result.rows.iter()
+            result
+                .rows
+                .iter()
                 .map(|row| row.iter().map(|s| s.len()).sum::<usize>())
-                .sum::<usize>() / row_count
+                .sum::<usize>()
+                / row_count
         } else {
             0
         };
@@ -480,7 +490,7 @@ impl BloomFilter {
         Self {
             inner: crate::index::simd_bloom::SimdBloomFilter::new(
                 expected_items,
-                false_positive_rate
+                false_positive_rate,
             ),
         }
     }
@@ -541,13 +551,11 @@ impl BloomFilterHashJoin {
             }
         }
 
-        let filtered_probe = QueryResult::new(
-            probe_side.columns.clone(),
-            filtered_probe_rows,
-        );
+        let filtered_probe = QueryResult::new(probe_side.columns.clone(), filtered_probe_rows);
 
         // Perform actual join with filtered probe side
-        self.executor.execute(build_side, filtered_probe, build_key_col, probe_key_col)
+        self.executor
+            .execute(build_side, filtered_probe, build_key_col, probe_key_col)
     }
 }
 

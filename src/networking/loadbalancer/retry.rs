@@ -13,9 +13,7 @@ pub enum RetryStrategy {
     /// No retries
     None,
     /// Fixed delay between retries
-    Fixed {
-        delay: Duration,
-    },
+    Fixed { delay: Duration },
     /// Exponential backoff
     Exponential {
         initial_delay: Duration,
@@ -41,8 +39,7 @@ impl RetryStrategy {
                 max_delay,
                 multiplier,
             } => {
-                let delay_ms = initial_delay.as_millis() as f64
-                    * multiplier.powi(attempt as i32);
+                let delay_ms = initial_delay.as_millis() as f64 * multiplier.powi(attempt as i32);
                 let delay = Duration::from_millis(delay_ms as u64);
                 Some(delay.min(*max_delay))
             }
@@ -51,8 +48,8 @@ impl RetryStrategy {
                 max_delay,
                 multiplier,
             } => {
-                let base_delay_ms = initial_delay.as_millis() as f64
-                    * multiplier.powi(attempt as i32);
+                let base_delay_ms =
+                    initial_delay.as_millis() as f64 * multiplier.powi(attempt as i32);
 
                 // Add jitter: random value between 0 and base_delay
                 let jitter = rand::random::<f64>() * base_delay_ms;
@@ -108,11 +105,7 @@ impl RetryPolicy {
     }
 
     /// Create a policy with exponential backoff
-    pub fn exponential(
-        initial_delay: Duration,
-        max_delay: Duration,
-        max_attempts: u32,
-    ) -> Self {
+    pub fn exponential(initial_delay: Duration, max_delay: Duration, max_attempts: u32) -> Self {
         Self {
             strategy: RetryStrategy::Exponential {
                 initial_delay,
@@ -223,19 +216,13 @@ impl RetryPolicy {
         }
 
         // All retries exhausted
-        Err(last_error.unwrap_or_else(|| {
-            DbError::Network("All retry attempts failed".to_string())
-        }))
+        Err(last_error.unwrap_or_else(|| DbError::Network("All retry attempts failed".to_string())))
     }
 }
 
 impl Default for RetryPolicy {
     fn default() -> Self {
-        Self::exponential_with_jitter(
-            Duration::from_millis(100),
-            Duration::from_secs(30),
-            3,
-        )
+        Self::exponential_with_jitter(Duration::from_millis(100), Duration::from_secs(30), 3)
     }
 }
 
@@ -259,8 +246,11 @@ impl RetryBudget {
     /// # Arguments
     /// * `target_ratio` - Target ratio of retries to requests (0.0 to 1.0)
     /// * `min_requests` - Minimum requests before enforcing budget
-    pub fn new(#[allow(dead_code)] // Reserved for dynamic budget calculation
-    target_ratio: f64, min_requests: u32) -> Self {
+    pub fn new(
+        #[allow(dead_code)] // Reserved for dynamic budget calculation
+        target_ratio: f64,
+        min_requests: u32,
+    ) -> Self {
         Self {
             target_ratio: target_ratio.clamp(0.0, 1.0),
             min_requests,
@@ -346,8 +336,14 @@ mod tests {
             delay: Duration::from_millis(100),
         };
 
-        assert_eq!(strategy.delay_for_attempt(0), Some(Duration::from_millis(100)));
-        assert_eq!(strategy.delay_for_attempt(5), Some(Duration::from_millis(100)));
+        assert_eq!(
+            strategy.delay_for_attempt(0),
+            Some(Duration::from_millis(100))
+        );
+        assert_eq!(
+            strategy.delay_for_attempt(5),
+            Some(Duration::from_millis(100))
+        );
     }
 
     #[test]
@@ -358,10 +354,22 @@ mod tests {
             multiplier: 2.0,
         };
 
-        assert_eq!(strategy.delay_for_attempt(0), Some(Duration::from_millis(100)));
-        assert_eq!(strategy.delay_for_attempt(1), Some(Duration::from_millis(200)));
-        assert_eq!(strategy.delay_for_attempt(2), Some(Duration::from_millis(400)));
-        assert_eq!(strategy.delay_for_attempt(3), Some(Duration::from_millis(800)));
+        assert_eq!(
+            strategy.delay_for_attempt(0),
+            Some(Duration::from_millis(100))
+        );
+        assert_eq!(
+            strategy.delay_for_attempt(1),
+            Some(Duration::from_millis(200))
+        );
+        assert_eq!(
+            strategy.delay_for_attempt(2),
+            Some(Duration::from_millis(400))
+        );
+        assert_eq!(
+            strategy.delay_for_attempt(3),
+            Some(Duration::from_millis(800))
+        );
     }
 
     #[test]
@@ -373,7 +381,10 @@ mod tests {
         };
 
         // Should be capped at max_delay
-        assert_eq!(strategy.delay_for_attempt(10), Some(Duration::from_millis(500)));
+        assert_eq!(
+            strategy.delay_for_attempt(10),
+            Some(Duration::from_millis(500))
+        );
     }
 
     #[test]
@@ -448,17 +459,17 @@ mod tests {
     #[test]
     fn test_is_retryable_error() {
         assert!(is_retryable_error(&DbError::Network("error".to_string())));
-        assert!(is_retryable_error(&DbError::Unavailable("error".to_string())));
+        assert!(is_retryable_error(&DbError::Unavailable(
+            "error".to_string()
+        )));
         assert!(is_retryable_error(&DbError::LockTimeout));
         assert!(!is_retryable_error(&DbError::NotFound("error".to_string())));
     }
 
     #[tokio::test]
     async fn test_decorrelated_jitter() {
-        let retry = DecorrelatedJitterRetry::new(
-            Duration::from_millis(100),
-            Duration::from_secs(10),
-        );
+        let retry =
+            DecorrelatedJitterRetry::new(Duration::from_millis(100), Duration::from_secs(10));
 
         let delay1 = retry.next_delay().await;
         let delay2 = retry.next_delay().await;

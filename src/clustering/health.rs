@@ -58,9 +58,9 @@ impl ClusterHealth {
             match node_info.status {
                 crate::clustering::node::NodeStatus::Healthy => self.healthy_nodes += 1,
                 crate::clustering::node::NodeStatus::Degraded => self.degraded_nodes += 1,
-                crate::clustering::node::NodeStatus::Unreachable |
-                crate::clustering::node::NodeStatus::ShuttingDown |
-                crate::clustering::node::NodeStatus::Failed => self.failed_nodes += 1,
+                crate::clustering::node::NodeStatus::Unreachable
+                | crate::clustering::node::NodeStatus::ShuttingDown
+                | crate::clustering::node::NodeStatus::Failed => self.failed_nodes += 1,
             }
         }
 
@@ -80,7 +80,10 @@ impl ClusterHealth {
 
     // Check if cluster is operational
     pub fn is_operational(&self) -> bool {
-        matches!(self.cluster_status, ClusterStatus::Healthy | ClusterStatus::Degraded)
+        matches!(
+            self.cluster_status,
+            ClusterStatus::Healthy | ClusterStatus::Degraded
+        )
     }
 }
 
@@ -152,7 +155,7 @@ pub struct NodeHealthMetrics {
 #[cfg(test)]
 mod tests {
     use super::*;
-use crate::clustering::node::{NodeStatus};
+    use crate::clustering::node::NodeStatus;
 
     #[test]
     fn test_cluster_health_new() {

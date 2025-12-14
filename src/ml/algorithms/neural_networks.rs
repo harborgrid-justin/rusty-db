@@ -27,7 +27,7 @@
 //
 // This module is currently a placeholder and will be implemented in future releases.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // Placeholder structures for future implementation
 

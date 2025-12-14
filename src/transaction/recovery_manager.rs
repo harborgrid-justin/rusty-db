@@ -17,11 +17,11 @@
 // recovery_mgr.create_checkpoint(active_txns)?;
 // ```
 
-use std::fmt;
-use std::time::SystemTime;
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
 use std::time::Duration;
+use std::time::SystemTime;
 
 use parking_lot::Mutex;
 
@@ -161,15 +161,27 @@ impl RecoveryManager {
 
         for entry in entries {
             match entry {
-                WALEntry::Insert { table: _, key: _, value: _, .. } => {
+                WALEntry::Insert {
+                    table: _,
+                    key: _,
+                    value: _,
+                    ..
+                } => {
                     // In production: apply insert to storage
                     stats.operations_redone += 1;
                 }
-                WALEntry::Update { table: _, key: _, new_value: _, .. } => {
+                WALEntry::Update {
+                    table: _,
+                    key: _,
+                    new_value: _,
+                    ..
+                } => {
                     // In production: apply update to storage
                     stats.operations_redone += 1;
                 }
-                WALEntry::Delete { table: _, key: _, .. } => {
+                WALEntry::Delete {
+                    table: _, key: _, ..
+                } => {
                     // In production: apply delete to storage
                     stats.operations_redone += 1;
                 }
@@ -191,15 +203,27 @@ impl RecoveryManager {
         // Undo in reverse order
         for entry in entries.iter().rev() {
             match entry {
-                WALEntry::Insert { table: _, key: _, .. } => {
+                WALEntry::Insert {
+                    table: _, key: _, ..
+                } => {
                     // Undo insert: delete the row
                     stats.operations_undone += 1;
                 }
-                WALEntry::Update { table: _, key: _, old_value: _, .. } => {
+                WALEntry::Update {
+                    table: _,
+                    key: _,
+                    old_value: _,
+                    ..
+                } => {
                     // Undo update: restore old value
                     stats.operations_undone += 1;
                 }
-                WALEntry::Delete { table: _, key: _, value: _, .. } => {
+                WALEntry::Delete {
+                    table: _,
+                    key: _,
+                    value: _,
+                    ..
+                } => {
                     // Undo delete: reinsert the row
                     stats.operations_undone += 1;
                 }

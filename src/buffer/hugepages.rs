@@ -43,11 +43,11 @@
 // - Not as mature as Linux support
 
 use crate::error::{DbError, Result};
+use parking_lot::Mutex;
 use std::alloc::{alloc, dealloc, Layout};
 use std::ptr;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
-use parking_lot::Mutex;
 
 // ============================================================================
 // Constants
@@ -222,9 +222,7 @@ impl HugePageAllocator {
                 self.allocate_transparent_huge(size, alignment)
             }
 
-            AllocationStrategy::ExplicitHugePages => {
-                self.allocate_explicit_huge(size, alignment)
-            }
+            AllocationStrategy::ExplicitHugePages => self.allocate_explicit_huge(size, alignment),
 
             AllocationStrategy::BestEffort => {
                 // Try explicit, then THP, then standard
@@ -266,7 +264,8 @@ impl HugePageAllocator {
         stats.standard_page_bytes += size as u64;
         drop(stats);
 
-        self.allocated_bytes.fetch_add(size as u64, Ordering::Relaxed);
+        self.allocated_bytes
+            .fetch_add(size as u64, Ordering::Relaxed);
         self.standard_pages_allocated
             .fetch_add((size + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K, Ordering::Relaxed);
 
@@ -280,7 +279,11 @@ impl HugePageAllocator {
     }
 
     /// Allocate using transparent huge pages (Linux with madvise)
-    fn allocate_transparent_huge(&self, size: usize, alignment: usize) -> Result<HugePageAllocation> {
+    fn allocate_transparent_huge(
+        &self,
+        size: usize,
+        alignment: usize,
+    ) -> Result<HugePageAllocation> {
         // Round up to huge page size
         let huge_page_size = self.config.page_size.bytes();
         let aligned_size = ((size + huge_page_size - 1) / huge_page_size) * huge_page_size;
@@ -307,11 +310,8 @@ impl HugePageAllocator {
         #[cfg(target_os = "linux")]
         {
             unsafe {
-                let result = libc::madvise(
-                    ptr as *mut libc::c_void,
-                    aligned_size,
-                    libc::MADV_HUGEPAGE,
-                );
+                let result =
+                    libc::madvise(ptr as *mut libc::c_void, aligned_size, libc::MADV_HUGEPAGE);
 
                 if result != 0 {
                     // madvise failed, but allocation succeeded
@@ -513,7 +513,8 @@ pub fn query_huge_page_info() -> HugePageSystemInfo {
         }
 
         // Check THP status
-        if let Ok(contents) = std::fs::read_to_string("/sys/kernel/mm/transparent_hugepage/enabled") {
+        if let Ok(contents) = std::fs::read_to_string("/sys/kernel/mm/transparent_hugepage/enabled")
+        {
             info.thp_enabled = contents.contains("[always]") || contents.contains("[madvise]");
         }
     }

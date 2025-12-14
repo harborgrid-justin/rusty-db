@@ -3,8 +3,8 @@
 // Advanced feature preprocessing, transformation, and selection for ML models.
 // Supports automatic feature extraction from SQL tables and zero-copy transformations.
 
-use crate::error::Result;
 use super::Dataset;
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -157,9 +157,12 @@ impl Normalizer {
             return Err(crate::DbError::InvalidInput("Normalizer not fitted".into()));
         }
 
-        let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
+        let transformed_features: Vec<Vec<f64>> = dataset
+            .features
+            .iter()
             .map(|sample| {
-                sample.iter()
+                sample
+                    .iter()
                     .enumerate()
                     .map(|(i, &value)| {
                         let range = self.max_values[i] - self.min_values[i];
@@ -254,12 +257,17 @@ impl Standardizer {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(crate::DbError::InvalidInput("Standardizer not fitted".into()));
+            return Err(crate::DbError::InvalidInput(
+                "Standardizer not fitted".into(),
+            ));
         }
 
-        let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
+        let transformed_features: Vec<Vec<f64>> = dataset
+            .features
+            .iter()
             .map(|sample| {
-                sample.iter()
+                sample
+                    .iter()
                     .enumerate()
                     .map(|(i, &value)| (value - self.means[i]) / self.std_devs[i])
                     .collect()
@@ -330,7 +338,9 @@ impl OneHotEncoder {
 
     pub fn transform(&self, dataset: &Dataset) -> Result<Dataset> {
         if !self.fitted {
-            return Err(crate::DbError::InvalidInput("OneHotEncoder not fitted".into()));
+            return Err(crate::DbError::InvalidInput(
+                "OneHotEncoder not fitted".into(),
+            ));
         }
 
         let mut new_feature_names = Vec::new();
@@ -417,7 +427,9 @@ impl Binner {
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
         for &feature_idx in &self.feature_indices {
-            let mut values: Vec<f64> = dataset.features.iter()
+            let mut values: Vec<f64> = dataset
+                .features
+                .iter()
                 .map(|sample| sample[feature_idx])
                 .collect();
 
@@ -463,9 +475,12 @@ impl Binner {
             return Err(crate::DbError::InvalidInput("Binner not fitted".into()));
         }
 
-        let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
+        let transformed_features: Vec<Vec<f64>> = dataset
+            .features
+            .iter()
             .map(|sample| {
-                sample.iter()
+                sample
+                    .iter()
                     .enumerate()
                     .map(|(i, &value)| {
                         if self.feature_indices.contains(&i) {
@@ -488,7 +503,9 @@ impl Binner {
         Ok(Dataset {
             features: transformed_features,
             targets: dataset.targets.clone(),
-            feature_names: dataset.feature_names.iter()
+            feature_names: dataset
+                .feature_names
+                .iter()
                 .enumerate()
                 .map(|(i, name)| {
                     if self.feature_indices.contains(&i) {
@@ -544,7 +561,9 @@ impl Imputer {
         self.fill_values = vec![0.0; n_features];
 
         for i in 0..n_features {
-            let mut values: Vec<f64> = dataset.features.iter()
+            let mut values: Vec<f64> = dataset
+                .features
+                .iter()
                 .map(|sample| sample[i])
                 .filter(|&v| (v - self.missing_value).abs() > 1e-10)
                 .collect();
@@ -555,9 +574,7 @@ impl Imputer {
             }
 
             self.fill_values[i] = match self.strategy {
-                ImputationStrategy::Mean => {
-                    values.iter().sum::<f64>() / values.len() as f64
-                }
+                ImputationStrategy::Mean => values.iter().sum::<f64>() / values.len() as f64,
                 ImputationStrategy::Median => {
                     values.sort_by(|a, b| a.partial_cmp(b).unwrap());
                     let mid = values.len() / 2;
@@ -572,7 +589,8 @@ impl Imputer {
                     for &v in &values {
                         *counts.entry(v as i64).or_insert(0) += 1;
                     }
-                    counts.into_iter()
+                    counts
+                        .into_iter()
                         .max_by_key(|(_, count)| *count)
                         .map(|(val, _)| val as f64)
                         .unwrap_or(0.0)
@@ -595,9 +613,12 @@ impl Imputer {
             return Err(crate::DbError::InvalidInput("Imputer not fitted".into()));
         }
 
-        let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
+        let transformed_features: Vec<Vec<f64>> = dataset
+            .features
+            .iter()
             .map(|sample| {
-                sample.iter()
+                sample
+                    .iter()
                     .enumerate()
                     .map(|(i, &value)| {
                         if (value - self.missing_value).abs() < 1e-10 {
@@ -695,8 +716,7 @@ impl PolynomialTransform {
                     if !self.interaction_only || i != j {
                         feature_names.push(format!(
                             "{}*{}",
-                            dataset.feature_names[i],
-                            dataset.feature_names[j]
+                            dataset.feature_names[i], dataset.feature_names[j]
                         ));
                     }
                 }
@@ -749,9 +769,7 @@ impl VarianceThresholdSelector {
         for i in 0..n_features {
             let values: Vec<f64> = dataset.features.iter().map(|s| s[i]).collect();
             let mean = values.iter().sum::<f64>() / n_samples;
-            let variance = values.iter()
-                .map(|&x| (x - mean).powi(2))
-                .sum::<f64>() / n_samples;
+            let variance = values.iter().map(|&x| (x - mean).powi(2)).sum::<f64>() / n_samples;
 
             self.variances.push(variance);
 
@@ -774,15 +792,15 @@ impl VarianceThresholdSelector {
             return Err(crate::DbError::InvalidInput("Selector not fitted".into()));
         }
 
-        let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
-            .map(|sample| {
-                self.selected_features.iter()
-                    .map(|&i| sample[i])
-                    .collect()
-            })
+        let transformed_features: Vec<Vec<f64>> = dataset
+            .features
+            .iter()
+            .map(|sample| self.selected_features.iter().map(|&i| sample[i]).collect())
             .collect();
 
-        let feature_names = self.selected_features.iter()
+        let feature_names = self
+            .selected_features
+            .iter()
             .map(|&i| dataset.feature_names[i].clone())
             .collect();
 
@@ -841,7 +859,8 @@ impl CorrelationSelector {
             }
         }
 
-        self.selected_features = keep.iter()
+        self.selected_features = keep
+            .iter()
             .enumerate()
             .filter(|(_, &k)| k)
             .map(|(i, _)| i)
@@ -861,15 +880,15 @@ impl CorrelationSelector {
             return Err(crate::DbError::InvalidInput("Selector not fitted".into()));
         }
 
-        let transformed_features: Vec<Vec<f64>> = dataset.features.iter()
-            .map(|sample| {
-                self.selected_features.iter()
-                    .map(|&i| sample[i])
-                    .collect()
-            })
+        let transformed_features: Vec<Vec<f64>> = dataset
+            .features
+            .iter()
+            .map(|sample| self.selected_features.iter().map(|&i| sample[i]).collect())
             .collect();
 
-        let feature_names = self.selected_features.iter()
+        let feature_names = self
+            .selected_features
+            .iter()
             .map(|&i| dataset.feature_names[i].clone())
             .collect();
 
@@ -891,10 +910,12 @@ impl CorrelationSelector {
         let mean_i = values_i.iter().sum::<f64>() / n;
         let mean_j = values_j.iter().sum::<f64>() / n;
 
-        let cov: f64 = values_i.iter()
+        let cov: f64 = values_i
+            .iter()
             .zip(&values_j)
             .map(|(&vi, &vj)| (vi - mean_i) * (vj - mean_j))
-            .sum::<f64>() / n;
+            .sum::<f64>()
+            / n;
 
         let std_i = (values_i.iter().map(|&v| (v - mean_i).powi(2)).sum::<f64>() / n).sqrt();
         let std_j = (values_j.iter().map(|&v| (v - mean_j).powi(2)).sum::<f64>() / n).sqrt();

@@ -3,13 +3,13 @@
 // This module provides comprehensive cursor support including explicit cursors,
 // REF CURSORs, cursor variables, and bulk operations (BULK COLLECT, FORALL).
 
-use crate::{Result, DbError};
-use crate::procedures::parser::{PlSqlType, Expression};
+use crate::procedures::parser::{Expression, PlSqlType};
 use crate::procedures::runtime::RuntimeValue;
+use crate::{DbError, Result};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 
 // Cursor parameter
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -172,7 +172,9 @@ impl CursorForLoop {
     }
 
     pub fn next(&mut self) -> Option<(&str, CursorRow)> {
-        self.state.fetch().map(|row| (self.record_name.as_str(), row))
+        self.state
+            .fetch()
+            .map(|row| (self.record_name.as_str(), row))
     }
 }
 
@@ -235,7 +237,12 @@ pub struct ForAll {
 }
 
 impl ForAll {
-    pub fn new(index_variable: String, lower_bound: i64, upper_bound: i64, dml_statement: String) -> Self {
+    pub fn new(
+        index_variable: String,
+        lower_bound: i64,
+        upper_bound: i64,
+        dml_statement: String,
+    ) -> Self {
         Self {
             index_variable,
             lower_bound,
@@ -257,7 +264,8 @@ impl ForAll {
 
         for i in self.lower_bound..=self.upper_bound {
             // Execute DML statement with index variable substituted
-            let stmt = self.dml_statement
+            let stmt = self
+                .dml_statement
                 .replace(&format!("({})", self.index_variable), &format!("({})", i))
                 .replace(&format!("[{}]", self.index_variable), &format!("[{}]", i))
                 .replace(&format!(" {} ", self.index_variable), &format!(" {} ", i));
@@ -267,13 +275,15 @@ impl ForAll {
             let result = if stmt_upper.starts_with("INSERT")
                 || stmt_upper.starts_with("UPDATE")
                 || stmt_upper.starts_with("DELETE")
-                || stmt_upper.starts_with("MERGE") {
+                || stmt_upper.starts_with("MERGE")
+            {
                 // Execute the DML statement
                 // In a full implementation, this would call the SQL executor
                 Ok(1usize)
             } else {
                 Err(DbError::InvalidInput(format!(
-                    "FORALL only supports DML statements, got: {}", stmt
+                    "FORALL only supports DML statements, got: {}",
+                    stmt
                 )))
             };
 
@@ -338,9 +348,10 @@ impl CursorManager {
         let mut cursors = self.cursors.write();
 
         if cursors.contains_key(&cursor.name) {
-            return Err(DbError::AlreadyExists(
-                format!("Cursor '{}' already declared", cursor.name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Cursor '{}' already declared",
+                cursor.name
+            )));
         }
 
         cursors.insert(cursor.name.clone(), cursor);
@@ -348,33 +359,32 @@ impl CursorManager {
     }
 
     // Open a cursor with parameters
-    pub fn open_cursor(
-        &self,
-        cursor_name: &str,
-        parameters: Vec<RuntimeValue>,
-    ) -> Result<()> {
+    pub fn open_cursor(&self, cursor_name: &str, parameters: Vec<RuntimeValue>) -> Result<()> {
         let cursors = self.cursors.read();
         let mut cursor_states = self.cursor_states.write();
 
-        let cursor = cursors.get(cursor_name).ok_or_else(||
-            DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?;
+        let cursor = cursors
+            .get(cursor_name)
+            .ok_or_else(|| DbError::NotFound(format!("Cursor '{}' not found", cursor_name)))?;
 
         // Check if cursor is already open
         if let Some(state) = cursor_states.get(cursor_name) {
             if state.is_open {
-                return Err(DbError::InvalidInput(
-                    format!("Cursor '{}' is already open", cursor_name)
-                ));
+                return Err(DbError::InvalidInput(format!(
+                    "Cursor '{}' is already open",
+                    cursor_name
+                )));
             }
         }
 
         // Validate parameters
         if parameters.len() != cursor.parameters.len() {
-            return Err(DbError::InvalidInput(
-                format!("Cursor '{}' expects {} parameters, got {}",
-                    cursor_name, cursor.parameters.len(), parameters.len())
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Cursor '{}' expects {} parameters, got {}",
+                cursor_name,
+                cursor.parameters.len(),
+                parameters.len()
+            )));
         }
 
         // Execute query and fetch rows
@@ -393,8 +403,8 @@ impl CursorManager {
                     RuntimeValue::Timestamp(t) => format!("TIMESTAMP '{}'", t),
                     _ => format!("{:?}", param_value),
                 };
-                query = query.replace(&format!(":{}" , param_def.name), &value_str);
-                query = query.replace(&format!(":{}" , i + 1), &value_str);
+                query = query.replace(&format!(":{}", param_def.name), &value_str);
+                query = query.replace(&format!(":{}", i + 1), &value_str);
             }
         }
 
@@ -415,14 +425,15 @@ impl CursorManager {
     pub fn fetch_cursor(&self, cursor_name: &str) -> Result<Option<CursorRow>> {
         let mut cursor_states = self.cursor_states.write();
 
-        let state = cursor_states.get_mut(cursor_name).ok_or_else(||
+        let state = cursor_states.get_mut(cursor_name).ok_or_else(|| {
             DbError::NotFound(format!("Cursor '{}' not found or not open", cursor_name))
-        )?;
+        })?;
 
         if !state.is_open {
-            return Err(DbError::InvalidInput(
-                format!("Cursor '{}' is not open", cursor_name)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Cursor '{}' is not open",
+                cursor_name
+            )));
         }
 
         Ok(state.fetch())
@@ -432,14 +443,15 @@ impl CursorManager {
     pub fn close_cursor(&self, cursor_name: &str) -> Result<()> {
         let mut cursor_states = self.cursor_states.write();
 
-        let state = cursor_states.get_mut(cursor_name).ok_or_else(||
-            DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?;
+        let state = cursor_states
+            .get_mut(cursor_name)
+            .ok_or_else(|| DbError::NotFound(format!("Cursor '{}' not found", cursor_name)))?;
 
         if !state.is_open {
-            return Err(DbError::InvalidInput(
-                format!("Cursor '{}' is not open", cursor_name)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Cursor '{}' is not open",
+                cursor_name
+            )));
         }
 
         state.close();
@@ -450,9 +462,9 @@ impl CursorManager {
     pub fn get_attributes(&self, cursor_name: &str) -> Result<CursorAttributes> {
         let cursor_states = self.cursor_states.read();
 
-        let state = cursor_states.get(cursor_name).ok_or_else(||
-            DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?;
+        let state = cursor_states
+            .get(cursor_name)
+            .ok_or_else(|| DbError::NotFound(format!("Cursor '{}' not found", cursor_name)))?;
 
         let found = if state.is_open {
             Some(state.is_found())
@@ -492,14 +504,15 @@ impl CursorManager {
     pub fn open_ref_cursor(&self, id: &str, query: String) -> Result<()> {
         let mut ref_cursors = self.ref_cursors.write();
 
-        let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
-            DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?;
+        let ref_cursor = ref_cursors
+            .get_mut(id)
+            .ok_or_else(|| DbError::NotFound(format!("REF CURSOR '{}' not found", id)))?;
 
         if ref_cursor.state.is_open {
-            return Err(DbError::InvalidInput(
-                format!("REF CURSOR '{}' is already open", id)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "REF CURSOR '{}' is already open",
+                id
+            )));
         }
 
         // Execute query and fetch rows
@@ -517,14 +530,15 @@ impl CursorManager {
     pub fn fetch_ref_cursor(&self, id: &str) -> Result<Option<CursorRow>> {
         let mut ref_cursors = self.ref_cursors.write();
 
-        let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
-            DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?;
+        let ref_cursor = ref_cursors
+            .get_mut(id)
+            .ok_or_else(|| DbError::NotFound(format!("REF CURSOR '{}' not found", id)))?;
 
         if !ref_cursor.state.is_open {
-            return Err(DbError::InvalidInput(
-                format!("REF CURSOR '{}' is not open", id)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "REF CURSOR '{}' is not open",
+                id
+            )));
         }
 
         Ok(ref_cursor.state.fetch())
@@ -534,14 +548,15 @@ impl CursorManager {
     pub fn close_ref_cursor(&self, id: &str) -> Result<()> {
         let mut ref_cursors = self.ref_cursors.write();
 
-        let ref_cursor = ref_cursors.get_mut(id).ok_or_else(||
-            DbError::NotFound(format!("REF CURSOR '{}' not found", id))
-        )?;
+        let ref_cursor = ref_cursors
+            .get_mut(id)
+            .ok_or_else(|| DbError::NotFound(format!("REF CURSOR '{}' not found", id)))?;
 
         if !ref_cursor.state.is_open {
-            return Err(DbError::InvalidInput(
-                format!("REF CURSOR '{}' is not open", id)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "REF CURSOR '{}' is not open",
+                id
+            )));
         }
 
         ref_cursor.state.close();
@@ -551,21 +566,18 @@ impl CursorManager {
     }
 
     // Bulk collect from cursor
-    pub fn bulk_collect(
-        &self,
-        cursor_name: &str,
-        limit: Option<usize>,
-    ) -> Result<Vec<CursorRow>> {
+    pub fn bulk_collect(&self, cursor_name: &str, limit: Option<usize>) -> Result<Vec<CursorRow>> {
         let mut cursor_states = self.cursor_states.write();
 
-        let state = cursor_states.get_mut(cursor_name).ok_or_else(||
-            DbError::NotFound(format!("Cursor '{}' not found", cursor_name))
-        )?;
+        let state = cursor_states
+            .get_mut(cursor_name)
+            .ok_or_else(|| DbError::NotFound(format!("Cursor '{}' not found", cursor_name)))?;
 
         if !state.is_open {
-            return Err(DbError::InvalidInput(
-                format!("Cursor '{}' is not open", cursor_name)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Cursor '{}' is not open",
+                cursor_name
+            )));
         }
 
         let bulk_collect = if let Some(limit_val) = limit {
@@ -586,11 +598,10 @@ impl CursorManager {
     // Get cursor definition
     pub fn get_cursor(&self, cursor_name: &str) -> Result<ExplicitCursor> {
         let cursors = self.cursors.read();
-        cursors.get(cursor_name)
+        cursors
+            .get(cursor_name)
             .cloned()
-            .ok_or_else(|| DbError::NotFound(
-                format!("Cursor '{}' not found", cursor_name)
-            ))
+            .ok_or_else(|| DbError::NotFound(format!("Cursor '{}' not found", cursor_name)))
     }
 }
 
@@ -789,7 +800,10 @@ mod tests {
         for i in 0..5 {
             let mut row = CursorRow::new();
             row.set("id".to_string(), RuntimeValue::Integer(i));
-            row.set("name".to_string(), RuntimeValue::String(format!("name{}", i)));
+            row.set(
+                "name".to_string(),
+                RuntimeValue::String(format!("name{}", i)),
+            );
             rows.push(row);
         }
 

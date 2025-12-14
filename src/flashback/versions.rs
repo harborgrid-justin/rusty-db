@@ -22,18 +22,18 @@
 // WHERE employee_id = 100;
 // ```
 
-use std::fmt;
-use std::time::Duration;
-use std::collections::VecDeque;
-use std::collections::{HashMap};
-use std::sync::{Arc, RwLock};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
+use std::time::SystemTime;
 
-use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::error::{Result, DbError};
-use super::time_travel::{SCN, Timestamp, RowVersion, current_timestamp};
+use super::time_travel::{current_timestamp, RowVersion, Timestamp, SCN};
+use crate::common::{RowId, TableId, TransactionId, Value};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Arena Allocator for Version Data
@@ -71,18 +71,17 @@ impl VersionArena {
             return None;
         }
 
-        self.offset.compare_exchange(
-            current,
-            new_offset,
-            Ordering::Release,
-            Ordering::Relaxed
-        ).ok().map(|_| current)
+        self.offset
+            .compare_exchange(current, new_offset, Ordering::Release, Ordering::Relaxed)
+            .ok()
+            .map(|_| current)
     }
 
     /// Get remaining capacity
     #[inline]
     pub fn remaining(&self) -> usize {
-        self.capacity.saturating_sub(self.offset.load(Ordering::Relaxed))
+        self.capacity
+            .saturating_sub(self.offset.load(Ordering::Relaxed))
     }
 
     /// Reset arena (use with caution - only when all allocations are done)
@@ -162,11 +161,7 @@ impl VersionManager {
     }
 
     /// Get all versions for a row
-    pub fn get_row_versions(
-        &self,
-        table_id: TableId,
-        row_id: RowId,
-    ) -> Result<Vec<VersionRow>> {
+    pub fn get_row_versions(&self, table_id: TableId, row_id: RowId) -> Result<Vec<VersionRow>> {
         let store = self.store.read().unwrap();
         store.get_all_versions(table_id, row_id)
     }
@@ -191,7 +186,9 @@ impl VersionManager {
         let result = gc.collect(&mut *store, &policies)?;
 
         let mut stats = self.stats.write().unwrap();
-        stats.active_versions = stats.active_versions.saturating_sub(result.versions_removed as u64);
+        stats.active_versions = stats
+            .active_versions
+            .saturating_sub(result.versions_removed as u64);
         stats.gc_runs += 1;
         stats.total_versions_removed += result.versions_removed as u64;
 
@@ -285,12 +282,7 @@ impl VersionStore {
         }
     }
 
-    fn add_version(
-        &mut self,
-        table_id: TableId,
-        row_id: RowId,
-        version: RowVersion,
-    ) -> Result<()> {
+    fn add_version(&mut self, table_id: TableId, row_id: RowId, version: RowVersion) -> Result<()> {
         let table_versions = self.versions.entry(table_id).or_insert_with(HashMap::new);
         let row_versions = table_versions.entry(row_id).or_insert_with(VecDeque::new);
 
@@ -320,11 +312,7 @@ impl VersionStore {
         Ok(results)
     }
 
-    fn get_all_versions(
-        &self,
-        table_id: TableId,
-        row_id: RowId,
-    ) -> Result<Vec<VersionRow>> {
+    fn get_all_versions(&self, table_id: TableId, row_id: RowId) -> Result<Vec<VersionRow>> {
         let versions = self.get_row_version_deque(table_id, row_id)?;
         Ok(versions.iter().map(|v| self.version_to_row(v)).collect())
     }
@@ -344,9 +332,10 @@ impl VersionStore {
     #[cold]
     #[inline(never)]
     fn no_versions_error(table_id: TableId, row_id: RowId) -> DbError {
-        DbError::Validation(
-            format!("No versions found for table {} row {}", table_id, row_id)
-        )
+        DbError::Validation(format!(
+            "No versions found for table {} row {}",
+            table_id, row_id
+        ))
     }
 
     fn is_version_in_range(
@@ -403,9 +392,7 @@ impl VersionStore {
         let version = versions
             .iter()
             .find(|v| v.scn_created == scn)
-            .ok_or_else(|| DbError::Validation(
-                format!("Version not found at SCN {}", scn)
-            ))?;
+            .ok_or_else(|| DbError::Validation(format!("Version not found at SCN {}", scn)))?;
 
         Ok(VersionMetadata {
             scn_created: version.scn_created,
@@ -417,7 +404,11 @@ impl VersionStore {
     }
 
     fn estimate_version_size(&self, version: &RowVersion) -> usize {
-        version.values.iter().map(|v| self.estimate_value_size(v)).sum()
+        version
+            .values
+            .iter()
+            .map(|v| self.estimate_value_size(v))
+            .sum()
     }
 
     fn estimate_value_size(&self, value: &Value) -> usize {
@@ -445,10 +436,14 @@ impl VersionStore {
     ) -> Result<VersionComparison> {
         let versions = self.get_row_version_deque(table_id, row_id)?;
 
-        let v1 = versions.iter().find(|v| v.scn_created == scn1)
+        let v1 = versions
+            .iter()
+            .find(|v| v.scn_created == scn1)
             .ok_or_else(|| DbError::Validation(format!("Version at SCN {} not found", scn1)))?;
 
-        let v2 = versions.iter().find(|v| v.scn_created == scn2)
+        let v2 = versions
+            .iter()
+            .find(|v| v.scn_created == scn2)
             .ok_or_else(|| DbError::Validation(format!("Version at SCN {} not found", scn2)))?;
 
         let mut changed_columns = Vec::new();
@@ -631,9 +626,7 @@ impl VersionGarbageCollector {
         };
 
         for (table_id, table_versions) in store.versions.iter_mut() {
-            let policy = policies.get(table_id)
-                .cloned()
-                .unwrap_or_default();
+            let policy = policies.get(table_id).cloned().unwrap_or_default();
 
             if policy.retain_all {
                 continue;
@@ -854,7 +847,7 @@ pub struct VersionStats {
     pub version_queries: u64,
     pub gc_runs: u64,
     pub total_versions_removed: u64,
-    pub storage_bytes: ()
+    pub storage_bytes: (),
 }
 
 impl VersionStats {
@@ -920,11 +913,9 @@ mod tests {
             manager.track_version(1, 1, version).unwrap();
         }
 
-        let versions = manager.query_versions_between(
-            1, 1,
-            VersionBound::SCN(1100),
-            VersionBound::SCN(1300),
-        ).unwrap();
+        let versions = manager
+            .query_versions_between(1, 1, VersionBound::SCN(1100), VersionBound::SCN(1300))
+            .unwrap();
 
         assert_eq!(versions.len(), 3); // SCN 1100, 1200, 1300
     }
@@ -950,7 +941,9 @@ mod tests {
             bitemporal: None,
         };
 
-        let undo = manager.create_undo_record(1, 1, old_version, new_version).unwrap();
+        let undo = manager
+            .create_undo_record(1, 1, old_version, new_version)
+            .unwrap();
         assert_eq!(undo.old_values[0], Value::Integer(10));
         assert_eq!(undo.new_values[0], Value::Integer(20));
     }

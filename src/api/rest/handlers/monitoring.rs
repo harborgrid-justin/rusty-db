@@ -4,8 +4,8 @@
 
 use axum::{
     extract::{Path, Query, State},
-    response::{Json as AxumJson},
     http::StatusCode,
+    response::Json as AxumJson,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -13,6 +13,17 @@ use std::time::SystemTime;
 
 use super::super::types::*;
 
+/// GET /api/v1/metrics
+///
+/// Get all system and application metrics
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics",
+    tag = "monitoring",
+    responses(
+        (status = 200, description = "All metrics", body = MetricsResponse),
+    )
+)]
 pub async fn get_metrics(
     State(state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<MetricsResponse>> {
@@ -21,39 +32,52 @@ pub async fn get_metrics(
     let mut metric_data = HashMap::new();
 
     // Basic request metrics
-    metric_data.insert("total_requests".to_string(), MetricData {
-        value: metrics.total_requests as f64,
-        unit: "count".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "total_requests".to_string(),
+        MetricData {
+            value: metrics.total_requests as f64,
+            unit: "count".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
-    metric_data.insert("successful_requests".to_string(), MetricData {
-        value: metrics.successful_requests as f64,
-        unit: "count".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "successful_requests".to_string(),
+        MetricData {
+            value: metrics.successful_requests as f64,
+            unit: "count".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
-    metric_data.insert("failed_requests".to_string(), MetricData {
-        value: metrics.failed_requests as f64,
-        unit: "count".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "failed_requests".to_string(),
+        MetricData {
+            value: metrics.failed_requests as f64,
+            unit: "count".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
-    metric_data.insert("avg_response_time".to_string(), MetricData {
-        value: metrics.avg_response_time_ms,
-        unit: "milliseconds".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "avg_response_time".to_string(),
+        MetricData {
+            value: metrics.avg_response_time_ms,
+            unit: "milliseconds".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
     // System metrics - CPU
-    let cpu_usage = sys_info::loadavg()
-        .map(|l| l.one * 10.0)
-        .unwrap_or(0.0);
-    metric_data.insert("cpu_usage_percent".to_string(), MetricData {
-        value: cpu_usage,
-        unit: "percent".to_string(),
-        labels: HashMap::new(),
-    });
+    let cpu_usage = sys_info::loadavg().map(|l| l.one * 10.0).unwrap_or(0.0);
+    metric_data.insert(
+        "cpu_usage_percent".to_string(),
+        MetricData {
+            value: cpu_usage,
+            unit: "percent".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
     // System metrics - Memory
     let mem_info = sys_info::mem_info().unwrap_or(sys_info::MemInfo {
@@ -72,37 +96,52 @@ pub async fn get_metrics(
         0.0
     };
 
-    metric_data.insert("memory_usage_bytes".to_string(), MetricData {
-        value: mem_used_bytes as f64,
-        unit: "bytes".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "memory_usage_bytes".to_string(),
+        MetricData {
+            value: mem_used_bytes as f64,
+            unit: "bytes".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
-    metric_data.insert("memory_usage_percent".to_string(), MetricData {
-        value: mem_usage_percent,
-        unit: "percent".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "memory_usage_percent".to_string(),
+        MetricData {
+            value: mem_usage_percent,
+            unit: "percent".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
     // Disk I/O metrics (placeholder - would need platform-specific implementation)
-    metric_data.insert("disk_io_read_bytes".to_string(), MetricData {
-        value: 0.0,
-        unit: "bytes".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "disk_io_read_bytes".to_string(),
+        MetricData {
+            value: 0.0,
+            unit: "bytes".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
-    metric_data.insert("disk_io_write_bytes".to_string(), MetricData {
-        value: 0.0,
-        unit: "bytes".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "disk_io_write_bytes".to_string(),
+        MetricData {
+            value: 0.0,
+            unit: "bytes".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
     // Cache hit ratio (placeholder - would integrate with buffer pool)
-    metric_data.insert("cache_hit_ratio".to_string(), MetricData {
-        value: 0.95,
-        unit: "ratio".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "cache_hit_ratio".to_string(),
+        MetricData {
+            value: 0.95,
+            unit: "ratio".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
     // Generate Prometheus format from the metrics
     let mut prometheus_output = String::new();
@@ -114,11 +153,12 @@ pub async fn get_metrics(
         prometheus_output.push_str(&format!("# HELP {} {}\n", metric_name, name));
 
         // TYPE line - determine type based on metric
-        let metric_type = if name.contains("total") || name.contains("requests") || name.contains("bytes") {
-            "counter"
-        } else {
-            "gauge"
-        };
+        let metric_type =
+            if name.contains("total") || name.contains("requests") || name.contains("bytes") {
+                "counter"
+            } else {
+                "gauge"
+            };
         prometheus_output.push_str(&format!("# TYPE {} {}\n", metric_name, metric_type));
 
         // Metric value
@@ -127,7 +167,10 @@ pub async fn get_metrics(
     }
 
     let response = MetricsResponse {
-        timestamp: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        timestamp: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         metrics: metric_data,
         prometheus_format: Some(prometheus_output),
     };
@@ -135,10 +178,18 @@ pub async fn get_metrics(
     Ok(AxumJson(response))
 }
 
-// Get Prometheus-formatted metrics
-pub async fn get_prometheus_metrics(
-    State(state): State<Arc<ApiState>>,
-) -> ApiResult<String> {
+/// GET /api/v1/metrics/prometheus
+///
+/// Get metrics in Prometheus format
+#[utoipa::path(
+    get,
+    path = "/api/v1/metrics/prometheus",
+    tag = "monitoring",
+    responses(
+        (status = 200, description = "Metrics in Prometheus format", body = String),
+    )
+)]
+pub async fn get_prometheus_metrics(State(state): State<Arc<ApiState>>) -> ApiResult<String> {
     let metrics = state.metrics.read().await;
 
     let mut output = String::new();
@@ -146,24 +197,34 @@ pub async fn get_prometheus_metrics(
     // Request metrics
     output.push_str("# HELP rustydb_total_requests Total number of requests\n");
     output.push_str("# TYPE rustydb_total_requests counter\n");
-    output.push_str(&format!("rustydb_total_requests {}\n\n", metrics.total_requests));
+    output.push_str(&format!(
+        "rustydb_total_requests {}\n\n",
+        metrics.total_requests
+    ));
 
     output.push_str("# HELP rustydb_successful_requests Number of successful requests\n");
     output.push_str("# TYPE rustydb_successful_requests counter\n");
-    output.push_str(&format!("rustydb_successful_requests {}\n\n", metrics.successful_requests));
+    output.push_str(&format!(
+        "rustydb_successful_requests {}\n\n",
+        metrics.successful_requests
+    ));
 
     output.push_str("# HELP rustydb_failed_requests Number of failed requests\n");
     output.push_str("# TYPE rustydb_failed_requests counter\n");
-    output.push_str(&format!("rustydb_failed_requests {}\n\n", metrics.failed_requests));
+    output.push_str(&format!(
+        "rustydb_failed_requests {}\n\n",
+        metrics.failed_requests
+    ));
 
     output.push_str("# HELP rustydb_avg_response_time_ms Average response time in milliseconds\n");
     output.push_str("# TYPE rustydb_avg_response_time_ms gauge\n");
-    output.push_str(&format!("rustydb_avg_response_time_ms {}\n\n", metrics.avg_response_time_ms));
+    output.push_str(&format!(
+        "rustydb_avg_response_time_ms {}\n\n",
+        metrics.avg_response_time_ms
+    ));
 
     // System metrics - CPU
-    let cpu_usage = sys_info::loadavg()
-        .map(|l| l.one * 10.0)
-        .unwrap_or(0.0);
+    let cpu_usage = sys_info::loadavg().map(|l| l.one * 10.0).unwrap_or(0.0);
     output.push_str("# HELP rustydb_cpu_usage_percent CPU usage percentage\n");
     output.push_str("# TYPE rustydb_cpu_usage_percent gauge\n");
     output.push_str(&format!("rustydb_cpu_usage_percent {}\n\n", cpu_usage));
@@ -187,11 +248,17 @@ pub async fn get_prometheus_metrics(
 
     output.push_str("# HELP rustydb_memory_usage_bytes Memory usage in bytes\n");
     output.push_str("# TYPE rustydb_memory_usage_bytes gauge\n");
-    output.push_str(&format!("rustydb_memory_usage_bytes {}\n\n", mem_used_bytes));
+    output.push_str(&format!(
+        "rustydb_memory_usage_bytes {}\n\n",
+        mem_used_bytes
+    ));
 
     output.push_str("# HELP rustydb_memory_usage_percent Memory usage percentage\n");
     output.push_str("# TYPE rustydb_memory_usage_percent gauge\n");
-    output.push_str(&format!("rustydb_memory_usage_percent {}\n\n", mem_usage_percent));
+    output.push_str(&format!(
+        "rustydb_memory_usage_percent {}\n\n",
+        mem_usage_percent
+    ));
 
     // Disk I/O metrics (placeholder)
     output.push_str("# HELP rustydb_disk_io_read_bytes Disk I/O read bytes\n");
@@ -224,13 +291,9 @@ pub async fn get_session_stats(
 ) -> ApiResult<AxumJson<SessionStatsResponse>> {
     let sessions = state.active_sessions.read().await;
 
-    let active_count = sessions.values()
-        .filter(|s| s.state == "active")
-        .count();
+    let active_count = sessions.values().filter(|s| s.state == "active").count();
 
-    let idle_count = sessions.values()
-        .filter(|s| s.state == "idle")
-        .count();
+    let idle_count = sessions.values().filter(|s| s.state == "idle").count();
 
     let response = SessionStatsResponse {
         active_sessions: active_count,
@@ -281,7 +344,15 @@ pub async fn get_performance_data(
     State(state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<PerformanceDataResponse>> {
     let cpu_usage = sys_info::loadavg().map(|l| l.one).unwrap_or(0.0) * 10.0;
-    let mem_info = sys_info::mem_info().unwrap_or(sys_info::MemInfo { total: 0, free: 0, avail: 0, buffers: 0, cached: 0, swap_total: 0, swap_free: 0 });
+    let mem_info = sys_info::mem_info().unwrap_or(sys_info::MemInfo {
+        total: 0,
+        free: 0,
+        avail: 0,
+        buffers: 0,
+        cached: 0,
+        swap_total: 0,
+        swap_free: 0,
+    });
     let mem_usage_bytes = (mem_info.total - mem_info.free) * 1024;
     let mem_usage_percent = if mem_info.total > 0 {
         (mem_info.total - mem_info.free) as f64 / mem_info.total as f64 * 100.0
@@ -339,9 +410,7 @@ pub async fn get_logs(
         (status = 200, description = "Alerts", body = AlertResponse),
     )
 )]
-pub async fn get_alerts(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<AxumJson<AlertResponse>> {
+pub async fn get_alerts(State(_state): State<Arc<ApiState>>) -> ApiResult<AxumJson<AlertResponse>> {
     let response = AlertResponse {
         alerts: vec![],
         active_count: 0,

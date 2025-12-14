@@ -1,8 +1,8 @@
 // Advanced Plan Transformation Techniques
 // Includes memoization, CSE, view matching, decorrelation, and DPccp join enumeration
 
-use crate::execution::planner::PlanNode;
 use crate::execution::optimizer::cost_model::SingleTableStatistics;
+use crate::execution::planner::PlanNode;
 use std::collections::HashMap;
 use std::hash::Hash;
 
@@ -148,7 +148,13 @@ impl BitSet {
         result
     }
 
-    fn enumerate_recursive(n: usize, size: usize, start: usize, current: u64, result: &mut Vec<BitSet>) {
+    fn enumerate_recursive(
+        n: usize,
+        size: usize,
+        start: usize,
+        current: u64,
+        result: &mut Vec<BitSet>,
+    ) {
         if size == 0 {
             result.push(BitSet { bits: current });
             return;
@@ -167,7 +173,9 @@ impl BitSet {
         for i in 1..(1 << n) {
             if i & self.bits == i && i != self.bits {
                 let left = BitSet { bits: i };
-                let right = BitSet { bits: self.bits ^ i };
+                let right = BitSet {
+                    bits: self.bits ^ i,
+                };
                 if right.bits != 0 {
                     result.push((left, right));
                 }

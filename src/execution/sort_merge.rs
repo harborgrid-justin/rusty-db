@@ -25,13 +25,13 @@
 use crate::error::DbError;
 use crate::execution::QueryResult;
 use crate::parser::OrderByClause;
+use parking_lot::Mutex;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::fs::File;
-use std::io::{Write as IoWrite, BufWriter, BufReader, BufRead};
+use std::io::{BufRead, BufReader, BufWriter, Write as IoWrite};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use parking_lot::Mutex;
 
 // Sort configuration
 #[derive(Debug, Clone)]
@@ -188,16 +188,11 @@ impl ExternalMergeSorter {
     }
 
     // Merge multiple sorted runs into one
-    fn merge_runs(
-        &self,
-        runs: &[PathBuf],
-        order_by: &[OrderByClause],
-    ) -> Result<PathBuf, DbError> {
+    fn merge_runs(&self, runs: &[PathBuf], order_by: &[OrderByClause]) -> Result<PathBuf, DbError> {
         // Open readers for all runs
         let mut readers: Vec<BufReader<File>> = Vec::new();
         for run_path in runs {
-            let file = File::open(run_path)
-                .map_err(|e| DbError::IoError(e.to_string()))?;
+            let file = File::open(run_path).map_err(|e| DbError::IoError(e.to_string()))?;
             readers.push(BufReader::new(file));
         }
 
@@ -221,8 +216,8 @@ impl ExternalMergeSorter {
 
         // Create output run
         let output_path = self.create_run_path()?;
-        let output_file = File::create(&output_path)
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+        let output_file =
+            File::create(&output_path).map_err(|e| DbError::IoError(e.to_string()))?;
         let mut writer = BufWriter::new(output_file);
 
         // Merge loop
@@ -241,7 +236,9 @@ impl ExternalMergeSorter {
             }
         }
 
-        writer.flush().map_err(|e| DbError::IoError(e.to_string()))?;
+        writer
+            .flush()
+            .map_err(|e| DbError::IoError(e.to_string()))?;
 
         Ok(output_path)
     }
@@ -280,9 +277,11 @@ impl ExternalMergeSorter {
             return 1000; // Default
         }
 
-        let avg_row_size = rows.iter()
+        let avg_row_size = rows
+            .iter()
             .map(|row| row.iter().map(|s| s.len()).sum::<usize>())
-            .sum::<usize>() / rows.len();
+            .sum::<usize>()
+            / rows.len();
 
         (self.config.memory_budget / avg_row_size.max(1)).max(1)
     }
@@ -290,23 +289,23 @@ impl ExternalMergeSorter {
     // Write sorted run to disk
     fn write_run_to_disk(&self, rows: &[Vec<String>]) -> Result<PathBuf, DbError> {
         let path = self.create_run_path()?;
-        let file = File::create(&path)
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+        let file = File::create(&path).map_err(|e| DbError::IoError(e.to_string()))?;
         let mut writer = BufWriter::new(file);
 
         for row in rows {
             Self::write_row(&mut writer, row)?;
         }
 
-        writer.flush().map_err(|e| DbError::IoError(e.to_string()))?;
+        writer
+            .flush()
+            .map_err(|e| DbError::IoError(e.to_string()))?;
 
         Ok(path)
     }
 
     // Read sorted run from disk
     fn read_run_from_disk(&self, path: &Path) -> Result<Vec<Vec<String>>, DbError> {
-        let file = File::open(path)
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+        let file = File::open(path).map_err(|e| DbError::IoError(e.to_string()))?;
         let mut reader = BufReader::new(file);
 
         let mut rows = Vec::new();
@@ -320,7 +319,8 @@ impl ExternalMergeSorter {
     // Write single row to file
     fn write_row(writer: &mut BufWriter<File>, row: &[String]) -> Result<(), DbError> {
         let line = row.join("\t") + "\n";
-        writer.write_all(line.as_bytes())
+        writer
+            .write_all(line.as_bytes())
             .map_err(|e| DbError::IoError(e.to_string()))?;
         Ok(())
     }
@@ -328,7 +328,8 @@ impl ExternalMergeSorter {
     // Read single row from file
     fn read_row(reader: &mut BufReader<File>) -> Result<Option<Vec<String>>, DbError> {
         let mut line = String::new();
-        let bytes_read = reader.read_line(&mut line)
+        let bytes_read = reader
+            .read_line(&mut line)
             .map_err(|e| DbError::IoError(e.to_string()))?;
 
         if bytes_read == 0 {
@@ -354,9 +355,12 @@ impl ExternalMergeSorter {
             return 0;
         }
 
-        let avg_row_size = data.rows.iter()
+        let avg_row_size = data
+            .rows
+            .iter()
             .map(|row| row.iter().map(|s| s.len()).sum::<usize>())
-            .sum::<usize>() / data.rows.len();
+            .sum::<usize>()
+            / data.rows.len();
 
         data.rows.len() * avg_row_size
     }
@@ -508,9 +512,7 @@ impl TopKSelector {
 
     // Get top K rows in sorted order
     pub fn get_top_k(self) -> Vec<Vec<String>> {
-        let mut results: Vec<Vec<String>> = self.heap.into_iter()
-            .map(|entry| entry.row)
-            .collect();
+        let mut results: Vec<Vec<String>> = self.heap.into_iter().map(|entry| entry.row).collect();
 
         // Reverse to get ascending order
         results.reverse();
@@ -614,7 +616,8 @@ impl SortBasedGrouping {
         let mut current_count = 0;
 
         for row in sorted_rows {
-            let group_key: Vec<String> = group_by_cols.iter()
+            let group_key: Vec<String> = group_by_cols
+                .iter()
                 .filter_map(|&idx| row.get(idx).cloned())
                 .collect();
 
@@ -646,7 +649,8 @@ impl SortBasedGrouping {
             result_rows.push(result_row);
         }
 
-        let mut columns: Vec<String> = group_by_cols.iter()
+        let mut columns: Vec<String> = group_by_cols
+            .iter()
             .filter_map(|&idx| data.columns.get(idx).cloned())
             .collect();
         columns.push("count".to_string());

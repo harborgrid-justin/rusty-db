@@ -3,12 +3,12 @@
 // Comprehensive metrics collection and monitoring for connection pools.
 // Tracks pool health, performance, and resource utilization.
 
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Instant, SystemTime};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
 
 /// Global pool metrics aggregator
 pub struct PoolMetrics {
@@ -62,18 +62,21 @@ impl PoolMetrics {
 
     /// Record a connection creation
     pub fn record_connection_created(&self) {
-        self.total_connections_created.fetch_add(1, Ordering::Relaxed);
+        self.total_connections_created
+            .fetch_add(1, Ordering::Relaxed);
     }
 
     /// Record a connection closure
     pub fn record_connection_closed(&self) {
-        self.total_connections_closed.fetch_add(1, Ordering::Relaxed);
+        self.total_connections_closed
+            .fetch_add(1, Ordering::Relaxed);
     }
 
     /// Record a successful acquire operation
     pub fn record_acquire(&self, wait_time_ms: u64) {
         self.total_acquires.fetch_add(1, Ordering::Relaxed);
-        self.total_acquire_wait_ms.fetch_add(wait_time_ms, Ordering::Relaxed);
+        self.total_acquire_wait_ms
+            .fetch_add(wait_time_ms, Ordering::Relaxed);
 
         // Update maximum
         let mut current_max = self.max_acquire_wait_ms.load(Ordering::Relaxed);
@@ -122,7 +125,9 @@ impl PoolMetrics {
         GlobalPoolStats {
             total_connections_created: self.total_connections_created.load(Ordering::Relaxed),
             total_connections_closed: self.total_connections_closed.load(Ordering::Relaxed),
-            active_connections: self.total_connections_created.load(Ordering::Relaxed)
+            active_connections: self
+                .total_connections_created
+                .load(Ordering::Relaxed)
                 .saturating_sub(self.total_connections_closed.load(Ordering::Relaxed)),
             total_acquires: self.total_acquires.load(Ordering::Relaxed),
             total_failed_acquires: self.total_failed_acquires.load(Ordering::Relaxed),

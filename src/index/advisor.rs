@@ -8,8 +8,8 @@
 // - Cost-benefit analysis
 
 use crate::Result;
-use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
 
 // Index Advisor
 pub struct IndexAdvisor {
@@ -56,7 +56,6 @@ impl IndexAdvisor {
 
         // Identify redundant indexes
         recommendations.extend(self.identify_redundant_indexes()?);
-
 
         // Sort by priority
         recommendations.sort_by(|a, b| b.priority.cmp(&a.priority));
@@ -123,7 +122,9 @@ impl IndexAdvisor {
 
             // Check ORDER BY clauses
             if !query_pattern.order_by.is_empty() {
-                let columns: Vec<_> = query_pattern.order_by.iter()
+                let columns: Vec<_> = query_pattern
+                    .order_by
+                    .iter()
                     .map(|o| o.column.clone())
                     .collect();
 
@@ -196,10 +197,8 @@ impl IndexAdvisor {
             for i in 0..indexes.len() {
                 for j in (i + 1)..indexes.len() {
                     if self.can_consolidate(indexes[i], indexes[j]) {
-                        let combined_columns = self.combine_columns(
-                            &indexes[i].columns,
-                            &indexes[j].columns,
-                        );
+                        let combined_columns =
+                            self.combine_columns(&indexes[i].columns, &indexes[j].columns);
 
                         recommendations.push(IndexRecommendation {
                             recommendation_type: RecommendationType::ConsolidateIndexes,
@@ -212,9 +211,7 @@ impl IndexAdvisor {
                             priority: Priority::Low,
                             estimated_benefit: indexes[i].maintenance_cost
                                 + indexes[j].maintenance_cost,
-                            estimated_cost: self.estimate_composite_index_cost(
-                                &indexes[i].columns,
-                            ),
+                            estimated_cost: self.estimate_composite_index_cost(&indexes[i].columns),
                         });
                     }
                 }
@@ -278,9 +275,9 @@ impl IndexAdvisor {
 
     // Check if a composite index exists
     fn has_composite_index(&self, table: &str, columns: &[String]) -> bool {
-        self.existing_indexes.iter().any(|idx| {
-            idx.table == table && idx.columns == columns
-        })
+        self.existing_indexes
+            .iter()
+            .any(|idx| idx.table == table && idx.columns == columns)
     }
 
     // Check if indexes can be consolidated
@@ -372,7 +369,10 @@ impl WorkloadTracker {
 
     fn record_query(&mut self, query: &Query) {
         let pattern = QueryPattern::from_query(query);
-        let stats = self.query_patterns.entry(pattern).or_insert_with(QueryStats::new);
+        let stats = self
+            .query_patterns
+            .entry(pattern)
+            .or_insert_with(QueryStats::new);
 
         stats.execution_count += 1;
         stats.total_execution_time_ms += query.execution_time_ms;

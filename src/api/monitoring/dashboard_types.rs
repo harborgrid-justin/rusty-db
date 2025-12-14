@@ -2,11 +2,11 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::Arc;
-use std::collections::{BTreeMap, VecDeque, HashMap};
-use std::time::{Duration, SystemTime};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 use crate::error::DbError;
 
@@ -162,7 +162,9 @@ impl DashboardManager {
     }
 
     pub fn create_dashboard(&self, dashboard: Dashboard) -> Result<(), DbError> {
-        self.dashboards.write().insert(dashboard.id.clone(), dashboard);
+        self.dashboards
+            .write()
+            .insert(dashboard.id.clone(), dashboard);
         Ok(())
     }
 
@@ -171,7 +173,9 @@ impl DashboardManager {
     }
 
     pub fn update_dashboard(&self, dashboard: Dashboard) -> Result<(), DbError> {
-        self.dashboards.write().insert(dashboard.id.clone(), dashboard);
+        self.dashboards
+            .write()
+            .insert(dashboard.id.clone(), dashboard);
         Ok(())
     }
 
@@ -224,13 +228,15 @@ impl TimeSeriesDatabase {
         let points = data.get(&query.metric_name).cloned().unwrap_or_default();
 
         // Filter by time range
-        let filtered: Vec<_> = points.iter()
+        let filtered: Vec<_> = points
+            .iter()
             .filter(|p| p.timestamp >= query.start_time && p.timestamp <= query.end_time)
             .filter(|p| {
                 // Filter by labels
-                query.labels.iter().all(|(k, v)| {
-                    p.labels.get(k).map(|pv| pv == v).unwrap_or(false)
-                })
+                query
+                    .labels
+                    .iter()
+                    .all(|(k, v)| p.labels.get(k).map(|pv| pv == v).unwrap_or(false))
             })
             .cloned()
             .collect();
@@ -294,11 +300,7 @@ impl TimeSeriesDatabase {
         result
     }
 
-    fn apply_aggregation(
-        &self,
-        points: &[TimeSeriesPoint],
-        function: AggregationFunction,
-    ) -> f64 {
+    fn apply_aggregation(&self, points: &[TimeSeriesPoint], function: AggregationFunction) -> f64 {
         if points.is_empty() {
             return 0.0;
         }
@@ -307,18 +309,15 @@ impl TimeSeriesDatabase {
             AggregationFunction::Avg => {
                 points.iter().map(|p| p.value).sum::<f64>() / points.len() as f64
             }
-            AggregationFunction::Sum => {
-                points.iter().map(|p| p.value).sum()
-            }
+            AggregationFunction::Sum => points.iter().map(|p| p.value).sum(),
             AggregationFunction::Min => {
                 points.iter().map(|p| p.value).fold(f64::INFINITY, f64::min)
             }
-            AggregationFunction::Max => {
-                points.iter().map(|p| p.value).fold(f64::NEG_INFINITY, f64::max)
-            }
-            AggregationFunction::Count => {
-                points.len() as f64
-            }
+            AggregationFunction::Max => points
+                .iter()
+                .map(|p| p.value)
+                .fold(f64::NEG_INFINITY, f64::max),
+            AggregationFunction::Count => points.len() as f64,
             AggregationFunction::Rate => {
                 if points.len() < 2 {
                     return 0.0;

@@ -3,9 +3,9 @@
 // Full JSONPath implementation for querying JSON documents with support for
 // recursive descent, filter expressions, and array slicing.
 
+use crate::error::Result;
 use serde_json::Value;
 use std::collections::VecDeque;
-use crate::error::Result;
 
 // JSONPath expression
 #[derive(Debug, Clone, PartialEq)]
@@ -23,7 +23,11 @@ pub enum JsonPath {
     // Array index [n]
     Index(i64),
     // Array slice [start:end:step]
-    Slice { start: Option<i64>, end: Option<i64>, step: Option<i64> },
+    Slice {
+        start: Option<i64>,
+        end: Option<i64>,
+        step: Option<i64>,
+    },
     // Filter expression [?(...)]
     Filter(Box<FilterExpression>),
     // Union of multiple paths [path1, path2, ...]
@@ -88,7 +92,7 @@ impl JsonPathParser {
             self.parse_path_segments()
         } else {
             Err(crate::error::DbError::InvalidInput(
-                "JSONPath must start with $".to_string()
+                "JSONPath must start with $".to_string(),
             ))
         }
     }
@@ -318,7 +322,7 @@ impl JsonPathParser {
             Some(c) if c.is_ascii_digit() || c == '-' => {
                 let n = self.parse_number()?;
                 Ok(FilterExpression::Literal(Value::Number(
-                    serde_json::Number::from(n)
+                    serde_json::Number::from(n),
                 )))
             }
             Some('t') if self.peek_keyword("true") => {
@@ -340,9 +344,10 @@ impl JsonPathParser {
                 self.expect_char(')')?;
                 Ok(expr)
             }
-            _ => Err(crate::error::DbError::InvalidInput(
-                format!("Unexpected character in filter expression at position {}", self.position)
-            ))
+            _ => Err(crate::error::DbError::InvalidInput(format!(
+                "Unexpected character in filter expression at position {}",
+                self.position
+            ))),
         }
     }
 
@@ -358,7 +363,7 @@ impl JsonPathParser {
 
         if start == self.position {
             Err(crate::error::DbError::InvalidInput(
-                "Expected identifier".to_string()
+                "Expected identifier".to_string(),
             ))
         } else {
             Ok(self.input[start..self.position].to_string())
@@ -381,9 +386,7 @@ impl JsonPathParser {
 
         self.input[start..self.position]
             .parse()
-            .map_err(|_| crate::error::DbError::InvalidInput(
-                "Invalid number".to_string()
-            ))
+            .map_err(|_| crate::error::DbError::InvalidInput("Invalid number".to_string()))
     }
 
     fn parse_string(&mut self) -> Result<String> {
@@ -401,7 +404,7 @@ impl JsonPathParser {
         }
 
         Err(crate::error::DbError::InvalidInput(
-            "Unterminated string".to_string()
+            "Unterminated string".to_string(),
         ))
     }
 
@@ -414,9 +417,11 @@ impl JsonPathParser {
             self.position += 1;
             Ok(())
         } else {
-            Err(crate::error::DbError::InvalidInput(
-                format!("Expected '{}', got {:?}", expected, self.current_char())
-            ))
+            Err(crate::error::DbError::InvalidInput(format!(
+                "Expected '{}', got {:?}",
+                expected,
+                self.current_char()
+            )))
         }
     }
 
@@ -466,21 +471,19 @@ impl JsonPathEvaluator {
                     }
                 }
             }
-            JsonPath::Wildcard => {
-                match value {
-                    Value::Object(obj) => {
-                        for v in obj.values() {
-                            results.push(v.clone());
-                        }
+            JsonPath::Wildcard => match value {
+                Value::Object(obj) => {
+                    for v in obj.values() {
+                        results.push(v.clone());
                     }
-                    Value::Array(arr) => {
-                        for v in arr {
-                            results.push(v.clone());
-                        }
-                    }
-                    _ => {}
                 }
-            }
+                Value::Array(arr) => {
+                    for v in arr {
+                        results.push(v.clone());
+                    }
+                }
+                _ => {}
+            },
             JsonPath::RecursiveDescent(inner_path) => {
                 Self::recursive_descent(inner_path, value, results)?;
             }
@@ -589,16 +592,12 @@ impl JsonPathEvaluator {
             FilterExpression::Or(left, right) => {
                 Ok(Self::test_filter(left, value)? || Self::test_filter(right, value)?)
             }
-            FilterExpression::Not(expr) => {
-                Ok(!Self::test_filter(expr, value)?)
-            }
+            FilterExpression::Not(expr) => Ok(!Self::test_filter(expr, value)?),
             FilterExpression::Path(path) => {
                 let results = Self::evaluate(path, value)?;
                 Ok(!results.is_empty())
             }
-            FilterExpression::Literal(v) => {
-                Ok(v.as_bool().unwrap_or(true))
-            }
+            FilterExpression::Literal(v) => Ok(v.as_bool().unwrap_or(true)),
             FilterExpression::Exists(path) => {
                 let results = Self::evaluate(path, value)?;
                 Ok(!results.is_empty())

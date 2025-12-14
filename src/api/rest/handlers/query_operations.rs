@@ -8,11 +8,11 @@ use axum::{
     response::Json as AxumJson,
 };
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use std::sync::Arc;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::api::rest::types::{ApiState, ApiError, ApiResult};
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
 
 // ============================================================================
 // Request/Response Types
@@ -171,7 +171,10 @@ pub async fn execute_query_with_monitoring(
 
     // In production: start query execution with monitoring
     let websocket_url = if request.enable_progress_tracking.unwrap_or(false) {
-        Some(format!("ws://localhost:8080/api/v1/ws/query/execution?query_id={}", query_id))
+        Some(format!(
+            "ws://localhost:8080/api/v1/ws/query/execution?query_id={}",
+            query_id
+        ))
     } else {
         None
     };

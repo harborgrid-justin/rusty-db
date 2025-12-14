@@ -36,12 +36,12 @@
 // }
 // ```
 
-use std::fmt;
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::fmt;
 use std::time::{Duration, SystemTime};
-use crate::Result;
 
 // ============================================================================
 // Type Aliases - Shared Identifiers
@@ -286,9 +286,7 @@ impl Tuple {
         // Simplified visibility check (actual MVCC logic is more complex)
         match (self.xmin, self.xmax) {
             (Some(xmin), None) => snapshot.is_visible(xmin),
-            (Some(xmin), Some(xmax)) => {
-                snapshot.is_visible(xmin) && !snapshot.is_visible(xmax)
-            }
+            (Some(xmin), Some(xmax)) => snapshot.is_visible(xmin) && !snapshot.is_visible(xmax),
             _ => false,
         }
     }
@@ -629,7 +627,12 @@ pub enum MetricValue {
     Counter(u64),
     Gauge(f64),
     Histogram(Vec<f64>),
-    Summary { count: u64, sum: f64, min: f64, max: f64 },
+    Summary {
+        count: u64,
+        sum: f64,
+        min: f64,
+        max: f64,
+    },
 }
 
 /// Component statistics
@@ -685,35 +688,79 @@ pub trait ReplicableState: Component {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SystemEvent {
     // Transaction events
-    TransactionBegin { txn_id: TransactionId, isolation: IsolationLevel },
-    TransactionCommit { txn_id: TransactionId },
-    TransactionRollback { txn_id: TransactionId },
+    TransactionBegin {
+        txn_id: TransactionId,
+        isolation: IsolationLevel,
+    },
+    TransactionCommit {
+        txn_id: TransactionId,
+    },
+    TransactionRollback {
+        txn_id: TransactionId,
+    },
 
     // Storage events
-    PageEvicted { page_id: PageId },
-    CheckpointStarted { lsn: LogSequenceNumber },
-    CheckpointCompleted { lsn: LogSequenceNumber },
+    PageEvicted {
+        page_id: PageId,
+    },
+    CheckpointStarted {
+        lsn: LogSequenceNumber,
+    },
+    CheckpointCompleted {
+        lsn: LogSequenceNumber,
+    },
 
     // Cluster events
-    NodeJoined { node_id: NodeId },
-    NodeLeft { node_id: NodeId },
-    LeaderElected { node_id: NodeId },
+    NodeJoined {
+        node_id: NodeId,
+    },
+    NodeLeft {
+        node_id: NodeId,
+    },
+    LeaderElected {
+        node_id: NodeId,
+    },
 
     // Security events
-    UserLogin { username: String, session_id: SessionId },
-    UserLogout { session_id: SessionId },
-    AuthenticationFailed { username: String, reason: String },
-    PermissionDenied { user: String, resource: String },
+    UserLogin {
+        username: String,
+        session_id: SessionId,
+    },
+    UserLogout {
+        session_id: SessionId,
+    },
+    AuthenticationFailed {
+        username: String,
+        reason: String,
+    },
+    PermissionDenied {
+        user: String,
+        resource: String,
+    },
 
     // Performance events
-    SlowQuery { sql: String, duration: Duration },
-    ResourceThresholdExceeded { resource: String, value: f64 },
+    SlowQuery {
+        sql: String,
+        duration: Duration,
+    },
+    ResourceThresholdExceeded {
+        resource: String,
+        value: f64,
+    },
 
     // Backup events
-    BackupStarted { backup_id: String },
-    BackupCompleted { backup_id: String },
-    RestoreStarted { backup_id: String },
-    RestoreCompleted { backup_id: String },
+    BackupStarted {
+        backup_id: String,
+    },
+    BackupCompleted {
+        backup_id: String,
+    },
+    RestoreStarted {
+        backup_id: String,
+    },
+    RestoreCompleted {
+        backup_id: String,
+    },
 }
 
 /// Event listener trait
@@ -889,7 +936,10 @@ mod tests {
     fn test_value_display() {
         assert_eq!(Value::Null.to_display_string(), "NULL");
         assert_eq!(Value::Integer(42).to_display_string(), "42");
-        assert_eq!(Value::String("hello".to_string()).to_display_string(), "hello");
+        assert_eq!(
+            Value::String("hello".to_string()).to_display_string(),
+            "hello"
+        );
         assert_eq!(Value::Boolean(true).to_display_string(), "true");
     }
 
@@ -918,10 +968,7 @@ mod tests {
 
     #[test]
     fn test_tuple_creation() {
-        let values = vec![
-            Value::Integer(1),
-            Value::String("Alice".to_string()),
-        ];
+        let values = vec![Value::Integer(1), Value::String("Alice".to_string())];
 
         let tuple = Tuple::new(values, 100);
         assert_eq!(tuple.row_id, 100);
@@ -938,7 +985,7 @@ mod tests {
             max_committed_txn: 97,
         };
 
-        assert!(snapshot.is_visible(50));  // Committed before snapshot
+        assert!(snapshot.is_visible(50)); // Committed before snapshot
         assert!(!snapshot.is_visible(98)); // Active transaction
         assert!(!snapshot.is_visible(100)); // After snapshot
     }

@@ -2,15 +2,11 @@
 //
 // Kubernetes-style health probe endpoints for liveness, readiness, and startup checks
 
-use axum::{
-    extract::State,
-    response::Json as AxumJson,
-    http::StatusCode,
-};
+use axum::{extract::State, http::StatusCode, response::Json as AxumJson};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::super::types::*;

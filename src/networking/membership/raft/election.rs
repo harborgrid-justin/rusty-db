@@ -6,15 +6,15 @@
 // - Vote request/response handling
 // - Leadership transfer support
 
-use crate::error::{DbError, Result};
+use super::{RaftLog, RaftRole, RaftStateData, Term};
 use crate::common::NodeId;
+use crate::error::{DbError, Result};
 use crate::networking::membership::RaftConfig;
-use super::{RaftStateData, RaftRole, RaftLog, Term};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
-use rand::Rng;
 
 /// Vote request message
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -230,8 +230,8 @@ impl ElectionManager {
         let our_last_index = log.last_index();
         drop(log);
 
-        let log_ok = (request.last_log_term > our_last_term) ||
-            (request.last_log_term == our_last_term && request.last_log_index >= our_last_index);
+        let log_ok = (request.last_log_term > our_last_term)
+            || (request.last_log_term == our_last_term && request.last_log_index >= our_last_index);
 
         if !log_ok {
             return Ok(VoteResponse {
@@ -332,12 +332,8 @@ mod tests {
         let state = Arc::new(RwLock::new(RaftStateData::new("node1".to_string())));
         let log = Arc::new(RwLock::new(RaftLog::new()));
 
-        let election = ElectionManager::new(
-            "node1".to_string(),
-            config,
-            state.clone(),
-            log.clone(),
-        );
+        let election =
+            ElectionManager::new("node1".to_string(), config, state.clone(), log.clone());
 
         let request = VoteRequest {
             term: 1,
@@ -357,12 +353,8 @@ mod tests {
         let state = Arc::new(RwLock::new(RaftStateData::new("node1".to_string())));
         let log = Arc::new(RwLock::new(RaftLog::new()));
 
-        let election = ElectionManager::new(
-            "node1".to_string(),
-            config,
-            state.clone(),
-            log.clone(),
-        );
+        let election =
+            ElectionManager::new("node1".to_string(), config, state.clone(), log.clone());
 
         // Set current term to 5
         {

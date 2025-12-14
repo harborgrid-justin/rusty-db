@@ -6,14 +6,14 @@
 // - Node addition/removal
 // - Partition reorganization
 
-use std::fmt;
-use std::collections::VecDeque;
-use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo};
-use std::collections::{HashMap};
+use crate::error::DbError;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
 
 // Trait for data migration coordination
 pub trait MigrationCoordinator {
@@ -41,7 +41,8 @@ pub struct DataMigrationManager {
 
 impl fmt::Debug for DataMigrationManager {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("DataMigrationManager").finish_non_exhaustive()
+        f.debug_struct("DataMigrationManager")
+            .finish_non_exhaustive()
     }
 }
 
@@ -57,8 +58,9 @@ impl DataMigrationManager {
 
     pub fn execute_next_migration(&self) -> Result<Option<MigrationResult>, DbError> {
         let task = {
-            let mut queue = self.migration_queue.write()
-                .map_err(|_| DbError::LockError("Failed to acquire migration queue lock".to_string()))?;
+            let mut queue = self.migration_queue.write().map_err(|_| {
+                DbError::LockError("Failed to acquire migration queue lock".to_string())
+            })?;
             queue.pop_front()
         };
 
@@ -67,14 +69,16 @@ impl DataMigrationManager {
 
             // Move from active to completed
             {
-                let mut active = self.active_migrations.write()
-                    .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
+                let mut active = self.active_migrations.write().map_err(|_| {
+                    DbError::LockError("Failed to acquire active migrations lock".to_string())
+                })?;
                 active.remove(&task.id);
             }
 
             {
-                let mut completed = self.completed_migrations.write()
-                    .map_err(|_| DbError::LockError("Failed to acquire completed migrations lock".to_string()))?;
+                let mut completed = self.completed_migrations.write().map_err(|_| {
+                    DbError::LockError("Failed to acquire completed migrations lock".to_string())
+                })?;
                 completed.push(result.clone());
             }
 
@@ -85,27 +89,31 @@ impl DataMigrationManager {
     }
 
     pub fn get_pending_migrations(&self) -> Result<Vec<MigrationTask>, DbError> {
-        let queue = self.migration_queue.read()
-            .map_err(|_| DbError::LockError("Failed to acquire migration queue lock".to_string()))?;
+        let queue = self.migration_queue.read().map_err(|_| {
+            DbError::LockError("Failed to acquire migration queue lock".to_string())
+        })?;
         Ok(queue.iter().cloned().collect())
     }
 
     pub fn get_migration_progress(&self) -> Result<MigrationProgress, DbError> {
         let pending = {
-            let queue = self.migration_queue.read()
-                .map_err(|_| DbError::LockError("Failed to acquire migration queue lock".to_string()))?;
+            let queue = self.migration_queue.read().map_err(|_| {
+                DbError::LockError("Failed to acquire migration queue lock".to_string())
+            })?;
             queue.len()
         };
 
         let active = {
-            let active_map = self.active_migrations.read()
-                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
+            let active_map = self.active_migrations.read().map_err(|_| {
+                DbError::LockError("Failed to acquire active migrations lock".to_string())
+            })?;
             active_map.len()
         };
 
         let completed = {
-            let completed_vec = self.completed_migrations.read()
-                .map_err(|_| DbError::LockError("Failed to acquire completed migrations lock".to_string()))?;
+            let completed_vec = self.completed_migrations.read().map_err(|_| {
+                DbError::LockError("Failed to acquire completed migrations lock".to_string())
+            })?;
             completed_vec.len()
         };
 
@@ -120,8 +128,9 @@ impl DataMigrationManager {
 
 impl MigrationCoordinator for DataMigrationManager {
     fn schedule_migration(&self, task: MigrationTask) -> Result<(), DbError> {
-        let mut queue = self.migration_queue.write()
-            .map_err(|_| DbError::LockError("Failed to acquire migration queue lock".to_string()))?;
+        let mut queue = self.migration_queue.write().map_err(|_| {
+            DbError::LockError("Failed to acquire migration queue lock".to_string())
+        })?;
 
         queue.push_back(task);
         Ok(())
@@ -130,8 +139,9 @@ impl MigrationCoordinator for DataMigrationManager {
     fn execute_migration(&self, task: &MigrationTask) -> Result<MigrationResult, DbError> {
         // Add to active migrations
         {
-            let mut active = self.active_migrations.write()
-                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
+            let mut active = self.active_migrations.write().map_err(|_| {
+                DbError::LockError("Failed to acquire active migrations lock".to_string())
+            })?;
             active.insert(task.id.clone(), task.clone());
         }
 
@@ -142,7 +152,8 @@ impl MigrationCoordinator for DataMigrationManager {
         std::thread::sleep(Duration::from_millis(100));
 
         let end_time = SystemTime::now();
-        let duration = end_time.duration_since(start_time)
+        let duration = end_time
+            .duration_since(start_time)
             .map_err(|_| DbError::Internal("Invalid time calculation".to_string()))?;
 
         Ok(MigrationResult {
@@ -150,7 +161,7 @@ impl MigrationCoordinator for DataMigrationManager {
             source_node: task.source_node.clone(),
             target_node: task.target_node.clone(),
             table_name: task.table_name.clone(),
-            rows_migrated: 1000, // Would track actual rows
+            rows_migrated: 1000,         // Would track actual rows
             bytes_migrated: 1024 * 1024, // Would track actual bytes
             duration_ms: duration.as_millis() as u64,
             success: true,
@@ -159,21 +170,26 @@ impl MigrationCoordinator for DataMigrationManager {
     }
 
     fn cancel_migration(&self, task_id: &str) -> Result<(), DbError> {
-        let mut active = self.active_migrations.write()
-            .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
+        let mut active = self.active_migrations.write().map_err(|_| {
+            DbError::LockError("Failed to acquire active migrations lock".to_string())
+        })?;
 
         if active.remove(task_id).is_some() {
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Migration task {} not found", task_id)))
+            Err(DbError::NotFound(format!(
+                "Migration task {} not found",
+                task_id
+            )))
         }
     }
 
     fn get_migration_status(&self, task_id: &str) -> Result<MigrationStatus, DbError> {
         // Check active migrations
         {
-            let active = self.active_migrations.read()
-                .map_err(|_| DbError::LockError("Failed to acquire active migrations lock".to_string()))?;
+            let active = self.active_migrations.read().map_err(|_| {
+                DbError::LockError("Failed to acquire active migrations lock".to_string())
+            })?;
             if active.contains_key(task_id) {
                 return Ok(MigrationStatus::InProgress);
             }
@@ -181,8 +197,9 @@ impl MigrationCoordinator for DataMigrationManager {
 
         // Check completed migrations
         {
-            let completed = self.completed_migrations.read()
-                .map_err(|_| DbError::LockError("Failed to acquire completed migrations lock".to_string()))?;
+            let completed = self.completed_migrations.read().map_err(|_| {
+                DbError::LockError("Failed to acquire completed migrations lock".to_string())
+            })?;
             if completed.iter().any(|r| r.task_id == task_id) {
                 return Ok(MigrationStatus::Completed);
             }
@@ -190,14 +207,18 @@ impl MigrationCoordinator for DataMigrationManager {
 
         // Check pending migrations
         {
-            let queue = self.migration_queue.read()
-                .map_err(|_| DbError::LockError("Failed to acquire migration queue lock".to_string()))?;
+            let queue = self.migration_queue.read().map_err(|_| {
+                DbError::LockError("Failed to acquire migration queue lock".to_string())
+            })?;
             if queue.iter().any(|t| t.id == task_id) {
                 return Ok(MigrationStatus::Pending);
             }
         }
 
-        Err(DbError::NotFound(format!("Migration task {} not found", task_id)))
+        Err(DbError::NotFound(format!(
+            "Migration task {} not found",
+            task_id
+        )))
     }
 }
 

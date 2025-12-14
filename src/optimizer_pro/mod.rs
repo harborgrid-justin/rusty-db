@@ -44,29 +44,29 @@
 // # }
 // ```
 
+use crate::common::{IndexId, Schema, TableId, Value};
+use crate::error::{DbError, Result};
+use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::time::SystemTime;
-use crate::common::{TableId, IndexId, Value, Schema};
-use crate::error::{Result, DbError};
-use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use std::time::{Instant, Duration};
+use std::time::SystemTime;
+use std::time::{Duration, Instant};
 
 // Submodules
-pub mod cost_model;
-pub mod plan_generator;
 pub mod adaptive;
-pub mod plan_baselines;
-pub mod transformations;
+pub mod cost_model;
 pub mod hints;
+pub mod plan_baselines;
+pub mod plan_generator;
+pub mod transformations;
 
 // Re-exports
-pub use cost_model::{CostModel, CostEstimate, CardinalityEstimator, Histogram};
-pub use plan_generator::{PlanGenerator, JoinEnumerator, AccessPathSelector};
-pub use adaptive::{AdaptiveExecutor, RuntimeStatistics, PlanCorrector};
-pub use plan_baselines::{PlanBaselineManager, SqlPlanBaseline, PlanHistory};
+pub use adaptive::{AdaptiveExecutor, PlanCorrector, RuntimeStatistics};
+pub use cost_model::{CardinalityEstimator, CostEstimate, CostModel, Histogram};
+pub use hints::{HintParser, HintValidator, OptimizerHint};
+pub use plan_baselines::{PlanBaselineManager, PlanHistory, SqlPlanBaseline};
+pub use plan_generator::{AccessPathSelector, JoinEnumerator, PlanGenerator};
 pub use transformations::{QueryTransformer, TransformationRule};
-pub use hints::{HintParser, OptimizerHint, HintValidator};
 
 // ============================================================================
 // Core Types
@@ -275,15 +275,41 @@ pub enum AggregateFunctionType {
 // Expression representation
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
-    Column { table: String, column: String },
+    Column {
+        table: String,
+        column: String,
+    },
     Literal(Value),
-    BinaryOp { op: BinaryOperator, left: Box<Expression>, right: Box<Expression> },
-    UnaryOp { op: UnaryOperator, expr: Box<Expression> },
-    Function { name: String, args: Vec<Expression> },
-    Cast { expr: Box<Expression>, target_type: String },
-    Case { conditions: Vec<(Expression, Expression)>, else_expr: Option<Box<Expression>> },
-    In { expr: Box<Expression>, list: Vec<Expression> },
-    Between { expr: Box<Expression>, low: Box<Expression>, high: Box<Expression> },
+    BinaryOp {
+        op: BinaryOperator,
+        left: Box<Expression>,
+        right: Box<Expression>,
+    },
+    UnaryOp {
+        op: UnaryOperator,
+        expr: Box<Expression>,
+    },
+    Function {
+        name: String,
+        args: Vec<Expression>,
+    },
+    Cast {
+        expr: Box<Expression>,
+        target_type: String,
+    },
+    Case {
+        conditions: Vec<(Expression, Expression)>,
+        else_expr: Option<Box<Expression>>,
+    },
+    In {
+        expr: Box<Expression>,
+        list: Vec<Expression>,
+    },
+    Between {
+        expr: Box<Expression>,
+        low: Box<Expression>,
+        high: Box<Expression>,
+    },
     IsNull(Box<Expression>),
     IsNotNull(Box<Expression>),
 }
@@ -470,11 +496,8 @@ impl QueryOptimizer {
         let hints = self.hint_parser.parse_hints(&query.text)?;
 
         // Generate query fingerprint
-        let fingerprint = QueryFingerprint::new(
-            &query.text,
-            query.param_types.clone(),
-            query.schema_version,
-        );
+        let fingerprint =
+            QueryFingerprint::new(&query.text, query.param_types.clone(), query.schema_version);
 
         // Check plan cache
         if let Some(cached_plan) = self.plan_cache.read().unwrap().get(&fingerprint) {
@@ -500,13 +523,18 @@ impl QueryOptimizer {
         };
 
         // Generate candidate plans
-        let candidate_plans = self.plan_generator.generate_plans(&transformed_query, &hints)?;
+        let candidate_plans = self
+            .plan_generator
+            .generate_plans(&transformed_query, &hints)?;
 
         // Select best plan based on cost
         let best_plan = self.select_best_plan(candidate_plans)?;
 
         // Cache the plan
-        self.plan_cache.write().unwrap().insert(fingerprint, best_plan.clone());
+        self.plan_cache
+            .write()
+            .unwrap()
+            .insert(fingerprint, best_plan.clone());
 
         // Update statistics
         let mut stats = self.stats.write().unwrap();
@@ -534,7 +562,9 @@ impl QueryOptimizer {
     #[inline]
     fn select_best_plan(&self, mut plans: Vec<PhysicalPlan>) -> Result<PhysicalPlan> {
         if plans.is_empty() {
-            return Err(DbError::Internal("No candidate plans generated".to_string()));
+            return Err(DbError::Internal(
+                "No candidate plans generated".to_string(),
+            ));
         }
 
         // Sort by cost in-place, unstable for better performance
@@ -554,7 +584,11 @@ impl QueryOptimizer {
     }
 
     // Capture a plan baseline
-    pub fn capture_baseline(&self, fingerprint: QueryFingerprint, plan: PhysicalPlan) -> Result<()> {
+    pub fn capture_baseline(
+        &self,
+        fingerprint: QueryFingerprint,
+        plan: PhysicalPlan,
+    ) -> Result<()> {
         self.baseline_manager.capture_baseline(fingerprint, plan)
     }
 

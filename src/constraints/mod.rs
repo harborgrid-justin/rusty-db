@@ -1,9 +1,9 @@
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
 use std::sync::Arc;
-use crate::Result;
 
 /// Foreign key constraint
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -89,7 +89,8 @@ impl ConstraintManager {
 
     pub fn add_unique_constraint(&self, constraint: UniqueConstraint) -> Result<()> {
         let mut constraints = self.unique_constraints.write();
-        constraints.entry(constraint.table.clone())
+        constraints
+            .entry(constraint.table.clone())
             .or_insert_with(Vec::new)
             .push(constraint);
         Ok(())
@@ -97,13 +98,18 @@ impl ConstraintManager {
 
     pub fn add_check_constraint(&self, constraint: CheckConstraint) -> Result<()> {
         let mut constraints = self.check_constraints.write();
-        constraints.entry(constraint.table.clone())
+        constraints
+            .entry(constraint.table.clone())
             .or_insert_with(Vec::new)
             .push(constraint);
         Ok(())
     }
 
-    pub fn validate_foreign_key(&self, table: &str, values: &HashMap<String, String>) -> Result<()> {
+    pub fn validate_foreign_key(
+        &self,
+        table: &str,
+        values: &HashMap<String, String>,
+    ) -> Result<()> {
         let fks = self.foreign_keys.read();
 
         if let Some(constraints) = fks.get(table) {
@@ -145,11 +151,15 @@ impl ConstraintManager {
             for fk in constraints {
                 if fk.referenced_table == table {
                     // Get the referenced column value
-                    let referenced_value = fk.referenced_columns.get(0)
+                    let referenced_value = fk
+                        .referenced_columns
+                        .get(0)
                         .and_then(|col| values.get(col))
-                        .ok_or_else(|| DbError::Internal(
-                            "Missing referenced column value for cascade operation".to_string()
-                        ))?;
+                        .ok_or_else(|| {
+                            DbError::Internal(
+                                "Missing referenced column value for cascade operation".to_string(),
+                            )
+                        })?;
 
                     match operation {
                         "DELETE" => {
@@ -157,7 +167,10 @@ impl ConstraintManager {
                                 ReferentialAction::Cascade => {
                                     actions.push(CascadeAction::Delete {
                                         table: referencing_table.clone(),
-                                        condition: format!("{}={}", fk.columns[0], referenced_value),
+                                        condition: format!(
+                                            "{}={}",
+                                            fk.columns[0], referenced_value
+                                        ),
                                     });
                                 }
                                 ReferentialAction::SetNull => {

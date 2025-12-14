@@ -1,9 +1,9 @@
 // CTE optimization logic
 
-use std::collections::HashMap;
+use super::core::{CteContext, CteDefinition};
 use crate::error::DbError;
 use crate::execution::planner::PlanNode;
-use super::core::{CteDefinition, CteContext};
+use std::collections::HashMap;
 
 // CTE reference tracker - tracks how many times each CTE is referenced
 pub struct CteReferenceTracker {
@@ -94,10 +94,7 @@ impl CteRewriteRules {
         // Implementation would push filter predicates into CTE definitions
     }
 
-    pub fn eliminate_unused(
-        ctes: Vec<CteDefinition>,
-        main_query: &PlanNode,
-    ) -> Vec<CteDefinition> {
+    pub fn eliminate_unused(ctes: Vec<CteDefinition>, main_query: &PlanNode) -> Vec<CteDefinition> {
         let mut tracker = CteReferenceTracker::new();
         let mut temp_context = CteContext::new();
 

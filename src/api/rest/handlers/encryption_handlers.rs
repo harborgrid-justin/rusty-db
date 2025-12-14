@@ -3,20 +3,20 @@
 // REST API endpoints for Transparent Data Encryption (TDE), key management,
 // and encryption status monitoring.
 
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::security_vault::SecurityVaultManager;
 use axum::{
-    extract::{State, Path},
+    extract::{Path, State},
     response::Json,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::api::rest::types::{ApiState, ApiResult, ApiError};
-use crate::security_vault::SecurityVaultManager;
 
 // Request/Response Types
 
 /// Encryption status response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct EncryptionStatus {
     pub tde_enabled: bool,
     pub default_algorithm: String,
@@ -28,7 +28,7 @@ pub struct EncryptionStatus {
 }
 
 /// Tablespace encryption info
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct TablespaceEncryption {
     pub tablespace_name: String,
     pub algorithm: String,
@@ -39,7 +39,7 @@ pub struct TablespaceEncryption {
 }
 
 /// Column encryption info
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct ColumnEncryption {
     pub table_name: String,
     pub column_name: String,
@@ -49,7 +49,7 @@ pub struct ColumnEncryption {
 }
 
 /// Key rotation status
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct KeyRotationStatus {
     pub last_rotation: Option<i64>,
     pub next_scheduled_rotation: Option<i64>,
@@ -57,7 +57,7 @@ pub struct KeyRotationStatus {
 }
 
 /// Enable TDE request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct EnableEncryptionRequest {
     pub tablespace_name: String,
     pub algorithm: String,
@@ -65,7 +65,7 @@ pub struct EnableEncryptionRequest {
 }
 
 /// Enable column encryption request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct EnableColumnEncryptionRequest {
     pub table_name: String,
     pub column_name: String,
@@ -73,7 +73,7 @@ pub struct EnableColumnEncryptionRequest {
 }
 
 /// DDL operation result
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct DdlResult {
     pub success: bool,
     pub message: String,
@@ -81,7 +81,7 @@ pub struct DdlResult {
 }
 
 /// Key generation request
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct KeyGenerationRequest {
     pub key_type: String,
     pub algorithm: String,
@@ -89,7 +89,7 @@ pub struct KeyGenerationRequest {
 }
 
 /// Key generation result
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct KeyResult {
     pub success: bool,
     pub key_id: String,
@@ -129,6 +129,15 @@ fn get_or_init_vault() -> Result<Arc<SecurityVaultManager>, ApiError> {
 ///
 /// Get current encryption status including TDE configuration, encrypted objects,
 /// and encryption statistics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/security/encryption/status",
+    tag = "security-encryption",
+    responses(
+        (status = 200, description = "Encryption status retrieved successfully", body = EncryptionStatus),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn get_encryption_status(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<Json<EncryptionStatus>> {
@@ -156,18 +165,31 @@ pub async fn get_encryption_status(
 /// POST /api/v1/security/encryption/enable
 ///
 /// Enable transparent data encryption for a tablespace.
+#[utoipa::path(
+    post,
+    path = "/api/v1/security/encryption/enable",
+    tag = "security-encryption",
+    request_body = EnableEncryptionRequest,
+    responses(
+        (status = 200, description = "Encryption enabled successfully", body = DdlResult),
+        (status = 400, description = "Invalid request", body = ApiError),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn enable_encryption(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<EnableEncryptionRequest>,
 ) -> ApiResult<Json<DdlResult>> {
     // Note: Stub implementation - actual encryption requires &mut self on vault
     // TODO: Refactor SecurityVaultManager methods to use interior mutability consistently
-    let _ = get_or_init_vault()?;  // Ensure vault exists
+    let _ = get_or_init_vault()?; // Ensure vault exists
 
     Ok(Json(DdlResult {
         success: true,
-        message: format!("Encryption enabled for tablespace '{}' with algorithm '{}'",
-            request.tablespace_name, request.algorithm),
+        message: format!(
+            "Encryption enabled for tablespace '{}' with algorithm '{}'",
+            request.tablespace_name, request.algorithm
+        ),
         affected_objects: vec![request.tablespace_name],
     }))
 }
@@ -175,13 +197,25 @@ pub async fn enable_encryption(
 /// POST /api/v1/security/encryption/column
 ///
 /// Enable column-level encryption for a specific column.
+#[utoipa::path(
+    post,
+    path = "/api/v1/security/encryption/column",
+    tag = "security-encryption",
+    request_body = EnableColumnEncryptionRequest,
+    responses(
+        (status = 200, description = "Column encryption enabled successfully", body = DdlResult),
+        (status = 400, description = "Invalid request", body = ApiError),
+        (status = 404, description = "Table or column not found", body = ApiError),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn enable_column_encryption(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<EnableColumnEncryptionRequest>,
 ) -> ApiResult<Json<DdlResult>> {
     // Note: Stub implementation - actual encryption requires &mut self on vault
     // TODO: Refactor SecurityVaultManager methods to use interior mutability consistently
-    let _ = get_or_init_vault()?;  // Ensure vault exists
+    let _ = get_or_init_vault()?; // Ensure vault exists
 
     Ok(Json(DdlResult {
         success: true,
@@ -196,6 +230,17 @@ pub async fn enable_column_encryption(
 /// POST /api/v1/security/keys/generate
 ///
 /// Generate a new encryption key.
+#[utoipa::path(
+    post,
+    path = "/api/v1/security/keys/generate",
+    tag = "security-encryption",
+    request_body = KeyGenerationRequest,
+    responses(
+        (status = 200, description = "Key generated successfully", body = KeyResult),
+        (status = 400, description = "Invalid request", body = ApiError),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn generate_key(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<KeyGenerationRequest>,
@@ -205,15 +250,13 @@ pub async fn generate_key(
     let mut key_store_guard = key_store.lock().await;
 
     match key_store_guard.generate_dek(&request.key_name, &request.algorithm) {
-        Ok(_key_bytes) => {
-            Ok(Json(KeyResult {
-                success: true,
-                key_id: request.key_name.clone(),
-                key_version: 1,
-                algorithm: request.algorithm.clone(),
-                created_at: chrono::Utc::now().timestamp(),
-            }))
-        }
+        Ok(_key_bytes) => Ok(Json(KeyResult {
+            success: true,
+            key_id: request.key_name.clone(),
+            key_version: 1,
+            algorithm: request.algorithm.clone(),
+            created_at: chrono::Utc::now().timestamp(),
+        })),
         Err(e) => Err(ApiError::new("KEY_GENERATION_ERROR", e.to_string())),
     }
 }
@@ -221,6 +264,19 @@ pub async fn generate_key(
 /// POST /api/v1/security/keys/{id}/rotate
 ///
 /// Rotate an encryption key.
+#[utoipa::path(
+    post,
+    path = "/api/v1/security/keys/{id}/rotate",
+    tag = "security-encryption",
+    params(
+        ("id" = String, Path, description = "Key ID to rotate")
+    ),
+    responses(
+        (status = 200, description = "Key rotated successfully", body = KeyResult),
+        (status = 404, description = "Key not found", body = ApiError),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn rotate_key(
     State(_state): State<Arc<ApiState>>,
     Path(key_id): Path<String>,
@@ -246,9 +302,16 @@ pub async fn rotate_key(
 /// GET /api/v1/security/keys
 ///
 /// List all encryption keys.
-pub async fn list_keys(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<Json<Vec<KeyResult>>> {
+#[utoipa::path(
+    get,
+    path = "/api/v1/security/keys",
+    tag = "security-encryption",
+    responses(
+        (status = 200, description = "List of encryption keys", body = Vec<KeyResult>),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
+pub async fn list_keys(State(_state): State<Arc<ApiState>>) -> ApiResult<Json<Vec<KeyResult>>> {
     let vault = get_or_init_vault()?;
     let key_store = vault.key_store();
     let key_store_guard = key_store.lock().await;
@@ -256,13 +319,16 @@ pub async fn list_keys(
     // list_deks returns Vec<String> of key IDs
     let key_ids = key_store_guard.list_deks();
     let timestamp = chrono::Utc::now().timestamp();
-    let key_results: Vec<KeyResult> = key_ids.into_iter().map(|key_id| KeyResult {
-        success: true,
-        key_id,
-        key_version: 1,
-        algorithm: "AES-256-GCM".to_string(),
-        created_at: timestamp,
-    }).collect();
+    let key_results: Vec<KeyResult> = key_ids
+        .into_iter()
+        .map(|key_id| KeyResult {
+            success: true,
+            key_id,
+            key_version: 1,
+            algorithm: "AES-256-GCM".to_string(),
+            created_at: timestamp,
+        })
+        .collect();
 
     Ok(Json(key_results))
 }

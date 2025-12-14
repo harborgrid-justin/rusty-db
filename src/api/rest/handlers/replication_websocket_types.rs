@@ -3,8 +3,8 @@
 // Comprehensive event types for real-time replication and clustering monitoring
 
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use std::collections::HashMap;
+use utoipa::ToSchema;
 
 // ============================================================================
 // Replication Events

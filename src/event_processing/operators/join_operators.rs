@@ -1,7 +1,6 @@
 /// Join Operators Module
 ///
 /// Stream-to-stream join operators with windowing support.
-
 use super::super::Event;
 use crate::error::Result;
 use serde::{Deserialize, Serialize};

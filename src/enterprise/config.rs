@@ -39,20 +39,20 @@
 // }
 // ```
 
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::time::SystemTime;
-use tokio::sync::{RwLock, mpsc};
-use serde::{Serialize, Deserialize};
 use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
-use base64::{Engine as _, engine::general_purpose};
-use sha2::{Sha256, Digest};
+use base64::{engine::general_purpose, Engine as _};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::SystemTime;
+use tokio::sync::{mpsc, RwLock};
 
-use crate::{Result, DbError};
+use crate::{DbError, Result};
 
 // Environment type for configuration profiles
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -282,7 +282,8 @@ impl ConfigManager {
     // Load configuration from file
     pub async fn load_from_file(&self, path: impl AsRef<Path>) -> Result<()> {
         let path = path.as_ref();
-        let contents = tokio::fs::read_to_string(path).await
+        let contents = tokio::fs::read_to_string(path)
+            .await
             .map_err(|e| DbError::IoError(format!("Failed to read config file: {}", e)))?;
 
         let config: HashMap<String, ConfigValue> = serde_json::from_str(&contents)
@@ -307,23 +308,20 @@ impl ConfigManager {
             p.to_path_buf()
         } else {
             let config_path = self.config_path.read().await;
-            config_path.clone().ok_or_else(|| {
-                DbError::InvalidInput("No config path specified".to_string())
-            })?
+            config_path
+                .clone()
+                .ok_or_else(|| DbError::InvalidInput("No config path specified".to_string()))?
         };
 
-        tokio::fs::write(&save_path, json).await
+        tokio::fs::write(&save_path, json)
+            .await
             .map_err(|e| DbError::IoError(format!("Failed to write config file: {}", e)))?;
 
         Ok(())
     }
 
     // Set a configuration value
-    pub async fn set(
-        &self,
-        key: impl Into<String>,
-        value: ConfigValue,
-    ) -> Result<()> {
+    pub async fn set(&self, key: impl Into<String>, value: ConfigValue) -> Result<()> {
         self.set_with_metadata(key, value, "system", None).await
     }
 
@@ -383,7 +381,8 @@ impl ConfigManager {
     // Get a configuration value
     pub async fn get(&self, key: &str) -> Result<ConfigValue> {
         let config = self.config.read().await;
-        let value = config.get(key)
+        let value = config
+            .get(key)
             .ok_or_else(|| DbError::NotFound(format!("Config key not found: {}", key)))?
             .clone();
 
@@ -409,7 +408,8 @@ impl ConfigManager {
     // Remove a configuration value
     pub async fn remove(&self, key: &str) -> Result<ConfigValue> {
         let mut config = self.config.write().await;
-        config.remove(key)
+        config
+            .remove(key)
             .ok_or_else(|| DbError::NotFound(format!("Config key not found: {}", key)))
     }
 
@@ -440,26 +440,35 @@ impl ConfigManager {
                 match rule {
                     ValidationRule::Required => {
                         if matches!(value, ConfigValue::Null) {
-                            return Err(DbError::InvalidInput(
-                                format!("Required field '{}' is null", key)
-                            ));
+                            return Err(DbError::InvalidInput(format!(
+                                "Required field '{}' is null",
+                                key
+                            )));
                         }
                     }
                     ValidationRule::Min(min) => {
-                        if let Some(num) = value.as_float().or_else(|| value.as_integer().map(|i| i as f64)) {
+                        if let Some(num) = value
+                            .as_float()
+                            .or_else(|| value.as_integer().map(|i| i as f64))
+                        {
                             if num < *min {
-                                return Err(DbError::InvalidInput(
-                                    format!("Value {} is less than minimum {}", num, min)
-                                ));
+                                return Err(DbError::InvalidInput(format!(
+                                    "Value {} is less than minimum {}",
+                                    num, min
+                                )));
                             }
                         }
                     }
                     ValidationRule::Max(max) => {
-                        if let Some(num) = value.as_float().or_else(|| value.as_integer().map(|i| i as f64)) {
+                        if let Some(num) = value
+                            .as_float()
+                            .or_else(|| value.as_integer().map(|i| i as f64))
+                        {
                             if num > *max {
-                                return Err(DbError::InvalidInput(
-                                    format!("Value {} is greater than maximum {}", num, max)
-                                ));
+                                return Err(DbError::InvalidInput(format!(
+                                    "Value {} is greater than maximum {}",
+                                    num, max
+                                )));
                             }
                         }
                     }
@@ -472,9 +481,10 @@ impl ConfigManager {
                             0
                         };
                         if len < *min_len {
-                            return Err(DbError::InvalidInput(
-                                format!("Length {} is less than minimum {}", len, min_len)
-                            ));
+                            return Err(DbError::InvalidInput(format!(
+                                "Length {} is less than minimum {}",
+                                len, min_len
+                            )));
                         }
                     }
                     ValidationRule::MaxLength(max_len) => {
@@ -486,28 +496,32 @@ impl ConfigManager {
                             0
                         };
                         if len > *max_len {
-                            return Err(DbError::InvalidInput(
-                                format!("Length {} is greater than maximum {}", len, max_len)
-                            ));
+                            return Err(DbError::InvalidInput(format!(
+                                "Length {} is greater than maximum {}",
+                                len, max_len
+                            )));
                         }
                     }
                     ValidationRule::Pattern(pattern) => {
                         if let Some(s) = value.as_string() {
-                            let re = regex::Regex::new(pattern)
-                                .map_err(|e| DbError::Internal(format!("Invalid pattern: {}", e)))?;
+                            let re = regex::Regex::new(pattern).map_err(|e| {
+                                DbError::Internal(format!("Invalid pattern: {}", e))
+                            })?;
                             if !re.is_match(s) {
-                                return Err(DbError::InvalidInput(
-                                    format!("Value '{}' does not match pattern '{}'", s, pattern)
-                                ));
+                                return Err(DbError::InvalidInput(format!(
+                                    "Value '{}' does not match pattern '{}'",
+                                    s, pattern
+                                )));
                             }
                         }
                     }
                     ValidationRule::Enum(allowed) => {
                         if let Some(s) = value.as_string() {
                             if !allowed.contains(&s.to_string()) {
-                                return Err(DbError::InvalidInput(
-                                    format!("Value '{}' is not in allowed values: {:?}", s, allowed)
-                                ));
+                                return Err(DbError::InvalidInput(format!(
+                                    "Value '{}' is not in allowed values: {:?}",
+                                    s, allowed
+                                )));
                             }
                         }
                     }
@@ -537,7 +551,8 @@ impl ConfigManager {
         let nonce_bytes = rand::random::<[u8; 12]>();
         let nonce = Nonce::from_slice(&nonce_bytes);
 
-        let ciphertext = cipher.encrypt(nonce, plaintext.as_bytes())
+        let ciphertext = cipher
+            .encrypt(nonce, plaintext.as_bytes())
             .map_err(|e| DbError::Internal(format!("Encryption error: {}", e)))?;
 
         // Combine nonce and ciphertext
@@ -551,7 +566,8 @@ impl ConfigManager {
     // Decrypt a configuration value
     fn decrypt_value(&self, value: ConfigValue) -> Result<ConfigValue> {
         if let ConfigValue::Encrypted(encoded) = value {
-            let combined = general_purpose::STANDARD.decode(&encoded)
+            let combined = general_purpose::STANDARD
+                .decode(&encoded)
                 .map_err(|e| DbError::Internal(format!("Base64 decode error: {}", e)))?;
 
             if combined.len() < 12 {
@@ -564,7 +580,8 @@ impl ConfigManager {
             let cipher = Aes256Gcm::new_from_slice(&self.encryption_key)
                 .map_err(|e| DbError::Internal(format!("Cipher init error: {}", e)))?;
 
-            let plaintext = cipher.decrypt(nonce, ciphertext)
+            let plaintext = cipher
+                .decrypt(nonce, ciphertext)
                 .map_err(|e| DbError::Internal(format!("Decryption error: {}", e)))?;
 
             let decrypted_value: ConfigValue = serde_json::from_slice(&plaintext)
@@ -626,7 +643,8 @@ impl ConfigManager {
     // Restore from a snapshot
     pub async fn restore_snapshot(&self, snapshot_id: &str) -> Result<()> {
         let snapshots = self.snapshots.read().await;
-        let snapshot = snapshots.iter()
+        let snapshot = snapshots
+            .iter()
             .find(|s| s.id == snapshot_id)
             .ok_or_else(|| DbError::NotFound(format!("Snapshot not found: {}", snapshot_id)))?;
 
@@ -661,7 +679,10 @@ mod tests {
     #[tokio::test]
     async fn test_set_get() {
         let config = ConfigManager::new(Environment::Development);
-        config.set("test.key", ConfigValue::String("value".to_string())).await.unwrap();
+        config
+            .set("test.key", ConfigValue::String("value".to_string()))
+            .await
+            .unwrap();
 
         let value = config.get("test.key").await.unwrap();
         assert_eq!(value.as_string(), Some("value"));
@@ -672,18 +693,26 @@ mod tests {
         let config = ConfigManager::new(Environment::Production);
 
         // Register sensitive field
-        config.register_schema(ConfigSchema {
-            path: "database.password".to_string(),
-            description: "Database password".to_string(),
-            value_type: "string".to_string(),
-            default: None,
-            rules: vec![],
-            sensitive: true,
-        }).await.unwrap();
+        config
+            .register_schema(ConfigSchema {
+                path: "database.password".to_string(),
+                description: "Database password".to_string(),
+                value_type: "string".to_string(),
+                default: None,
+                rules: vec![],
+                sensitive: true,
+            })
+            .await
+            .unwrap();
 
         // Set sensitive value
-        config.set("database.password", ConfigValue::String("secret123".to_string()))
-            .await.unwrap();
+        config
+            .set(
+                "database.password",
+                ConfigValue::String("secret123".to_string()),
+            )
+            .await
+            .unwrap();
 
         // Verify it's encrypted in storage
         let stored = {
@@ -701,23 +730,26 @@ mod tests {
     async fn test_validation() {
         let config = ConfigManager::new(Environment::Development);
 
-        config.register_schema(ConfigSchema {
-            path: "port".to_string(),
-            description: "Server port".to_string(),
-            value_type: "integer".to_string(),
-            default: Some(ConfigValue::Integer(8080)),
-            rules: vec![
-                ValidationRule::Min(1.0),
-                ValidationRule::Max(65535.0),
-            ],
-            sensitive: false,
-        }).await.unwrap();
+        config
+            .register_schema(ConfigSchema {
+                path: "port".to_string(),
+                description: "Server port".to_string(),
+                value_type: "integer".to_string(),
+                default: Some(ConfigValue::Integer(8080)),
+                rules: vec![ValidationRule::Min(1.0), ValidationRule::Max(65535.0)],
+                sensitive: false,
+            })
+            .await
+            .unwrap();
 
         // Valid value
         assert!(config.set("port", ConfigValue::Integer(8080)).await.is_ok());
 
         // Invalid value (too large)
-        assert!(config.set("port", ConfigValue::Integer(70000)).await.is_err());
+        assert!(config
+            .set("port", ConfigValue::Integer(70000))
+            .await
+            .is_err());
     }
 
     #[tokio::test]
@@ -725,7 +757,10 @@ mod tests {
         let config = ConfigManager::new(Environment::Development);
         let mut watcher = config.watch("test.watched").await;
 
-        config.set("test.watched", ConfigValue::Integer(42)).await.unwrap();
+        config
+            .set("test.watched", ConfigValue::Integer(42))
+            .await
+            .unwrap();
 
         let value = watcher.recv().await.unwrap();
         assert_eq!(value.as_integer(), Some(42));
@@ -735,12 +770,18 @@ mod tests {
     async fn test_snapshot() {
         let config = ConfigManager::new(Environment::Development);
 
-        config.set("key1", ConfigValue::String("value1".to_string())).await.unwrap();
+        config
+            .set("key1", ConfigValue::String("value1".to_string()))
+            .await
+            .unwrap();
         config.set("key2", ConfigValue::Integer(42)).await.unwrap();
 
         let snapshot_id = config.create_snapshot("Test snapshot").await.unwrap();
 
-        config.set("key1", ConfigValue::String("changed".to_string())).await.unwrap();
+        config
+            .set("key1", ConfigValue::String("changed".to_string()))
+            .await
+            .unwrap();
 
         config.restore_snapshot(&snapshot_id).await.unwrap();
 

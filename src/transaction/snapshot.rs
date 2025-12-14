@@ -13,8 +13,8 @@
 // }
 // ```
 
+use std::collections::BTreeMap;
 use std::collections::HashSet;
-use std::collections::{BTreeMap};
 use std::sync::Arc;
 use std::time::SystemTime;
 
@@ -44,11 +44,7 @@ pub struct Snapshot {
 
 impl Snapshot {
     /// Creates a new snapshot.
-    pub fn new(
-        id: u64,
-        txn_id: TransactionId,
-        active_txns: HashSet<TransactionId>,
-    ) -> Self {
+    pub fn new(id: u64, txn_id: TransactionId, active_txns: HashSet<TransactionId>) -> Self {
         let min_txn_id = *active_txns.iter().min().unwrap_or(&0);
         let max_txn_id = *active_txns.iter().max().unwrap_or(&txn_id);
 

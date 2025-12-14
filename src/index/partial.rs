@@ -8,9 +8,9 @@
 
 use crate::error::{DbError, Result};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::sync::Arc;
-use serde::{Deserialize, Serialize};
 
 // Partial Index
 //
@@ -236,11 +236,7 @@ impl<K: Ord + Clone> Clone for CoveringIndex<K> {
 
 impl<K: Ord + Clone> CoveringIndex<K> {
     // Create a new covering index
-    pub fn new(
-        name: String,
-        indexed_columns: Vec<String>,
-        included_columns: Vec<String>,
-    ) -> Self {
+    pub fn new(name: String, indexed_columns: Vec<String>, included_columns: Vec<String>) -> Self {
         Self {
             name,
             indexed_columns,
@@ -253,10 +249,13 @@ impl<K: Ord + Clone> CoveringIndex<K> {
     pub fn insert(&self, key: K, row_id: u64, included_values: Vec<ColumnValue>) -> Result<()> {
         let mut index = self.index.write();
 
-        index.entry(key).or_insert_with(Vec::new).push(CoveringEntry {
-            row_id,
-            included_values,
-        });
+        index
+            .entry(key)
+            .or_insert_with(Vec::new)
+            .push(CoveringEntry {
+                row_id,
+                included_values,
+            });
 
         Ok(())
     }
@@ -317,9 +316,7 @@ impl Predicate {
             Predicate::And(left, right) => {
                 Ok(left.evaluate(row_data)? && right.evaluate(row_data)?)
             }
-            Predicate::Or(left, right) => {
-                Ok(left.evaluate(row_data)? || right.evaluate(row_data)?)
-            }
+            Predicate::Or(left, right) => Ok(left.evaluate(row_data)? || right.evaluate(row_data)?),
             Predicate::Not(pred) => Ok(!pred.evaluate(row_data)?),
             Predicate::IsNull(column) => {
                 let value = row_data.get_column(column)?;
@@ -402,9 +399,7 @@ impl Expression {
                 Ok(ComputedValue::from_column_value(value))
             }
             Expression::Constant(value) => Ok(ComputedValue::from_column_value(value.clone())),
-            Expression::Function { name, args } => {
-                self.evaluate_function(name, args, row_data)
-            }
+            Expression::Function { name, args } => self.evaluate_function(name, args, row_data),
             Expression::BinaryOp {
                 left,
                 operator,
@@ -492,7 +487,9 @@ impl BinaryOperator {
                 BinaryOperator::Concat => Ok(ComputedValue::String(format!("{}{}", l, r))),
                 _ => Err(DbError::Internal("Invalid operation on strings".into())),
             },
-            _ => Err(DbError::Internal("Type mismatch in binary operation".into())),
+            _ => Err(DbError::Internal(
+                "Type mismatch in binary operation".into(),
+            )),
         }
     }
 }
@@ -586,7 +583,7 @@ pub struct ExpressionIndexStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::collections::HashMap;
+    use std::collections::HashMap;
 
     #[test]
     fn test_partial_index() {
@@ -599,10 +596,16 @@ use std::collections::HashMap;
         let index: PartialIndex<i64, u64> = PartialIndex::new("idx_active".to_string(), predicate);
 
         let mut row1 = RowData::new();
-        row1.set_column("status".to_string(), ColumnValue::String("active".to_string()));
+        row1.set_column(
+            "status".to_string(),
+            ColumnValue::String("active".to_string()),
+        );
 
         let mut row2 = RowData::new();
-        row2.set_column("status".to_string(), ColumnValue::String("inactive".to_string()));
+        row2.set_column(
+            "status".to_string(),
+            ColumnValue::String("inactive".to_string()),
+        );
 
         // Insert active row - should be indexed
         assert!(index.insert(1, 100, &row1).unwrap());
@@ -630,7 +633,10 @@ use std::collections::HashMap;
             ExpressionIndex::new("idx_upper_email".to_string(), expression);
 
         let mut row = RowData::new();
-        row.set_column("email".to_string(), ColumnValue::String("user@example.com".to_string()));
+        row.set_column(
+            "email".to_string(),
+            ColumnValue::String("user@example.com".to_string()),
+        );
 
         index.insert(&row, 100).unwrap();
 
@@ -685,7 +691,10 @@ use std::collections::HashMap;
 
         let mut row = RowData::new();
         row.set_column("age".to_string(), ColumnValue::Integer(25));
-        row.set_column("status".to_string(), ColumnValue::String("active".to_string()));
+        row.set_column(
+            "status".to_string(),
+            ColumnValue::String("active".to_string()),
+        );
 
         assert!(predicate.evaluate(&row).unwrap());
     }

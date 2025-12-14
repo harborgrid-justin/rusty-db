@@ -1,7 +1,7 @@
 // Partition Pruning Optimization
 
-use super::types::*;
 use super::manager::PartitionManager;
+use super::types::*;
 use std::collections::HashMap;
 
 // Partition pruning optimizer
@@ -18,9 +18,10 @@ impl PartitionPruner {
             PartitionStrategy::Range { column, ranges } => {
                 Self::prune_range_partitions(column, ranges, predicate)
             }
-            PartitionStrategy::Hash { column, num_partitions } => {
-                Self::prune_hash_partitions(column, *num_partitions, predicate)
-            }
+            PartitionStrategy::Hash {
+                column,
+                num_partitions,
+            } => Self::prune_hash_partitions(column, *num_partitions, predicate),
             PartitionStrategy::List { column, lists } => {
                 Self::prune_list_partitions(column, lists, predicate)
             }
@@ -30,9 +31,10 @@ impl PartitionPruner {
                     PartitionStrategy::Range { column, ranges } => {
                         Self::prune_range_partitions(column, ranges, predicate)
                     }
-                    PartitionStrategy::Hash { column, num_partitions } => {
-                        Self::prune_hash_partitions(column, *num_partitions, predicate)
-                    }
+                    PartitionStrategy::Hash {
+                        column,
+                        num_partitions,
+                    } => Self::prune_hash_partitions(column, *num_partitions, predicate),
                     PartitionStrategy::List { column, lists } => {
                         Self::prune_list_partitions(column, lists, predicate)
                     }
@@ -54,11 +56,7 @@ impl PartitionPruner {
         ranges
             .iter()
             .filter(|range| {
-                Self::range_matches_predicate(
-                    &range.lower_bound,
-                    &range.upper_bound,
-                    predicate,
-                )
+                Self::range_matches_predicate(&range.lower_bound, &range.upper_bound, predicate)
             })
             .map(|p| p.name.clone())
             .collect()
@@ -70,23 +68,21 @@ impl PartitionPruner {
         predicate: &QueryPredicate,
     ) -> bool {
         match predicate.operator {
-            PredicateOperator::Equal => {
-                match (lower, upper) {
-                    (None, None) => true,
-                    (None, Some(u)) => &predicate.value < u,
-                    (Some(l), None) => &predicate.value >= l,
-                    (Some(l), Some(u)) => {
-                        &predicate.value >= l && &predicate.value < u
-                    }
-                }
-            }
+            PredicateOperator::Equal => match (lower, upper) {
+                (None, None) => true,
+                (None, Some(u)) => &predicate.value < u,
+                (Some(l), None) => &predicate.value >= l,
+                (Some(l), Some(u)) => &predicate.value >= l && &predicate.value < u,
+            },
             PredicateOperator::GreaterThan => {
                 upper.as_ref().map(|u| u > &predicate.value).unwrap_or(true)
             }
             PredicateOperator::LessThan => {
                 lower.as_ref().map(|l| l < &predicate.value).unwrap_or(true)
             }
-            PredicateOperator::Between { upper: ref pred_upper_bound } => {
+            PredicateOperator::Between {
+                upper: ref pred_upper_bound,
+            } => {
                 let pred_lower = &predicate.value;
                 let pred_upper = pred_upper_bound;
 
@@ -115,17 +111,12 @@ impl PartitionPruner {
 
         match predicate.operator {
             PredicateOperator::Equal => {
-                let partition = PartitionManager::hash_partition(
-                    &predicate.value,
-                    num_partitions,
-                );
+                let partition = PartitionManager::hash_partition(&predicate.value, num_partitions);
                 vec![partition]
             }
-            _ => {
-                (0..num_partitions)
-                    .map(|i| format!("partition_{}", i))
-                    .collect()
-            }
+            _ => (0..num_partitions)
+                .map(|i| format!("partition_{}", i))
+                .collect(),
         }
     }
 
@@ -139,16 +130,12 @@ impl PartitionPruner {
         }
 
         match predicate.operator {
-            PredicateOperator::Equal => {
-                lists
-                    .iter()
-                    .filter(|list| list.values.contains(&predicate.value))
-                    .map(|p| p.name.clone())
-                    .collect()
-            }
-            _ => {
-                lists.iter().map(|p| p.name.clone()).collect()
-            }
+            PredicateOperator::Equal => lists
+                .iter()
+                .filter(|list| list.values.contains(&predicate.value))
+                .map(|p| p.name.clone())
+                .collect(),
+            _ => lists.iter().map(|p| p.name.clone()).collect(),
         }
     }
 }
@@ -192,7 +179,12 @@ pub mod advanced {
             }
         }
 
-        pub fn add_statistics(&mut self, table: String, partition: String, stats: PartitionStatistics) {
+        pub fn add_statistics(
+            &mut self,
+            table: String,
+            partition: String,
+            stats: PartitionStatistics,
+        ) {
             let key = format!("{}:{}", table, partition);
             self.statistics.insert(key, stats);
         }
@@ -220,9 +212,7 @@ pub mod advanced {
         ) -> Vec<String> {
             partitions
                 .iter()
-                .filter(|partition| {
-                    self.partition_matches_rule(table, partition, rule)
-                })
+                .filter(|partition| self.partition_matches_rule(table, partition, rule))
                 .cloned()
                 .collect()
         }
@@ -252,11 +242,7 @@ pub mod advanced {
             value >= min && value <= max
         }
 
-        pub fn estimate_pruned_rows(
-            &self,
-            table: &str,
-            partitions: &[String],
-        ) -> usize {
+        pub fn estimate_pruned_rows(&self, table: &str, partitions: &[String]) -> usize {
             partitions
                 .iter()
                 .filter_map(|p| {

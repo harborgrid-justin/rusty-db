@@ -93,7 +93,11 @@ impl<T: 'static> LockFreeStack<T> {
 
             // Set new node's next to current head
             // Safety: We own node_ptr until we successfully push it
-            node_ptr.as_ref().unwrap().next.store(head, Ordering::Relaxed);
+            node_ptr
+                .as_ref()
+                .unwrap()
+                .next
+                .store(head, Ordering::Relaxed);
 
             // Try to swing head to new node
             match self.head.compare_exchange_weak(
@@ -222,7 +226,11 @@ impl<T: 'static> LockFreeStack<T> {
 
             if let Some(prev_head) = chain_head {
                 // Safety: We own these nodes until we link them to the stack
-                node_ptr.as_ref().unwrap().next.store(prev_head, Ordering::Relaxed);
+                node_ptr
+                    .as_ref()
+                    .unwrap()
+                    .next
+                    .store(prev_head, Ordering::Relaxed);
             }
 
             chain_head = Some(node_ptr);
@@ -235,7 +243,11 @@ impl<T: 'static> LockFreeStack<T> {
         let mut chain_tail = chain_head;
         loop {
             // Safety: We own the chain
-            let next = chain_tail.as_ref().unwrap().next.load(Ordering::Relaxed, &guard);
+            let next = chain_tail
+                .as_ref()
+                .unwrap()
+                .next
+                .load(Ordering::Relaxed, &guard);
             if next.is_null() {
                 break;
             }
@@ -247,7 +259,11 @@ impl<T: 'static> LockFreeStack<T> {
             let head = self.head.load(Ordering::Acquire, &guard);
 
             // Set chain tail's next to current head
-            chain_tail.as_ref().unwrap().next.store(head, Ordering::Relaxed);
+            chain_tail
+                .as_ref()
+                .unwrap()
+                .next
+                .store(head, Ordering::Relaxed);
 
             // Try to swing head to chain head
             match self.head.compare_exchange_weak(
@@ -405,12 +421,11 @@ impl<T: 'static> EliminationArray<T> {
 
         if ispush {
             // Try to deposit value for a pop to collect
-            if slot.state.compare_exchange(
-                EMPTY,
-                WAITING,
-                Ordering::Acquire,
-                Ordering::Relaxed,
-            ).is_ok() {
+            if slot
+                .state
+                .compare_exchange(EMPTY, WAITING, Ordering::Acquire, Ordering::Relaxed)
+                .is_ok()
+            {
                 if let Some(v) = value.take() {
                     let _guard = Epoch::pin();
                     let owned = Owned::new(v);
@@ -440,12 +455,11 @@ impl<T: 'static> EliminationArray<T> {
             }
         } else {
             // Try to collect a value from a push
-            if slot.state.compare_exchange(
-                WAITING,
-                BUSY,
-                Ordering::Acquire,
-                Ordering::Relaxed,
-            ).is_ok() {
+            if slot
+                .state
+                .compare_exchange(WAITING, BUSY, Ordering::Acquire, Ordering::Relaxed)
+                .is_ok()
+            {
                 let guard = Epoch::pin();
                 let ptr = slot.value.swap(Shared::null(), Ordering::Acquire, &guard);
                 slot.state.store(EMPTY, Ordering::Release);
@@ -568,16 +582,16 @@ mod tests {
         }
 
         // Poppers
-for _ in 0..5 {
-                let s = stack.clone();
-                handles.push(thread::spawn(move || {
-                    for _ in 0..1000 {
-                        while s.pop().is_none() {
-                            thread::yield_now();
-                        }
+        for _ in 0..5 {
+            let s = stack.clone();
+            handles.push(thread::spawn(move || {
+                for _ in 0..1000 {
+                    while s.pop().is_none() {
+                        thread::yield_now();
                     }
-                }));
-            }
+                }
+            }));
+        }
 
         for handle in handles {
             handle.join().unwrap();

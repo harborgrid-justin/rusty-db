@@ -2,12 +2,12 @@
 //
 // Logistic regression and Naive Bayes implementations for classification tasks.
 
-use crate::error::Result;
-use super::super::{Dataset, Vector, Matrix, Hyperparameters, MLError};
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-use bincode::{Encode, Decode};
+use super::super::{Dataset, Hyperparameters, MLError, Matrix, Vector};
 use super::{Algorithm, ModelType};
+use crate::error::Result;
+use bincode::{Decode, Encode};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // ============================================================================
 // Logistic Regression
@@ -44,36 +44,43 @@ impl LogisticRegression {
 
     // Compute predictions (probabilities)
     fn predict_proba_internal(&self, features: &Matrix) -> Vector {
-        features.iter().map(|sample| {
-            let mut logit = self.intercept;
-            for (i, &feature) in sample.iter().enumerate() {
-                logit += self.weights.get(i).unwrap_or(&0.0) * feature;
-            }
-            self.sigmoid(logit)
-        }).collect()
+        features
+            .iter()
+            .map(|sample| {
+                let mut logit = self.intercept;
+                for (i, &feature) in sample.iter().enumerate() {
+                    logit += self.weights.get(i).unwrap_or(&0.0) * feature;
+                }
+                self.sigmoid(logit)
+            })
+            .collect()
     }
 
     // Compute binary cross-entropy loss
     fn binary_cross_entropy(&self, predictions: &Vector, targets: &Vector) -> f64 {
         let epsilon = 1e-15;
-        predictions.iter()
+        predictions
+            .iter()
             .zip(targets.iter())
             .map(|(pred, target)| {
                 let p = pred.clamp(epsilon, 1.0 - epsilon);
                 -target * p.ln() - (1.0 - target) * (1.0 - p).ln()
             })
-            .sum::<f64>() / predictions.len() as f64
+            .sum::<f64>()
+            / predictions.len() as f64
     }
 
     // Calculate accuracy
     fn accuracy(&self, predictions: &Vector, targets: &Vector) -> f64 {
-        predictions.iter()
+        predictions
+            .iter()
             .zip(targets.iter())
             .filter(|(pred, target)| {
                 let class = if **pred >= 0.5 { 1.0 } else { 0.0 };
                 (class - **target).abs() < 1e-9
             })
-            .count() as f64 / predictions.len() as f64
+            .count() as f64
+            / predictions.len() as f64
     }
 }
 
@@ -87,7 +94,9 @@ impl Algorithm for LogisticRegression {
     fn fit(&mut self, dataset: &Dataset, params: &Hyperparameters) -> Result<()> {
         dataset.validate()?;
 
-        let target = dataset.target.as_ref()
+        let target = dataset
+            .target
+            .as_ref()
             .ok_or_else(|| MLError::InvalidConfiguration("No target provided".to_string()))?;
 
         let learning_rate = params.get_float("learning_rate").unwrap_or(0.01);
@@ -162,7 +171,8 @@ impl Algorithm for LogisticRegression {
             return Err(MLError::PredictionFailed("Model not trained".to_string()).into());
         }
         // Return class labels (0 or 1)
-        Ok(self.predict_proba_internal(features)
+        Ok(self
+            .predict_proba_internal(features)
             .iter()
             .map(|&p| if p >= 0.5 { 1.0 } else { 0.0 })
             .collect())
@@ -174,15 +184,18 @@ impl Algorithm for LogisticRegression {
 
     fn serialize(&self) -> Result<Vec<u8>> {
         let config = bincode::config::standard();
-        bincode::encode_to_vec(self, config)
-            .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
+        bincode::encode_to_vec(self, config).map_err(|e| {
+            MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into()
+        })
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
         let config = bincode::config::standard();
         bincode::decode_from_slice(bytes, config)
             .map(|(model, _)| model)
-            .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
+            .map_err(|e| {
+                MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into()
+            })
     }
 
     fn feature_importance(&self) -> Option<Vector> {
@@ -268,7 +281,9 @@ impl Algorithm for NaiveBayes {
     fn fit(&mut self, dataset: &Dataset, params: &Hyperparameters) -> Result<()> {
         dataset.validate()?;
 
-        let target = dataset.target.as_ref()
+        let target = dataset
+            .target
+            .as_ref()
             .ok_or_else(|| MLError::InvalidConfiguration("No target provided".to_string()))?;
 
         let alpha = params.get_float("alpha").unwrap_or(1.0);
@@ -287,12 +302,17 @@ impl Algorithm for NaiveBayes {
 
         // Calculate class priors
         for (&class, &count) in &class_counts {
-            self.class_priors.insert(class, (count as f64 + alpha) / (n_samples as f64 + alpha * self.classes.len() as f64));
+            self.class_priors.insert(
+                class,
+                (count as f64 + alpha) / (n_samples as f64 + alpha * self.classes.len() as f64),
+            );
         }
 
         // Calculate feature statistics per class
         for &class in &self.classes {
-            let class_samples: Vec<&Vec<f64>> = dataset.features.iter()
+            let class_samples: Vec<&Vec<f64>> = dataset
+                .features
+                .iter()
                 .zip(target.iter())
                 .filter(|(_, &label)| label as i64 == class)
                 .map(|(features, _)| features)
@@ -313,7 +333,8 @@ impl Algorithm for NaiveBayes {
             return Err(MLError::PredictionFailed("Model not trained".to_string()).into());
         }
 
-        Ok(features.iter()
+        Ok(features
+            .iter()
             .map(|sample| {
                 let mut best_class = self.classes[0];
                 let mut best_prob = f64::NEG_INFINITY;
@@ -345,14 +366,17 @@ impl Algorithm for NaiveBayes {
 
     fn serialize(&self) -> Result<Vec<u8>> {
         let config = bincode::config::standard();
-        bincode::encode_to_vec(self, config)
-            .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
+        bincode::encode_to_vec(self, config).map_err(|e| {
+            MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into()
+        })
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
         let config = bincode::config::standard();
         bincode::decode_from_slice(bytes, config)
             .map(|(model, _)| model)
-            .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
+            .map_err(|e| {
+                MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into()
+            })
     }
 }

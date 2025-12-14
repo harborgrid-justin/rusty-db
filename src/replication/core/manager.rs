@@ -1,6 +1,6 @@
 // Replication manager
-use crate::error::Result;
 use super::types::*;
+use crate::error::Result;
 
 pub struct ReplicationManager {
     _mode: ReplicationMode,

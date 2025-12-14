@@ -15,15 +15,15 @@
 // - High availability across regions
 // - Compliance with data sovereignty requirements
 
-use std::collections::VecDeque;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
-use std::time::SystemTime;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::hash::{Hash, Hasher};
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Datacenter identifier
 pub type DatacenterId = String;
@@ -157,7 +157,6 @@ impl ReplicatedValue {
 
     // Verify checksum
     pub fn verify_checksum(&self) -> bool {
-
         let mut hasher = DefaultHasher::new();
         self.data.hash(&mut hasher);
         hasher.finish() == self.checksum
@@ -566,7 +565,10 @@ impl GeoReplicationManager {
     }
 
     // Select best datacenter for read based on consistency level
-    pub fn select_read_datacenter(&self, consistency: ConsistencyLevel) -> Result<DatacenterId, DbError> {
+    pub fn select_read_datacenter(
+        &self,
+        consistency: ConsistencyLevel,
+    ) -> Result<DatacenterId, DbError> {
         let datacenters = self.datacenters.read().unwrap();
 
         match consistency {

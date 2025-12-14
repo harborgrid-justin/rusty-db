@@ -28,20 +28,22 @@ pub fn format_memory_size(bytes: u64) -> String {
 pub fn parse_memory_size(s: &str) -> Result<u64> {
     let s = s.trim().to_uppercase();
     let (num_str, multiplier) = if s.ends_with("TB") {
-        (&s[..s.len()-2], 1024u64 * 1024 * 1024 * 1024)
+        (&s[..s.len() - 2], 1024u64 * 1024 * 1024 * 1024)
     } else if s.ends_with("GB") {
-        (&s[..s.len()-2], 1024u64 * 1024 * 1024)
+        (&s[..s.len() - 2], 1024u64 * 1024 * 1024)
     } else if s.ends_with("MB") {
-        (&s[..s.len()-2], 1024u64 * 1024)
+        (&s[..s.len() - 2], 1024u64 * 1024)
     } else if s.ends_with("KB") {
-        (&s[..s.len()-2], 1024u64)
+        (&s[..s.len() - 2], 1024u64)
     } else if s.ends_with("B") {
-        (&s[..s.len()-1], 1)
+        (&s[..s.len() - 1], 1)
     } else {
         (s.as_str(), 1)
     };
 
-    let num: f64 = num_str.trim().parse()
+    let num: f64 = num_str
+        .trim()
+        .parse()
         .map_err(|e| DbError::InvalidArgument(format!("Invalid memory size: {}", e)))?;
 
     Ok((num * multiplier as f64) as u64)
@@ -80,14 +82,23 @@ mod tests {
         assert_eq!(parse_memory_size("1KB").unwrap(), 1024);
         assert_eq!(parse_memory_size("1MB").unwrap(), 1024 * 1024);
         assert_eq!(parse_memory_size("1GB").unwrap(), 1024 * 1024 * 1024);
-        assert_eq!(parse_memory_size("1.5GB").unwrap(), (1.5 * 1024.0 * 1024.0 * 1024.0) as u64);
+        assert_eq!(
+            parse_memory_size("1.5GB").unwrap(),
+            (1.5 * 1024.0 * 1024.0 * 1024.0) as u64
+        );
     }
 
     #[test]
     fn test_classify_allocation_size() {
         assert_eq!(classify_allocation_size(1024), AllocatorType::Slab);
         assert_eq!(classify_allocation_size(MAX_SLAB_SIZE), AllocatorType::Slab);
-        assert_eq!(classify_allocation_size(MAX_SLAB_SIZE + 1), AllocatorType::System);
-        assert_eq!(classify_allocation_size(LARGE_OBJECT_THRESHOLD), AllocatorType::LargeObject);
+        assert_eq!(
+            classify_allocation_size(MAX_SLAB_SIZE + 1),
+            AllocatorType::System
+        );
+        assert_eq!(
+            classify_allocation_size(LARGE_OBJECT_THRESHOLD),
+            AllocatorType::LargeObject
+        );
     }
 }

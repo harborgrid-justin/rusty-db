@@ -52,12 +52,9 @@ impl HazardRecord {
 
     /// Acquire this record for the current thread
     fn try_acquire(&self) -> bool {
-        self.active.compare_exchange(
-            false,
-            true,
-            Ordering::Acquire,
-            Ordering::Relaxed,
-        ).is_ok()
+        self.active
+            .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok()
     }
 
     /// Release this record
@@ -140,12 +137,11 @@ impl HazardList {
             let old_head = self.head.load(Ordering::Acquire);
             record_ref.next.store(old_head, Ordering::Release);
 
-            if self.head.compare_exchange(
-                old_head,
-                record,
-                Ordering::Release,
-                Ordering::Acquire,
-            ).is_ok() {
+            if self
+                .head
+                .compare_exchange(old_head, record, Ordering::Release, Ordering::Acquire)
+                .is_ok()
+            {
                 self.count.fetch_add(1, Ordering::Relaxed);
                 return NonNull::new(record).unwrap();
             }
@@ -441,9 +437,7 @@ pub struct HazardScope {
 
 impl HazardScope {
     fn new() -> Self {
-        Self {
-            guards: Vec::new(),
-        }
+        Self { guards: Vec::new() }
     }
 
     /// Protect a pointer
@@ -482,9 +476,7 @@ impl HazardStats {
             current = record.next.load(Ordering::Acquire);
         }
 
-        let retired_count = THREAD_LOCAL.with(|tl| {
-            tl.borrow().retired.len()
-        });
+        let retired_count = THREAD_LOCAL.with(|tl| tl.borrow().retired.len());
 
         Self {
             total_records,
@@ -578,5 +570,3 @@ mod tests {
         }
     }
 }
-
-

@@ -2,7 +2,7 @@
 //
 // Provides adaptive query optimization using execution statistics
 
-use crate::{Result, error::DbError};
+use crate::{error::DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -33,10 +33,13 @@ impl AdaptiveQueryOptimizer {
         actual_rows: usize,
         execution_time_ms: u64,
     ) -> Result<()> {
-        let mut stats = self.statistics.write()
+        let mut stats = self
+            .statistics
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
 
-        let entry = stats.entry(query_hash.to_string())
+        let entry = stats
+            .entry(query_hash.to_string())
             .or_insert_with(|| QueryStatistics {
                 query_hash: query_hash.to_string(),
                 execution_count: 0,
@@ -62,7 +65,9 @@ impl AdaptiveQueryOptimizer {
 
     // Get optimization suggestions
     pub fn get_suggestions(&self, query_hash: &str) -> Result<OptimizationSuggestions> {
-        let stats = self.statistics.read()
+        let stats = self
+            .statistics
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
 
         if let Some(stat) = stats.get(query_hash) {
@@ -109,7 +114,9 @@ impl AdaptiveQueryOptimizer {
 
     // Get all query statistics
     pub fn get_all_statistics(&self) -> Result<Vec<QueryStatistics>> {
-        let stats = self.statistics.read()
+        let stats = self
+            .statistics
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(stats.values().cloned().collect())
     }

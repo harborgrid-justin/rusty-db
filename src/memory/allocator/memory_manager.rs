@@ -2,12 +2,12 @@
 //\!
 //\! Integration layer for all allocators.
 
-use super::common::*;
-use super::slab_allocator::{SlabAllocator, SlabAllocatorStats};
 use super::arena_allocator::{ArenaAllocator, ArenaAllocatorStats, MemoryContext};
+use super::common::*;
+use super::debugger::{MemoryDebugger, MemoryDebuggerStats};
 use super::large_object_allocator::{LargeObjectAllocator, LargeObjectAllocatorStats};
 use super::pressure_manager::{MemoryPressureManager, MemoryPressureStats, MemoryUsage};
-use super::debugger::{MemoryDebugger, MemoryDebuggerStats};
+use super::slab_allocator::{SlabAllocator, SlabAllocatorStats};
 
 pub struct MemoryManager {
     // Slab allocator for small objects
@@ -46,24 +46,28 @@ impl MemoryManager {
     fn setup_pressure_callbacks(&self) {
         let arena = Arc::clone(&self.arena_allocator);
 
-        self.pressure_manager.register_callback(Arc::new(move |level| {
-            match level {
-                MemoryPressureLevel::None | MemoryPressureLevel::Normal => {
-                    // No cleanup needed
-                    Ok(0)
+        self.pressure_manager
+            .register_callback(Arc::new(move |level| {
+                match level {
+                    MemoryPressureLevel::None | MemoryPressureLevel::Normal => {
+                        // No cleanup needed
+                        Ok(0)
+                    }
+                    MemoryPressureLevel::Low | MemoryPressureLevel::Warning => {
+                        // Cleanup dead contexts
+                        let freed = arena.cleanup_dead_contexts();
+                        Ok(freed * 1024) // Estimate
+                    }
+                    MemoryPressureLevel::Medium
+                    | MemoryPressureLevel::High
+                    | MemoryPressureLevel::Critical
+                    | MemoryPressureLevel::Emergency => {
+                        // Aggressive cleanup
+                        let freed = arena.cleanup_dead_contexts();
+                        Ok(freed * 1024)
+                    }
                 }
-                MemoryPressureLevel::Low | MemoryPressureLevel::Warning => {
-                    // Cleanup dead contexts
-                    let freed = arena.cleanup_dead_contexts();
-                    Ok(freed * 1024) // Estimate
-                }
-                MemoryPressureLevel::Medium | MemoryPressureLevel::High | MemoryPressureLevel::Critical | MemoryPressureLevel::Emergency => {
-                    // Aggressive cleanup
-                    let freed = arena.cleanup_dead_contexts();
-                    Ok(freed * 1024)
-                }
-            }
-        }));
+            }));
     }
 
     // Allocate memory using the appropriate allocator
@@ -86,12 +90,14 @@ impl MemoryManager {
             }
         } else {
             // Use large object allocator
-            self.large_object_allocator.allocate(size, size >= HUGE_PAGE_2MB, false)?
+            self.large_object_allocator
+                .allocate(size, size >= HUGE_PAGE_2MB, false)?
         };
 
         // Record allocation
         self.pressure_manager.record_allocation(size as u64)?;
-        self.debugger.track_allocation(ptr.as_ptr() as usize, size, source);
+        self.debugger
+            .track_allocation(ptr.as_ptr() as usize, size, source);
 
         Ok(ptr)
     }
@@ -132,7 +138,9 @@ impl MemoryManager {
         let arena_stats = self.arena_allocator.get_stats();
         let large_object_stats = self.large_object_allocator.get_stats();
 
-        let total_allocated = slab_stats.total_allocated + arena_stats.total_allocated + large_object_stats.bytes_allocated;
+        let total_allocated = slab_stats.total_allocated
+            + arena_stats.total_allocated
+            + large_object_stats.bytes_allocated;
         let total_capacity = self.total_capacity;
 
         ComprehensiveMemoryStats {
@@ -170,7 +178,7 @@ pub struct ComprehensiveMemoryStats {
     pub total_usage: MemoryUsage,
     pub total_capacity: u64,
     pub total_allocated: u64,
-    pub context_stats: u64
+    pub context_stats: u64,
 }
 
 // ============================================================================

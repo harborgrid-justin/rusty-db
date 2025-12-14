@@ -3,7 +3,7 @@
 // Implements native Kubernetes service discovery using the Kubernetes API.
 // Supports headless services, endpoint slices, and pod label selectors.
 
-use super::{HealthStatus, Node, ServiceDiscovery, KubernetesConfig};
+use super::{HealthStatus, KubernetesConfig, Node, ServiceDiscovery};
 use crate::error::{DbError, Result};
 use async_trait::async_trait;
 // HashMap removed - unused

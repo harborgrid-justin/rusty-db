@@ -7,12 +7,12 @@
 // - SAML federation
 // - Token-based authentication
 
-use std::fmt;
 use super::types::Username;
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
+use std::fmt;
 use std::time::SystemTime;
 
 // Authentication provider trait
@@ -59,10 +59,8 @@ pub trait Authenticator: Send + Sync {
     ) -> impl std::future::Future<Output = Result<AuthenticationResult>> + Send;
 
     // Validate existing authentication token
-    fn validate_token(
-        &self,
-        token: &str,
-    ) -> impl std::future::Future<Output = Result<bool>> + Send;
+    fn validate_token(&self, token: &str)
+        -> impl std::future::Future<Output = Result<bool>> + Send;
 
     // Refresh authentication token
     fn refresh_token(
@@ -307,15 +305,17 @@ impl TokenAuthenticator {
     // # Returns
     //
     // Generated token string
-pub fn issue_token(&self, username: String, validity: std::time::Duration) -> String {
-    use uuid::Uuid;
+    pub fn issue_token(&self, username: String, validity: std::time::Duration) -> String {
+        use uuid::Uuid;
 
-    let token = Uuid::new_v4().to_string();
-    let expiry = SystemTime::now() + validity;
+        let token = Uuid::new_v4().to_string();
+        let expiry = SystemTime::now() + validity;
 
-    self.tokens.write().insert(token.clone(), (username, expiry));
-    token
-}
+        self.tokens
+            .write()
+            .insert(token.clone(), (username, expiry));
+        token
+    }
 
     // Revoke a token
     pub fn revoke_token(&self, token: &str) {
@@ -323,7 +323,7 @@ pub fn issue_token(&self, username: String, validity: std::time::Duration) -> St
     }
 
     // Check if token is valid and not expired
-fn is_token_valid(&self, token: &str) -> Option<String> {
+    fn is_token_valid(&self, token: &str) -> Option<String> {
         let tokens = self.tokens.read();
         tokens.get(token).and_then(|(username, expiry)| {
             if SystemTime::now() < *expiry {
@@ -341,15 +341,16 @@ impl Authenticator for TokenAuthenticator {
             Credentials::Token { token } => {
                 if let Some(username) = self.is_token_valid(token) {
                     Ok(AuthenticationResult {
-                        username: Username::new(username)
-                            .map_err(|e| DbError::InvalidInput(e))?,
+                        username: Username::new(username).map_err(|e| DbError::InvalidInput(e))?,
                         authenticated: true,
                         privileges: PrivilegeSet::default(),
                         roles: HashSet::new(),
                         auth_method: AuthMethod::Token,
                     })
                 } else {
-                    Err(DbError::Authentication("Invalid or expired token".to_string()))
+                    Err(DbError::Authentication(
+                        "Invalid or expired token".to_string(),
+                    ))
                 }
             }
             _ => Err(DbError::Authentication(
@@ -375,7 +376,7 @@ impl Authenticator for TokenAuthenticator {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Duration;
+    use std::time::Duration;
 
     #[test]
     fn test_privilege_set() {
@@ -439,7 +440,9 @@ use std::time::Duration;
         let auth = TokenAuthenticator::new();
         let token = auth.issue_token("carol".to_string(), Duration::from_secs(3600));
 
-        let creds = Credentials::Token { token: token.clone() };
+        let creds = Credentials::Token {
+            token: token.clone(),
+        };
         let result = auth.authenticate(&creds).await.unwrap();
 
         assert!(result.authenticated);

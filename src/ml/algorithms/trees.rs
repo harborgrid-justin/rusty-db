@@ -2,11 +2,11 @@
 //
 // Decision tree and random forest implementations for classification and regression.
 
-use crate::error::Result;
-use super::super::{Dataset, Vector, Matrix, Hyperparameters, MLError};
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
+use super::super::{Dataset, Hyperparameters, MLError, Matrix, Vector};
 use super::{Algorithm, ModelType};
+use crate::error::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // ============================================================================
 // Decision Tree (CART Algorithm)
@@ -121,7 +121,8 @@ impl DecisionTree {
             let class = targets[i] as i64;
             *counts.entry(class).or_insert(0) += 1;
         }
-        counts.into_iter()
+        counts
+            .into_iter()
             .max_by_key(|(_, count)| *count)
             .map(|(class, _)| class as f64)
             .unwrap_or(0.0)
@@ -142,15 +143,14 @@ impl DecisionTree {
 
         for feature_idx in 0..self.n_features {
             // Get unique values for this feature
-            let mut values: Vec<f64> = indices.iter()
-                .map(|&i| features[i][feature_idx])
-                .collect();
+            let mut values: Vec<f64> = indices.iter().map(|&i| features[i][feature_idx]).collect();
             values.sort_by(|a, b| a.partial_cmp(b).unwrap());
             values.dedup();
 
             // Try each potential split point
             for &threshold in &values {
-                let (left, right): (Vec<_>, Vec<_>) = indices.iter()
+                let (left, right): (Vec<_>, Vec<_>) = indices
+                    .iter()
                     .partition(|&&i| features[i][feature_idx] <= threshold);
 
                 if left.len() < min_samples_leaf || right.len() < min_samples_leaf {
@@ -193,7 +193,8 @@ impl DecisionTree {
             }
 
             let n = indices.len() as f64;
-            1.0 - counts.values()
+            1.0 - counts
+                .values()
                 .map(|&count| {
                     let p = count as f64 / n;
                     p * p
@@ -202,9 +203,11 @@ impl DecisionTree {
         } else {
             // Variance
             let mean = indices.iter().map(|&i| targets[i]).sum::<f64>() / indices.len() as f64;
-            indices.iter()
+            indices
+                .iter()
                 .map(|&i| (targets[i] - mean).powi(2))
-                .sum::<f64>() / indices.len() as f64
+                .sum::<f64>()
+                / indices.len() as f64
         }
     }
 
@@ -212,7 +215,13 @@ impl DecisionTree {
     fn predict_sample(&self, sample: &[f64], node: &TreeNode) -> f64 {
         match node {
             TreeNode::Leaf { value, .. } => *value,
-            TreeNode::Split { feature, threshold, left, right, .. } => {
+            TreeNode::Split {
+                feature,
+                threshold,
+                left,
+                right,
+                ..
+            } => {
                 if sample[*feature] <= *threshold {
                     self.predict_sample(sample, left)
                 } else {
@@ -233,7 +242,9 @@ impl Algorithm for DecisionTree {
     fn fit(&mut self, dataset: &Dataset, params: &Hyperparameters) -> Result<()> {
         dataset.validate()?;
 
-        let target = dataset.target.as_ref()
+        let target = dataset
+            .target
+            .as_ref()
             .ok_or_else(|| MLError::InvalidConfiguration("No target provided".to_string()))?;
 
         let max_depth = params.get_int("max_depth").unwrap_or(10) as usize;
@@ -262,10 +273,13 @@ impl Algorithm for DecisionTree {
             return Err(MLError::PredictionFailed("Model not trained".to_string()).into());
         }
 
-        let root = self.root.as_ref()
+        let root = self
+            .root
+            .as_ref()
             .ok_or_else(|| MLError::PredictionFailed("No tree built".to_string()))?;
 
-        Ok(features.iter()
+        Ok(features
+            .iter()
             .map(|sample| self.predict_sample(sample, root))
             .collect())
     }
@@ -275,14 +289,17 @@ impl Algorithm for DecisionTree {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::encode_to_vec(self, bincode::config::standard())
-            .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
+        bincode::encode_to_vec(self, bincode::config::standard()).map_err(|e| {
+            MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into()
+        })
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
         bincode::decode_from_slice(bytes, bincode::config::standard())
             .map(|(result, _)| result)
-            .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
+            .map_err(|e| {
+                MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into()
+            })
     }
 }
 
@@ -330,7 +347,9 @@ impl Algorithm for RandomForest {
     fn fit(&mut self, dataset: &Dataset, params: &Hyperparameters) -> Result<()> {
         dataset.validate()?;
 
-        let target = dataset.target.as_ref()
+        let target = dataset
+            .target
+            .as_ref()
             .ok_or_else(|| MLError::InvalidConfiguration("No target provided".to_string()))?;
 
         self.n_estimators = params.get_int("n_estimators").unwrap_or(100) as usize;
@@ -345,12 +364,12 @@ impl Algorithm for RandomForest {
             let bootstrap_indices = self.bootstrap_sample(dataset.num_samples());
 
             // Create bootstrap dataset
-            let bootstrap_features: Matrix = bootstrap_indices.iter()
+            let bootstrap_features: Matrix = bootstrap_indices
+                .iter()
                 .map(|&idx| dataset.features[idx].clone())
                 .collect();
-            let bootstrap_target: Vector = bootstrap_indices.iter()
-                .map(|&idx| target[idx])
-                .collect();
+            let bootstrap_target: Vector =
+                bootstrap_indices.iter().map(|&idx| target[idx]).collect();
 
             let bootstrap_dataset = Dataset::new(
                 bootstrap_features,
@@ -398,11 +417,13 @@ impl Algorithm for RandomForest {
         // Average for regression, majority vote for classification
         if self.is_classifier {
             // Round to nearest class
-            Ok(predictions.iter()
+            Ok(predictions
+                .iter()
                 .map(|&sum| (sum / self.n_estimators as f64).round())
                 .collect())
         } else {
-            Ok(predictions.iter()
+            Ok(predictions
+                .iter()
                 .map(|&sum| sum / self.n_estimators as f64)
                 .collect())
         }
@@ -413,13 +434,16 @@ impl Algorithm for RandomForest {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::encode_to_vec(self, bincode::config::standard())
-            .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
+        bincode::encode_to_vec(self, bincode::config::standard()).map_err(|e| {
+            MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into()
+        })
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
         bincode::decode_from_slice(bytes, bincode::config::standard())
             .map(|(result, _)| result)
-            .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
+            .map_err(|e| {
+                MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into()
+            })
     }
 }

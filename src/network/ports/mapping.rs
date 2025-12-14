@@ -10,11 +10,11 @@
 // - **Dynamic Advertisement**: Announce service ports to cluster
 
 use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 use std::time::SystemTime;
+use tokio::sync::RwLock;
 
 /// Port mapping information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -149,9 +149,10 @@ impl ServiceRegistry {
         // Check if port is already in use by a different service
         if let Some(existing_service) = ports.get(&port) {
             if existing_service != &service_type {
-                return Err(DbError::AlreadyExists(
-                    format!("Port {} already registered to service {}", port, existing_service)
-                ));
+                return Err(DbError::AlreadyExists(format!(
+                    "Port {} already registered to service {}",
+                    port, existing_service
+                )));
             }
         }
 
@@ -170,7 +171,10 @@ impl ServiceRegistry {
             ports.remove(&mapping.port);
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Service {} not registered", service_type)))
+            Err(DbError::NotFound(format!(
+                "Service {} not registered",
+                service_type
+            )))
         }
     }
 
@@ -183,7 +187,10 @@ impl ServiceRegistry {
             services.remove(&service_type);
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("No service registered on port {}", port)))
+            Err(DbError::NotFound(format!(
+                "No service registered on port {}",
+                port
+            )))
         }
     }
 
@@ -198,7 +205,8 @@ impl ServiceRegistry {
         let ports = self.ports.read().await;
         let services = self.services.read().await;
 
-        ports.get(&port)
+        ports
+            .get(&port)
             .and_then(|service_type| services.get(service_type))
             .cloned()
     }
@@ -254,7 +262,12 @@ impl PortMappingService {
     }
 
     /// Register a port for a service type
-    pub fn register_port(&mut self, service_type: impl Into<String>, port: u16, description: impl Into<String>) {
+    pub fn register_port(
+        &mut self,
+        service_type: impl Into<String>,
+        port: u16,
+        description: impl Into<String>,
+    ) {
         let service_type = service_type.into();
         let description = description.into();
 
@@ -342,7 +355,8 @@ impl PortMappingService {
 
     /// Get service port by service type
     pub async fn get_service_port(&self, service_type: &str) -> Option<u16> {
-        self.registry.get_service(service_type)
+        self.registry
+            .get_service(service_type)
             .await
             .map(|m| m.port)
     }
@@ -396,13 +410,9 @@ mod tests {
 
     #[test]
     fn test_port_mapping_with_metadata() {
-        let mapping = PortMapping::new(
-            "TestService".to_string(),
-            8080,
-            "Test service".to_string(),
-        )
-        .with_metadata("version".to_string(), "1.0".to_string())
-        .with_metadata("protocol".to_string(), "TCP".to_string());
+        let mapping = PortMapping::new("TestService".to_string(), 8080, "Test service".to_string())
+            .with_metadata("version".to_string(), "1.0".to_string())
+            .with_metadata("protocol".to_string(), "TCP".to_string());
 
         assert_eq!(mapping.get_metadata("version"), Some(&"1.0".to_string()));
         assert_eq!(mapping.get_metadata("protocol"), Some(&"TCP".to_string()));
@@ -413,11 +423,7 @@ mod tests {
     async fn test_service_registry() {
         let registry = ServiceRegistry::new();
 
-        let mapping = PortMapping::new(
-            "Database".to_string(),
-            5432,
-            "Main database".to_string(),
-        );
+        let mapping = PortMapping::new("Database".to_string(), 5432, "Main database".to_string());
 
         registry.register(mapping).await.unwrap();
 
@@ -433,19 +439,11 @@ mod tests {
     async fn test_registry_port_conflict() {
         let registry = ServiceRegistry::new();
 
-        let mapping1 = PortMapping::new(
-            "Service1".to_string(),
-            8080,
-            "First service".to_string(),
-        );
+        let mapping1 = PortMapping::new("Service1".to_string(), 8080, "First service".to_string());
 
         registry.register(mapping1).await.unwrap();
 
-        let mapping2 = PortMapping::new(
-            "Service2".to_string(),
-            8080,
-            "Second service".to_string(),
-        );
+        let mapping2 = PortMapping::new("Service2".to_string(), 8080, "Second service".to_string());
 
         let result = registry.register(mapping2).await;
         assert!(result.is_err());
@@ -455,11 +453,7 @@ mod tests {
     async fn test_unregister() {
         let registry = ServiceRegistry::new();
 
-        let mapping = PortMapping::new(
-            "TestService".to_string(),
-            9000,
-            "Test".to_string(),
-        );
+        let mapping = PortMapping::new("TestService".to_string(), 9000, "Test".to_string());
 
         registry.register(mapping).await.unwrap();
         assert_eq!(registry.count().await, 1);

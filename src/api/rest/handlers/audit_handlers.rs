@@ -3,15 +3,15 @@
 // REST API endpoints for querying audit logs, generating compliance reports,
 // and managing audit policies.
 
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::security_vault::SecurityVaultManager;
 use axum::{
-    extract::{State, Query},
+    extract::{Query, State},
     response::Json,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::api::rest::types::{ApiState, ApiResult, ApiError};
-use crate::security_vault::SecurityVaultManager;
 
 // Request/Response Types
 
@@ -225,7 +225,8 @@ pub async fn export_audit_logs(
     match audit_guard.query(config.start_time, config.end_time, None, None) {
         Ok(records) => {
             // In a real implementation, we'd actually write to the file
-            let file_path = format!("{}/audit_export_{}.{}",
+            let file_path = format!(
+                "{}/audit_export_{}.{}",
                 config.destination,
                 chrono::Utc::now().timestamp(),
                 config.format
@@ -256,26 +257,33 @@ pub async fn compliance_report(
 ) -> ApiResult<Json<ComplianceReportResponse>> {
     let vault = get_or_init_vault()?;
 
-    match vault.generate_compliance_report(
-        &params.regulation,
-        params.start_date,
-        params.end_date,
-    ).await {
+    match vault
+        .generate_compliance_report(&params.regulation, params.start_date, params.end_date)
+        .await
+    {
         Ok(report) => {
             // Convert internal report to API response
             // Determine compliance based on failed operations and security events
             let compliant = report.failed_operations == 0 && report.security_events == 0;
 
             // Convert findings to violations
-            let violations: Vec<ComplianceViolation> = report.findings.iter().enumerate().map(|(i, finding)| {
-                ComplianceViolation {
+            let violations: Vec<ComplianceViolation> = report
+                .findings
+                .iter()
+                .enumerate()
+                .map(|(i, finding)| ComplianceViolation {
                     violation_type: "compliance_violation".to_string(),
-                    severity: if report.security_events > 0 { "HIGH" } else { "MEDIUM" }.to_string(),
+                    severity: if report.security_events > 0 {
+                        "HIGH"
+                    } else {
+                        "MEDIUM"
+                    }
+                    .to_string(),
                     description: finding.clone(),
                     affected_records: vec![i as u64],
                     remediation: "Review audit logs and security policies".to_string(),
-                }
-            }).collect();
+                })
+                .collect();
 
             let response = ComplianceReportResponse {
                 regulation: params.regulation.clone(),
@@ -328,17 +336,15 @@ pub async fn verify_audit_integrity(
     let vault = get_or_init_vault()?;
 
     match vault.verify_audit_integrity().await {
-        Ok(valid) => {
-            Ok(Json(serde_json::json!({
-                "valid": valid,
-                "verified_at": chrono::Utc::now().timestamp(),
-                "message": if valid {
-                    "Audit trail integrity verified successfully"
-                } else {
-                    "WARNING: Audit trail integrity check failed - possible tampering detected"
-                }
-            })))
-        }
+        Ok(valid) => Ok(Json(serde_json::json!({
+            "valid": valid,
+            "verified_at": chrono::Utc::now().timestamp(),
+            "message": if valid {
+                "Audit trail integrity verified successfully"
+            } else {
+                "WARNING: Audit trail integrity check failed - possible tampering detected"
+            }
+        }))),
         Err(e) => Err(ApiError::new("INTEGRITY_CHECK_ERROR", e.to_string())),
     }
 }

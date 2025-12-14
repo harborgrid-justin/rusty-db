@@ -1,10 +1,10 @@
-use sqlparser::ast::{Statement, SetExpr, SelectItem, Expr, TableFactor, TableWithJoins};
+use crate::catalog::{Column, DataType};
+use crate::error::DbError;
+use crate::security::injection_prevention::InjectionPreventionGuard;
+use crate::Result;
+use sqlparser::ast::{Expr, SelectItem, SetExpr, Statement, TableFactor, TableWithJoins};
 use sqlparser::dialect::GenericDialect;
 use sqlparser::parser::Parser;
-use crate::Result;
-use crate::error::DbError;
-use crate::catalog::{Column, DataType};
-use crate::security::injection_prevention::InjectionPreventionGuard;
 
 pub mod expression;
 pub mod string_functions;
@@ -226,10 +226,15 @@ impl SqlParser {
                         sqlparser::ast::DataType::Float(_) => DataType::Float,
                         sqlparser::ast::DataType::Double(_) => DataType::Double,
                         sqlparser::ast::DataType::Varchar(len) => {
-                            let size = len.map(|l| match l {
-                                sqlparser::ast::CharacterLength::IntegerLength { length, .. } => length as usize,
-                                _ => 255,
-                            }).unwrap_or(255);
+                            let size = len
+                                .map(|l| match l {
+                                    sqlparser::ast::CharacterLength::IntegerLength {
+                                        length,
+                                        ..
+                                    } => length as usize,
+                                    _ => 255,
+                                })
+                                .unwrap_or(255);
                             DataType::Varchar(size)
                         }
                         sqlparser::ast::DataType::Text => DataType::Text,
@@ -242,9 +247,10 @@ impl SqlParser {
                     cols.push(Column {
                         name: col.name.to_string(),
                         data_type,
-                        nullable: col.options.iter().any(|opt| {
-                            matches!(opt.option, sqlparser::ast::ColumnOption::Null)
-                        }),
+                        nullable: col
+                            .options
+                            .iter()
+                            .any(|opt| matches!(opt.option, sqlparser::ast::ColumnOption::Null)),
                         default: None,
                     });
                 }
@@ -254,25 +260,24 @@ impl SqlParser {
                     columns: cols,
                 })
             }
-            Statement::Drop { names, object_type, .. } => {
+            Statement::Drop {
+                names, object_type, ..
+            } => {
                 use sqlparser::ast::ObjectType;
                 match object_type {
-                    ObjectType::Table => {
-                        Ok(SqlStatement::DropTable {
-                            name: names[0].to_string(),
-                        })
-                    }
-                    ObjectType::View => {
-                        Ok(SqlStatement::DropView {
-                            name: names[0].to_string(),
-                        })
-                    }
-                    ObjectType::Index => {
-                        Ok(SqlStatement::DropIndex {
-                            name: names[0].to_string(),
-                        })
-                    }
-                    _ => Err(DbError::SqlParse(format!("Unsupported DROP object type: {:?}", object_type))),
+                    ObjectType::Table => Ok(SqlStatement::DropTable {
+                        name: names[0].to_string(),
+                    }),
+                    ObjectType::View => Ok(SqlStatement::DropView {
+                        name: names[0].to_string(),
+                    }),
+                    ObjectType::Index => Ok(SqlStatement::DropIndex {
+                        name: names[0].to_string(),
+                    }),
+                    _ => Err(DbError::SqlParse(format!(
+                        "Unsupported DROP object type: {:?}",
+                        object_type
+                    ))),
                 }
             }
             Statement::Query(query) => {
@@ -325,27 +330,31 @@ impl SqlParser {
             }
             Statement::Delete(delete) => {
                 let table = match &delete.from {
-                    sqlparser::ast::FromTable::WithFromKeyword(tables) => {
-                        tables.first().and_then(|t| {
+                    sqlparser::ast::FromTable::WithFromKeyword(tables) => tables
+                        .first()
+                        .and_then(|t| {
                             if let sqlparser::ast::TableFactor::Table { name, .. } = &t.relation {
                                 Some(name.to_string())
                             } else {
                                 None
                             }
-                        }).unwrap_or_default()
-                    }
-                    sqlparser::ast::FromTable::WithoutKeyword(tables) => {
-                        tables.first().and_then(|t| {
+                        })
+                        .unwrap_or_default(),
+                    sqlparser::ast::FromTable::WithoutKeyword(tables) => tables
+                        .first()
+                        .and_then(|t| {
                             if let sqlparser::ast::TableFactor::Table { name, .. } = &t.relation {
                                 Some(name.to_string())
                             } else {
                                 None
                             }
-                        }).unwrap_or_default()
-                    }
+                        })
+                        .unwrap_or_default(),
                 };
                 if table.is_empty() {
-                    return Err(DbError::SqlParse("Delete statement requires a table".to_string()));
+                    return Err(DbError::SqlParse(
+                        "Delete statement requires a table".to_string(),
+                    ));
                 }
                 Ok(SqlStatement::Delete {
                     table,
@@ -356,18 +365,22 @@ impl SqlParser {
                 let name = if let Some(first_name) = truncate.table_names.first() {
                     first_name.to_string()
                 } else {
-                    return Err(DbError::SqlParse("Truncate statement requires a table".to_string()));
+                    return Err(DbError::SqlParse(
+                        "Truncate statement requires a table".to_string(),
+                    ));
                 };
-                Ok(SqlStatement::TruncateTable {
-                    name,
-                })
+                Ok(SqlStatement::TruncateTable { name })
             }
             Statement::CreateIndex(create_index) => {
-                let index_name = create_index.name.as_ref()
+                let index_name = create_index
+                    .name
+                    .as_ref()
                     .map(|n| n.to_string())
                     .unwrap_or_else(|| format!("idx_{}", create_index.table_name.to_string()));
                 let table = create_index.table_name.to_string();
-                let cols: Vec<String> = create_index.columns.iter()
+                let cols: Vec<String> = create_index
+                    .columns
+                    .iter()
                     .map(|col| col.column.to_string())
                     .collect();
                 let unique = create_index.unique;
@@ -379,13 +392,11 @@ impl SqlParser {
                     unique,
                 })
             }
-            Statement::CreateView(create_view) => {
-                Ok(SqlStatement::CreateView {
-                    name: create_view.name.to_string(),
-                    query: create_view.query.to_string(),
-                    or_replace: create_view.or_replace,
-                })
-            }
+            Statement::CreateView(create_view) => Ok(SqlStatement::CreateView {
+                name: create_view.name.to_string(),
+                query: create_view.query.to_string(),
+                or_replace: create_view.or_replace,
+            }),
             _ => Err(DbError::SqlParse("Unsupported statement type".to_string())),
         }
     }
@@ -433,7 +444,7 @@ impl SqlParser {
             Expr::Identifier(ident) => ident.to_string(),
             Expr::UnaryOp { op, expr } => {
                 format!("{}{}", op, self.extract_literal_value(expr))
-            },
+            }
             _ => expr.to_string(),
         }
     }
@@ -475,7 +486,12 @@ mod tests {
 
         assert_eq!(stmts.len(), 1);
         match &stmts[0] {
-            SqlStatement::Select { table, columns, distinct, .. } => {
+            SqlStatement::Select {
+                table,
+                columns,
+                distinct,
+                ..
+            } => {
                 assert_eq!(table, "users");
                 assert_eq!(columns.len(), 2);
                 assert!(!distinct);
@@ -494,7 +510,12 @@ mod tests {
 
         assert_eq!(stmts.len(), 1);
         match &stmts[0] {
-            SqlStatement::Select { table, columns, distinct, .. } => {
+            SqlStatement::Select {
+                table,
+                columns,
+                distinct,
+                ..
+            } => {
                 assert_eq!(table, "users");
                 assert_eq!(columns.len(), 1);
                 assert!(distinct);
@@ -564,7 +585,12 @@ mod tests {
 
         assert_eq!(stmts.len(), 1);
         match &stmts[0] {
-            SqlStatement::CreateIndex { name, table, columns, unique } => {
+            SqlStatement::CreateIndex {
+                name,
+                table,
+                columns,
+                unique,
+            } => {
                 assert_eq!(name, "idx_users_email");
                 assert_eq!(table, "users");
                 assert_eq!(columns.len(), 1);
@@ -584,7 +610,11 @@ mod tests {
 
         assert_eq!(stmts.len(), 1);
         match &stmts[0] {
-            SqlStatement::CreateView { name, query, or_replace } => {
+            SqlStatement::CreateView {
+                name,
+                query,
+                or_replace,
+            } => {
                 assert_eq!(name, "active_users");
                 assert!(query.contains("SELECT"));
             }

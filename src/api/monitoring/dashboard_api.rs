@@ -2,14 +2,17 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::Arc;
-use std::collections::{BTreeMap, HashMap};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
-use crate::api::{DashboardManager, HealthCheckCoordinator, MetricsRegistry, PrometheusExporter, TimeSeriesDatabase, TimeSeriesQuery, TimeSeriesResult, HealthCheckResult, HealthStatus, Alert, Dashboard};
-use crate::api::monitoring::{MetricStream, AlertManager, RetentionPolicy, TimeSeriesPoint};
-use crate::error::DbError;
 use super::metrics_core::*;
+use crate::api::monitoring::{AlertManager, MetricStream, RetentionPolicy, TimeSeriesPoint};
+use crate::api::{
+    Alert, Dashboard, DashboardManager, HealthCheckCoordinator, HealthCheckResult, HealthStatus,
+    MetricsRegistry, PrometheusExporter, TimeSeriesDatabase, TimeSeriesQuery, TimeSeriesResult,
+};
+use crate::error::DbError;
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 // Export format for metrics data
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -48,7 +51,9 @@ impl MetricsExporter {
         let mut csv = String::from("timestamp,value\n");
 
         for point in &result.points {
-            let ts = point.timestamp.duration_since(UNIX_EPOCH)
+            let ts = point
+                .timestamp
+                .duration_since(UNIX_EPOCH)
                 .map_err(|e| DbError::Internal(format!("Time error: {}", e)))?
                 .as_secs();
             csv.push_str(&format!("{},{}\n", ts, point.value));
@@ -61,7 +66,9 @@ impl MetricsExporter {
         let mut output = String::new();
 
         for point in &result.points {
-            let labels: Vec<String> = point.labels.iter()
+            let labels: Vec<String> = point
+                .labels
+                .iter()
                 .map(|(k, v)| format!("{}=\"{}\"", k, v))
                 .collect();
 
@@ -71,16 +78,15 @@ impl MetricsExporter {
                 format!("{{{}}}", labels.join(","))
             };
 
-            let ts = point.timestamp.duration_since(UNIX_EPOCH)
+            let ts = point
+                .timestamp
+                .duration_since(UNIX_EPOCH)
                 .map_err(|e| DbError::Internal(format!("Time error: {}", e)))?
                 .as_millis();
 
             output.push_str(&format!(
                 "{}{} {} {}\n",
-                result.metric_name,
-                label_str,
-                point.value,
-                ts
+                result.metric_name, label_str, point.value, ts
             ));
         }
 
@@ -153,20 +159,16 @@ impl MonitoringApi {
     // Metric recording convenience methods
 
     pub fn increment_counter(&self, name: &str, labels: &[(&str, &str)]) {
-        let counter = self.metrics_registry.get_or_create_counter(
-            name,
-            labels,
-            format!("{} counter", name),
-        );
+        let counter =
+            self.metrics_registry
+                .get_or_create_counter(name, labels, format!("{} counter", name));
         counter.inc();
     }
 
     pub fn record_gauge(&self, name: &str, value: f64, labels: &[(&str, &str)]) {
-        let gauge = self.metrics_registry.get_or_create_gauge(
-            name,
-            labels,
-            format!("{} gauge", name),
-        );
+        let gauge =
+            self.metrics_registry
+                .get_or_create_gauge(name, labels, format!("{} gauge", name));
         gauge.set(value);
     }
 
@@ -180,16 +182,21 @@ impl MonitoringApi {
         histogram.observe(value);
 
         // Also record in time-series database
-        self.tsdb.insert(name.to_string(), TimeSeriesPoint {
-            timestamp: SystemTime::now(),
-            value,
-            labels: labels.iter()
-                .map(|(k, v)| (k.to_string(), v.to_string()))
-                .collect(),
-        });
+        self.tsdb.insert(
+            name.to_string(),
+            TimeSeriesPoint {
+                timestamp: SystemTime::now(),
+                value,
+                labels: labels
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.to_string()))
+                    .collect(),
+            },
+        );
 
         // Publish to stream
-        let label_map: BTreeMap<String, String> = labels.iter()
+        let label_map: BTreeMap<String, String> = labels
+            .iter()
             .map(|(k, v)| (k.to_string(), v.to_string()))
             .collect();
         self.metric_stream.publish(name, value, &label_map);
@@ -213,7 +220,11 @@ impl MonitoringApi {
         self.tsdb.query(query)
     }
 
-    pub fn export_metrics(&self, query: TimeSeriesQuery, format: ExportFormat) -> Result<String, DbError> {
+    pub fn export_metrics(
+        &self,
+        query: TimeSeriesQuery,
+        format: ExportFormat,
+    ) -> Result<String, DbError> {
         self.exporter.export(query, format)
     }
 
@@ -231,7 +242,10 @@ impl MonitoringApi {
             duration: Duration::from_secs(0),
             details: HashMap::new(),
         }
-        .with_detail("component_results".to_string(), serde_json::to_value(&results).unwrap())
+        .with_detail(
+            "component_results".to_string(),
+            serde_json::to_value(&results).unwrap(),
+        )
     }
 
     pub fn liveness(&self) -> HealthCheckResult {
@@ -273,9 +287,9 @@ impl MonitoringApi {
 
 #[cfg(test)]
 mod tests {
-    use crate::api::AlertSeverity;
     use super::*;
     use crate::api::monitoring::{ComparisonOperator, LivenessProbe, ThresholdAlertRule};
+    use crate::api::AlertSeverity;
 
     #[test]
     fn test_counter_metric() {
@@ -306,10 +320,7 @@ mod tests {
 
     #[test]
     fn test_histogram_metric() {
-        let histogram = HistogramMetric::new(
-            "test histogram",
-            vec![1.0, 5.0, 10.0],
-        );
+        let histogram = HistogramMetric::new("test histogram", vec![1.0, 5.0, 10.0]);
 
         histogram.observe(0.5);
         histogram.observe(2.0);

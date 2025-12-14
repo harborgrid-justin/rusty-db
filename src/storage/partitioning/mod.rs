@@ -8,20 +8,20 @@
 // - Partition pruning optimization
 // - Dynamic partition management
 
-pub mod types;
-pub mod manager;
-pub mod pruning;
-pub mod operations;
 pub mod execution;
+pub mod manager;
+pub mod operations;
 pub mod optimizer;
+pub mod pruning;
+pub mod types;
 
 // Re-export main types
-pub use types::*;
-pub use manager::{PartitionManager, PartitionStatsManager, PartitionMerger, PartitionSplitter};
-pub use pruning::{PartitionPruner, advanced};
-pub use operations::*;
 pub use execution::*;
+pub use manager::{PartitionManager, PartitionMerger, PartitionSplitter, PartitionStatsManager};
+pub use operations::*;
 pub use optimizer::*;
+pub use pruning::{advanced, PartitionPruner};
+pub use types::*;
 
 // Tests
 #[cfg(test)]
@@ -49,12 +49,18 @@ mod tests {
             ],
         };
 
-        assert!(manager.create_partitioned_table("sales".to_string(), strategy).is_ok());
+        assert!(manager
+            .create_partitioned_table("sales".to_string(), strategy)
+            .is_ok());
 
-        let partition = manager.get_partition_for_value("sales", "2023-06-15").unwrap();
+        let partition = manager
+            .get_partition_for_value("sales", "2023-06-15")
+            .unwrap();
         assert_eq!(partition, "p_2023");
 
-        let partition = manager.get_partition_for_value("sales", "2024-06-15").unwrap();
+        let partition = manager
+            .get_partition_for_value("sales", "2024-06-15")
+            .unwrap();
         assert_eq!(partition, "p_2024");
     }
 
@@ -67,7 +73,9 @@ mod tests {
             num_partitions: 4,
         };
 
-        assert!(manager.create_partitioned_table("users".to_string(), strategy).is_ok());
+        assert!(manager
+            .create_partitioned_table("users".to_string(), strategy)
+            .is_ok());
 
         let partition = manager.get_partition_for_value("users", "12345").unwrap();
         assert!(partition.starts_with("partition_"));
@@ -91,7 +99,9 @@ mod tests {
             ],
         };
 
-        assert!(manager.create_partitioned_table("stores".to_string(), strategy).is_ok());
+        assert!(manager
+            .create_partitioned_table("stores".to_string(), strategy)
+            .is_ok());
 
         let partition = manager.get_partition_for_value("stores", "CA").unwrap();
         assert_eq!(partition, "p_west");
@@ -109,14 +119,18 @@ mod tests {
             ranges: vec![],
         };
 
-        manager.create_partitioned_table("events".to_string(), strategy).unwrap();
+        manager
+            .create_partitioned_table("events".to_string(), strategy)
+            .unwrap();
 
         let def = PartitionDefinition::Range {
             lower: Some("2023-01-01".to_string()),
             upper: Some("2024-01-01".to_string()),
         };
 
-        assert!(manager.add_partition("events", "p_2023".to_string(), def).is_ok());
+        assert!(manager
+            .add_partition("events", "p_2023".to_string(), def)
+            .is_ok());
 
         let partitions = manager.list_partitions("events").unwrap();
         assert_eq!(partitions.len(), 1);
@@ -161,12 +175,7 @@ mod tests {
     fn test_partition_stats() {
         let mut stats_mgr = PartitionStatsManager::new();
 
-        stats_mgr.update_stats(
-            "sales".to_string(),
-            "p_2023".to_string(),
-            1000,
-            1024000,
-        );
+        stats_mgr.update_stats("sales".to_string(), "p_2023".to_string(), 1000, 1024000);
 
         let stats = stats_mgr.get_stats("sales", "p_2023");
         assert!(stats.is_some());

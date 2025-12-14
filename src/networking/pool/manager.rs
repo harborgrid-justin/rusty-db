@@ -3,16 +3,15 @@
 // Manages connection pools for all nodes in the cluster. Provides centralized
 // pool management, routing, and lifecycle coordination.
 
+use super::{
+    Connection, ConnectionStats, NodePool, PoolConfig, PoolEvent, PoolEventListener, PoolMetrics,
+};
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
-use super::{
-    PoolConfig, PoolEvent, PoolEventListener, NodePool, Connection,
-    ConnectionStats, PoolMetrics,
-};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
 use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
 
 /// Central manager for all node connection pools
 pub struct PoolManager {
@@ -62,7 +61,8 @@ impl PoolManager {
             node_id: node_id.to_string(),
             connection_id: connection.connection_id(),
             wait_time_ms,
-        }).await;
+        })
+        .await;
 
         Ok(connection)
     }
@@ -75,10 +75,12 @@ impl PoolManager {
     ) -> Result<PooledConnection> {
         tokio::time::timeout(timeout, self.acquire(node_id))
             .await
-            .map_err(|_| DbError::Timeout(format!(
-                "Failed to acquire connection to {} within {:?}",
-                node_id, timeout
-            )))?
+            .map_err(|_| {
+                DbError::Timeout(format!(
+                    "Failed to acquire connection to {} within {:?}",
+                    node_id, timeout
+                ))
+            })?
     }
 
     /// Get or create a pool for the specified node
@@ -100,10 +102,7 @@ impl PoolManager {
         }
 
         // Create new pool
-        let pool = Arc::new(NodePool::new(
-            node_id.to_string(),
-            self.config.clone(),
-        ));
+        let pool = Arc::new(NodePool::new(node_id.to_string(), self.config.clone()));
 
         pools.insert(node_id.to_string(), Arc::clone(&pool));
 
@@ -112,7 +111,8 @@ impl PoolManager {
             node_id: node_id.to_string(),
             old_size: 0,
             new_size: self.config.min_connections,
-        }).await;
+        })
+        .await;
 
         Ok(pool)
     }
@@ -256,10 +256,7 @@ pub struct PooledConnection {
 
 impl PooledConnection {
     /// Create a new pooled connection guard
-    pub fn new(
-        connection: Box<dyn Connection>,
-        pool: Arc<NodePool>,
-    ) -> Self {
+    pub fn new(connection: Box<dyn Connection>, pool: Arc<NodePool>) -> Self {
         let connection_id = connection.connection_id();
         let node_id = connection.node_id().clone();
 

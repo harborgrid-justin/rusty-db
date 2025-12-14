@@ -7,13 +7,13 @@
 // careful memory ordering to achieve linearizability without locks.
 
 pub mod epoch;
-pub mod queue;
-pub mod stack;
 pub mod hashmap;
-pub mod work_stealing;
-pub mod skiplist;
-pub mod rwlock_wp;
 pub mod hazard;
+pub mod queue;
+pub mod rwlock_wp;
+pub mod skiplist;
+pub mod stack;
+pub mod work_stealing;
 
 // Re-export main types
 pub use epoch::{Atomic, Epoch, EpochGuard, Owned, Shared};
@@ -198,5 +198,3 @@ mod tests {
         assert_eq!(backoff.step, 0);
     }
 }
-
-

@@ -3,7 +3,7 @@
 // Implements service discovery and registration using HashiCorp Consul.
 // Supports health checks, KV store metadata, and prepared queries.
 
-use super::{HealthStatus, Node, ServiceDiscovery, ConsulConfig};
+use super::{ConsulConfig, HealthStatus, Node, ServiceDiscovery};
 use crate::error::{DbError, Result};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -63,7 +63,10 @@ impl ConsulDiscovery {
     /// Queries services from Consul catalog
     async fn query_services(&self) -> Result<Vec<Node>> {
         let url = if let Some(ref dc) = self.config.datacenter {
-            format!("health/service/{}?dc={}&passing=true", self.config.service_name, dc)
+            format!(
+                "health/service/{}?dc={}&passing=true",
+                self.config.service_name, dc
+            )
         } else {
             format!("health/service/{}?passing=true", self.config.service_name)
         };
@@ -86,20 +89,16 @@ impl ConsulDiscovery {
             )));
         }
 
-        let services: Vec<ConsulServiceEntry> = response
-            .json()
-            .await
-            .map_err(|e| DbError::Serialization(format!("Failed to parse Consul response: {}", e)))?;
+        let services: Vec<ConsulServiceEntry> = response.json().await.map_err(|e| {
+            DbError::Serialization(format!("Failed to parse Consul response: {}", e))
+        })?;
 
         let mut nodes = Vec::new();
 
         for entry in services {
             // Parse IP address
-            let ip_addr: IpAddr = entry
-                .service
-                .address
-                .parse()
-                .map_err(|e| {
+            let ip_addr: IpAddr =
+                entry.service.address.parse().map_err(|e| {
                     DbError::Network(format!("Invalid IP address from Consul: {}", e))
                 })?;
 
@@ -109,10 +108,7 @@ impl ConsulDiscovery {
             }
 
             // Add tags to metadata
-            metadata.insert(
-                "tags".to_string(),
-                entry.service.tags.join(","),
-            );
+            metadata.insert("tags".to_string(), entry.service.tags.join(","));
 
             if let Some(ref dc) = self.config.datacenter {
                 metadata.insert("datacenter".to_string(), dc.clone());
@@ -207,7 +203,10 @@ impl ConsulDiscovery {
             )));
         }
 
-        tracing::info!("Successfully registered service with Consul: {}", service_id);
+        tracing::info!(
+            "Successfully registered service with Consul: {}",
+            service_id
+        );
         Ok(service_id)
     }
 
@@ -231,7 +230,10 @@ impl ConsulDiscovery {
             )));
         }
 
-        tracing::info!("Successfully deregistered service from Consul: {}", service_id);
+        tracing::info!(
+            "Successfully deregistered service from Consul: {}",
+            service_id
+        );
         Ok(())
     }
 
@@ -258,10 +260,7 @@ impl ConsulDiscovery {
                 match http_client.put(&url).send().await {
                     Ok(response) => {
                         if !response.status().is_success() {
-                            tracing::warn!(
-                                "Failed to pass health check: {}",
-                                response.status()
-                            );
+                            tracing::warn!("Failed to pass health check: {}", response.status());
                         }
                     }
                     Err(e) => {
@@ -278,10 +277,7 @@ impl ConsulDiscovery {
 #[async_trait]
 impl ServiceDiscovery for ConsulDiscovery {
     async fn initialize(&mut self) -> Result<()> {
-        tracing::info!(
-            "Initializing Consul discovery at: {}",
-            self.config.address
-        );
+        tracing::info!("Initializing Consul discovery at: {}", self.config.address);
 
         // Validate configuration
         if self.config.service_name.is_empty() {
@@ -297,9 +293,7 @@ impl ServiceDiscovery for ConsulDiscovery {
             .get(&url)
             .send()
             .await
-            .map_err(|e| {
-                DbError::Network(format!("Failed to connect to Consul: {}", e))
-            })?;
+            .map_err(|e| DbError::Network(format!("Failed to connect to Consul: {}", e)))?;
 
         if !response.status().is_success() {
             return Err(DbError::Network(format!(
@@ -355,10 +349,9 @@ impl ServiceDiscovery for ConsulDiscovery {
             return Ok(HealthStatus::Unknown);
         }
 
-        let services: Vec<ConsulServiceEntry> = response
-            .json()
-            .await
-            .map_err(|e| DbError::Serialization(format!("Failed to parse health response: {}", e)))?;
+        let services: Vec<ConsulServiceEntry> = response.json().await.map_err(|e| {
+            DbError::Serialization(format!("Failed to parse health response: {}", e))
+        })?;
 
         // Find the specific service
         for entry in services {

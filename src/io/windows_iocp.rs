@@ -2,13 +2,13 @@
 //
 // High-performance asynchronous I/O using Windows IOCP.
 
-use crate::error::{Result, DbError};
-use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus, IoHandle};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use crate::error::{DbError, Result};
+use crate::io::{IoCompletion, IoHandle, IoOpType, IoRequest, IoStatus};
 use parking_lot::Mutex;
-use std::time::Duration;
 use std::ptr;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use std::time::Duration;
 
 // ============================================================================
 // Send-safe pointer wrapper
@@ -136,7 +136,8 @@ unsafe impl Sync for OverlappedIo {}
 impl OverlappedIo {
     /// Create new overlapped I/O
     pub unsafe fn new(request_id: u64, offset: u64) -> Self {
-        let mut overlapped: windows_sys::Win32::System::IO::OVERLAPPED = unsafe { std::mem::zeroed() };
+        let mut overlapped: windows_sys::Win32::System::IO::OVERLAPPED =
+            unsafe { std::mem::zeroed() };
 
         // Set offset (split into high and low parts)
         overlapped.Anonymous.Anonymous.Offset = (offset & 0xFFFFFFFF) as u32;
@@ -242,8 +243,8 @@ pub struct WindowsIocp {
 impl WindowsIocp {
     /// Create new IOCP engine
     pub fn new(config: IocpConfig) -> Result<Self> {
-        use windows_sys::Win32::System::IO::CreateIoCompletionPort;
         use windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE;
+        use windows_sys::Win32::System::IO::CreateIoCompletionPort;
 
         // Create IOCP
         let iocp_handle = unsafe {
@@ -282,7 +283,9 @@ impl WindowsIocp {
         };
 
         if result.is_null() {
-            return Err(DbError::Internal("Failed to associate file with IOCP".to_string()));
+            return Err(DbError::Internal(
+                "Failed to associate file with IOCP".to_string(),
+            ));
         }
 
         Ok(())
@@ -345,7 +348,11 @@ impl WindowsIocp {
     }
 
     /// Submit a write operation
-    fn submit_write(&self, request: &IoRequest, overlapped: &mut Box<OverlappedIo>) -> Result<bool> {
+    fn submit_write(
+        &self,
+        request: &IoRequest,
+        overlapped: &mut Box<OverlappedIo>,
+    ) -> Result<bool> {
         use windows_sys::Win32::Storage::FileSystem::WriteFile;
 
         let mut bytes_written = 0u32;
@@ -379,7 +386,10 @@ impl WindowsIocp {
 
         if result == 0 {
             let error = unsafe { windows_sys::Win32::Foundation::GetLastError() };
-            return Err(DbError::Internal(format!("FlushFileBuffers failed: {}", error)));
+            return Err(DbError::Internal(format!(
+                "FlushFileBuffers failed: {}",
+                error
+            )));
         }
 
         // Mark as completed immediately
@@ -412,7 +422,8 @@ impl WindowsIocp {
         for _ in 0..max_completions {
             let mut bytes_transferred = 0u32;
             let mut completion_key = 0usize;
-            let mut overlapped_ptr: *mut windows_sys::Win32::System::IO::OVERLAPPED = ptr::null_mut();
+            let mut overlapped_ptr: *mut windows_sys::Win32::System::IO::OVERLAPPED =
+                ptr::null_mut();
 
             let result = unsafe {
                 GetQueuedCompletionStatus(

@@ -54,9 +54,10 @@ impl VersionVector {
 
     /// Check if this vector dominates another (all versions >= other's versions)
     pub fn dominates(&self, other: &VersionVector) -> bool {
-        other.versions.iter().all(|(node_id, version)| {
-            self.get(node_id) >= *version
-        })
+        other
+            .versions
+            .iter()
+            .all(|(node_id, version)| self.get(node_id) >= *version)
     }
 }
 
@@ -146,7 +147,8 @@ impl MembershipSnapshot {
 
     /// Get alive member count
     pub fn alive_count(&self) -> usize {
-        self.members.iter()
+        self.members
+            .iter()
             .filter(|m| m.info.status == NodeStatus::Alive)
             .count()
     }
@@ -226,7 +228,8 @@ impl MembershipList {
 
     /// Get all alive members
     pub fn alive(&self) -> Vec<&Member> {
-        self.members.values()
+        self.members
+            .values()
             .filter(|m| m.info.status == NodeStatus::Alive)
             .collect()
     }
@@ -392,15 +395,9 @@ mod tests {
     fn test_membership_list() {
         let mut list = MembershipList::new();
 
-        let node1 = NodeInfo::new(
-            "node1".to_string(),
-            "127.0.0.1:7946".parse().unwrap(),
-        );
+        let node1 = NodeInfo::new("node1".to_string(), "127.0.0.1:7946".parse().unwrap());
 
-        let node2 = NodeInfo::new(
-            "node2".to_string(),
-            "127.0.0.1:7947".parse().unwrap(),
-        );
+        let node2 = NodeInfo::new("node2".to_string(), "127.0.0.1:7947".parse().unwrap());
 
         // Add members
         let delta1 = list.add_or_update(node1.clone());
@@ -414,7 +411,9 @@ mod tests {
 
         // Update member
         let mut node1_updated = node1.clone();
-        node1_updated.metadata.insert("key".to_string(), "value".to_string());
+        node1_updated
+            .metadata
+            .insert("key".to_string(), "value".to_string());
 
         let delta3 = list.add_or_update(node1_updated);
         assert!(matches!(delta3, Some(MembershipDelta::Updated(_))));
@@ -432,10 +431,7 @@ mod tests {
     fn test_membership_snapshot() {
         let mut list = MembershipList::new();
 
-        let node1 = NodeInfo::new(
-            "node1".to_string(),
-            "127.0.0.1:7946".parse().unwrap(),
-        );
+        let node1 = NodeInfo::new("node1".to_string(), "127.0.0.1:7946".parse().unwrap());
 
         list.add_or_update(node1);
 

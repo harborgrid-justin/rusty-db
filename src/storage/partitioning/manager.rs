@@ -49,16 +49,10 @@ impl PartitionManager {
 
     // Get partition for a given row value
     #[inline]
-    pub fn get_partition_for_value(
-        &self,
-        table_name: &str,
-        column_value: &str,
-    ) -> Result<String> {
-        let metadata = self.partitions.get(table_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Partitioned table '{}' not found",
-                table_name
-            )))?;
+    pub fn get_partition_for_value(&self, table_name: &str, column_value: &str) -> Result<String> {
+        let metadata = self.partitions.get(table_name).ok_or_else(|| {
+            DbError::NotFound(format!("Partitioned table '{}' not found", table_name))
+        })?;
 
         match &metadata.strategy {
             PartitionStrategy::Range { ranges, .. } => {
@@ -67,9 +61,7 @@ impl PartitionManager {
             PartitionStrategy::Hash { num_partitions, .. } => {
                 Ok(Self::hash_partition(column_value, *num_partitions))
             }
-            PartitionStrategy::List { lists, .. } => {
-                Self::find_list_partition(lists, column_value)
-            }
+            PartitionStrategy::List { lists, .. } => Self::find_list_partition(lists, column_value),
             PartitionStrategy::Composite { primary, secondary } => {
                 // Use primary strategy
                 let _ = secondary;
@@ -84,7 +76,7 @@ impl PartitionManager {
                         Self::find_list_partition(lists, column_value)
                     }
                     _ => Err(DbError::InvalidOperation(
-                        "Unsupported composite partitioning".to_string()
+                        "Unsupported composite partitioning".to_string(),
                     )),
                 }
             }
@@ -98,11 +90,9 @@ impl PartitionManager {
         partition_name: String,
         partition_def: PartitionDefinition,
     ) -> Result<()> {
-        let metadata = self.partitions.get_mut(table_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Partitioned table '{}' not found",
-                table_name
-            )))?;
+        let metadata = self.partitions.get_mut(table_name).ok_or_else(|| {
+            DbError::NotFound(format!("Partitioned table '{}' not found", table_name))
+        })?;
 
         match &mut metadata.strategy {
             PartitionStrategy::Range { ranges, .. } => {
@@ -116,7 +106,7 @@ impl PartitionManager {
                     Ok(())
                 } else {
                     Err(DbError::InvalidInput(
-                        "Expected range partition definition".to_string()
+                        "Expected range partition definition".to_string(),
                     ))
                 }
             }
@@ -130,27 +120,21 @@ impl PartitionManager {
                     Ok(())
                 } else {
                     Err(DbError::InvalidInput(
-                        "Expected list partition definition".to_string()
+                        "Expected list partition definition".to_string(),
                     ))
                 }
             }
             _ => Err(DbError::InvalidOperation(
-                "Cannot add partition to hash partitioning".to_string()
+                "Cannot add partition to hash partitioning".to_string(),
             )),
         }
     }
 
     // Drop a partition
-    pub fn drop_partition(
-        &mut self,
-        table_name: &str,
-        partition_name: &str,
-    ) -> Result<()> {
-        let metadata = self.partitions.get_mut(table_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Partitioned table '{}' not found",
-                table_name
-            )))?;
+    pub fn drop_partition(&mut self, table_name: &str, partition_name: &str) -> Result<()> {
+        let metadata = self.partitions.get_mut(table_name).ok_or_else(|| {
+            DbError::NotFound(format!("Partitioned table '{}' not found", table_name))
+        })?;
 
         match &mut metadata.strategy {
             PartitionStrategy::Range { ranges, .. } => {
@@ -163,12 +147,12 @@ impl PartitionManager {
             }
             PartitionStrategy::Hash { .. } => {
                 return Err(DbError::InvalidOperation(
-                    "Cannot drop individual hash partitions".to_string()
+                    "Cannot drop individual hash partitions".to_string(),
                 ));
             }
             PartitionStrategy::Composite { .. } => {
                 return Err(DbError::InvalidOperation(
-                    "Composite partition management not yet supported".to_string()
+                    "Composite partition management not yet supported".to_string(),
                 ));
             }
         }
@@ -178,40 +162,30 @@ impl PartitionManager {
 
     // List all partitions for a table
     pub fn list_partitions(&self, table_name: &str) -> Result<Vec<String>> {
-        let metadata = self.partitions.get(table_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Partitioned table '{}' not found",
-                table_name
-            )))?;
+        let metadata = self.partitions.get(table_name).ok_or_else(|| {
+            DbError::NotFound(format!("Partitioned table '{}' not found", table_name))
+        })?;
 
         Ok(match &metadata.strategy {
             PartitionStrategy::Range { ranges, .. } => {
                 ranges.iter().map(|p| p.name.clone()).collect()
             }
-            PartitionStrategy::Hash { num_partitions, .. } => {
-                (0..*num_partitions)
-                    .map(|i| format!("partition_{}", i))
-                    .collect()
-            }
-            PartitionStrategy::List { lists, .. } => {
-                lists.iter().map(|p| p.name.clone()).collect()
-            }
-            PartitionStrategy::Composite { primary, .. } => {
-                match primary.as_ref() {
-                    PartitionStrategy::Range { ranges, .. } => {
-                        ranges.iter().map(|p| p.name.clone()).collect()
-                    }
-                    PartitionStrategy::Hash { num_partitions, .. } => {
-                        (0..*num_partitions)
-                            .map(|i| format!("partition_{}", i))
-                            .collect()
-                    }
-                    PartitionStrategy::List { lists, .. } => {
-                        lists.iter().map(|p| p.name.clone()).collect()
-                    }
-                    _ => Vec::new(),
+            PartitionStrategy::Hash { num_partitions, .. } => (0..*num_partitions)
+                .map(|i| format!("partition_{}", i))
+                .collect(),
+            PartitionStrategy::List { lists, .. } => lists.iter().map(|p| p.name.clone()).collect(),
+            PartitionStrategy::Composite { primary, .. } => match primary.as_ref() {
+                PartitionStrategy::Range { ranges, .. } => {
+                    ranges.iter().map(|p| p.name.clone()).collect()
                 }
-            }
+                PartitionStrategy::Hash { num_partitions, .. } => (0..*num_partitions)
+                    .map(|i| format!("partition_{}", i))
+                    .collect(),
+                PartitionStrategy::List { lists, .. } => {
+                    lists.iter().map(|p| p.name.clone()).collect()
+                }
+                _ => Vec::new(),
+            },
         })
     }
 
@@ -226,10 +200,7 @@ impl PartitionManager {
         }
     }
 
-    pub fn find_range_partition(
-        ranges: &[RangePartition],
-        value: &str,
-    ) -> Result<String> {
+    pub fn find_range_partition(ranges: &[RangePartition], value: &str) -> Result<String> {
         for range in ranges {
             let in_range = match (&range.lower_bound, &range.upper_bound) {
                 (None, None) => true,
@@ -250,18 +221,15 @@ impl PartitionManager {
     }
 
     pub fn hash_partition(value: &str, num_partitions: usize) -> String {
-        let hash = value.bytes().fold(0u64, |acc, b| {
-            acc.wrapping_mul(31).wrapping_add(b as u64)
-        });
+        let hash = value
+            .bytes()
+            .fold(0u64, |acc, b| acc.wrapping_mul(31).wrapping_add(b as u64));
 
         let partition_idx = (hash % num_partitions as u64) as usize;
         format!("partition_{}", partition_idx)
     }
 
-    pub fn find_list_partition(
-        lists: &[ListPartition],
-        value: &str,
-    ) -> Result<String> {
+    pub fn find_list_partition(lists: &[ListPartition], value: &str) -> Result<String> {
         for list in lists {
             if list.values.contains(&value.to_string()) {
                 return Ok(list.name.clone());
@@ -352,7 +320,7 @@ impl PartitionMerger {
         _partition2: &RangePartition,
     ) -> Result<RangePartition> {
         Err(DbError::NotImplemented(
-            "Partition merging not yet implemented".to_string()
+            "Partition merging not yet implemented".to_string(),
         ))
     }
 }
@@ -367,7 +335,7 @@ impl PartitionSplitter {
         _split_value: String,
     ) -> Result<(RangePartition, RangePartition)> {
         Err(DbError::NotImplemented(
-            "Partition splitting not yet implemented".to_string()
+            "Partition splitting not yet implemented".to_string(),
         ))
     }
 }

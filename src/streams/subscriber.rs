@@ -3,20 +3,20 @@
 // Event subscription with consumer groups, offset tracking, at-least-once
 // and exactly-once delivery semantics, subscription filtering, and replay.
 
+use super::publisher::PublishedEvent;
+use crate::error::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Instant, SystemTime};
-use parking_lot::{RwLock};
-use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tokio::time::interval;
-use crate::error::Result;
-use super::publisher::PublishedEvent;
 
 // Delivery semantics
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -201,7 +201,8 @@ impl ConsumerGroup {
 
         for partition in 0..num_partitions {
             let idx = partition as usize % member_ids.len();
-            self.partition_assignment.insert(partition, member_ids[idx].clone());
+            self.partition_assignment
+                .insert(partition, member_ids[idx].clone());
         }
 
         // Update member assignments
@@ -359,7 +360,8 @@ impl EventSubscriber {
 
         // Initialize positions for all topics
         for topic in &self.config.topics {
-            self.positions.write()
+            self.positions
+                .write()
                 .entry(topic.clone())
                 .or_insert_with(|| ConsumerPosition::new(topic.clone()));
         }
@@ -422,7 +424,8 @@ impl EventSubscriber {
         {
             let mut stats = self.stats.write();
             stats.total_consumed += consumed.len() as u64;
-            stats.total_bytes += consumed.iter()
+            stats.total_bytes += consumed
+                .iter()
                 .map(|e| e.event.size_bytes() as u64)
                 .sum::<u64>();
         }
@@ -430,7 +433,12 @@ impl EventSubscriber {
         // Auto-commit if enabled
         if self.config.commit_strategy == OffsetCommitStrategy::AutoCommitAfterProcess {
             for event in &consumed {
-                self.store_offset(&event.event.topic, event.event.partition, event.event.offset).await?;
+                self.store_offset(
+                    &event.event.topic,
+                    event.event.partition,
+                    event.event.offset,
+                )
+                .await?;
             }
         }
 
@@ -457,12 +465,18 @@ impl EventSubscriber {
 
     // Commit offsets synchronously
     pub async fn commit_sync(&self) -> Result<()> {
-        let pending = self.pending_commits.lock().unwrap().drain(..).collect::<Vec<_>>();
+        let pending = self
+            .pending_commits
+            .lock()
+            .unwrap()
+            .drain(..)
+            .collect::<Vec<_>>();
 
         for offset in pending {
             // Update position
             if let Some(topic) = self.config.topics.first() {
-                self.positions.write()
+                self.positions
+                    .write()
                     .entry(topic.clone())
                     .or_insert_with(|| ConsumerPosition::new(topic.clone()))
                     .update_offset(offset.partition, offset.offset);
@@ -481,14 +495,18 @@ impl EventSubscriber {
     // Store offset for later commit
     pub async fn store_offset(&self, _topic: &str, partition: u32, offset: u64) -> Result<()> {
         if self.config.enable_auto_offset_store {
-            self.pending_commits.lock().unwrap().push_back(PartitionOffset::new(partition, offset));
+            self.pending_commits
+                .lock()
+                .unwrap()
+                .push_back(PartitionOffset::new(partition, offset));
         }
         Ok(())
     }
 
     // Seek to a specific offset
     pub async fn seek(&self, topic: &str, partition: u32, offset: u64) -> Result<()> {
-        self.positions.write()
+        self.positions
+            .write()
             .entry(topic.to_string())
             .or_insert_with(|| ConsumerPosition::new(topic.to_string()))
             .update_offset(partition, offset);
@@ -515,7 +533,10 @@ impl EventSubscriber {
         if let Some(group_id) = &self.config.group_id {
             let groups = self.groups.read();
             if let Some(group) = groups.get(group_id) {
-                return group.lock().unwrap().get_assigned_partitions(&self.config.consumer_id);
+                return group
+                    .lock()
+                    .unwrap()
+                    .get_assigned_partitions(&self.config.consumer_id);
             }
         }
         Vec::new()
@@ -551,12 +572,12 @@ impl EventSubscriber {
 
     async fn join_consumer_group(&self, group_id: &str, topic: &str) -> Result<()> {
         let mut groups = self.groups.write();
-        let group = groups
-            .entry(group_id.to_string())
-            .or_insert_with(|| Arc::new(Mutex::new(ConsumerGroup::new(
+        let group = groups.entry(group_id.to_string()).or_insert_with(|| {
+            Arc::new(Mutex::new(ConsumerGroup::new(
                 group_id.to_string(),
                 topic.to_string(),
-            ))));
+            )))
+        });
 
         let mut group = group.lock().unwrap();
         group.add_member(self.config.consumer_id.clone());
@@ -595,10 +616,15 @@ impl EventSubscriber {
                 interval.tick().await;
 
                 // Commit pending offsets
-                let pending = pending_commits.lock().unwrap().drain(..).collect::<Vec<_>>();
+                let pending = pending_commits
+                    .lock()
+                    .unwrap()
+                    .drain(..)
+                    .collect::<Vec<_>>();
                 for offset in pending {
                     if let Some(topic) = topics.first() {
-                        positions.write()
+                        positions
+                            .write()
                             .entry(topic.clone())
                             .or_insert_with(|| ConsumerPosition::new(topic.clone()))
                             .update_offset(offset.partition, offset.offset);
@@ -643,13 +669,15 @@ mod tests {
 
     #[test]
     fn test_subscription_filter() {
-        let filter = SubscriptionFilter::new()
-            .with_header("type".to_string(), "insert".to_string());
+        let filter =
+            SubscriptionFilter::new().with_header("type".to_string(), "insert".to_string());
 
         let mut event = PublishedEvent::new("test".to_string(), vec![]);
         assert!(!filter.matches(&event));
 
-        event.headers.insert("type".to_string(), "insert".to_string());
+        event
+            .headers
+            .insert("type".to_string(), "insert".to_string());
         assert!(filter.matches(&event));
     }
 

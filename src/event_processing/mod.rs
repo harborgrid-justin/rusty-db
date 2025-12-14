@@ -4,13 +4,13 @@
 // innovations including out-of-order event handling, GPU-accelerated pattern matching,
 // and ML model serving in streams.
 
-use std::fmt;
-use std::time::SystemTime;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
+use std::time::SystemTime;
 
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
 
 pub mod analytics;
 pub mod cep;
@@ -560,16 +560,16 @@ mod tests {
     }
 
     #[test]
-fn test_watermark_lateness() {
-            let now = SystemTime::now();
-            let watermark = Watermark::new(now, Duration::from_secs(5));
-        
-            let recent_event = now - Duration::from_secs(3);
-            assert!(!watermark.is_late(recent_event));
-        
-            let late_event = now - Duration::from_secs(10);
-            assert!(watermark.is_late(late_event));
-        }
+    fn test_watermark_lateness() {
+        let now = SystemTime::now();
+        let watermark = Watermark::new(now, Duration::from_secs(5));
+
+        let recent_event = now - Duration::from_secs(3);
+        assert!(!watermark.is_late(recent_event));
+
+        let late_event = now - Duration::from_secs(10);
+        assert!(watermark.is_late(late_event));
+    }
 
     #[test]
     fn test_stream_state() {
@@ -608,5 +608,3 @@ fn test_watermark_lateness() {
         assert_eq!(metrics.events_dropped, 1);
     }
 }
-
-

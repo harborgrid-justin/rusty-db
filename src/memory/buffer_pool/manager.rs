@@ -2,15 +2,15 @@
 //
 // Main interface for buffer pool operations.
 
-use super::common::*;
-use super::multi_tier::*;
 use super::arc::*;
-use super::two_q::*;
-use super::prefetcher::*;
-use super::eviction_policies::*;
 use super::checkpoint::*;
-use super::writer::*;
+use super::common::*;
+use super::eviction_policies::*;
+use super::multi_tier::*;
+use super::prefetcher::*;
 use super::statistics::*;
+use super::two_q::*;
+use super::writer::*;
 
 pub struct BufferPoolManager {
     pool: Arc<MultiTierBufferPool>,
@@ -50,7 +50,7 @@ impl BufferPoolManager {
             incremental_checkpointer: Arc::new(IncrementalCheckpointer::new(
                 60,
                 100,
-                checkpoint_queue.clone()
+                checkpoint_queue.clone(),
             )),
             background_writer: Arc::new(BackgroundWriter::new(50, 5, 0.75)),
             write_coalescing: Arc::new(WriteCoalescingBuffer::new(100)),

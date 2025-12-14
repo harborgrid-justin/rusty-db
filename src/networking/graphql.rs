@@ -6,8 +6,8 @@
 use async_graphql::{
     Context, EmptySubscription, Object, Result as GqlResult, Schema, SimpleObject, Subscription,
 };
-use std::sync::Arc;
 use futures::StreamExt;
+use std::sync::Arc;
 use tokio_stream::Stream;
 
 use super::manager::NetworkManager;
@@ -262,8 +262,7 @@ impl MutationRoot {
                 if parts.len() != 2 {
                     return Err("Invalid seed node format");
                 }
-                let port = parts[1].parse::<u16>()
-                    .map_err(|_| "Invalid port")?;
+                let port = parts[1].parse::<u16>().map_err(|_| "Invalid port")?;
                 Ok(NodeAddress::new(parts[0], port))
             })
             .collect();
@@ -352,10 +351,7 @@ pub struct SubscriptionRoot;
 #[Subscription]
 impl SubscriptionRoot {
     /// Subscribe to peer events (join, leave, health changes)
-    async fn peer_events(
-        &self,
-        _ctx: &Context<'_>,
-    ) -> impl Stream<Item = GqlMembershipEvent> {
+    async fn peer_events(&self, _ctx: &Context<'_>) -> impl Stream<Item = GqlMembershipEvent> {
         // TODO: Implement real subscription using membership change channel
         // For now, return an empty stream
 
@@ -363,10 +359,7 @@ impl SubscriptionRoot {
     }
 
     /// Subscribe to topology changes
-    async fn topology_changes(
-        &self,
-        _ctx: &Context<'_>,
-    ) -> impl Stream<Item = GqlTopology> {
+    async fn topology_changes(&self, _ctx: &Context<'_>) -> impl Stream<Item = GqlTopology> {
         // TODO: Implement real subscription
         // For now, return an empty stream
 
@@ -384,9 +377,9 @@ impl SubscriptionRoot {
         if let Some(ctx) = context {
             let network_manager = ctx.network_manager.clone();
 
-            tokio_stream::wrappers::IntervalStream::new(
-                tokio::time::interval(std::time::Duration::from_secs(interval_secs))
-            )
+            tokio_stream::wrappers::IntervalStream::new(tokio::time::interval(
+                std::time::Duration::from_secs(interval_secs),
+            ))
             .then(move |_| {
                 let nm = network_manager.clone();
                 async move {
@@ -527,19 +520,16 @@ pub mod examples {
 
 #[cfg(test)]
 mod tests {
-    use crate::networking::NodeInfo;
     use super::*;
+    use crate::networking::NodeInfo;
 
     #[tokio::test]
     async fn test_schema_creation() {
-        use super::super::types::{NetworkConfig, NodeAddress};
         use super::super::manager::create_default_manager;
+        use super::super::types::{NetworkConfig, NodeAddress};
 
         let config = NetworkConfig::default();
-        let local_node = NodeInfo::new(
-            NodeId::new("test"),
-            NodeAddress::new("localhost", 7000),
-        );
+        let local_node = NodeInfo::new(NodeId::new("test"), NodeAddress::new("localhost", 7000));
 
         let manager = create_default_manager(config, local_node);
         let schema = create_schema(Arc::new(manager));

@@ -2,16 +2,16 @@
 //
 // State snapshot and checkpoint management for point-in-time recovery.
 
-use tokio::time::sleep;
-use std::collections::BTreeMap;
-use std::time::SystemTime;
-use crate::{Result, DbError};
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{Duration, Instant};
+use crate::{DbError, Result};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use std::time::SystemTime;
+use std::time::{Duration, Instant};
 use tokio::time::interval;
+use tokio::time::sleep;
 
 // ============================================================================
 // StateSnapshotManager
@@ -89,11 +89,16 @@ impl StateSnapshotManager {
             let mut stats = self.stats.write();
             stats.total_snapshots += 1;
             stats.avg_snapshot_time_ms = (stats.avg_snapshot_time_ms + elapsed) / 2;
-            stats.avg_snapshot_size_mb = (stats.avg_snapshot_size_mb + (snapshot.size_bytes / 1024 / 1024)) / 2;
+            stats.avg_snapshot_size_mb =
+                (stats.avg_snapshot_size_mb + (snapshot.size_bytes / 1024 / 1024)) / 2;
         }
 
-        tracing::info!("Created checkpoint {} in {}ms ({} MB)",
-            snapshot_id, elapsed, snapshot.size_bytes / 1024 / 1024);
+        tracing::info!(
+            "Created checkpoint {} in {}ms ({} MB)",
+            snapshot_id,
+            elapsed,
+            snapshot.size_bytes / 1024 / 1024
+        );
 
         Ok(snapshot_id)
     }
@@ -103,11 +108,17 @@ impl StateSnapshotManager {
 
         let snapshot = {
             let snapshots = self.snapshots.read();
-            snapshots.get(&snapshot_id).cloned()
+            snapshots
+                .get(&snapshot_id)
+                .cloned()
                 .ok_or_else(|| DbError::NotFound(format!("Snapshot {} not found", snapshot_id)))?
         };
 
-        tracing::info!("Restoring from snapshot {} (LSN {})", snapshot_id, snapshot.lsn);
+        tracing::info!(
+            "Restoring from snapshot {} (LSN {})",
+            snapshot_id,
+            snapshot.lsn
+        );
 
         sleep(Duration::from_millis(100)).await;
 

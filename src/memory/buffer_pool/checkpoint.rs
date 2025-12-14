@@ -3,7 +3,7 @@
 // Checkpoint queue and incremental checkpointing.
 
 use super::common::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct DirtyPage {
@@ -51,9 +51,7 @@ impl CheckpointQueue {
         let lsn = dirty_page.lsn;
         let mut queue = self.queue.lock();
 
-        queue.entry(lsn)
-            .or_insert_with(Vec::new)
-            .push(dirty_page);
+        queue.entry(lsn).or_insert_with(Vec::new).push(dirty_page);
 
         self.dirty_count.fetch_add(1, Ordering::Relaxed);
         self.stats.pages_queued.fetch_add(1, Ordering::Relaxed);
@@ -65,9 +63,7 @@ impl CheckpointQueue {
         let mut pages = Vec::new();
 
         // Collect all pages with LSN <= up_to_lsn
-        let lsns_to_remove: Vec<u64> = queue.range(..=up_to_lsn)
-            .map(|(lsn, _)| *lsn)
-            .collect();
+        let lsns_to_remove: Vec<u64> = queue.range(..=up_to_lsn).map(|(lsn, _)| *lsn).collect();
 
         for lsn in lsns_to_remove {
             if let Some(lsn_pages) = queue.remove(&lsn) {
@@ -93,7 +89,9 @@ impl CheckpointQueue {
             page.frame.dirty.store(false, Ordering::Release);
         }
 
-        self.stats.pages_flushed.fetch_add(page_count as u64, Ordering::Relaxed);
+        self.stats
+            .pages_flushed
+            .fetch_add(page_count as u64, Ordering::Relaxed);
         self.checkpoint_lsn.fetch_add(1, Ordering::Relaxed);
 
         CheckpointResult {
@@ -184,7 +182,9 @@ impl IncrementalCheckpointer {
         let batch_size = self.batch_size;
         let queue = self.checkpoint_queue.clone();
         let running = self.running.clone();
-        let _stats = Arc::new(Mutex::new(AtomicU64::new(self.stats.incremental_checkpoints.load(Ordering::Relaxed))));
+        let _stats = Arc::new(Mutex::new(AtomicU64::new(
+            self.stats.incremental_checkpoints.load(Ordering::Relaxed),
+        )));
 
         std::thread::spawn(move || {
             while running.load(Ordering::Acquire) {

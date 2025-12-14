@@ -84,7 +84,7 @@ pub mod types;
 
 // Re-export commonly used types for convenience
 pub use auth::{
-    AuthMethod, Authenticator, AuthenticationResult, Credentials, DatabaseAuthenticator,
+    AuthMethod, AuthenticationResult, Authenticator, Credentials, DatabaseAuthenticator,
     PrivilegeSet, TokenAuthenticator,
 };
 pub use state::{

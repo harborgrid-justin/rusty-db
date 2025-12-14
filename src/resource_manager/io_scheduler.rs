@@ -9,17 +9,17 @@
 // - Cold attributes for error paths
 // - Per-device I/O tracking
 
-use std::sync::Mutex;
-use std::time::Instant;
-use std::collections::{HashMap, BinaryHeap, VecDeque};
-use std::sync::{Arc, RwLock};
-use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
-use std::time::Duration;
-use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap, VecDeque};
+use std::sync::atomic::{AtomicU32, AtomicU64, AtomicUsize, Ordering as AtomicOrdering};
+use std::sync::Mutex;
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
+use std::time::Instant;
 
-use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
+use crate::error::{DbError, Result};
 
 // I/O request identifier
 pub type IoRequestId = u64;
@@ -152,7 +152,8 @@ impl IoRequest {
 impl Ord for IoRequest {
     fn cmp(&self, other: &Self) -> Ordering {
         // Lower priority value = higher priority
-        self.effective_priority().cmp(&other.effective_priority())
+        self.effective_priority()
+            .cmp(&other.effective_priority())
             .then_with(|| {
                 // For same priority, earlier deadline = higher priority
                 match (&self.deadline, &other.deadline) {
@@ -378,17 +379,20 @@ impl IoStats {
 
     #[inline]
     pub fn inc_completed(&self) {
-        self.completed_requests.fetch_add(1, AtomicOrdering::Relaxed);
+        self.completed_requests
+            .fetch_add(1, AtomicOrdering::Relaxed);
     }
 
     #[inline]
     pub fn add_bytes_read(&self, bytes: u64) {
-        self.total_bytes_read.fetch_add(bytes, AtomicOrdering::Relaxed);
+        self.total_bytes_read
+            .fetch_add(bytes, AtomicOrdering::Relaxed);
     }
 
     #[inline]
     pub fn add_bytes_written(&self, bytes: u64) {
-        self.total_bytes_written.fetch_add(bytes, AtomicOrdering::Relaxed);
+        self.total_bytes_written
+            .fetch_add(bytes, AtomicOrdering::Relaxed);
     }
 
     #[inline]
@@ -398,7 +402,8 @@ impl IoStats {
 
     #[inline]
     pub fn inc_throttled(&self) {
-        self.throttled_requests.fetch_add(1, AtomicOrdering::Relaxed);
+        self.throttled_requests
+            .fetch_add(1, AtomicOrdering::Relaxed);
     }
 
     pub fn snapshot(&self) -> IoStatsSnapshot {
@@ -455,14 +460,15 @@ impl IoScheduler {
         let mut allocations = self.group_allocations.write().unwrap();
 
         if allocations.contains_key(&group_id) {
-            return Err(DbError::AlreadyExists(
-                format!("Group {} already registered", group_id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Group {} already registered",
+                group_id
+            )));
         }
 
         allocations.insert(
             group_id,
-            IoGroupAllocation::new(group_id, bandwidth_limit, iops_limit, weight)
+            IoGroupAllocation::new(group_id, bandwidth_limit, iops_limit, weight),
         );
 
         // Create token buckets if limits are set
@@ -473,7 +479,10 @@ impl IoScheduler {
 
         if let Some(iops_limit) = iops_limit {
             let mut buckets = self.iops_buckets.write().unwrap();
-            buckets.insert(group_id, TokenBucket::new(iops_limit as u64, iops_limit as f64));
+            buckets.insert(
+                group_id,
+                TokenBucket::new(iops_limit as u64, iops_limit as f64),
+            );
         }
 
         // Create group queue
@@ -696,7 +705,8 @@ impl IoScheduler {
     // Complete an I/O request
     pub fn complete_request(&self, request_id: IoRequestId) -> Result<()> {
         let mut requests = self.requests.write().unwrap();
-        let request = requests.get_mut(&request_id)
+        let request = requests
+            .get_mut(&request_id)
             .ok_or_else(|| DbError::NotFound(format!("Request {} not found", request_id)))?;
 
         request.completed_at = Some(Instant::now());
@@ -738,7 +748,9 @@ impl IoScheduler {
         if let Some(started) = started_at {
             let latency_us = started.duration_since(submitted_at).as_micros() as u64;
             let current_avg = self.stats.avg_latency_us.load(AtomicOrdering::Relaxed);
-            self.stats.avg_latency_us.store((current_avg + latency_us) / 2, AtomicOrdering::Relaxed);
+            self.stats
+                .avg_latency_us
+                .store((current_avg + latency_us) / 2, AtomicOrdering::Relaxed);
         }
 
         // Remove from active requests
@@ -756,7 +768,10 @@ impl IoScheduler {
     }
 
     // Get group I/O statistics (values only, not Clone)
-    pub fn get_group_stats(&self, group_id: ConsumerGroupId) -> Option<(ConsumerGroupId, u64, u64, usize)> {
+    pub fn get_group_stats(
+        &self,
+        group_id: ConsumerGroupId,
+    ) -> Option<(ConsumerGroupId, u64, u64, usize)> {
         let allocations = self.group_allocations.read().unwrap();
         allocations.get(&group_id).map(|alloc| {
             (
@@ -777,7 +792,9 @@ impl IoScheduler {
             let current_bw = alloc.current_bandwidth.load(AtomicOrdering::Relaxed);
             let total_bytes = alloc.total_bytes.load(AtomicOrdering::Relaxed);
             let new_bw = (current_bw * 9 + total_bytes) / 10;
-            alloc.current_bandwidth.store(new_bw, AtomicOrdering::Relaxed);
+            alloc
+                .current_bandwidth
+                .store(new_bw, AtomicOrdering::Relaxed);
 
             let current_iops = alloc.current_iops.load(AtomicOrdering::Relaxed);
             let total_ops = alloc.total_ops.load(AtomicOrdering::Relaxed);
@@ -790,7 +807,7 @@ impl IoScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::collections::VecDeque;
+    use std::collections::VecDeque;
 
     #[test]
     fn test_io_scheduler_creation() {
@@ -803,14 +820,9 @@ use std::collections::VecDeque;
         let scheduler = IoScheduler::new(IoSchedulingPolicy::Priority, 32);
         scheduler.register_group(1, None, None, 100).unwrap();
 
-        let request_id = scheduler.submit_request(
-            1,
-            IoRequestType::Read,
-            IoPriority::Normal,
-            4096,
-            0,
-            None,
-        ).unwrap();
+        let request_id = scheduler
+            .submit_request(1, IoRequestType::Read, IoPriority::Normal, 4096, 0, None)
+            .unwrap();
 
         assert!(request_id > 0);
     }
@@ -827,16 +839,13 @@ use std::collections::VecDeque;
     fn test_schedule_with_limits() {
         let scheduler = IoScheduler::new(IoSchedulingPolicy::Priority, 32);
         // Set low bandwidth limit
-        scheduler.register_group(1, Some(1000), Some(10), 100).unwrap();
+        scheduler
+            .register_group(1, Some(1000), Some(10), 100)
+            .unwrap();
 
-        scheduler.submit_request(
-            1,
-            IoRequestType::Read,
-            IoPriority::Normal,
-            500,
-            0,
-            None,
-        ).unwrap();
+        scheduler
+            .submit_request(1, IoRequestType::Read, IoPriority::Normal, 500, 0, None)
+            .unwrap();
 
         let scheduled = scheduler.schedule_next();
         assert!(scheduled.is_some());

@@ -4,20 +4,20 @@
 // Captures INSERT, UPDATE, and DELETE operations with before/after images,
 // column-level tracking, and low-latency event delivery.
 
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::time::Duration;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{Instant, SystemTime};
+use crate::common::{LogSequenceNumber, RowId, TableId, TransactionId, Value};
+use crate::error::{DbError, Result};
+use crate::transaction::wal::{LogRecord, WALEntry};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::{Instant, SystemTime};
 use tokio::sync::broadcast;
 use tokio::time::interval;
-use crate::error::{DbError, Result};
-use crate::common::{TransactionId, TableId, RowId, Value, LogSequenceNumber};
-use crate::transaction::wal::{LogRecord, WALEntry};
 
 // Change event type
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -145,7 +145,9 @@ impl ChangeEvent {
 
     // Get change for a specific column
     pub fn get_column_change(&self, column_name: &str) -> Option<&ColumnChange> {
-        self.column_changes.iter().find(|c| c.column_name == column_name)
+        self.column_changes
+            .iter()
+            .find(|c| c.column_name == column_name)
     }
 }
 
@@ -224,11 +226,7 @@ impl Default for CaptureFilter {
         Self {
             included_tables: None, // All tables
             excluded_tables: Vec::new(),
-            change_types: vec![
-                ChangeType::Insert,
-                ChangeType::Update,
-                ChangeType::Delete,
-            ],
+            change_types: vec![ChangeType::Insert, ChangeType::Update, ChangeType::Delete],
             min_txn_id: None,
             capture_column_changes: true,
             capture_before_image: true,
@@ -299,7 +297,7 @@ pub struct CaptureStatistics {
     pub filtered_events: u64,
     // Number of errors
     pub error_count: u64,
-    pub lag_ms: ()
+    pub lag_ms: (),
 }
 
 impl CaptureStatistics {
@@ -309,14 +307,13 @@ impl CaptureStatistics {
         *self.events_by_type.entry(key).or_insert(0) += 1;
 
         // Simple moving average for latency
-        self.avg_capture_latency_ms =
-            (self.avg_capture_latency_ms * 0.9) + (latency_ms * 0.1);
+        self.avg_capture_latency_ms = (self.avg_capture_latency_ms * 0.9) + (latency_ms * 0.1);
     }
 
     pub fn record_batch(&mut self, batch_size: usize) {
         self.total_batches += 1;
-        self.avg_batch_size =
-            ((self.avg_batch_size * (self.total_batches - 1) as f64) + batch_size as f64)
+        self.avg_batch_size = ((self.avg_batch_size * (self.total_batches - 1) as f64)
+            + batch_size as f64)
             / self.total_batches as f64;
     }
 }
@@ -456,7 +453,7 @@ impl CDCEngine {
         let mut state = self.state.write();
         if *state != CaptureState::Stopped {
             return Err(DbError::InvalidOperation(
-                "CDC engine is already running".to_string()
+                "CDC engine is already running".to_string(),
             ));
         }
         *state = CaptureState::Starting;
@@ -505,29 +502,43 @@ impl CDCEngine {
         let mut events = Vec::new();
 
         match &entry.record {
-            LogRecord::Insert { txn_id, page_id, data, .. } => {
-                if let Some(event) = self.process_insert(*txn_id, entry.lsn, *page_id, data).await? {
+            LogRecord::Insert {
+                txn_id,
+                page_id,
+                data,
+                ..
+            } => {
+                if let Some(event) = self
+                    .process_insert(*txn_id, entry.lsn, *page_id, data)
+                    .await?
+                {
                     events.push(event);
                 }
             }
-            LogRecord::Update { txn_id, page_id, before_image, after_image, .. } => {
-                if let Some(event) = self.process_update(
-                    *txn_id,
-                    entry.lsn,
-                    *page_id,
-                    before_image,
-                    after_image
-                ).await? {
+            LogRecord::Update {
+                txn_id,
+                page_id,
+                before_image,
+                after_image,
+                ..
+            } => {
+                if let Some(event) = self
+                    .process_update(*txn_id, entry.lsn, *page_id, before_image, after_image)
+                    .await?
+                {
                     events.push(event);
                 }
             }
-            LogRecord::Delete { txn_id, page_id, deleted_data, .. } => {
-                if let Some(event) = self.process_delete(
-                    *txn_id,
-                    entry.lsn,
-                    *page_id,
-                    deleted_data
-                ).await? {
+            LogRecord::Delete {
+                txn_id,
+                page_id,
+                deleted_data,
+                ..
+            } => {
+                if let Some(event) = self
+                    .process_delete(*txn_id, entry.lsn, *page_id, deleted_data)
+                    .await?
+                {
                     events.push(event);
                 }
             }
@@ -560,7 +571,11 @@ impl CDCEngine {
         let table_id = self.extract_table_id(page_id);
 
         // Check filter
-        if !self.config.filter.should_capture(table_id, &ChangeType::Insert) {
+        if !self
+            .config
+            .filter
+            .should_capture(table_id, &ChangeType::Insert)
+        {
             self.stats.write().filtered_events += 1;
             return Ok(None);
         }
@@ -584,11 +599,8 @@ impl CDCEngine {
 
         // Generate column changes
         if self.config.filter.capture_column_changes {
-            event.column_changes = self.generate_column_changes(
-                None,
-                event.after_image.as_ref(),
-                &table_metadata,
-            );
+            event.column_changes =
+                self.generate_column_changes(None, event.after_image.as_ref(), &table_metadata);
         }
 
         Ok(Some(event))
@@ -605,7 +617,11 @@ impl CDCEngine {
     ) -> Result<Option<ChangeEvent>> {
         let table_id = self.extract_table_id(page_id);
 
-        if !self.config.filter.should_capture(table_id, &ChangeType::Update) {
+        if !self
+            .config
+            .filter
+            .should_capture(table_id, &ChangeType::Update)
+        {
             self.stats.write().filtered_events += 1;
             return Ok(None);
         }
@@ -640,11 +656,8 @@ impl CDCEngine {
 
         // Generate column-level changes
         if self.config.filter.capture_column_changes {
-            event.column_changes = self.generate_column_changes(
-                before.as_ref(),
-                after.as_ref(),
-                &table_metadata,
-            );
+            event.column_changes =
+                self.generate_column_changes(before.as_ref(), after.as_ref(), &table_metadata);
         }
 
         Ok(Some(event))
@@ -660,7 +673,11 @@ impl CDCEngine {
     ) -> Result<Option<ChangeEvent>> {
         let table_id = self.extract_table_id(page_id);
 
-        if !self.config.filter.should_capture(table_id, &ChangeType::Delete) {
+        if !self
+            .config
+            .filter
+            .should_capture(table_id, &ChangeType::Delete)
+        {
             self.stats.write().filtered_events += 1;
             return Ok(None);
         }
@@ -684,11 +701,8 @@ impl CDCEngine {
 
         // Generate column changes
         if self.config.filter.capture_column_changes {
-            event.column_changes = self.generate_column_changes(
-                event.before_image.as_ref(),
-                None,
-                &table_metadata,
-            );
+            event.column_changes =
+                self.generate_column_changes(event.before_image.as_ref(), None, &table_metadata);
         }
 
         Ok(Some(event))
@@ -826,7 +840,8 @@ impl CDCEngine {
     // Restore from checkpoint
     pub async fn restore_from_checkpoint(&self, checkpoint: &CaptureCheckpoint) -> Result<()> {
         self.current_lsn.store(checkpoint.lsn, Ordering::SeqCst);
-        self.next_event_id.store(checkpoint.event_id, Ordering::SeqCst);
+        self.next_event_id
+            .store(checkpoint.event_id, Ordering::SeqCst);
         Ok(())
     }
 
@@ -853,7 +868,9 @@ impl CDCEngine {
             primary_key_columns: vec![0],
         };
 
-        self.table_metadata.write().insert(table_id, metadata.clone());
+        self.table_metadata
+            .write()
+            .insert(table_id, metadata.clone());
         Ok(metadata)
     }
 
@@ -881,9 +898,7 @@ impl CDCEngine {
             let engine = self.clone_for_task();
             move |batch: ChangeEventBatch| {
                 let engine = engine.clone();
-                async move {
-                    engine.flush_batch(batch).await
-                }
+                async move { engine.flush_batch(batch).await }
             }
         };
 

@@ -3,8 +3,8 @@
 // Model versioning, serialization, registry, and deployment pipeline.
 // Supports A/B testing and production model management.
 
+use super::{Algorithm, EvaluationMetrics, Hyperparameters, ModelId, TrainingStats};
 use crate::error::Result;
-use super::{Algorithm, ModelId, Hyperparameters, TrainingStats, EvaluationMetrics};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -104,7 +104,9 @@ impl Model {
 
     pub fn deploy(&mut self, deployment: DeploymentConfig) -> Result<()> {
         if self.status != ModelStatus::Ready {
-            return Err(crate::DbError::InvalidInput("Model not ready for deployment".into()));
+            return Err(crate::DbError::InvalidInput(
+                "Model not ready for deployment".into(),
+            ));
         }
         self.status = ModelStatus::Deployed(deployment);
         self.updated_at = SystemTime::now()
@@ -152,7 +154,9 @@ pub struct NetworkLayer {
     pub activation: ActivationType,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode,
+)]
 pub enum ActivationType {
     ReLU,
     Sigmoid,
@@ -213,7 +217,9 @@ impl DeploymentConfig {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode,
+)]
 pub enum DeploymentEnvironment {
     Development,
     Staging,
@@ -447,21 +453,14 @@ impl ModelStore {
 
     // List all models
     pub fn list_models(&self) -> Vec<ModelMetadata> {
-        self.models
-            .values()
-            .map(ModelMetadata::from)
-            .collect()
+        self.models.values().map(ModelMetadata::from).collect()
     }
 
     // Find models by name
     pub fn find_by_name(&self, name: &str) -> Vec<&Model> {
         self.name_to_id
             .get(name)
-            .map(|ids| {
-                ids.iter()
-                    .filter_map(|id| self.models.get(id))
-                    .collect()
-            })
+            .map(|ids| ids.iter().filter_map(|id| self.models.get(id)).collect())
             .unwrap_or_default()
     }
 
@@ -484,7 +483,9 @@ impl ModelStore {
 
     // Delete a model
     pub fn delete_model(&mut self, id: ModelId) -> Result<()> {
-        let model = self.models.remove(&id)
+        let model = self
+            .models
+            .remove(&id)
             .ok_or_else(|| crate::DbError::InvalidInput(format!("Model not found: {:?}", id)))?;
 
         // Remove from name index
@@ -523,13 +524,11 @@ impl ModelStore {
         }
 
         // Validate traffic allocations sum to 1.0
-        let total_traffic: f64 = test.variants.iter()
-            .map(|v| v.traffic_allocation)
-            .sum();
+        let total_traffic: f64 = test.variants.iter().map(|v| v.traffic_allocation).sum();
 
         if (total_traffic - 1.0).abs() > 1e-6 {
             return Err(crate::DbError::InvalidInput(
-                "Traffic allocations must sum to 1.0".into()
+                "Traffic allocations must sum to 1.0".into(),
             ));
         }
 
@@ -543,8 +542,15 @@ impl ModelStore {
     }
 
     // Update A/B test results
-    pub fn update_ab_results(&mut self, test_id: &str, variant: &str, results: ABResults) -> Result<()> {
-        let test = self.ab_tests.get_mut(test_id)
+    pub fn update_ab_results(
+        &mut self,
+        test_id: &str,
+        variant: &str,
+        results: ABResults,
+    ) -> Result<()> {
+        let test = self
+            .ab_tests
+            .get_mut(test_id)
             .ok_or_else(|| crate::DbError::InvalidInput("A/B test not found".into()))?;
 
         test.results.insert(variant.to_string(), results);
@@ -555,13 +561,12 @@ impl ModelStore {
     pub fn get_winner(&self, test_id: &str) -> Option<(String, ModelId)> {
         let test = self.ab_tests.get(test_id)?;
 
-        let winner = test.results.iter()
-            .max_by(|(_, a), (_, b)| {
-                a.mean_score.partial_cmp(&b.mean_score).unwrap()
-            })?;
+        let winner = test
+            .results
+            .iter()
+            .max_by(|(_, a), (_, b)| a.mean_score.partial_cmp(&b.mean_score).unwrap())?;
 
-        let variant = test.variants.iter()
-            .find(|v| v.name == *winner.0)?;
+        let variant = test.variants.iter().find(|v| v.name == *winner.0)?;
 
         Some((variant.name.clone(), variant.model_id))
     }
@@ -592,9 +597,7 @@ impl ModelStore {
     pub fn search_by_tags(&self, tags: &[String]) -> Vec<&Model> {
         self.models
             .values()
-            .filter(|model| {
-                tags.iter().any(|tag| model.tags.contains(tag))
-            })
+            .filter(|model| tags.iter().any(|tag| model.tags.contains(tag)))
             .collect()
     }
 
@@ -643,7 +646,7 @@ pub struct PerformanceSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_model_store() {

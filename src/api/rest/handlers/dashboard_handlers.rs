@@ -4,13 +4,13 @@
 
 use axum::{
     extract::{Path, State},
-    response::Json as AxumJson,
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::super::types::*;
@@ -112,16 +112,18 @@ pub async fn create_dashboard(
         .unwrap()
         .as_secs() as i64;
 
-    let widgets: Vec<WidgetResponse> = request.widgets.into_iter().map(|w| {
-        WidgetResponse {
+    let widgets: Vec<WidgetResponse> = request
+        .widgets
+        .into_iter()
+        .map(|w| WidgetResponse {
             id: uuid::Uuid::new_v4().to_string(),
             title: w.title,
             widget_type: w.widget_type,
             queries: w.queries,
             refresh_interval_seconds: w.refresh_interval_seconds.unwrap_or(30),
             position: w.position,
-        }
-    }).collect();
+        })
+        .collect();
 
     let response = DashboardResponse {
         id: dashboard_id,
@@ -221,16 +223,18 @@ pub async fn update_dashboard(
         .unwrap()
         .as_secs() as i64;
 
-    let widgets: Vec<WidgetResponse> = request.widgets.into_iter().map(|w| {
-        WidgetResponse {
+    let widgets: Vec<WidgetResponse> = request
+        .widgets
+        .into_iter()
+        .map(|w| WidgetResponse {
             id: uuid::Uuid::new_v4().to_string(),
             title: w.title,
             widget_type: w.widget_type,
             queries: w.queries,
             refresh_interval_seconds: w.refresh_interval_seconds.unwrap_or(30),
             position: w.position,
-        }
-    }).collect();
+        })
+        .collect();
 
     let response = DashboardResponse {
         id,
@@ -264,4 +268,77 @@ pub async fn delete_dashboard(
 ) -> ApiResult<StatusCode> {
     // In a real implementation, this would delete the dashboard from DashboardManager
     Ok(StatusCode::NO_CONTENT)
+}
+
+// ============================================================================
+// WebSocket Streaming for Dashboard Real-time Metrics
+// ============================================================================
+
+use axum::extract::WebSocketUpgrade;
+use axum::response::Response;
+
+/// GET /api/v1/ws/dashboard
+///
+/// WebSocket endpoint for real-time dashboard metrics streaming
+pub async fn ws_dashboard_stream(
+    ws: WebSocketUpgrade,
+    State(state): State<Arc<ApiState>>,
+) -> Response {
+    ws.on_upgrade(|socket| handle_dashboard_websocket(socket, state))
+}
+
+async fn handle_dashboard_websocket(
+    mut socket: axum::extract::ws::WebSocket,
+    _state: Arc<ApiState>,
+) {
+    use axum::extract::ws::Message;
+    use tokio::time::{interval, Duration};
+
+    let mut interval = interval(Duration::from_secs(5));
+
+    loop {
+        tokio::select! {
+            _ = interval.tick() => {
+                // Collect real-time metrics
+                let cpu_usage = sys_info::loadavg().map(|l| l.one * 10.0).unwrap_or(0.0);
+                let mem_info = sys_info::mem_info().unwrap_or(sys_info::MemInfo {
+                    total: 0, free: 0, avail: 0, buffers: 0, cached: 0,
+                    swap_total: 0, swap_free: 0,
+                });
+                let mem_usage = if mem_info.total > 0 {
+                    (mem_info.total - mem_info.free) as f64 / mem_info.total as f64 * 100.0
+                } else {
+                    0.0
+                };
+
+                // Create real-time dashboard update
+                let update = serde_json::json!({
+                    "timestamp": SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+                    "metrics": {
+                        "cpu_usage_percent": cpu_usage,
+                        "memory_usage_percent": mem_usage,
+                        "active_connections": 0,
+                        "queries_per_second": 0.0,
+                    },
+                    "alerts": []
+                });
+
+                let message = Message::Text(update.to_string().into());
+                if socket.send(message).await.is_err() {
+                    break;
+                }
+            }
+            msg = socket.recv() => {
+                match msg {
+                    Some(Ok(Message::Close(_))) | None => break,
+                    Some(Ok(Message::Ping(data))) => {
+                        if socket.send(Message::Pong(data)).await.is_err() {
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
 }

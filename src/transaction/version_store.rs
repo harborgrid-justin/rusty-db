@@ -18,11 +18,11 @@
 // let visible = store.get_version("key1", txn_id, snapshot_time);
 // ```
 
-use std::fmt;
-use std::time::SystemTime;
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 use parking_lot::{Mutex, RwLock};
 
@@ -197,7 +197,10 @@ impl fmt::Debug for VersionStore {
         let versions = self.versions.read();
         f.debug_struct("VersionStore")
             .field("key_count", &versions.len())
-            .field("version_count", &versions.values().map(|v| v.len()).sum::<usize>())
+            .field(
+                "version_count",
+                &versions.values().map(|v| v.len()).sum::<usize>(),
+            )
             .finish()
     }
 }
@@ -296,9 +299,7 @@ impl GarbageCollector {
                     .max()
                     .unwrap_or(SystemTime::UNIX_EPOCH);
 
-                version_list.retain(|v| {
-                    v.txn_id >= min_active_txn || v.timestamp == newest_ts
-                });
+                version_list.retain(|v| v.txn_id >= min_active_txn || v.timestamp == newest_ts);
             }
 
             removed += (before_len - version_list.len()) as u64;
@@ -331,7 +332,7 @@ impl Default for GarbageCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     fn make_version(txn_id: TransactionId, data: &[u8]) -> Version {
         Version {

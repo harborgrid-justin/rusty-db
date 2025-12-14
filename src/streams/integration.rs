@@ -3,20 +3,20 @@
 // Provides integration patterns including Outbox, Event Sourcing, CQRS,
 // external system connectors, webhooks, and schema registry.
 
+use super::cdc::ChangeEvent;
+use super::publisher::{EventPublisher, PublishedEvent};
+use crate::common::{TransactionId, Value};
+use crate::error::{DbError, Result};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime};
-use parking_lot::{RwLock};
-use serde::{Deserialize, Serialize};
+use std::time::SystemTime;
 use tokio::time::interval;
-use crate::error::{DbError, Result};
-use crate::common::{TransactionId, Value};
-use super::cdc::{ChangeEvent};
-use super::publisher::{PublishedEvent, EventPublisher};
 
 // ============================================================================
 // Outbox Pattern Implementation
@@ -181,11 +181,9 @@ impl OutboxProcessor {
                 // Process entries
                 for mut entry in entries {
                     // Create published event
-                    let event = PublishedEvent::new(
-                        entry.aggregate_type.clone(),
-                        entry.payload.clone(),
-                    )
-                    .with_key(entry.aggregate_id.as_bytes().to_vec());
+                    let event =
+                        PublishedEvent::new(entry.aggregate_type.clone(), entry.payload.clone())
+                            .with_key(entry.aggregate_id.as_bytes().to_vec());
 
                     // Publish
                     match publisher.publish(event).await {
@@ -304,7 +302,9 @@ impl EventStore {
         event.event_id = self.next_event_id.fetch_add(1, Ordering::SeqCst);
 
         let mut events = self.events.write();
-        let stream = events.entry(event.aggregate_id.clone()).or_insert_with(Vec::new);
+        let stream = events
+            .entry(event.aggregate_id.clone())
+            .or_insert_with(Vec::new);
 
         // Check version (optimistic concurrency)
         let expected_version = stream.len() as u64 + 1;
@@ -321,14 +321,19 @@ impl EventStore {
 
     // Get events for aggregate
     pub fn get_events(&self, aggregate_id: &str) -> Vec<DomainEvent> {
-        self.events.read()
+        self.events
+            .read()
             .get(aggregate_id)
             .cloned()
             .unwrap_or_default()
     }
 
     // Get events from version
-    pub fn get_events_from_version(&self, aggregate_id: &str, from_version: u64) -> Vec<DomainEvent> {
+    pub fn get_events_from_version(
+        &self,
+        aggregate_id: &str,
+        from_version: u64,
+    ) -> Vec<DomainEvent> {
         self.get_events(aggregate_id)
             .into_iter()
             .filter(|e| e.version >= from_version)
@@ -337,7 +342,9 @@ impl EventStore {
 
     // Save snapshot
     pub fn save_snapshot(&self, snapshot: AggregateSnapshot) {
-        self.snapshots.write().insert(snapshot.aggregate_id.clone(), snapshot);
+        self.snapshots
+            .write()
+            .insert(snapshot.aggregate_id.clone(), snapshot);
     }
 
     // Load snapshot
@@ -434,7 +441,10 @@ impl CQRSCoordinator {
         if let Some(projection) = projections.get(projection_name) {
             projection.query(&query)
         } else {
-            Err(DbError::NotFound(format!("Projection '{}' not found", projection_name)))
+            Err(DbError::NotFound(format!(
+                "Projection '{}' not found",
+                projection_name
+            )))
         }
     }
 
@@ -443,7 +453,11 @@ impl CQRSCoordinator {
         self.projections.write().insert(name, projection);
     }
 
-    fn handle_command(&self, _command: &Command, _events: &[DomainEvent]) -> Result<Vec<DomainEvent>> {
+    fn handle_command(
+        &self,
+        _command: &Command,
+        _events: &[DomainEvent],
+    ) -> Result<Vec<DomainEvent>> {
         // Simplified - in production, load aggregate, validate, and generate events
         Ok(Vec::new())
     }
@@ -479,7 +493,9 @@ impl ReadModelProjection {
         // Simplified implementation
         let key = format!("{}:{}", event.aggregate_type, event.aggregate_id);
         let serialized = bincode::serde::encode_to_vec(&event, bincode::config::standard())
-            .map_err(|e| crate::error::DbError::Serialization(format!("Serialization failed: {}", e)))?;
+            .map_err(|e| {
+                crate::error::DbError::Serialization(format!("Serialization failed: {}", e))
+            })?;
         self.data.write().insert(key, serialized);
         Ok(())
     }
@@ -551,8 +567,8 @@ impl WebhookConnector {
 impl ExternalConnector for WebhookConnector {
     fn send_event(&self, event: &ChangeEvent) -> Result<()> {
         // In production, use reqwest or similar to send HTTP POST
-        let _payload = serde_json::to_string(event)
-            .map_err(|e| DbError::SerializationError(e.to_string()))?;
+        let _payload =
+            serde_json::to_string(event).map_err(|e| DbError::SerializationError(e.to_string()))?;
 
         // Simulate HTTP request
         // reqwest::Client::new()
@@ -671,7 +687,7 @@ impl SchemaRegistry {
             if let Some(prev_schema) = self.get_schema(&schema.event_type, prev_version) {
                 if !self.is_compatible(&schema, &prev_schema) {
                     return Err(DbError::InvalidOperation(
-                        "Schema is not compatible with previous version".to_string()
+                        "Schema is not compatible with previous version".to_string(),
                     ));
                 }
             }
@@ -682,7 +698,8 @@ impl SchemaRegistry {
         self.schemas.write().insert(key, schema.clone());
 
         // Update latest version
-        self.latest_versions.write()
+        self.latest_versions
+            .write()
             .entry(schema.event_type.clone())
             .and_modify(|v| *v = (*v).max(schema.version))
             .or_insert(schema.version);
@@ -704,7 +721,8 @@ impl SchemaRegistry {
 
     // Validate event against schema
     pub fn validate_event(&self, event_type: &str, event_data: &[u8]) -> Result<bool> {
-        let schema = self.get_latest_schema(event_type)
+        let schema = self
+            .get_latest_schema(event_type)
             .ok_or_else(|| DbError::NotFound(format!("Schema for '{}' not found", event_type)))?;
 
         // In production, use jsonschema or avro validation
@@ -742,7 +760,8 @@ mod tests {
             "Order".to_string(),
             "OrderCreated".to_string(),
             vec![1, 2, 3],
-        ).with_metadata("key".to_string(), "value".to_string());
+        )
+        .with_metadata("key".to_string(), "value".to_string());
 
         assert_eq!(entry.aggregate_id, "agg-1");
         assert!(!entry.processed);
@@ -754,7 +773,8 @@ mod tests {
             "user-123".to_string(),
             "User".to_string(),
             "UserCreated".to_string(),
-        ).with_data("name".to_string(), Value::String("Alice".to_string()));
+        )
+        .with_data("name".to_string(), Value::String("Alice".to_string()));
 
         assert_eq!(event.aggregate_id, "user-123");
         assert_eq!(event.version, 1);

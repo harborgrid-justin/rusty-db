@@ -6,11 +6,11 @@
 // - Routing strategies
 // - Load balancing
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
 use parking_lot::RwLock;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 // Placeholder struct for PoolPartition
@@ -56,12 +56,16 @@ impl<C> PoolPartition<C> {
 
     /// Record a connection acquisition
     pub fn record_acquisition(&self) {
-        self.statistics.connections_acquired.fetch_add(1, Ordering::SeqCst);
+        self.statistics
+            .connections_acquired
+            .fetch_add(1, Ordering::SeqCst);
     }
 
     /// Record a connection release
     pub fn record_release(&self) {
-        self.statistics.connections_released.fetch_add(1, Ordering::SeqCst);
+        self.statistics
+            .connections_released
+            .fetch_add(1, Ordering::SeqCst);
     }
 
     /// Record a wait timeout
@@ -71,7 +75,9 @@ impl<C> PoolPartition<C> {
 
     /// Record a limit violation
     pub fn record_limit_violation(&self) {
-        self.statistics.limit_violations.fetch_add(1, Ordering::SeqCst);
+        self.statistics
+            .limit_violations
+            .fetch_add(1, Ordering::SeqCst);
     }
 
     /// Get statistics snapshot
@@ -227,7 +233,11 @@ impl AffinityRules {
     }
 
     /// Select a partition based on affinity rules
-    pub fn select_partition(&self, available: &[String], session_id: Option<&str>) -> Option<String> {
+    pub fn select_partition(
+        &self,
+        available: &[String],
+        session_id: Option<&str>,
+    ) -> Option<String> {
         // Check sticky session first
         if let Some(sid) = session_id {
             if let Some(partition) = self.get_partition_for_session(sid) {
@@ -387,7 +397,9 @@ impl std::fmt::Display for PartitionError {
             PartitionError::AlreadyExists(name) => write!(f, "Partition '{}' already exists", name),
             PartitionError::NotFound(name) => write!(f, "Partition '{}' not found", name),
             PartitionError::LimitExceeded(msg) => write!(f, "Partition limit exceeded: {}", msg),
-            PartitionError::InvalidConfiguration(msg) => write!(f, "Invalid partition configuration: {}", msg),
+            PartitionError::InvalidConfiguration(msg) => {
+                write!(f, "Invalid partition configuration: {}", msg)
+            }
         }
     }
 }
@@ -509,7 +521,10 @@ impl LoadBalancer {
         self.algorithm = algorithm;
     }
 
-    pub fn select_partition<C>(&self, partitions: &HashMap<String, Arc<PoolPartition<C>>>) -> Option<String> {
+    pub fn select_partition<C>(
+        &self,
+        partitions: &HashMap<String, Arc<PoolPartition<C>>>,
+    ) -> Option<String> {
         if partitions.is_empty() {
             return None;
         }
@@ -517,7 +532,8 @@ impl LoadBalancer {
         match self.algorithm {
             LoadBalancingAlgorithm::RoundRobin => {
                 let keys: Vec<_> = partitions.keys().collect();
-                let index = self.round_robin_counter.fetch_add(1, Ordering::SeqCst) as usize % keys.len();
+                let index =
+                    self.round_robin_counter.fetch_add(1, Ordering::SeqCst) as usize % keys.len();
                 Some(keys[index].clone())
             }
             LoadBalancingAlgorithm::LeastConnections => {
@@ -526,7 +542,9 @@ impl LoadBalancer {
                     .iter()
                     .min_by_key(|(_, p)| {
                         let stats = p.statistics.snapshot();
-                        stats.connections_acquired.saturating_sub(stats.connections_released)
+                        stats
+                            .connections_acquired
+                            .saturating_sub(stats.connections_released)
                     })
                     .map(|(k, _)| k.clone())
             }
@@ -536,7 +554,8 @@ impl LoadBalancer {
                     None
                 } else {
                     // Use round robin counter as a simple pseudo-random source
-                    let index = (self.round_robin_counter.fetch_add(7, Ordering::SeqCst) as usize) % keys.len();
+                    let index = (self.round_robin_counter.fetch_add(7, Ordering::SeqCst) as usize)
+                        % keys.len();
                     Some(keys[index].clone())
                 }
             }
@@ -648,17 +667,21 @@ mod tests {
     fn test_partition_manager_list_partitions() {
         let manager: PartitionManager<()> = PartitionManager::new(RoutingStrategy::UserBased);
 
-        manager.create_partition(
-            "p1".to_string(),
-            PartitionType::User("user1".to_string()),
-            PartitionLimits::default(),
-        ).unwrap();
+        manager
+            .create_partition(
+                "p1".to_string(),
+                PartitionType::User("user1".to_string()),
+                PartitionLimits::default(),
+            )
+            .unwrap();
 
-        manager.create_partition(
-            "p2".to_string(),
-            PartitionType::User("user2".to_string()),
-            PartitionLimits::default(),
-        ).unwrap();
+        manager
+            .create_partition(
+                "p2".to_string(),
+                PartitionType::User("user2".to_string()),
+                PartitionLimits::default(),
+            )
+            .unwrap();
 
         let partitions = manager.list_partitions();
         assert_eq!(partitions.len(), 2);
@@ -699,16 +722,22 @@ mod tests {
         let lb = LoadBalancer::new();
         let mut partitions: HashMap<String, Arc<PoolPartition<()>>> = HashMap::new();
 
-        partitions.insert("p1".to_string(), Arc::new(PoolPartition::new(
+        partitions.insert(
             "p1".to_string(),
-            PartitionType::User("u1".to_string()),
-            PartitionLimits::default(),
-        )));
-        partitions.insert("p2".to_string(), Arc::new(PoolPartition::new(
+            Arc::new(PoolPartition::new(
+                "p1".to_string(),
+                PartitionType::User("u1".to_string()),
+                PartitionLimits::default(),
+            )),
+        );
+        partitions.insert(
             "p2".to_string(),
-            PartitionType::User("u2".to_string()),
-            PartitionLimits::default(),
-        )));
+            Arc::new(PoolPartition::new(
+                "p2".to_string(),
+                PartitionType::User("u2".to_string()),
+                PartitionLimits::default(),
+            )),
+        );
 
         // Should rotate through partitions
         let first = lb.select_partition(&partitions);
@@ -725,7 +754,11 @@ mod tests {
             .with_fallback("fallback".to_string())
             .with_sticky_sessions();
 
-        let available = vec!["primary".to_string(), "secondary".to_string(), "fallback".to_string()];
+        let available = vec![
+            "primary".to_string(),
+            "secondary".to_string(),
+            "fallback".to_string(),
+        ];
         let selected = rules.select_partition(&available, None);
         assert_eq!(selected, Some("primary".to_string()));
 

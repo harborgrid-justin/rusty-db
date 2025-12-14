@@ -279,14 +279,13 @@ pub mod srs;
 
 // Re-export commonly used types
 pub use analysis::{
-    DbscanClusterer, DelaunayTriangulation, HotSpotAnalysis, KMeansClusterer,
-    KNearestNeighbors, SpatialAggregation, VoronoiDiagram,
+    DbscanClusterer, DelaunayTriangulation, HotSpotAnalysis, KMeansClusterer, KNearestNeighbors,
+    SpatialAggregation, VoronoiDiagram,
 };
 
 pub use geometry::{
-    BoundingBox, CircularString, CompoundCurve, Coordinate, Geometry,
-    LineString, LinearRing, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
-    WkbParser, WktParser,
+    BoundingBox, CircularString, CompoundCurve, Coordinate, Geometry, LineString, LinearRing,
+    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, WkbParser, WktParser,
 };
 
 pub use indexes::{
@@ -295,8 +294,8 @@ pub use indexes::{
 };
 
 pub use network::{
-    AStarRouter, DijkstraRouter, Edge, Network, Node, Path, RestrictedNetwork,
-    ServiceAreaAnalyzer, TspSolver, TurnRestriction,
+    AStarRouter, DijkstraRouter, Edge, Network, Node, Path, RestrictedNetwork, ServiceAreaAnalyzer,
+    TspSolver, TurnRestriction,
 };
 
 pub use operators::{
@@ -310,8 +309,8 @@ pub use raster::{
 };
 
 pub use srs::{
-    CoordinateTransformer, Datum, Ellipsoid, GeodeticCalculator, ProjectionType,
-    SpatialReferenceSystem, SridType, SrsRegistry, UtmProjection, well_known_srid,
+    well_known_srid, CoordinateTransformer, Datum, Ellipsoid, GeodeticCalculator, ProjectionType,
+    SpatialReferenceSystem, SridType, SrsRegistry, UtmProjection,
 };
 
 // Spatial engine version
@@ -469,7 +468,11 @@ mod tests {
 
         let wgs84 = Coordinate::new(-122.4194, 37.7749);
         let mercator = transformer
-            .transform(&wgs84, well_known_srid::WGS84, well_known_srid::WEB_MERCATOR)
+            .transform(
+                &wgs84,
+                well_known_srid::WGS84,
+                well_known_srid::WEB_MERCATOR,
+            )
             .unwrap();
 
         assert_ne!(mercator.x, wgs84.x);

@@ -212,36 +212,18 @@ impl CompressedBitmap {
                 self.runs[run_idx].value = value;
             } else {
                 self.runs[run_idx].length -= 1;
-                self.runs.insert(
-                    run_idx,
-                    Run {
-                        value,
-                        length: 1,
-                    },
-                );
+                self.runs.insert(run_idx, Run { value, length: 1 });
             }
         } else if offset == run.length - 1 {
             // Split at end
             self.runs[run_idx].length -= 1;
-            self.runs.insert(
-                run_idx + 1,
-                Run {
-                    value,
-                    length: 1,
-                },
-            );
+            self.runs.insert(run_idx + 1, Run { value, length: 1 });
         } else {
             // Split in middle
             let remaining = run.length - offset - 1;
             self.runs[run_idx].length = offset;
 
-            self.runs.insert(
-                run_idx + 1,
-                Run {
-                    value,
-                    length: 1,
-                },
-            );
+            self.runs.insert(run_idx + 1, Run { value, length: 1 });
 
             self.runs.insert(
                 run_idx + 2,
@@ -288,9 +270,7 @@ impl CompressedBitmap {
 
     // AND operation
     pub fn and(&self, other: &CompressedBitmap) -> CompressedBitmap {
-        let mut result = CompressedBitmap {
-            runs: Vec::new(),
-        };
+        let mut result = CompressedBitmap { runs: Vec::new() };
 
         let mut self_iter = RunIterator::new(&self.runs);
         let mut other_iter = RunIterator::new(&other.runs);
@@ -328,9 +308,7 @@ impl CompressedBitmap {
 
     // OR operation
     pub fn or(&self, other: &CompressedBitmap) -> CompressedBitmap {
-        let mut result = CompressedBitmap {
-            runs: Vec::new(),
-        };
+        let mut result = CompressedBitmap { runs: Vec::new() };
 
         let mut self_iter = RunIterator::new(&self.runs);
         let mut other_iter = RunIterator::new(&other.runs);
@@ -368,9 +346,7 @@ impl CompressedBitmap {
 
     // NOT operation
     pub fn not(&self, _size: usize) -> CompressedBitmap {
-        let mut result = CompressedBitmap {
-            runs: Vec::new(),
-        };
+        let mut result = CompressedBitmap { runs: Vec::new() };
 
         for run in &self.runs {
             result.runs.push(Run {
@@ -479,7 +455,8 @@ impl RangeEncodedBitmap {
     pub fn insert(&mut self, value: i64, row_id: usize, total_rows: usize) {
         let bucket = self.get_bucket(value);
 
-        let bitmap = self.range_bitmaps
+        let bitmap = self
+            .range_bitmaps
             .entry(bucket)
             .or_insert_with(|| CompressedBitmap::new(total_rows));
 
@@ -529,7 +506,7 @@ pub struct BitmapIndexStats {
     pub compressed_size: usize,
     pub compression_ratio: f64,
     pub total_bytes: (),
-    pub total_entries: ()
+    pub total_entries: (),
 }
 
 #[cfg(test)]

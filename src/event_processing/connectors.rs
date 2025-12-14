@@ -3,8 +3,6 @@
 // Implements various connectors for streaming data including Kafka-compatible protocol,
 // JDBC/Database sink, file sink (JSON, Parquet), HTTP webhook, and custom connectors.
 
-use std::time::SystemTime;
-use std::sync::Mutex;
 use super::{Event, EventValue, StreamPosition};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
@@ -12,8 +10,10 @@ use std::collections::HashMap;
 use std::fs::{File, OpenOptions};
 use std::io::{BufWriter, Write};
 use std::path::PathBuf;
+use std::sync::Mutex;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
+use std::time::SystemTime;
 
 /// Connector type
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,26 +143,18 @@ impl KafkaConnector {
 
     /// Reserved for event serialization
 
-
     #[allow(dead_code)]
-
 
     fn serialize_event(&self, event: &Event) -> Result<Vec<u8>> {
         serde_json::to_vec(event).map_err(|e| {
-            crate::error::DbError::Serialization(format!(
-                "Failed to serialize event: {}",
-                e
-            ))
+            crate::error::DbError::Serialization(format!("Failed to serialize event: {}", e))
         })
     }
 
     #[allow(dead_code)]
     fn deserialize_event(&self, data: &[u8]) -> Result<Event> {
         serde_json::from_slice(data).map_err(|e| {
-            crate::error::DbError::Serialization(format!(
-                "Failed to deserialize event: {}",
-                e
-            ))
+            crate::error::DbError::Serialization(format!("Failed to deserialize event: {}", e))
         })
     }
 }
@@ -433,7 +425,12 @@ impl FileSinkConnector {
             .create(true)
             .append(true)
             .open(&self.file_path)
-.map_err(|e| crate::error::DbError::Io(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to open file: {}", e))))?;
+            .map_err(|e| {
+                crate::error::DbError::Io(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Failed to open file: {}", e),
+                ))
+            })?;
 
         self.writer = Some(Arc::new(Mutex::new(BufWriter::new(file))));
         Ok(())
@@ -487,7 +484,7 @@ impl FileSinkConnector {
                     // Parquet writing would require apache-parquet crate
                     // Simplified for now
                     return Err(crate::error::DbError::NotImplemented(
-                        "Parquet format not yet implemented".to_string()
+                        "Parquet format not yet implemented".to_string(),
                     ));
                 }
             }
@@ -505,9 +502,9 @@ impl FileSinkConnector {
         // Flush current writer
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
-            writer.flush().map_err(|e| {
-                crate::error::DbError::IoError(format!("Failed to flush: {}", e))
-            })?;
+            writer
+                .flush()
+                .map_err(|e| crate::error::DbError::IoError(format!("Failed to flush: {}", e)))?;
         }
 
         // Rename current file with timestamp
@@ -517,9 +514,8 @@ impl FileSinkConnector {
             .as_secs();
 
         let new_path = self.file_path.with_extension(format!("{}.old", timestamp));
-        std::fs::rename(&self.file_path, &new_path).map_err(|e| {
-            crate::error::DbError::IoError(format!("Failed to rename file: {}", e))
-        })?;
+        std::fs::rename(&self.file_path, &new_path)
+            .map_err(|e| crate::error::DbError::IoError(format!("Failed to rename file: {}", e)))?;
 
         // Reset writer
         self.writer = None;
@@ -539,9 +535,9 @@ impl SinkConnector for FileSinkConnector {
 
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
-            writer.flush().map_err(|e| {
-                crate::error::DbError::IoError(format!("Failed to flush: {}", e))
-            })?;
+            writer
+                .flush()
+                .map_err(|e| crate::error::DbError::IoError(format!("Failed to flush: {}", e)))?;
         }
 
         Ok(())
@@ -577,9 +573,9 @@ impl SinkConnector for FileSinkConnector {
 
         if let Some(writer) = &self.writer {
             let mut writer = writer.lock().unwrap();
-            writer.flush().map_err(|e| {
-                crate::error::DbError::IoError(format!("Failed to flush: {}", e))
-            })?;
+            writer
+                .flush()
+                .map_err(|e| crate::error::DbError::IoError(format!("Failed to flush: {}", e)))?;
         }
 
         Ok(())
@@ -794,11 +790,8 @@ mod tests {
     #[test]
     fn test_jdbc_sink_connector() {
         let config = ConnectorConfig::default();
-        let mut connector = JdbcSinkConnector::new(
-            config,
-            "jdbc:postgresql://localhost/test",
-            "events",
-        );
+        let mut connector =
+            JdbcSinkConnector::new(config, "jdbc:postgresql://localhost/test", "events");
 
         connector.start().unwrap();
 
@@ -813,11 +806,8 @@ mod tests {
         let config = ConnectorConfig::default();
         let temp_file = env::temp_dir().join("test_events.jsonl");
 
-        let mut connector = FileSinkConnector::new(
-            config,
-            temp_file.clone(),
-            FileFormat::JsonLines,
-        );
+        let mut connector =
+            FileSinkConnector::new(config, temp_file.clone(), FileFormat::JsonLines);
 
         connector.start().unwrap();
 

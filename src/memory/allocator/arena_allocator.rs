@@ -36,7 +36,9 @@ impl ArenaChunk {
 
         let base = System.alloc(layout);
         if base.is_null() {
-            return Err(DbError::OutOfMemory("Failed to allocate arena chunk".to_string()));
+            return Err(DbError::OutOfMemory(
+                "Failed to allocate arena chunk".to_string(),
+            ));
         }
 
         Ok(Self {
@@ -96,9 +98,10 @@ impl Arena {
     unsafe fn allocate(&mut self, size: usize, align: usize) -> Result<NonNull<u8>> {
         // Check limit
         if self.limit > 0 && self.total_allocated + size > self.limit {
-            return Err(DbError::LimitExceeded(
-                format!("Arena '{}' limit {} exceeded", self.name, self.limit)
-            ));
+            return Err(DbError::LimitExceeded(format!(
+                "Arena '{}' limit {} exceeded",
+                self.name, self.limit
+            )));
         }
 
         // Try current chunk
@@ -117,7 +120,8 @@ impl Arena {
         }
 
         let mut new_chunk = ArenaChunk::new(chunk_size)?;
-        let ptr = new_chunk.allocate(size, align)
+        let ptr = new_chunk
+            .allocate(size, align)
             .ok_or_else(|| DbError::OutOfMemory("Failed to allocate from new chunk".to_string()))?;
 
         self.current_chunk = Some(new_chunk);
@@ -343,7 +347,10 @@ impl ArenaAllocator {
         let context = MemoryContext::new_top_level(name, limit)?;
         let id = context.lock().unwrap().id;
 
-        self.contexts.write().unwrap().insert(id, Arc::downgrade(&context));
+        self.contexts
+            .write()
+            .unwrap()
+            .insert(id, Arc::downgrade(&context));
         self.stats.contexts_created.fetch_add(1, Ordering::Relaxed);
 
         Ok(context)
@@ -392,7 +399,9 @@ impl ArenaAllocator {
         contexts.retain(|_, weak| weak.strong_count() > 0);
         let removed = before - contexts.len();
 
-        self.stats.contexts_deleted.fetch_add(removed as u64, Ordering::Relaxed);
+        self.stats
+            .contexts_deleted
+            .fetch_add(removed as u64, Ordering::Relaxed);
         removed
     }
 }
@@ -410,7 +419,7 @@ pub struct ArenaAllocatorStats {
     pub allocation_count: u64,
     pub deallocation_count: u64,
     pub peak_usage: u64,
-    pub fragmentation: f64
+    pub fragmentation: f64,
 }
 
 // ============================================================================

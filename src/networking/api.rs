@@ -17,9 +17,7 @@ use std::sync::Arc;
 
 // DbError and Result removed - unused in current implementation
 use super::manager::NetworkManager;
-use super::types::{
-    NodeAddress, NodeId,
-};
+use super::types::{NodeAddress, NodeId};
 
 // ============================================================================
 // API Request/Response Types
@@ -199,21 +197,19 @@ pub fn create_router(network_manager: Arc<NetworkManager>) -> Router {
         // Peer management
         .route("/api/v1/network/peers", get(list_peers))
         .route("/api/v1/network/peers/{node_id}", get(get_peer))
-
         // Topology
         .route("/api/v1/network/topology", get(get_topology))
-
         // Cluster operations
         .route("/api/v1/network/join", post(join_cluster))
         .route("/api/v1/network/leave", post(leave_cluster))
-
         // Statistics and monitoring
         .route("/api/v1/network/stats", get(get_stats))
         .route("/api/v1/network/health", get(get_health))
-
         // Node information
-        .route("/api/v1/network/node/{node_id}/health", get(get_node_health))
-
+        .route(
+            "/api/v1/network/node/{node_id}/health",
+            get(get_node_health),
+        )
         .with_state(state)
 }
 
@@ -238,7 +234,8 @@ async fn list_peers(
             }
         }
 
-        let health = state.network_manager
+        let health = state
+            .network_manager
             .get_node_health(&member.id)
             .await
             .map(|h| format!("{:?}", h))
@@ -274,12 +271,14 @@ async fn get_peer(
 ) -> Result<Json<PeerInfoResponse>, AppError> {
     let node_id = NodeId::new(node_id);
 
-    let member = state.network_manager
+    let member = state
+        .network_manager
         .get_member(&node_id)
         .await
         .ok_or_else(|| AppError::NotFound(format!("Node {} not found", node_id)))?;
 
-    let health = state.network_manager
+    let health = state
+        .network_manager
         .get_node_health(&member.id)
         .await
         .map(|h| format!("{:?}", h))
@@ -297,9 +296,7 @@ async fn get_peer(
 }
 
 /// GET /api/v1/network/topology - Get cluster topology
-async fn get_topology(
-    State(state): State<ApiState>,
-) -> impl IntoResponse {
+async fn get_topology(State(state): State<ApiState>) -> impl IntoResponse {
     let members = state.network_manager.get_members().await;
     let local_node_id = state.network_manager.local_node_id().to_string();
 
@@ -342,13 +339,15 @@ async fn join_cluster(
             if parts.len() != 2 {
                 return Err(AppError::BadRequest("Invalid seed node format".to_string()));
             }
-            let port = parts[1].parse::<u16>()
+            let port = parts[1]
+                .parse::<u16>()
                 .map_err(|_| AppError::BadRequest("Invalid port".to_string()))?;
             Ok(NodeAddress::new(parts[0], port))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    state.network_manager
+    state
+        .network_manager
         .join_cluster(seed_nodes)
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
@@ -368,7 +367,8 @@ async fn join_cluster(
 async fn leave_cluster(
     State(state): State<ApiState>,
 ) -> Result<Json<LeaveClusterResponse>, AppError> {
-    state.network_manager
+    state
+        .network_manager
         .leave_cluster()
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
@@ -382,9 +382,7 @@ async fn leave_cluster(
 }
 
 /// GET /api/v1/network/stats - Get network statistics
-async fn get_stats(
-    State(state): State<ApiState>,
-) -> impl IntoResponse {
+async fn get_stats(State(state): State<ApiState>) -> impl IntoResponse {
     let stats = state.network_manager.get_stats().await;
 
     let response = StatsResponse {
@@ -401,16 +399,15 @@ async fn get_stats(
 }
 
 /// GET /api/v1/network/health - Get overall network health
-async fn get_health(
-    State(state): State<ApiState>,
-) -> impl IntoResponse {
+async fn get_health(State(state): State<ApiState>) -> impl IntoResponse {
     let members = state.network_manager.get_members().await;
     let unhealthy = state.network_manager.get_unhealthy_nodes().await;
 
     let mut node_health: Vec<NodeHealthResponse> = Vec::new();
 
     for member in &members {
-        let health = state.network_manager
+        let health = state
+            .network_manager
             .get_node_health(&member.id)
             .await
             .map(|h| format!("{:?}", h))
@@ -449,10 +446,13 @@ async fn get_node_health(
 ) -> Result<Json<NodeHealthDetail>, AppError> {
     let node_id = NodeId::new(node_id);
 
-    let health = state.network_manager
+    let health = state
+        .network_manager
         .get_node_health(&node_id)
         .await
-        .ok_or_else(|| AppError::NotFound(format!("Health info not available for node {}", node_id)))?;
+        .ok_or_else(|| {
+            AppError::NotFound(format!("Health info not available for node {}", node_id))
+        })?;
 
     let response = NodeHealthDetail {
         node_id: node_id.to_string(),
@@ -504,19 +504,16 @@ impl IntoResponse for AppError {
 
 #[cfg(test)]
 mod tests {
-    use crate::networking::NodeInfo;
     use super::*;
+    use crate::networking::NodeInfo;
 
     #[tokio::test]
     async fn test_router_creation() {
-        use super::super::types::{NetworkConfig, NodeAddress};
         use super::super::manager::create_default_manager;
+        use super::super::types::{NetworkConfig, NodeAddress};
 
         let config = NetworkConfig::default();
-        let local_node = NodeInfo::new(
-            NodeId::new("test"),
-            NodeAddress::new("localhost", 7000),
-        );
+        let local_node = NodeInfo::new(NodeId::new("test"), NodeAddress::new("localhost", 7000));
 
         let manager = create_default_manager(config, local_node);
         let router = create_router(Arc::new(manager));

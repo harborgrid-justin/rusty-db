@@ -5,8 +5,8 @@ use super::*;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
-use std::time::UNIX_EPOCH;
 use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 // Chunk store entry
 #[derive(Debug, Clone)]
@@ -51,11 +51,11 @@ pub struct ChunkingParams {
 impl Default for ChunkingParams {
     fn default() -> Self {
         Self {
-            min_chunk_size: 2 * 1024,      // 2KB
-            avg_chunk_size: 8 * 1024,      // 8KB
-            max_chunk_size: 64 * 1024,     // 64KB
+            min_chunk_size: 2 * 1024,  // 2KB
+            avg_chunk_size: 8 * 1024,  // 8KB
+            max_chunk_size: 64 * 1024, // 64KB
             window_size: 48,
-            mask_bits: 13,                  // Target ~8KB chunks
+            mask_bits: 13, // Target ~8KB chunks
         }
     }
 }
@@ -162,7 +162,10 @@ impl DedupEngine {
             // Check if chunk already exists
             let (chunk_id, _is_new) = if self.is_duplicate(chunk_hash) {
                 duplicate_chunks += 1;
-                let chunk_id = self.chunk_index.read().unwrap()
+                let chunk_id = self
+                    .chunk_index
+                    .read()
+                    .unwrap()
                     .get(&chunk_hash)
                     .cloned()
                     .unwrap();
@@ -193,7 +196,10 @@ impl DedupEngine {
 
             let (chunk_id, _is_new) = if self.is_duplicate(chunk_hash) {
                 duplicate_chunks += 1;
-                let chunk_id = self.chunk_index.read().unwrap()
+                let chunk_id = self
+                    .chunk_index
+                    .read()
+                    .unwrap()
                     .get(&chunk_hash)
                     .cloned()
                     .unwrap();
@@ -243,9 +249,12 @@ impl DedupEngine {
         }
 
         if restored.len() != metadata.original_size {
-            return Err(CompressionError::DecompressionFailed(
-                format!("Size mismatch: expected {}, got {}", metadata.original_size, restored.len())
-            ).into());
+            return Err(CompressionError::DecompressionFailed(format!(
+                "Size mismatch: expected {}, got {}",
+                metadata.original_size,
+                restored.len()
+            ))
+            .into());
         }
 
         Ok(restored)
@@ -339,7 +348,10 @@ impl DedupEngine {
         };
 
         self.chunk_store.write().unwrap().insert(hash, entry);
-        self.chunk_index.write().unwrap().insert(hash, chunk_id.clone());
+        self.chunk_index
+            .write()
+            .unwrap()
+            .insert(hash, chunk_id.clone());
 
         let mut stats = self.stats.write().unwrap();
         stats.unique_bytes += chunk.len();
@@ -358,9 +370,10 @@ impl DedupEngine {
             }
         }
 
-        Err(CompressionError::InvalidInput(
-            format!("Chunk not found: {:?}", chunk_id)
-        ))
+        Err(CompressionError::InvalidInput(format!(
+            "Chunk not found: {:?}",
+            chunk_id
+        )))
     }
 
     fn increment_reference(&self, chunk_hash: u64) {
@@ -515,9 +528,11 @@ impl CrossTableDedup {
     }
 
     // Deduplicate a table's data
-    pub fn deduplicate_table(&mut self, table_id: u64, data: Vec<Vec<u8>>)
-        -> CompressionResult<Vec<DedupMetadata>> {
-
+    pub fn deduplicate_table(
+        &mut self,
+        table_id: u64,
+        data: Vec<Vec<u8>>,
+    ) -> CompressionResult<Vec<DedupMetadata>> {
         let mut chunks = Vec::new();
         let mut total_size = 0;
         let mut deduplicated_size = 0;
@@ -536,20 +551,27 @@ impl CrossTableDedup {
             chunks: chunks.clone(),
         };
 
-        self.table_metadata.write().unwrap().insert(table_id, table_metadata);
+        self.table_metadata
+            .write()
+            .unwrap()
+            .insert(table_id, table_metadata);
 
         Ok(chunks)
     }
 
     // Get deduplication ratio for a table
     pub fn table_dedup_ratio(&self, table_id: u64) -> Option<f64> {
-        self.table_metadata.read().unwrap().get(&table_id).map(|metadata| {
-            if metadata.deduplicated_size == 0 {
-                0.0
-            } else {
-                metadata.total_size as f64 / metadata.deduplicated_size as f64
-            }
-        })
+        self.table_metadata
+            .read()
+            .unwrap()
+            .get(&table_id)
+            .map(|metadata| {
+                if metadata.deduplicated_size == 0 {
+                    0.0
+                } else {
+                    metadata.total_size as f64 / metadata.deduplicated_size as f64
+                }
+            })
     }
 
     // Get overall deduplication statistics

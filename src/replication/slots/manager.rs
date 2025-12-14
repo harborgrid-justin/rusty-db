@@ -6,10 +6,10 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
-use crate::replication::types::{LogSequenceNumber, ReplicaId};
 use super::config::SlotManagerConfig;
 use super::errors::SlotError;
 use super::types::*;
+use crate::replication::types::{LogSequenceNumber, ReplicaId};
 
 // Slot manager trait
 #[async_trait]
@@ -116,12 +116,15 @@ impl ReplicationSlotManager {
                 reason: format!("Failed to read storage directory: {}", e),
             })?;
 
-        while let Some(entry) = entries.next_entry()
-            .await
-            .map_err(|e| SlotError::ConsumptionFailed {
-                slot_name: "system".to_string(),
-                reason: e.to_string(),
-            })? {
+        while let Some(entry) =
+            entries
+                .next_entry()
+                .await
+                .map_err(|e| SlotError::ConsumptionFailed {
+                    slot_name: "system".to_string(),
+                    reason: e.to_string(),
+                })?
+        {
             let path = entry.path();
             if path.extension().map_or(false, |ext| ext == "slot") {
                 if let Ok(slot_info) = self.load_slot_from_disk(&path).await {
@@ -139,23 +142,26 @@ impl ReplicationSlotManager {
     }
 
     async fn load_slot_from_disk(&self, path: &std::path::Path) -> Result<SlotInfo, SlotError> {
-        let contents = tokio::fs::read_to_string(path)
-            .await
-            .map_err(|e| SlotError::ConsumptionFailed {
-                slot_name: "unknown".to_string(),
-                reason: e.to_string(),
-            })?;
-        serde_json::from_str(&contents)
-            .map_err(|e| SlotError::StateCorruption {
-                slot_name: "unknown".to_string(),
-                reason: format!("Failed to parse slot data: {}", e),
-            })
+        let contents =
+            tokio::fs::read_to_string(path)
+                .await
+                .map_err(|e| SlotError::ConsumptionFailed {
+                    slot_name: "unknown".to_string(),
+                    reason: e.to_string(),
+                })?;
+        serde_json::from_str(&contents).map_err(|e| SlotError::StateCorruption {
+            slot_name: "unknown".to_string(),
+            reason: format!("Failed to parse slot data: {}", e),
+        })
     }
 
     pub(crate) async fn save_slot_to_disk(&self, slot_info: &SlotInfo) -> Result<(), SlotError> {
-        let path = self.config.storage_path.join(format!("{}.slot", slot_info.slot_name));
-        let contents = serde_json::to_string_pretty(slot_info)
-            .map_err(|e| SlotError::WriteFailed {
+        let path = self
+            .config
+            .storage_path
+            .join(format!("{}.slot", slot_info.slot_name));
+        let contents =
+            serde_json::to_string_pretty(slot_info).map_err(|e| SlotError::WriteFailed {
                 slot_name: slot_info.slot_name.to_string(),
                 reason: e.to_string(),
             })?;
@@ -237,11 +243,17 @@ impl ReplicationSlotManager {
             issues.push("Slot is in error state".to_string());
             SlotHealthStatus::Critical
         } else if slot_info.statistics.lag_bytes > slot_info.config.max_lag_bytes {
-            issues.push(format!("High lag: {} bytes", slot_info.statistics.lag_bytes));
+            issues.push(format!(
+                "High lag: {} bytes",
+                slot_info.statistics.lag_bytes
+            ));
             recommendations.push("Consider scaling up resources or reducing load".to_string());
             SlotHealthStatus::Degraded
         } else if slot_info.statistics.error_count > 10 {
-            issues.push(format!("High error count: {}", slot_info.statistics.error_count));
+            issues.push(format!(
+                "High error count: {}",
+                slot_info.statistics.error_count
+            ));
             SlotHealthStatus::Degraded
         } else if !slot_info.active {
             let now = SystemTime::now();

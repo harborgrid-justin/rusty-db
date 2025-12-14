@@ -21,14 +21,14 @@
 // - I/O: Token bucket algorithm for bandwidth limiting
 // - Storage: Quota enforcement at tablespace level
 
-use std::time::Instant;
+use super::pdb::PdbId;
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::Instant;
 use tokio::sync::{RwLock, Semaphore};
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
-use super::pdb::PdbId;
 
 // Resource limits for a PDB
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,13 +64,13 @@ pub struct ResourceLimits {
 impl Default for ResourceLimits {
     fn default() -> Self {
         Self {
-            memory_bytes: 512 * 1024 * 1024,     // 512 MB
-            cpu_shares: 100,                      // 1% of total
+            memory_bytes: 512 * 1024 * 1024,               // 512 MB
+            cpu_shares: 100,                               // 1% of total
             io_bandwidth_bytes_per_sec: 100 * 1024 * 1024, // 100 MB/s
             max_connections: 100,
-            temp_space_bytes: 1024 * 1024 * 1024, // 1 GB
+            temp_space_bytes: 1024 * 1024 * 1024,         // 1 GB
             storage_quota_bytes: 10 * 1024 * 1024 * 1024, // 10 GB
-            qos_priority: 5,                      // Medium priority
+            qos_priority: 5,                              // Medium priority
             cpu_throttling_enabled: true,
             io_throttling_enabled: true,
         }
@@ -174,10 +174,10 @@ impl MemoryIsolator {
 
             if new_total > alloc.limit_bytes {
                 alloc.oom_count += 1;
-                return Err(DbError::ResourceExhausted(
-                    format!("Memory limit exceeded for PDB {:?}: {} > {}",
-                        pdb_id, new_total, alloc.limit_bytes)
-                ));
+                return Err(DbError::ResourceExhausted(format!(
+                    "Memory limit exceeded for PDB {:?}: {} > {}",
+                    pdb_id, new_total, alloc.limit_bytes
+                )));
             }
 
             alloc.current_bytes = new_total;
@@ -189,7 +189,10 @@ impl MemoryIsolator {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 
@@ -201,7 +204,10 @@ impl MemoryIsolator {
             alloc.current_bytes = alloc.current_bytes.saturating_sub(bytes);
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 
@@ -212,7 +218,10 @@ impl MemoryIsolator {
         if let Some(alloc) = allocations.get(&pdb_id) {
             Ok((alloc.current_bytes, alloc.limit_bytes))
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 
@@ -227,10 +236,14 @@ impl MemoryIsolator {
                 limit_bytes: alloc.limit_bytes,
                 allocation_count: alloc.allocation_count,
                 oom_count: alloc.oom_count,
-                utilization_percent: (alloc.current_bytes as f64 / alloc.limit_bytes as f64) * 100.0,
+                utilization_percent: (alloc.current_bytes as f64 / alloc.limit_bytes as f64)
+                    * 100.0,
             })
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 }
@@ -372,7 +385,10 @@ impl CpuScheduler {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 
@@ -397,7 +413,10 @@ impl CpuScheduler {
                 usage_percent,
             })
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 }
@@ -507,7 +526,10 @@ impl IoBandwidthAllocator {
         if let Some(bucket) = buckets.get_mut(&pdb_id) {
             Ok(bucket.consume(bytes))
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 
@@ -534,10 +556,15 @@ impl IoBandwidthAllocator {
                 refill_rate: bucket.refill_rate,
                 total_bytes: bucket.total_bytes,
                 throttle_count: bucket.throttle_count,
-                utilization_percent: ((bucket.capacity - bucket.tokens) as f64 / bucket.capacity as f64) * 100.0,
+                utilization_percent: ((bucket.capacity - bucket.tokens) as f64
+                    / bucket.capacity as f64)
+                    * 100.0,
             })
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 }
@@ -623,14 +650,17 @@ impl ConnectionLimiter {
                 }
                 Err(_) => {
                     limit.rejected_count += 1;
-                    Err(DbError::ResourceExhausted(
-                        format!("Connection limit reached for PDB {:?}: {}",
-                            pdb_id, limit.max_connections)
-                    ))
+                    Err(DbError::ResourceExhausted(format!(
+                        "Connection limit reached for PDB {:?}: {}",
+                        pdb_id, limit.max_connections
+                    )))
                 }
             }
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 
@@ -644,10 +674,15 @@ impl ConnectionLimiter {
                 current_connections: limit.current_connections,
                 total_attempts: limit.total_attempts,
                 rejected_count: limit.rejected_count,
-                utilization_percent: (limit.current_connections as f64 / limit.max_connections as f64) * 100.0,
+                utilization_percent: (limit.current_connections as f64
+                    / limit.max_connections as f64)
+                    * 100.0,
             })
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 }
@@ -725,10 +760,10 @@ impl TempSpaceLimiter {
             let new_total = usage.current_bytes + bytes;
             if new_total > usage.max_bytes {
                 usage.rejection_count += 1;
-                return Err(DbError::ResourceExhausted(
-                    format!("Temp space limit exceeded for PDB {:?}: {} > {}",
-                        pdb_id, new_total, usage.max_bytes)
-                ));
+                return Err(DbError::ResourceExhausted(format!(
+                    "Temp space limit exceeded for PDB {:?}: {} > {}",
+                    pdb_id, new_total, usage.max_bytes
+                )));
             }
 
             usage.current_bytes = new_total;
@@ -738,7 +773,10 @@ impl TempSpaceLimiter {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 
@@ -750,7 +788,10 @@ impl TempSpaceLimiter {
             usage.current_bytes = usage.current_bytes.saturating_sub(bytes);
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 }
@@ -808,16 +849,19 @@ impl StorageQuotaManager {
 
             if new_total > quota.max_bytes {
                 quota.violation_count += 1;
-                return Err(DbError::QuotaExceeded(
-                    format!("Storage quota exceeded for PDB {:?}: {} > {}",
-                        pdb_id, new_total, quota.max_bytes)
-                ));
+                return Err(DbError::QuotaExceeded(format!(
+                    "Storage quota exceeded for PDB {:?}: {} > {}",
+                    pdb_id, new_total, quota.max_bytes
+                )));
             }
 
             quota.current_bytes = new_total;
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("PDB not registered: {:?}", pdb_id)))
+            Err(DbError::NotFound(format!(
+                "PDB not registered: {:?}",
+                pdb_id
+            )))
         }
     }
 }
@@ -849,10 +893,18 @@ impl ResourceIsolator {
     pub async fn register_pdb(&self, pdb_id: PdbId, limits: &ResourceLimits) -> Result<()> {
         self.memory.register(pdb_id, limits.memory_bytes).await?;
         self.cpu.register(pdb_id, limits.cpu_shares).await?;
-        self.io.register(pdb_id, limits.io_bandwidth_bytes_per_sec).await?;
-        self.connections.register(pdb_id, limits.max_connections).await?;
-        self.temp_space.register(pdb_id, limits.temp_space_bytes).await?;
-        self.storage.register(pdb_id, limits.storage_quota_bytes).await?;
+        self.io
+            .register(pdb_id, limits.io_bandwidth_bytes_per_sec)
+            .await?;
+        self.connections
+            .register(pdb_id, limits.max_connections)
+            .await?;
+        self.temp_space
+            .register(pdb_id, limits.temp_space_bytes)
+            .await?;
+        self.storage
+            .register(pdb_id, limits.storage_quota_bytes)
+            .await?;
         Ok(())
     }
 

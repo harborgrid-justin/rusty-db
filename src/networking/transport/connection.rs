@@ -216,10 +216,18 @@ mod tests {
         let conn = Connection::new("node1".to_string(), TransportType::Tcp);
 
         // Initially should not timeout
-        assert!(!conn.should_close_idle(std::time::Duration::from_secs(10)).await);
+        assert!(
+            !conn
+                .should_close_idle(std::time::Duration::from_secs(10))
+                .await
+        );
 
         // Update activity
         conn.update_activity().await;
-        assert!(!conn.should_close_idle(std::time::Duration::from_secs(10)).await);
+        assert!(
+            !conn
+                .should_close_idle(std::time::Duration::from_secs(10))
+                .await
+        );
     }
 }

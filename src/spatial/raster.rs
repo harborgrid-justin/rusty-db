@@ -100,7 +100,9 @@ impl RasterBand {
     // Get pixel value at (x, y)
     pub fn get_pixel(&self, x: usize, y: usize) -> Result<PixelValue> {
         if x >= self.width || y >= self.height {
-            return Err(DbError::InvalidInput("Pixel coordinates out of bounds".to_string()));
+            return Err(DbError::InvalidInput(
+                "Pixel coordinates out of bounds".to_string(),
+            ));
         }
 
         let idx = (y * self.width + x) * self.pixel_type.size_bytes();
@@ -129,7 +131,9 @@ impl RasterBand {
     // Set pixel value at (x, y)
     pub fn set_pixel(&mut self, x: usize, y: usize, value: PixelValue) -> Result<()> {
         if x >= self.width || y >= self.height {
-            return Err(DbError::InvalidInput("Pixel coordinates out of bounds".to_string()));
+            return Err(DbError::InvalidInput(
+                "Pixel coordinates out of bounds".to_string(),
+            ));
         }
 
         let idx = (y * self.width + x) * self.pixel_type.size_bytes();
@@ -220,12 +224,12 @@ impl RasterBand {
 // Georeferencing information
 #[derive(Debug, Clone)]
 pub struct GeoTransform {
-    pub origin_x: f64,      // X coordinate of upper-left corner
-    pub origin_y: f64,      // Y coordinate of upper-left corner
-    pub pixel_width: f64,   // W-E pixel resolution
-    pub pixel_height: f64,  // N-S pixel resolution (usually negative)
-    pub rotation_x: f64,    // Rotation parameter
-    pub rotation_y: f64,    // Rotation parameter
+    pub origin_x: f64,     // X coordinate of upper-left corner
+    pub origin_y: f64,     // Y coordinate of upper-left corner
+    pub pixel_width: f64,  // W-E pixel resolution
+    pub pixel_height: f64, // N-S pixel resolution (usually negative)
+    pub rotation_x: f64,   // Rotation parameter
+    pub rotation_y: f64,   // Rotation parameter
 }
 
 impl GeoTransform {
@@ -363,11 +367,15 @@ impl RasterAlgebra {
         F: Fn(f64, f64) -> f64,
     {
         if raster1.width != raster2.width || raster1.height != raster2.height {
-            return Err(DbError::InvalidInput("Raster dimensions must match".to_string()));
+            return Err(DbError::InvalidInput(
+                "Raster dimensions must match".to_string(),
+            ));
         }
 
         if raster1.bands.len() != raster2.bands.len() {
-            return Err(DbError::InvalidInput("Number of bands must match".to_string()));
+            return Err(DbError::InvalidInput(
+                "Number of bands must match".to_string(),
+            ));
         }
 
         let mut result = Raster::new(
@@ -400,7 +408,9 @@ impl RasterAlgebra {
     // Calculate NDVI (Normalized Difference Vegetation Index)
     pub fn ndvi(nir_band: &RasterBand, red_band: &RasterBand) -> Result<RasterBand> {
         if nir_band.width != red_band.width || nir_band.height != red_band.height {
-            return Err(DbError::InvalidInput("Band dimensions must match".to_string()));
+            return Err(DbError::InvalidInput(
+                "Band dimensions must match".to_string(),
+            ));
         }
 
         let mut result = RasterBand::new(nir_band.width, nir_band.height, PixelType::Float32);
@@ -487,14 +497,9 @@ impl RasterVectorConverter {
 
                 if let Some(val) = band.get_pixel(x, y).ok().and_then(|v| v.to_f64()) {
                     if val >= threshold {
-                        if let Some(polygon) = Self::trace_polygon(
-                            band,
-                            geo_transform,
-                            x,
-                            y,
-                            threshold,
-                            &mut visited,
-                        )? {
+                        if let Some(polygon) =
+                            Self::trace_polygon(band, geo_transform, x, y, threshold, &mut visited)?
+                        {
                             polygons.push(polygon);
                         }
                     }
@@ -594,10 +599,26 @@ impl RasterVectorConverter {
         // Simplified marching squares algorithm
         for y in 0..band.height - 1 {
             for x in 0..band.width - 1 {
-                let v00 = band.get_pixel(x, y).ok().and_then(|v| v.to_f64()).unwrap_or(0.0);
-                let v10 = band.get_pixel(x + 1, y).ok().and_then(|v| v.to_f64()).unwrap_or(0.0);
-                let v01 = band.get_pixel(x, y + 1).ok().and_then(|v| v.to_f64()).unwrap_or(0.0);
-                let v11 = band.get_pixel(x + 1, y + 1).ok().and_then(|v| v.to_f64()).unwrap_or(0.0);
+                let v00 = band
+                    .get_pixel(x, y)
+                    .ok()
+                    .and_then(|v| v.to_f64())
+                    .unwrap_or(0.0);
+                let v10 = band
+                    .get_pixel(x + 1, y)
+                    .ok()
+                    .and_then(|v| v.to_f64())
+                    .unwrap_or(0.0);
+                let v01 = band
+                    .get_pixel(x, y + 1)
+                    .ok()
+                    .and_then(|v| v.to_f64())
+                    .unwrap_or(0.0);
+                let v11 = band
+                    .get_pixel(x + 1, y + 1)
+                    .ok()
+                    .and_then(|v| v.to_f64())
+                    .unwrap_or(0.0);
 
                 // Determine marching squares case
                 let mut case = 0;
@@ -652,7 +673,9 @@ impl RasterPyramid {
         let new_height = raster.height / 2;
 
         if new_width == 0 || new_height == 0 {
-            return Err(DbError::InvalidInput("Raster too small to downsample".to_string()));
+            return Err(DbError::InvalidInput(
+                "Raster too small to downsample".to_string(),
+            ));
         }
 
         let mut geo_transform = raster.geo_transform.clone();
@@ -747,10 +770,20 @@ impl TiledRaster {
     // Get or create a tile
     pub fn get_tile_mut(&mut self, tile_x: usize, tile_y: usize) -> &mut Raster {
         self.tiles.entry((tile_x, tile_y)).or_insert_with(|| {
-            let width = self.tile_width.min(self.full_width - tile_x * self.tile_width);
-            let height = self.tile_height.min(self.full_height - tile_y * self.tile_height);
+            let width = self
+                .tile_width
+                .min(self.full_width - tile_x * self.tile_width);
+            let height = self
+                .tile_height
+                .min(self.full_height - tile_y * self.tile_height);
 
-            Raster::new(width, height, 1, PixelType::UInt8, self.geo_transform.clone())
+            Raster::new(
+                width,
+                height,
+                1,
+                PixelType::UInt8,
+                self.geo_transform.clone(),
+            )
         })
     }
 
@@ -811,8 +844,12 @@ mod tests {
         let mut raster1 = Raster::new(2, 2, 1, PixelType::UInt8, geo_transform.clone());
         let mut raster2 = Raster::new(2, 2, 1, PixelType::UInt8, geo_transform);
 
-        raster1.bands[0].set_pixel(0, 0, PixelValue::UInt8(10)).unwrap();
-        raster2.bands[0].set_pixel(0, 0, PixelValue::UInt8(5)).unwrap();
+        raster1.bands[0]
+            .set_pixel(0, 0, PixelValue::UInt8(10))
+            .unwrap();
+        raster2.bands[0]
+            .set_pixel(0, 0, PixelValue::UInt8(5))
+            .unwrap();
 
         let result = RasterAlgebra::add(&raster1, &raster2).unwrap();
         let value = result.bands[0].get_pixel(0, 0).unwrap();

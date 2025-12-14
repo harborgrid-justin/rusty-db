@@ -4,13 +4,13 @@
 
 use axum::{
     extract::{Path, Query, State},
-    response::Json as AxumJson,
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::super::types::*;
@@ -28,7 +28,7 @@ pub struct IncidentListResponse {
 pub struct IncidentSummary {
     pub id: String,
     pub severity: String, // critical, high, medium, low
-    pub status: String, // open, investigating, resolved, closed
+    pub status: String,   // open, investigating, resolved, closed
     pub title: String,
     pub description: String,
     pub created_at: i64,
@@ -41,7 +41,7 @@ pub struct IncidentSummary {
 // Dump request/response types
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DumpRequest {
-    pub dump_type: String, // memory, thread, heap, query_plan, execution_stats
+    pub dump_type: String,      // memory, thread, heap, query_plan, execution_stats
     pub target: Option<String>, // specific query ID, session ID, or component
     pub include_stacktrace: Option<bool>,
     pub format: Option<String>, // json, text, binary
@@ -282,8 +282,8 @@ pub async fn get_dump_status(
         dump_id: id.clone(),
         dump_type: "memory".to_string(),
         status: "completed".to_string(),
-        created_at: now - 300, // 5 minutes ago
-        completed_at: Some(now - 60), // 1 minute ago
+        created_at: now - 300,              // 5 minutes ago
+        completed_at: Some(now - 60),       // 1 minute ago
         size_bytes: Some(1024 * 1024 * 50), // 50 MB
         download_url: Some(format!("/api/v1/diagnostics/dump/{}/download", id)),
         expires_at: Some(now + 3300), // ~55 minutes remaining

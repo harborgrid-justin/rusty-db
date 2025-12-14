@@ -362,37 +362,35 @@
 // - **In-Memory Config**: No file I/O required for tests
 
 // Module declarations
-pub mod service_bus;
 pub mod config;
+pub mod cross_cutting;
 pub mod feature_flags;
 pub mod lifecycle;
-pub mod cross_cutting;
+pub mod service_bus;
 
 // Re-export commonly used types for convenience
 pub use service_bus::{
-    ServiceBus, Message, MessagePriority, DeliveryMode, ServiceInfo,
-    BusStatistics, MessageMetadata,
+    BusStatistics, DeliveryMode, Message, MessageMetadata, MessagePriority, ServiceBus, ServiceInfo,
 };
 
 pub use config::{
-    ConfigManager, ConfigValue, Environment, ConfigSchema, ValidationRule,
-    ConfigChange, ConfigSnapshot,
+    ConfigChange, ConfigManager, ConfigSchema, ConfigSnapshot, ConfigValue, Environment,
+    ValidationRule,
 };
 
 pub use feature_flags::{
-    FeatureFlagManager, Feature, FeatureState, RolloutStrategy,
-    EvaluationContext, EvaluationResult, ABTest, Variant,
+    ABTest, EvaluationContext, EvaluationResult, Feature, FeatureFlagManager, FeatureState,
+    RolloutStrategy, Variant,
 };
 
 pub use lifecycle::{
-    LifecycleManager, Component, ComponentState, HealthStatus, HealthCheck,
-    ComponentMetadata, SystemSnapshot, LifecycleEvent,
+    Component, ComponentMetadata, ComponentState, HealthCheck, HealthStatus, LifecycleEvent,
+    LifecycleManager, SystemSnapshot,
 };
 
 pub use cross_cutting::{
-    RequestContext, TracingContext, Span, CircuitBreaker, CircuitState,
-    RateLimiter, Bulkhead, RetryPolicy, RecoveryStrategy, ErrorHandler,
-    retry_with_backoff,
+    retry_with_backoff, Bulkhead, CircuitBreaker, CircuitState, ErrorHandler, RateLimiter,
+    RecoveryStrategy, RequestContext, RetryPolicy, Span, TracingContext,
 };
 
 // Enterprise layer version
@@ -478,22 +476,26 @@ mod tests {
 
         // Test service bus
         let mut rx = runtime.service_bus.subscribe("test").await;
-        runtime.service_bus.publish(
-            Message::new("test", b"hello".to_vec())
-        ).await.unwrap();
+        runtime
+            .service_bus
+            .publish(Message::new("test", b"hello".to_vec()))
+            .await
+            .unwrap();
 
         let msg = rx.recv().await.unwrap();
         assert_eq!(msg.payload, b"hello");
 
         // Test config
-        runtime.config.set("test.key", ConfigValue::String("value".into()))
-            .await.unwrap();
+        runtime
+            .config
+            .set("test.key", ConfigValue::String("value".into()))
+            .await
+            .unwrap();
         let val = runtime.config.get("test.key").await.unwrap();
         assert_eq!(val.as_string(), Some("value"));
 
         // Test feature flags
-        let feature = Feature::new("test_feature")
-            .with_state(FeatureState::Enabled);
+        let feature = Feature::new("test_feature").with_state(FeatureState::Enabled);
         runtime.feature_flags.register(feature).await.unwrap();
 
         let ctx = EvaluationContext::for_user("user1");

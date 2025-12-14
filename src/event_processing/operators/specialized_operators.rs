@@ -1,9 +1,8 @@
+use super::super::Event;
 /// Specialized Operators Module
 ///
 /// Specialized stream operators: deduplication, TopN, and union.
-
 use super::pipeline::StreamOperator;
-use super::super::Event;
 use crate::error::Result;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{Hash, Hasher};
@@ -32,8 +31,8 @@ impl DeduplicationOperator {
     }
 
     fn compute_key(&self, event: &Event) -> u64 {
-        use std::collections::hash_map::DefaultHasher;
         use super::super::EventValue;
+        use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
 
         for field in &self.key_fields {

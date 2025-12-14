@@ -30,7 +30,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::error::DbError;
@@ -138,7 +138,11 @@ pub struct HealthCheckStatus {
 // Dependency injection container
 pub struct DependencyContainer {
     services: Arc<RwLock<HashMap<String, Arc<dyn std::any::Any + Send + Sync>>>>,
-    factories: Arc<RwLock<HashMap<String, Box<dyn Fn() -> Box<dyn std::any::Any + Send + Sync> + Send + Sync>>>>,
+    factories: Arc<
+        RwLock<
+            HashMap<String, Box<dyn Fn() -> Box<dyn std::any::Any + Send + Sync> + Send + Sync>>,
+        >,
+    >,
 }
 
 impl DependencyContainer {
@@ -162,16 +166,15 @@ impl DependencyContainer {
         F: Fn() -> T + Send + Sync + 'static,
     {
         let mut factories = self.factories.write().unwrap();
-        factories.insert(
-            name.to_string(),
-            Box::new(move || Box::new(factory())),
-        );
+        factories.insert(name.to_string(), Box::new(move || Box::new(factory())));
     }
 
     // Resolve a service by name
     pub fn resolve<T: Send + Sync + 'static>(&self, name: &str) -> Option<Arc<T>> {
         let services = self.services.read().unwrap();
-        services.get(name).and_then(|s| s.clone().downcast::<T>().ok())
+        services
+            .get(name)
+            .and_then(|s| s.clone().downcast::<T>().ok())
     }
 
     // Create a new instance from factory
@@ -262,14 +265,18 @@ impl FeatureFlagManager {
         }
     }
 
-    fn evaluate_condition(&self, condition: &FlagCondition, context: &HashMap<String, String>) -> bool {
+    fn evaluate_condition(
+        &self,
+        condition: &FlagCondition,
+        context: &HashMap<String, String>,
+    ) -> bool {
         let ctx_value = context.get(&condition.attribute);
         match &condition.operator {
             ConditionOperator::Equals => ctx_value == Some(&condition.value),
             ConditionOperator::NotEquals => ctx_value != Some(&condition.value),
-            ConditionOperator::Contains => {
-                ctx_value.map(|v| v.contains(&condition.value)).unwrap_or(false)
-            }
+            ConditionOperator::Contains => ctx_value
+                .map(|v| v.contains(&condition.value))
+                .unwrap_or(false),
             _ => false,
         }
     }
@@ -308,16 +315,25 @@ impl VersionCompatibilityChecker {
 
     pub fn register_constraint(&self, service: &str, constraint: VersionConstraint) {
         let mut matrix = self.compatibility_matrix.write().unwrap();
-        matrix.entry(service.to_string())
+        matrix
+            .entry(service.to_string())
             .or_insert_with(Vec::new)
             .push(constraint);
     }
 
-    pub fn check_compatibility(&self, service: &str, version: &str) -> std::result::Result<bool, DbError> {
+    pub fn check_compatibility(
+        &self,
+        service: &str,
+        version: &str,
+    ) -> std::result::Result<bool, DbError> {
         let matrix = self.compatibility_matrix.read().unwrap();
         if let Some(constraints) = matrix.get(service) {
             for constraint in constraints {
-                if !self.version_satisfies(version, &constraint.min_version, &constraint.max_version) {
+                if !self.version_satisfies(
+                    version,
+                    &constraint.min_version,
+                    &constraint.max_version,
+                ) {
                     if constraint.required {
                         return Err(DbError::Configuration(format!(
                             "Version incompatibility: {} version {} does not satisfy constraints",
@@ -357,7 +373,8 @@ impl ConfigurationAggregator {
 
     pub fn set_config(&self, service: &str, key: &str, value: &str) {
         let mut configs = self.configs.write().unwrap();
-        configs.entry(service.to_string())
+        configs
+            .entry(service.to_string())
             .or_insert_with(HashMap::new)
             .insert(key.to_string(), value.to_string());
 
@@ -433,7 +450,8 @@ impl ServiceEventBus {
 
     pub fn subscribe(&self, event_type: &str, handler: Box<dyn ServiceEventHandler>) {
         let mut subscribers = self.subscribers.write().unwrap();
-        subscribers.entry(event_type.to_string())
+        subscribers
+            .entry(event_type.to_string())
             .or_insert_with(Vec::new)
             .push(handler);
     }
@@ -467,10 +485,8 @@ impl ServiceRegistry {
         let service_id = registration.metadata.id.clone();
 
         // Check version compatibility
-        self.version_checker.check_compatibility(
-            &registration.metadata.name,
-            &registration.metadata.version,
-        )?;
+        self.version_checker
+            .check_compatibility(&registration.metadata.name, &registration.metadata.version)?;
 
         // Check dependencies
         self.check_dependencies(&registration.metadata.dependencies)?;
@@ -562,7 +578,10 @@ impl ServiceRegistry {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Service not found: {}", service_id)))
+            Err(DbError::NotFound(format!(
+                "Service not found: {}",
+                service_id
+            )))
         }
     }
 
@@ -590,7 +609,10 @@ impl ServiceRegistry {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Service not found: {}", service_id)))
+            Err(DbError::NotFound(format!(
+                "Service not found: {}",
+                service_id
+            )))
         }
     }
 

@@ -2,16 +2,16 @@
 //
 // Compliance validation, security metrics, penetration testing, and dashboard.
 
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
-use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
-use crate::Result;
-use crate::error::DbError;
 
-use super::threat_detection::*;
 use super::common::*;
+use super::threat_detection::*;
 
 // ============================================================================
 // ComplianceValidator
@@ -86,21 +86,25 @@ impl ComplianceValidator {
     pub fn new() -> Self {
         let mut frameworks = HashMap::new();
 
-        frameworks.insert("SOC2".to_string(), ComplianceFramework {
-            id: "SOC2".to_string(),
-            name: "SOC 2 Type II".to_string(),
-            version: "2017".to_string(),
-            controls: vec![
-                ComplianceControl {
+        frameworks.insert(
+            "SOC2".to_string(),
+            ComplianceFramework {
+                id: "SOC2".to_string(),
+                name: "SOC 2 Type II".to_string(),
+                version: "2017".to_string(),
+                controls: vec![ComplianceControl {
                     id: "CC6.1".to_string(),
                     name: "Logical and Physical Access Controls".to_string(),
-                    description: "The entity implements logical access security software.".to_string(),
+                    description: "The entity implements logical access security software."
+                        .to_string(),
                     required: true,
                     automated_check: true,
-                    validation_query: Some("SELECT COUNT(*) FROM users WHERE mfa_enabled = false".to_string()),
-                },
-            ],
-        });
+                    validation_query: Some(
+                        "SELECT COUNT(*) FROM users WHERE mfa_enabled = false".to_string(),
+                    ),
+                }],
+            },
+        );
 
         Self {
             frameworks: Arc::new(RwLock::new(frameworks)),
@@ -110,12 +114,19 @@ impl ComplianceValidator {
         }
     }
 
-    pub fn assess_control(&self, framework_id: &str, control_id: &str) -> Result<ControlAssessment> {
+    pub fn assess_control(
+        &self,
+        framework_id: &str,
+        control_id: &str,
+    ) -> Result<ControlAssessment> {
         let frameworks = self.frameworks.read();
-        let framework = frameworks.get(framework_id)
+        let framework = frameworks
+            .get(framework_id)
             .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?;
 
-        let control = framework.controls.iter()
+        let control = framework
+            .controls
+            .iter()
             .find(|c| c.id == control_id)
             .ok_or_else(|| DbError::Network(format!("Control {} not found", control_id)))?;
 
@@ -137,14 +148,18 @@ impl ComplianceValidator {
         };
 
         let mut assessments = self.assessments.write();
-        assessments.insert(format!("{}:{}", framework_id, control_id), assessment.clone());
+        assessments.insert(
+            format!("{}:{}", framework_id, control_id),
+            assessment.clone(),
+        );
 
         Ok(assessment)
     }
 
     pub fn calculate_framework_score(&self, framework_id: &str) -> Result<f64> {
         let frameworks = self.frameworks.read();
-        let framework = frameworks.get(framework_id)
+        let framework = frameworks
+            .get(framework_id)
             .ok_or_else(|| DbError::Network(format!("Framework {} not found", framework_id)))?;
 
         let assessments = self.assessments.read();
@@ -174,7 +189,8 @@ impl ComplianceValidator {
         let frameworks = self.frameworks.read();
         let scores = self.scores.read();
 
-        let framework_scores: HashMap<String, f64> = frameworks.keys()
+        let framework_scores: HashMap<String, f64> = frameworks
+            .keys()
             .map(|f| (f.clone(), scores.get(f).copied().unwrap_or(0.0)))
             .collect();
 
@@ -357,9 +373,16 @@ impl PenetrationTestHarness {
 
         Ok(PenTestReport {
             total_tests: results.len(),
-            passed: results.iter().filter(|r| r.status == TestStatus::Passed).count(),
-            failed: results.iter().filter(|r| r.status == TestStatus::Failed).count(),
-            vulnerabilities_found: results.iter()
+            passed: results
+                .iter()
+                .filter(|r| r.status == TestStatus::Passed)
+                .count(),
+            failed: results
+                .iter()
+                .filter(|r| r.status == TestStatus::Failed)
+                .count(),
+            vulnerabilities_found: results
+                .iter()
                 .flat_map(|r| r.vulnerabilities_found.clone())
                 .collect(),
             executed_at: current_timestamp(),
@@ -393,9 +416,16 @@ impl PenetrationTestHarness {
 
         PenTestSummary {
             total_tests_run: results.len(),
-            tests_passed: results.iter().filter(|r| r.status == TestStatus::Passed).count(),
-            tests_failed: results.iter().filter(|r| r.status == TestStatus::Failed).count(),
-            critical_vulnerabilities: results.iter()
+            tests_passed: results
+                .iter()
+                .filter(|r| r.status == TestStatus::Passed)
+                .count(),
+            tests_failed: results
+                .iter()
+                .filter(|r| r.status == TestStatus::Failed)
+                .count(),
+            critical_vulnerabilities: results
+                .iter()
                 .filter(|r| r.severity == EventSeverity::Critical && r.status == TestStatus::Failed)
                 .count(),
             last_run: results.last().map(|r| r.executed_at),

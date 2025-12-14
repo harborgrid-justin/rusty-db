@@ -13,10 +13,10 @@
 // - Routing queries to the correct nodes
 // - Rebalancing data across the cluster
 
-use std::collections::HashSet;
-use std::collections::hash_map::DefaultHasher;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
+use std::collections::HashSet;
 use std::collections::{BTreeMap, HashMap};
 use std::hash::{Hash, Hasher};
 use std::sync::{Arc, RwLock};
@@ -246,9 +246,9 @@ pub struct NodeMetadata {
     pub id: DhtNodeId,
     pub address: String,
     pub port: u16,
-    pub capacity: u64, // Storage capacity in bytes
-    pub used: u64,     // Used storage in bytes
-    pub vnodes: Vec<u32>, // Virtual node indices
+    pub capacity: u64,        // Storage capacity in bytes
+    pub used: u64,            // Used storage in bytes
+    pub vnodes: Vec<u32>,     // Virtual node indices
     pub shards: Vec<ShardId>, // Primary shards on this node
     pub joined_at: SystemTime,
 }
@@ -498,7 +498,6 @@ impl DistributedHashTable {
 
     // Get node using rendezvous hashing
     fn get_node_rendezvous(&self, key: &[u8]) -> Result<DhtNodeId, DbError> {
-
         let nodes = self.nodes.read().unwrap();
         if nodes.is_empty() {
             return Err(DbError::Internal("No nodes available".into()));
@@ -596,12 +595,18 @@ impl DistributedHashTable {
     // Update metrics for hot spot detection
     pub fn update_metrics(&self, shard_id: ShardId, rps: f64, data_size: u64, key_count: u64) {
         let mut metrics = self.metrics.write().unwrap();
-        let metric = metrics.entry(shard_id).or_insert_with(|| HotSpotMetrics::new(shard_id));
+        let metric = metrics
+            .entry(shard_id)
+            .or_insert_with(|| HotSpotMetrics::new(shard_id));
 
         metric.requests_per_second = rps;
         metric.data_size = data_size;
         metric.key_count = key_count;
-        metric.avg_key_size = if key_count > 0 { data_size / key_count } else { 0 };
+        metric.avg_key_size = if key_count > 0 {
+            data_size / key_count
+        } else {
+            0
+        };
         metric.measured_at = SystemTime::now();
     }
 
@@ -610,10 +615,12 @@ impl DistributedHashTable {
         let metrics = self.metrics.read().unwrap();
         metrics
             .values()
-            .filter(|m| m.is_hot_spot(
-                self.config.hot_spot_rps_threshold,
-                self.config.hot_spot_size_threshold,
-            ))
+            .filter(|m| {
+                m.is_hot_spot(
+                    self.config.hot_spot_rps_threshold,
+                    self.config.hot_spot_size_threshold,
+                )
+            })
             .map(|m| m.shard_id)
             .collect()
     }
@@ -625,7 +632,8 @@ impl DistributedHashTable {
 
         // Find partition to split
         if let Some(idx) = partitions.iter().position(|p| p.id == shardid) {
-            let new_node = self.find_least_loaded_node(&nodes, None)
+            let new_node = self
+                .find_least_loaded_node(&nodes, None)
                 .ok_or_else(|| DbError::Internal("No available node for split".into()))?;
 
             let mut next_shard = self.next_shard_id.write().unwrap();

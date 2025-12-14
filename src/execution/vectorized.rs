@@ -11,11 +11,11 @@
 // - Zero-copy batch transformations where possible
 // - Adaptive batch sizing based on memory pressure
 
-use crate::error::DbError;
 use crate::catalog::DataType;
-use std::sync::Arc;
+use crate::error::DbError;
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 // Default batch size for vectorized operations
 pub const DEFAULT_BATCH_SIZE: usize = 1024;
@@ -57,10 +57,11 @@ impl ColumnBatch {
     // Add a row to the batch
     pub fn add_row(&mut self, values: Vec<ColumnValue>) -> Result<(), DbError> {
         if values.len() != self.schema.len() {
-            return Err(DbError::Execution(
-                format!("Row has {} values but schema has {} columns",
-                        values.len(), self.schema.len())
-            ));
+            return Err(DbError::Execution(format!(
+                "Row has {} values but schema has {} columns",
+                values.len(),
+                self.schema.len()
+            )));
         }
 
         for (col_idx, value) in values.into_iter().enumerate() {
@@ -105,7 +106,8 @@ impl ColumnBatch {
         for row_idx in 0..self.row_count {
             let mut row = Vec::with_capacity(self.schema.len());
             for col_idx in 0..self.schema.len() {
-                let value = self.columns[col_idx].get(row_idx)
+                let value = self.columns[col_idx]
+                    .get(row_idx)
                     .map(|v| v.to_string())
                     .unwrap_or_else(|| "NULL".to_string());
                 row.push(value);
@@ -125,7 +127,8 @@ impl ColumnBatch {
         let mut batch = Self::new(schema, types);
 
         for row in rows {
-            let values: Vec<ColumnValue> = row.into_iter()
+            let values: Vec<ColumnValue> = row
+                .into_iter()
                 .map(|s| ColumnValue::from_string(s))
                 .collect();
             batch.add_row(values)?;
@@ -258,9 +261,7 @@ impl VectorizedExecutor {
         let mut current_batch = ColumnBatch::new(schema.clone(), types.clone());
 
         for row in data {
-            let values: Vec<ColumnValue> = row.into_iter()
-                .map(ColumnValue::from_string)
-                .collect();
+            let values: Vec<ColumnValue> = row.into_iter().map(ColumnValue::from_string).collect();
 
             current_batch.add_row(values)?;
 
@@ -290,14 +291,13 @@ impl VectorizedExecutor {
         let mut result_batches = Vec::new();
 
         for batch in batches {
-            let mut filtered_batch = ColumnBatch::new(
-                batch.schema.clone(),
-                batch.types.clone(),
-            );
+            let mut filtered_batch = ColumnBatch::new(batch.schema.clone(), batch.types.clone());
 
             // Process each row in the batch
             for row_idx in 0..batch.row_count {
-                let row_values: Vec<ColumnValue> = batch.columns.iter()
+                let row_values: Vec<ColumnValue> = batch
+                    .columns
+                    .iter()
                     .filter_map(|col| col.get(row_idx).cloned())
                     .collect();
 
@@ -330,11 +330,13 @@ impl VectorizedExecutor {
         let mut result_batches = Vec::new();
 
         for batch in batches {
-            let projected_schema: Vec<String> = column_indices.iter()
+            let projected_schema: Vec<String> = column_indices
+                .iter()
                 .filter_map(|&idx| batch.schema.get(idx).cloned())
                 .collect();
 
-            let projected_types: Vec<DataType> = column_indices.iter()
+            let projected_types: Vec<DataType> = column_indices
+                .iter()
                 .filter_map(|&idx| batch.types.get(idx).cloned())
                 .collect();
 
@@ -345,7 +347,9 @@ impl VectorizedExecutor {
             for &col_idx in column_indices {
                 if let Some(column) = batch.get_column(col_idx) {
                     projected_batch.columns.push(column.clone());
-                    projected_batch.null_bitmaps.push(batch.null_bitmaps[col_idx].clone());
+                    projected_batch
+                        .null_bitmaps
+                        .push(batch.null_bitmaps[col_idx].clone());
                 }
             }
 
@@ -368,9 +372,12 @@ impl VectorizedExecutor {
         for batch in &batches {
             for row_idx in 0..batch.row_count {
                 // Extract group key
-                let group_key: Vec<String> = group_by_cols.iter()
+                let group_key: Vec<String> = group_by_cols
+                    .iter()
                     .filter_map(|&col_idx| {
-                        batch.columns.get(col_idx)
+                        batch
+                            .columns
+                            .get(col_idx)
                             .and_then(|col| col.get(row_idx))
                             .map(|v| v.to_string())
                     })
@@ -387,15 +394,22 @@ impl VectorizedExecutor {
         }
 
         // Build result batch
-        let mut result_schema = group_by_cols.iter()
+        let mut result_schema = group_by_cols
+            .iter()
             .filter_map(|&idx| batches.first()?.schema.get(idx).cloned())
             .collect::<Vec<_>>();
-        result_schema.push(format!("{}({})",
+        result_schema.push(format!(
+            "{}({})",
             agg_type.to_string(),
-            batches.first().map(|b| b.schema.get(agg_col).cloned()).flatten().unwrap_or_default()
+            batches
+                .first()
+                .map(|b| b.schema.get(agg_col).cloned())
+                .flatten()
+                .unwrap_or_default()
         ));
 
-        let mut result_types = group_by_cols.iter()
+        let mut result_types = group_by_cols
+            .iter()
             .filter_map(|&idx| batches.first()?.types.get(idx).cloned())
             .collect::<Vec<_>>();
         result_types.push(DataType::Double);
@@ -403,9 +417,8 @@ impl VectorizedExecutor {
         let mut result_batch = ColumnBatch::new(result_schema, result_types);
 
         for (key, state) in groups {
-            let mut row_values: Vec<ColumnValue> = key.into_iter()
-                .map(ColumnValue::from_string)
-                .collect();
+            let mut row_values: Vec<ColumnValue> =
+                key.into_iter().map(ColumnValue::from_string).collect();
             row_values.push(ColumnValue::Double(state.finalize(agg_type)));
 
             result_batch.add_row(row_values)?;
@@ -496,7 +509,13 @@ impl AggregateState {
         match agg_type {
             AggregationType::Count => self.count as f64,
             AggregationType::Sum => self.sum,
-            AggregationType::Avg => if self.count > 0 { self.sum / self.count as f64 } else { 0.0 },
+            AggregationType::Avg => {
+                if self.count > 0 {
+                    self.sum / self.count as f64
+                } else {
+                    0.0
+                }
+            }
             AggregationType::Min => self.min,
             AggregationType::Max => self.max,
         }
@@ -574,7 +593,8 @@ pub mod simd_ops {
     pub fn filter_integers(column: &[i32], threshold: i32) -> Vec<usize> {
         // In production, this would use actual SIMD instructions
         // For now, we simulate with optimized scalar code
-        column.iter()
+        column
+            .iter()
             .enumerate()
             .filter(|(_, &val)| val > threshold)
             .map(|(idx, _)| idx)
@@ -616,9 +636,12 @@ impl VectorizedHashTable {
     // Insert batch into hash table
     pub fn insert_batch(&mut self, batch: &ColumnBatch, key_columns: &[usize]) {
         for row_idx in 0..batch.row_count {
-            let key_values: Vec<ColumnValue> = key_columns.iter()
+            let key_values: Vec<ColumnValue> = key_columns
+                .iter()
                 .filter_map(|&col_idx| {
-                    batch.columns.get(col_idx)
+                    batch
+                        .columns
+                        .get(col_idx)
                         .and_then(|col| col.get(row_idx))
                         .cloned()
                 })
@@ -627,7 +650,9 @@ impl VectorizedHashTable {
             let hash = self.hash_values(&key_values);
             let bucket_idx = (hash as usize) % self.num_buckets;
 
-            let row_values: Vec<ColumnValue> = batch.columns.iter()
+            let row_values: Vec<ColumnValue> = batch
+                .columns
+                .iter()
                 .filter_map(|col| col.get(row_idx).cloned())
                 .collect();
 
@@ -644,9 +669,12 @@ impl VectorizedHashTable {
         let mut results = vec![Vec::new(); batch.row_count];
 
         for row_idx in 0..batch.row_count {
-            let key_values: Vec<ColumnValue> = key_columns.iter()
+            let key_values: Vec<ColumnValue> = key_columns
+                .iter()
                 .filter_map(|&col_idx| {
-                    batch.columns.get(col_idx)
+                    batch
+                        .columns
+                        .get(col_idx)
                         .and_then(|col| col.get(row_idx))
                         .cloned()
                 })
@@ -655,7 +683,9 @@ impl VectorizedHashTable {
             let hash = self.hash_values(&key_values);
             let bucket_idx = (hash as usize) % self.num_buckets;
 
-            let probe_row: Vec<ColumnValue> = batch.columns.iter()
+            let probe_row: Vec<ColumnValue> = batch
+                .columns
+                .iter()
                 .filter_map(|col| col.get(row_idx).cloned())
                 .collect();
 
@@ -693,10 +723,12 @@ mod tests {
         let types = vec![DataType::Integer, DataType::Text];
         let mut batch = ColumnBatch::new(schema, types);
 
-        batch.add_row(vec![
-            ColumnValue::Integer(1),
-            ColumnValue::String("Alice".to_string()),
-        ]).unwrap();
+        batch
+            .add_row(vec![
+                ColumnValue::Integer(1),
+                ColumnValue::String("Alice".to_string()),
+            ])
+            .unwrap();
 
         assert_eq!(batch.row_count, 1);
         assert_eq!(batch.columns.len(), 2);
@@ -727,9 +759,12 @@ mod tests {
         batch.add_row(vec![ColumnValue::Integer(2)]).unwrap();
         batch.add_row(vec![ColumnValue::Integer(3)]).unwrap();
 
-        let filtered = executor.filter(vec![batch], |values| {
-            matches!(values.get(0), Some(ColumnValue::Integer(i)) if *i > 1)
-        }).unwrap();
+        let filtered = executor
+            .filter(
+                vec![batch],
+                |values| matches!(values.get(0), Some(ColumnValue::Integer(i)) if *i > 1),
+            )
+            .unwrap();
 
         assert_eq!(filtered[0].row_count, 2);
     }
@@ -741,11 +776,13 @@ mod tests {
         let types = vec![DataType::Integer, DataType::Text, DataType::Integer];
         let mut batch = ColumnBatch::new(schema, types);
 
-        batch.add_row(vec![
-            ColumnValue::Integer(1),
-            ColumnValue::String("Alice".to_string()),
-            ColumnValue::Integer(30),
-        ]).unwrap();
+        batch
+            .add_row(vec![
+                ColumnValue::Integer(1),
+                ColumnValue::String("Alice".to_string()),
+                ColumnValue::Integer(30),
+            ])
+            .unwrap();
 
         let projected = executor.project(vec![batch], &[0, 2]).unwrap();
         assert_eq!(projected[0].schema.len(), 2);

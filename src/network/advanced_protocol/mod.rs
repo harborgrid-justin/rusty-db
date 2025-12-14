@@ -15,8 +15,8 @@
 // Note: Full refactoring delegated to subsequent agents due to file size (3168 lines).
 // Current implementation maintains compatibility with stub types.
 
-use std::sync::Arc;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub mod errors;
 pub use errors::ProtocolError;
@@ -75,11 +75,11 @@ pub struct Packet {
 }
 
 impl<'a> Packet {
-        #[allow(dead_code)]
-        pub(crate) fn new(_p0: &&MessageType, _p1: Vec<u8>) -> &'a &'a Packet {
-            todo!()
-        }
+    #[allow(dead_code)]
+    pub(crate) fn new(_p0: &&MessageType, _p1: Vec<u8>) -> &'a &'a Packet {
+        todo!()
     }
+}
 
 #[derive(Debug, Clone)]
 pub struct ProtocolCapabilities {
@@ -173,7 +173,6 @@ pub enum ConnectionState {
 }
 
 impl ConnectionState {
-
     #[allow(dead_code)]
     pub(crate) fn can_transition_to(&self, target: ConnectionState) -> bool {
         match (self, target) {
@@ -215,7 +214,9 @@ pub struct ConnectionStateMachine {
 
 impl ConnectionStateMachine {
     pub fn new() -> Self {
-        Self { state: ConnectionState::Connecting }
+        Self {
+            state: ConnectionState::Connecting,
+        }
     }
 }
 
@@ -279,7 +280,9 @@ pub struct RequestResponsePipeline {
 
 impl RequestResponsePipeline {
     pub fn new() -> Self {
-        Self { pending: HashMap::new() }
+        Self {
+            pending: HashMap::new(),
+        }
     }
 }
 
@@ -351,7 +354,9 @@ pub struct ScatterGatherBuffer {
 
 impl ScatterGatherBuffer {
     pub fn new() -> Self {
-        Self { segments: Vec::new() }
+        Self {
+            segments: Vec::new(),
+        }
     }
 }
 
@@ -403,7 +408,9 @@ pub struct ExtensionRegistry {
 
 impl ExtensionRegistry {
     pub fn new() -> Self {
-        Self { extensions: HashMap::new() }
+        Self {
+            extensions: HashMap::new(),
+        }
     }
 }
 
@@ -419,7 +426,9 @@ pub struct CustomMessageRegistry {
 
 impl CustomMessageRegistry {
     pub fn new() -> Self {
-        Self { handlers: HashMap::new() }
+        Self {
+            handlers: HashMap::new(),
+        }
     }
 }
 
@@ -438,7 +447,9 @@ pub struct ProtocolManager {
 
 impl ProtocolManager {
     pub fn new() -> Self {
-        Self { registry: ExtensionRegistry::new() }
+        Self {
+            registry: ExtensionRegistry::new(),
+        }
     }
 }
 
@@ -478,7 +489,9 @@ pub struct CircuitBreaker {
 
 impl CircuitBreaker {
     pub fn new() -> Self {
-        Self { state: CircuitState::Closed }
+        Self {
+            state: CircuitState::Closed,
+        }
     }
 }
 

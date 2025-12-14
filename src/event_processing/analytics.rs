@@ -3,14 +3,14 @@
 // Implements real-time analytics on event streams including anomaly detection,
 // trend analysis, predictive analytics, and alert generation with ML model serving.
 
-use std::collections::VecDeque;
-use std::time::{SystemTime};
-use super::{Event};
+use super::Event;
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 /// Analytics metric
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -243,7 +243,10 @@ impl AnomalyDetector {
                 }
             }
 
-            AnomalyDetectionAlgorithm::EWMA { alpha: _, threshold } => {
+            AnomalyDetectionAlgorithm::EWMA {
+                alpha: _,
+                threshold,
+            } => {
                 let deviation = (value - self.stats.mean).abs();
 
                 if deviation > *threshold {
@@ -299,11 +302,8 @@ impl Statistics {
         };
 
         // Standard deviation
-        let variance = values
-            .iter()
-            .map(|v| (v - self.mean).powi(2))
-            .sum::<f64>()
-            / values.len() as f64;
+        let variance =
+            values.iter().map(|v| (v - self.mean).powi(2)).sum::<f64>() / values.len() as f64;
         self.std_dev = variance.sqrt();
 
         // Min/Max
@@ -700,7 +700,13 @@ impl AlertEngine {
                 };
 
                 let alert = Alert {
-                    id: format!("{}_{}", rule.name, now.duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs()),
+                    id: format!(
+                        "{}_{}",
+                        rule.name,
+                        now.duration_since(SystemTime::UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs()
+                    ),
                     severity: rule.severity,
                     message: format!("Alert: {} - value {} exceeded threshold", rule.name, value),
                     metric: metric.to_string(),
@@ -841,7 +847,8 @@ mod tests {
 
     #[test]
     fn test_anomaly_detector() {
-        let mut detector = AnomalyDetector::new(AnomalyDetectionAlgorithm::ZScore { threshold: 2.0 });
+        let mut detector =
+            AnomalyDetector::new(AnomalyDetectionAlgorithm::ZScore { threshold: 2.0 });
 
         // Add normal values
         for i in 0..100 {
@@ -869,7 +876,8 @@ mod tests {
 
     #[test]
     fn test_predictive_analyzer() {
-        let mut analyzer = PredictiveAnalyzer::new(PredictiveModel::SimpleMovingAverage { window: 5 });
+        let mut analyzer =
+            PredictiveAnalyzer::new(PredictiveModel::SimpleMovingAverage { window: 5 });
 
         for i in 0..10 {
             analyzer.add_value((i * 10) as f64);

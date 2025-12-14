@@ -1,7 +1,6 @@
 /// Temporal Operators Module
 ///
 /// Time-based constraints, measurements, and match contexts for CEP.
-
 use super::super::{Event, EventValue};
 use super::pattern_matching::Pattern;
 use serde::{Deserialize, Serialize};
@@ -63,9 +62,7 @@ impl TemporalConstraint {
 
             TemporalConstraint::Before(time) => events.iter().all(|e| e.event_time <= *time),
 
-            TemporalConstraint::And(constraints) => {
-                constraints.iter().all(|c| c.evaluate(events))
-            }
+            TemporalConstraint::And(constraints) => constraints.iter().all(|c| c.evaluate(events)),
         }
     }
 }
@@ -104,7 +101,10 @@ impl Measure {
             Aggregation::First => {
                 if let Some(event) = events.first() {
                     if let Some(field) = &self.field {
-                        event.get_payload(field).cloned().unwrap_or(EventValue::Null)
+                        event
+                            .get_payload(field)
+                            .cloned()
+                            .unwrap_or(EventValue::Null)
                     } else {
                         EventValue::Null
                     }
@@ -116,7 +116,10 @@ impl Measure {
             Aggregation::Last => {
                 if let Some(event) = events.last() {
                     if let Some(field) = &self.field {
-                        event.get_payload(field).cloned().unwrap_or(EventValue::Null)
+                        event
+                            .get_payload(field)
+                            .cloned()
+                            .unwrap_or(EventValue::Null)
                     } else {
                         EventValue::Null
                     }
@@ -265,7 +268,10 @@ impl MatchContext {
     }
 
     pub fn add_binding(&mut self, variable: String, event: Event) {
-        self.bindings.entry(variable).or_insert_with(Vec::new).push(event);
+        self.bindings
+            .entry(variable)
+            .or_insert_with(Vec::new)
+            .push(event);
     }
 
     pub fn get_binding(&self, variable: &str) -> Option<&Vec<Event>> {

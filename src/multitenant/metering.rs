@@ -21,14 +21,14 @@
 // - Exporters: Send data to billing systems
 // - Enforcers: Apply quota limits
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use super::{ResourceConsumption, TenantId};
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
-use super::{TenantId, ResourceConsumption};
 
 // Metering engine
 pub struct MeteringEngine {
@@ -68,7 +68,10 @@ impl MeteringEngine {
         // Create metering job
         let job = MeteringJob {
             tenant_id,
-            started_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            started_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             collection_interval_secs: 60, // 1 minute
             last_collection_at: 0,
         };
@@ -148,8 +151,16 @@ impl MeteringEngine {
             total_consumption,
             cost,
             metrics_count: filtered.len(),
-            peak_memory_bytes: filtered.iter().map(|m| m.resource_consumption.memory_bytes).max().unwrap_or(0),
-            peak_connections: filtered.iter().map(|m| m.resource_consumption.active_connections).max().unwrap_or(0),
+            peak_memory_bytes: filtered
+                .iter()
+                .map(|m| m.resource_consumption.memory_bytes)
+                .max()
+                .unwrap_or(0),
+            peak_connections: filtered
+                .iter()
+                .map(|m| m.resource_consumption.active_connections)
+                .max()
+                .unwrap_or(0),
         })
     }
 
@@ -211,7 +222,10 @@ impl ResourceUsageTracker {
 
         // Add to history
         let snapshot = UsageSnapshot {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             consumption,
         };
 
@@ -237,7 +251,10 @@ impl ResourceUsageTracker {
 
         Ok(TenantMetrics {
             tenant_id,
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             resource_consumption: consumption,
             query_count: 0,
             transaction_count: 0,
@@ -360,10 +377,10 @@ pub enum EnforcementMode {
 impl Default for ResourceQuota {
     fn default() -> Self {
         Self {
-            memory_quota_bytes: 1024 * 1024 * 1024, // 1 GB
-            cpu_quota_micros: 1_000_000,             // 1 second
+            memory_quota_bytes: 1024 * 1024 * 1024,       // 1 GB
+            cpu_quota_micros: 1_000_000,                  // 1 second
             storage_quota_bytes: 10 * 1024 * 1024 * 1024, // 10 GB
-            io_quota_bytes: 100 * 1024 * 1024,       // 100 MB
+            io_quota_bytes: 100 * 1024 * 1024,            // 100 MB
             connection_quota: 100,
             monthly_budget: Some(100.0),
             enforcement_mode: EnforcementMode::Hard,
@@ -415,7 +432,10 @@ impl QuotaEnforcer {
 
     // Update current usage
     pub async fn update_usage(&self, tenant_id: TenantId, consumption: ResourceConsumption) {
-        self.current_usage.write().await.insert(tenant_id, consumption);
+        self.current_usage
+            .write()
+            .await
+            .insert(tenant_id, consumption);
     }
 
     // Check quota compliance
@@ -433,9 +453,12 @@ impl QuotaEnforcer {
             .cloned()
             .unwrap_or_else(ResourceConsumption::zero);
 
-        let memory_usage_percent = (usage.memory_bytes as f64 / quota.memory_quota_bytes as f64) * 100.0;
-        let storage_usage_percent = (usage.storage_bytes as f64 / quota.storage_quota_bytes as f64) * 100.0;
-        let connection_usage_percent = (usage.active_connections as f64 / quota.connection_quota as f64) * 100.0;
+        let memory_usage_percent =
+            (usage.memory_bytes as f64 / quota.memory_quota_bytes as f64) * 100.0;
+        let storage_usage_percent =
+            (usage.storage_bytes as f64 / quota.storage_quota_bytes as f64) * 100.0;
+        let connection_usage_percent =
+            (usage.active_connections as f64 / quota.connection_quota as f64) * 100.0;
 
         let mut warnings = Vec::new();
         let mut quota_exceeded = false;
@@ -455,7 +478,10 @@ impl QuotaEnforcer {
         }
 
         if connection_usage_percent > 90.0 {
-            warnings.push(format!("Connection usage at {:.1}%", connection_usage_percent));
+            warnings.push(format!(
+                "Connection usage at {:.1}%",
+                connection_usage_percent
+            ));
             if connection_usage_percent >= 100.0 {
                 quota_exceeded = true;
             }
@@ -495,7 +521,10 @@ impl QuotaEnforcer {
         match quota.enforcement_mode {
             EnforcementMode::Soft => {
                 // Log warning but allow
-                eprintln!("Quota exceeded for tenant {:?}: {:?}", tenant_id, status.warnings);
+                eprintln!(
+                    "Quota exceeded for tenant {:?}: {:?}",
+                    tenant_id, status.warnings
+                );
                 Ok(())
             }
             EnforcementMode::Hard => {
@@ -515,7 +544,12 @@ impl QuotaEnforcer {
 
     // Get violation count
     pub async fn get_violations(&self, tenant_id: TenantId) -> u64 {
-        self.violations.read().await.get(&tenant_id).copied().unwrap_or(0)
+        self.violations
+            .read()
+            .await
+            .get(&tenant_id)
+            .copied()
+            .unwrap_or(0)
     }
 }
 
@@ -580,10 +614,13 @@ impl BillingIntegration {
     pub async fn calculate_cost(&self, consumption: &ResourceConsumption) -> f64 {
         let pricing = self.pricing.read().await;
 
-        let memory_gb_hours = (consumption.memory_bytes as f64 / (1024.0 * 1024.0 * 1024.0)) / 3600.0;
+        let memory_gb_hours =
+            (consumption.memory_bytes as f64 / (1024.0 * 1024.0 * 1024.0)) / 3600.0;
         let cpu_hours = (consumption.cpu_micros as f64 / 1_000_000.0) / 3600.0;
-        let storage_gb_months = (consumption.storage_bytes as f64 / (1024.0 * 1024.0 * 1024.0)) / (30.0 * 24.0);
-        let io_gb = (consumption.io_read_bytes + consumption.io_write_bytes) as f64 / (1024.0 * 1024.0 * 1024.0);
+        let storage_gb_months =
+            (consumption.storage_bytes as f64 / (1024.0 * 1024.0 * 1024.0)) / (30.0 * 24.0);
+        let io_gb = (consumption.io_read_bytes + consumption.io_write_bytes) as f64
+            / (1024.0 * 1024.0 * 1024.0);
 
         let memory_cost = memory_gb_hours * pricing.memory_price_per_gb_hour;
         let cpu_cost = cpu_hours * pricing.cpu_price_per_hour;

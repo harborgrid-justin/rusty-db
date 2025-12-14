@@ -2,15 +2,15 @@
 //
 // Integrated network hardening system orchestrator.
 
+use crate::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
-use std::collections::HashMap;
-use crate::Result;
-use serde::{Serialize, Deserialize};
 
 use super::firewall_rules::*;
-use super::rate_limiting::*;
 use super::intrusion_detection::*;
+use super::rate_limiting::*;
 
 // ============================================================================
 // Integrated Network Hardening Manager
@@ -59,39 +59,44 @@ impl NetworkHardeningManager {
 
         // 2. Connection guard
         if !self.connection_guard.check_connection(ip)? {
-            self.ip_reputation.record_violation(ip, ViolationType::RateLimitExceeded);
+            self.ip_reputation
+                .record_violation(ip, ViolationType::RateLimitExceeded);
             return Ok(false);
         }
 
         // 3. Rate limiting
         let rate_key = format!("ip:{}", ip);
         if !self.rate_limiter.check_rate_limit(&rate_key, ip)? {
-            self.ip_reputation.record_violation(ip, ViolationType::RateLimitExceeded);
+            self.ip_reputation
+                .record_violation(ip, ViolationType::RateLimitExceeded);
             return Ok(false);
         }
 
         // 4. Protocol validation
-        if let Err(_) = self.protocol_validator.validate_request(method, uri, headers, body_size) {
-            self.ip_reputation.record_violation(ip, ViolationType::ProtocolViolation);
+        if let Err(_) = self
+            .protocol_validator
+            .validate_request(method, uri, headers, body_size)
+        {
+            self.ip_reputation
+                .record_violation(ip, ViolationType::ProtocolViolation);
             return Ok(false);
         }
 
         // 5. DDoS detection
         let user_agent = headers.get("User-Agent").cloned();
-        let analysis = self.ddos_mitigator.analyze_request(
-            ip,
-            body_size,
-            uri.to_string(),
-            user_agent,
-        )?;
+        let analysis =
+            self.ddos_mitigator
+                .analyze_request(ip, body_size, uri.to_string(), user_agent)?;
 
         match analysis {
             DDoSAnalysisResult::Blocked(_) => {
-                self.ip_reputation.record_violation(ip, ViolationType::DDoSAttempt);
+                self.ip_reputation
+                    .record_violation(ip, ViolationType::DDoSAttempt);
                 return Ok(false);
             }
             DDoSAnalysisResult::Suspicious => {
-                self.ip_reputation.record_violation(ip, ViolationType::SuspiciousPattern);
+                self.ip_reputation
+                    .record_violation(ip, ViolationType::SuspiciousPattern);
             }
             DDoSAnalysisResult::Clean => {}
         }

@@ -486,7 +486,10 @@ impl<T> WorkStealingPool<T> {
 
     /// Get all stealers
     pub fn stealers(&self) -> Vec<Stealer<T>> {
-        self.workers.iter().map(|d| Stealer::new(d.clone())).collect()
+        self.workers
+            .iter()
+            .map(|d| Stealer::new(d.clone()))
+            .collect()
     }
 
     /// Get aggregate statistics

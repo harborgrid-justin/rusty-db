@@ -3,12 +3,12 @@
 // Implements event sourcing patterns including event store, event replay,
 // snapshots, projection rebuilding, event versioning, and aggregate reconstruction.
 
-use std::collections::VecDeque;
-use std::fmt;
 use super::{Event, EventId, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
@@ -179,7 +179,10 @@ impl EventStore for InMemoryEventStore {
     ) -> Result<Version> {
         // Check expected version
         let mut versions = self.versions.write().unwrap();
-        let current_version = versions.get(aggregate_id).copied().unwrap_or(Version::zero());
+        let current_version = versions
+            .get(aggregate_id)
+            .copied()
+            .unwrap_or(Version::zero());
 
         if let Some(expected) = expectedversion {
             if current_version != expected {
@@ -389,7 +392,11 @@ impl<A: Aggregate> AggregateRepository<A> {
         // Check if we should take a snapshot
         if new_version.0 % self.snapshot_frequency == 0 {
             let mut snapshot_store = self.snapshot_store.write().unwrap();
-            snapshot_store.save_snapshot(aggregate.aggregate_id().clone(), aggregate.clone(), new_version)?;
+            snapshot_store.save_snapshot(
+                aggregate.aggregate_id().clone(),
+                aggregate.clone(),
+                new_version,
+            )?;
         }
 
         Ok(())
@@ -434,7 +441,8 @@ impl<A: Clone> SnapshotStore<A> {
             timestamp: SystemTime::now(),
         };
 
-        self.snapshots.insert(aggregate_id.clone(), snapshot.clone());
+        self.snapshots
+            .insert(aggregate_id.clone(), snapshot.clone());
 
         // Add to history
         let history = self
@@ -461,10 +469,7 @@ impl<A: Clone> SnapshotStore<A> {
         version: Version,
     ) -> Option<&Snapshot<A>> {
         if let Some(history) = self.snapshot_history.get(aggregate_id) {
-            history
-                .iter()
-                .rev()
-                .find(|s| s.version <= version)
+            history.iter().rev().find(|s| s.version <= version)
         } else {
             None
         }
@@ -542,10 +547,8 @@ impl ProjectionManager {
     /// Rebuild a specific projection
     pub fn rebuild_projection(&self, projection_name: &str) -> Result<()> {
         let event_store = self.event_store.read().unwrap();
-        let all_events = event_store.get_events_by_time_range(
-            SystemTime::UNIX_EPOCH,
-            SystemTime::now(),
-        )?;
+        let all_events =
+            event_store.get_events_by_time_range(SystemTime::UNIX_EPOCH, SystemTime::now())?;
         drop(event_store);
 
         let mut projections = self.projections.write().unwrap();
@@ -608,7 +611,12 @@ impl EventReplayEngine {
     }
 
     /// Replay with a handler function
-    pub fn replay_with_handler<F>(&self, start: SystemTime, end: SystemTime, mut handler: F) -> Result<()>
+    pub fn replay_with_handler<F>(
+        &self,
+        start: SystemTime,
+        end: SystemTime,
+        mut handler: F,
+    ) -> Result<()>
     where
         F: FnMut(&EventEnvelope) -> Result<()>,
     {
@@ -680,10 +688,9 @@ impl Aggregate for ExampleAggregate {
     fn apply_event(&mut self, event: &Event) -> Result<()> {
         match event.event_type.as_str() {
             "data.updated" => {
-                if let (Some(key), Some(value)) = (
-                    event.get_payload("key"),
-                    event.get_payload("value"),
-                ) {
+                if let (Some(key), Some(value)) =
+                    (event.get_payload("key"), event.get_payload("value"))
+                {
                     if let Some(key_str) = key.as_str() {
                         self.data.insert(key_str.to_string(), value.clone());
                     }
@@ -708,7 +715,7 @@ impl Aggregate for ExampleAggregate {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_event_store() {
@@ -716,12 +723,7 @@ use std::time::UNIX_EPOCH;
         let aggregate_id = AggregateId::new("test_1");
 
         let event = Event::new("test.created");
-        let envelope = EventEnvelope::new(
-            aggregate_id.clone(),
-            "TestAggregate",
-            event,
-            Version(1),
-        );
+        let envelope = EventEnvelope::new(aggregate_id.clone(), "TestAggregate", event, Version(1));
 
         let version = store
             .append_events(&aggregate_id, vec![envelope], Some(Version::zero()))
@@ -784,12 +786,7 @@ use std::time::UNIX_EPOCH;
 
         let aggregate_id = AggregateId::new("test_1");
         let event = Event::new("test.created");
-        let envelope = EventEnvelope::new(
-            aggregate_id.clone(),
-            "TestAggregate",
-            event,
-            Version(1),
-        );
+        let envelope = EventEnvelope::new(aggregate_id.clone(), "TestAggregate", event, Version(1));
 
         {
             let mut store = event_store.write().unwrap();

@@ -3,15 +3,15 @@
 // This module implements PGA memory limits, session memory quotas,
 // automatic memory management, and out-of-memory prevention.
 
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 use std::time::Instant;
 use std::time::SystemTime;
-use std::collections::{HashMap};
-use std::sync::{Arc, RwLock};
-use serde::{Deserialize, Serialize};
 
-use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 use super::session_control::SessionId;
+use crate::error::{DbError, Result};
 
 // Memory pool identifier
 pub type MemoryPoolId = u64;
@@ -189,14 +189,14 @@ impl SessionMemoryQuota {
         if is_work_area {
             if !self.can_allocate_work_area(size) {
                 return Err(DbError::ResourceExhausted(
-                    "Work area memory limit exceeded".to_string()
+                    "Work area memory limit exceeded".to_string(),
                 ));
             }
             self.current_work_area += size;
         } else {
             if !self.can_allocate_pga(size) {
                 return Err(DbError::ResourceExhausted(
-                    "PGA memory limit exceeded".to_string()
+                    "PGA memory limit exceeded".to_string(),
                 ));
             }
             self.current_pga_usage += size;
@@ -413,9 +413,10 @@ impl MemoryManager {
     fn register_pool(&mut self, pool: MemoryPool) -> Result<()> {
         let mut pools = self.pools.write().unwrap();
         if pools.contains_key(&pool.id) {
-            return Err(DbError::AlreadyExists(
-                format!("Pool {} already exists", pool.id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Pool {} already exists",
+                pool.id
+            )));
         }
         pools.insert(pool.id, pool);
         Ok(())
@@ -443,13 +444,9 @@ impl MemoryManager {
         };
 
         // Use provided limits or group limits or defaults
-        let max_pga = max_pga_memory
-            .or(pga_limit)
-            .unwrap_or(100 * 1024 * 1024); // 100 MB default
+        let max_pga = max_pga_memory.or(pga_limit).unwrap_or(100 * 1024 * 1024); // 100 MB default
 
-        let max_work = max_work_area
-            .or(work_area_limit)
-            .unwrap_or(max_pga / 4);
+        let max_work = max_work_area.or(work_area_limit).unwrap_or(max_pga / 4);
 
         let quota = SessionMemoryQuota::new(session_id, group_id, max_pga, max_work);
 
@@ -484,29 +481,27 @@ impl MemoryManager {
     }
 
     // Allocate memory from a pool
-    pub fn allocate_from_pool(
-        &self,
-        pool_id: MemoryPoolId,
-        size: MemorySize,
-    ) -> Result<()> {
+    pub fn allocate_from_pool(&self, pool_id: MemoryPoolId, size: MemorySize) -> Result<()> {
         // Check pressure level
         let pressure = *self.pressure_level.read().unwrap();
         if pressure == MemoryPressure::Critical {
             return Err(DbError::ResourceExhausted(
-                "Critical memory pressure, allocation denied".to_string()
+                "Critical memory pressure, allocation denied".to_string(),
             ));
         }
 
         let mut pools = self.pools.write().unwrap();
-        let pool = pools.get_mut(&pool_id)
+        let pool = pools
+            .get_mut(&pool_id)
             .ok_or_else(|| DbError::NotFound(format!("Pool {} not found", pool_id)))?;
 
         if !pool.can_allocate(size) {
             let mut stats = self.stats.write().unwrap();
             stats.failed_allocations += 1;
-            return Err(DbError::ResourceExhausted(
-                format!("Pool {} cannot allocate {} bytes", pool.name, size)
-            ));
+            return Err(DbError::ResourceExhausted(format!(
+                "Pool {} cannot allocate {} bytes",
+                pool.name, size
+            )));
         }
 
         pool.allocated_size += size;
@@ -532,13 +527,10 @@ impl MemoryManager {
     }
 
     // Deallocate memory from a pool
-    pub fn deallocate_from_pool(
-        &self,
-        pool_id: MemoryPoolId,
-        size: MemorySize,
-    ) -> Result<()> {
+    pub fn deallocate_from_pool(&self, pool_id: MemoryPoolId, size: MemorySize) -> Result<()> {
         let mut pools = self.pools.write().unwrap();
-        let pool = pools.get_mut(&pool_id)
+        let pool = pools
+            .get_mut(&pool_id)
             .ok_or_else(|| DbError::NotFound(format!("Pool {} not found", pool_id)))?;
 
         pool.allocated_size = pool.allocated_size.saturating_sub(size);
@@ -569,7 +561,8 @@ impl MemoryManager {
         is_work_area: bool,
     ) -> Result<()> {
         let mut quotas = self.session_quotas.write().unwrap();
-        let quota = quotas.get_mut(&session_id)
+        let quota = quotas
+            .get_mut(&session_id)
             .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         quota.allocate(size, is_work_area)?;
@@ -587,7 +580,7 @@ impl MemoryManager {
                         quota.deallocate(size, is_work_area);
                         limits.current_total_usage -= size;
                         return Err(DbError::ResourceExhausted(
-                            "Group memory limit exceeded".to_string()
+                            "Group memory limit exceeded".to_string(),
                         ));
                     }
                 }
@@ -660,18 +653,22 @@ impl MemoryManager {
         let mut group_limits = self.group_limits.write().unwrap();
 
         if group_limits.contains_key(&group_id) {
-            return Err(DbError::AlreadyExists(
-                format!("Group {} limits already exist", group_id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Group {} limits already exist",
+                group_id
+            )));
         }
 
-        group_limits.insert(group_id, GroupMemoryLimits {
+        group_limits.insert(
             group_id,
-            max_group_memory,
-            max_session_pga,
-            current_total_usage: 0,
-            active_sessions: 0,
-        });
+            GroupMemoryLimits {
+                group_id,
+                max_group_memory,
+                max_session_pga,
+                current_total_usage: 0,
+                active_sessions: 0,
+            },
+        );
 
         Ok(())
     }
@@ -771,7 +768,8 @@ mod tests {
             16 * 1024 * 1024 * 1024, // 16 GB system
             8 * 1024 * 1024 * 1024,  // 8 GB for DB
             AllocationStrategy::Automatic,
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(manager.strategy, AllocationStrategy::Automatic);
     }
@@ -782,7 +780,8 @@ mod tests {
             16 * 1024 * 1024 * 1024,
             8 * 1024 * 1024 * 1024,
             AllocationStrategy::Manual,
-        ).unwrap();
+        )
+        .unwrap();
 
         // Allocate from buffer cache
         manager.allocate_from_pool(2, 1024 * 1024).unwrap();
@@ -797,12 +796,17 @@ mod tests {
             16 * 1024 * 1024 * 1024,
             8 * 1024 * 1024 * 1024,
             AllocationStrategy::Manual,
-        ).unwrap();
+        )
+        .unwrap();
 
-        manager.register_group_limits(1, None, Some(200 * 1024 * 1024)).unwrap();
+        manager
+            .register_group_limits(1, None, Some(200 * 1024 * 1024))
+            .unwrap();
         manager.create_session_quota(1, 1, None, None).unwrap();
 
-        manager.allocate_session_memory(1, 10 * 1024 * 1024, false).unwrap();
+        manager
+            .allocate_session_memory(1, 10 * 1024 * 1024, false)
+            .unwrap();
 
         let quota = manager.get_session_quota(1).unwrap();
         assert_eq!(quota.current_pga_usage, 10 * 1024 * 1024);

@@ -2,19 +2,19 @@
 // Provides ARIES-style physiological logging with group commit,
 // log shipping for replication, and checkpoint coordination
 
-use tokio::sync::oneshot;
-use std::collections::HashMap;
-use std::path::PathBuf;
-use std::fs::{File, OpenOptions};
-use std::io::{Write as IoWrite, BufWriter, BufReader, IoSlice};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, Duration, Instant};
+use super::TransactionId;
+use crate::error::{DbError, Result};
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
+use std::io::{BufReader, BufWriter, IoSlice, Write as IoWrite};
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant, SystemTime};
+use tokio::sync::oneshot;
 use tokio::time::interval;
-use crate::error::{Result, DbError};
-use super::TransactionId;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
@@ -158,9 +158,7 @@ pub enum LogRecord {
         redo_operation: Box<LogRecord>,
     },
     /// Checkpoint begin
-    CheckpointBegin {
-        timestamp: SystemTime,
-    },
+    CheckpointBegin { timestamp: SystemTime },
     /// Checkpoint end
     CheckpointEnd {
         active_txns: Vec<TransactionId>,
@@ -176,13 +174,13 @@ impl LogRecord {
     #[inline]
     pub fn txn_id(&self) -> Option<TransactionId> {
         match self {
-            LogRecord::Begin { txn_id, .. } |
-            LogRecord::Update { txn_id, .. } |
-            LogRecord::Insert { txn_id, .. } |
-            LogRecord::Delete { txn_id, .. } |
-            LogRecord::Commit { txn_id, .. } |
-            LogRecord::Abort { txn_id, .. } |
-            LogRecord::CLR { txn_id, .. } => Some(*txn_id),
+            LogRecord::Begin { txn_id, .. }
+            | LogRecord::Update { txn_id, .. }
+            | LogRecord::Insert { txn_id, .. }
+            | LogRecord::Delete { txn_id, .. }
+            | LogRecord::Commit { txn_id, .. }
+            | LogRecord::Abort { txn_id, .. }
+            | LogRecord::CLR { txn_id, .. } => Some(*txn_id),
             _ => None,
         }
     }
@@ -191,10 +189,10 @@ impl LogRecord {
     #[inline]
     pub fn page_id(&self) -> Option<PageId> {
         match self {
-            LogRecord::Update { page_id, .. } |
-            LogRecord::Insert { page_id, .. } |
-            LogRecord::Delete { page_id, .. } |
-            LogRecord::CLR { page_id, .. } => Some(*page_id),
+            LogRecord::Update { page_id, .. }
+            | LogRecord::Insert { page_id, .. }
+            | LogRecord::Delete { page_id, .. }
+            | LogRecord::CLR { page_id, .. } => Some(*page_id),
             _ => None,
         }
     }
@@ -459,10 +457,10 @@ impl WALManager {
             };
 
             let undo_next_lsn = match &record {
-                LogRecord::Update { undo_next_lsn, .. } |
-                LogRecord::Insert { undo_next_lsn, .. } |
-                LogRecord::Delete { undo_next_lsn, .. } |
-                LogRecord::CLR { undo_next_lsn, .. } => *undo_next_lsn,
+                LogRecord::Update { undo_next_lsn, .. }
+                | LogRecord::Insert { undo_next_lsn, .. }
+                | LogRecord::Delete { undo_next_lsn, .. }
+                | LogRecord::CLR { undo_next_lsn, .. } => *undo_next_lsn,
                 _ => None,
             };
 
@@ -479,10 +477,7 @@ impl WALManager {
 
         // Update dirty page table
         if let Some(page_id) = record.page_id() {
-            self.dirty_page_table
-                .write()
-                .entry(page_id)
-                .or_insert(lsn);
+            self.dirty_page_table.write().entry(page_id).or_insert(lsn);
         }
 
         // Group commit handling
@@ -552,12 +547,12 @@ impl WALManager {
         stats.avg_group_size = update_running_average(
             stats.avg_group_size,
             entries.len() as f64,
-            (stats.group_commits - 1) as f64
+            (stats.group_commits - 1) as f64,
         );
         stats.avg_flush_time_ms = update_running_average(
             stats.avg_flush_time_ms,
             flush_time,
-            (stats.group_commits - 1) as f64
+            (stats.group_commits - 1) as f64,
         );
 
         // Notify waiters
@@ -570,8 +565,9 @@ impl WALManager {
 
     /// Write a single entry to WAL
     fn write_entry(&self, entry: &WALEntry) -> Result<()> {
-        let serialized = serde_json::to_vec(entry)
-            .map_err(|e| DbError::SerializationError(format!("Failed to serialize WAL entry: {}", e)))?;
+        let serialized = serde_json::to_vec(entry).map_err(|e| {
+            DbError::SerializationError(format!("Failed to serialize WAL entry: {}", e))
+        })?;
 
         let mut file = self.wal_file.lock();
         file.write_all(&serialized)
@@ -593,13 +589,16 @@ impl WALManager {
         }
 
         // Serialize all entries
-let serialized: Vec<Vec<u8>> = entries.iter()
-              .map(|e| serde_json::to_vec(e).map_err(|e| DbError::SerializationError(format!("Serialization failed: {}", e))))
-              .collect::<Result<Vec<_>>>()?;
+        let serialized: Vec<Vec<u8>> = entries
+            .iter()
+            .map(|e| {
+                serde_json::to_vec(e).map_err(|e| {
+                    DbError::SerializationError(format!("Serialization failed: {}", e))
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
         // Prepare IoSlice for writev
-        let slices: Vec<IoSlice> = serialized.iter()
-            .map(|buf| IoSlice::new(buf))
-            .collect();
+        let slices: Vec<IoSlice> = serialized.iter().map(|buf| IoSlice::new(buf)).collect();
 
         let mut file = self.wal_file.lock();
 
@@ -609,7 +608,8 @@ let serialized: Vec<Vec<u8>> = entries.iter()
 
         // Note: write_vectored might not write everything in one call
         while total_written < total_size {
-            let written = file.get_mut()
+            let written = file
+                .get_mut()
                 .write_vectored(&slices[total_written..])
                 .map_err(|e| DbError::IOError(format!("Vectored write failed: {}", e)))?;
             total_written += written;
@@ -705,9 +705,10 @@ let serialized: Vec<Vec<u8>> = entries.iter()
 
             if entry.lsn >= start_lsn {
                 if !entry.verify_checksum() {
-                    return Err(DbError::CorruptionError(
-                        format!("Checksum mismatch at LSN {}", entry.lsn)
-                    ));
+                    return Err(DbError::CorruptionError(format!(
+                        "Checksum mismatch at LSN {}",
+                        entry.lsn
+                    )));
                 }
                 entries.push(entry);
             }
@@ -831,7 +832,8 @@ impl LogShippingManager {
 
         // Update last shipped LSN
         if let Some(last_entry) = entries.last() {
-            self.last_shipped_lsn.store(last_entry.lsn, Ordering::SeqCst);
+            self.last_shipped_lsn
+                .store(last_entry.lsn, Ordering::SeqCst);
         }
 
         // Update statistics
@@ -839,7 +841,8 @@ impl LogShippingManager {
         let mut stats = self.stats.write();
         stats.total_shipped += entries.len() as u64;
 
-        let serialized_size: usize = entries.iter()
+        let serialized_size: usize = entries
+            .iter()
             .map(|e| serde_json::to_vec(e).unwrap_or_default().len())
             .sum();
         stats.total_bytes_shipped += serialized_size as u64;
@@ -847,13 +850,13 @@ impl LogShippingManager {
         stats.avg_batch_size = update_running_average(
             stats.avg_batch_size,
             entries.len() as f64,
-            (stats.total_shipped - entries.len() as u64) as f64
+            (stats.total_shipped - entries.len() as u64) as f64,
         );
 
         stats.avg_shipping_latency_ms = update_running_average(
             stats.avg_shipping_latency_ms,
             shipping_time,
-            (stats.total_shipped - entries.len() as u64) as f64
+            (stats.total_shipped - entries.len() as u64) as f64,
         );
 
         Ok(())
@@ -863,7 +866,9 @@ impl LogShippingManager {
         // In production, this would send over network
         // For now, just update the last applied LSN
         if let Some(last_entry) = entries.last() {
-            standby.last_applied_lsn.store(last_entry.lsn, Ordering::SeqCst);
+            standby
+                .last_applied_lsn
+                .store(last_entry.lsn, Ordering::SeqCst);
         }
         Ok(())
     }
@@ -923,9 +928,12 @@ impl CheckpointCoordinator {
         let start = Instant::now();
 
         // Write checkpoint begin record
-        let begin_lsn = self.wal.append(LogRecord::CheckpointBegin {
-            timestamp: SystemTime::now(),
-        }).await?;
+        let begin_lsn = self
+            .wal
+            .append(LogRecord::CheckpointBegin {
+                timestamp: SystemTime::now(),
+            })
+            .await?;
 
         // Get transaction and dirty page tables
         let txn_table = self.wal.transaction_table();
@@ -940,11 +948,14 @@ impl CheckpointCoordinator {
         let dirty_page_ids: Vec<PageId> = dirty_pages.keys().copied().collect();
 
         // Write checkpoint end record
-        let end_lsn = self.wal.append(LogRecord::CheckpointEnd {
-            active_txns,
-            dirty_pages: dirty_page_ids,
-            timestamp: SystemTime::now(),
-        }).await?;
+        let end_lsn = self
+            .wal
+            .append(LogRecord::CheckpointEnd {
+                active_txns,
+                dirty_pages: dirty_page_ids,
+                timestamp: SystemTime::now(),
+            })
+            .await?;
 
         self.last_checkpoint_lsn.store(end_lsn, Ordering::SeqCst);
 
@@ -959,7 +970,7 @@ impl CheckpointCoordinator {
         stats.avg_checkpoint_time_ms = update_running_average(
             stats.avg_checkpoint_time_ms,
             checkpoint_time,
-            (stats.total_checkpoints - 1) as f64
+            (stats.total_checkpoints - 1) as f64,
         );
 
         Ok(end_lsn)
@@ -985,9 +996,9 @@ impl CheckpointCoordinator {
 
 #[cfg(test)]
 mod tests {
+    use crate::transaction::wal::{GroupCommitBuffer, LogRecord, WALConfig, WALEntry, WALManager};
     use std::time::{Duration, SystemTime};
     use tempfile::tempdir;
-    use crate::transaction::wal::{GroupCommitBuffer, LogRecord, WALConfig, WALEntry, WALManager};
 
     #[tokio::test]
     async fn test_wal_append_and_read() {
@@ -1002,19 +1013,25 @@ mod tests {
         let wal = WALManager::new(wal_path.clone(), config).unwrap();
 
         // Write some records
-        let lsn1 = wal.append(LogRecord::Begin {
-            txn_id: 1,
-            timestamp: SystemTime::now(),
-        }).await.unwrap();
+        let lsn1 = wal
+            .append(LogRecord::Begin {
+                txn_id: 1,
+                timestamp: SystemTime::now(),
+            })
+            .await
+            .unwrap();
 
-        let lsn2 = wal.append(LogRecord::Update {
-            txn_id: 1,
-            page_id: 100,
-            offset: 0,
-            before_image: vec![1, 2, 3],
-            after_image: vec![4, 5, 6],
-            undo_next_lsn: None,
-        }).await.unwrap();
+        let lsn2 = wal
+            .append(LogRecord::Update {
+                txn_id: 1,
+                page_id: 100,
+                offset: 0,
+                before_image: vec![1, 2, 3],
+                after_image: vec![4, 5, 6],
+                undo_next_lsn: None,
+            })
+            .await
+            .unwrap();
 
         wal.shutdown().unwrap();
 

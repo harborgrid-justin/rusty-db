@@ -23,16 +23,16 @@
 // pool.add_connection(conn).await;
 // ```
 
+use super::message::{MessageCodec, WebSocketMessage};
+use super::protocol::{Protocol, ProtocolHandler};
+use crate::error::{DbError, Result};
+use futures_util::{SinkExt, StreamExt};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::{mpsc, RwLock, Mutex};
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tokio::time::{interval, sleep};
 use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
-use futures_util::{SinkExt, StreamExt};
-use crate::error::{DbError, Result};
-use super::message::{WebSocketMessage, MessageCodec};
-use super::protocol::{Protocol, ProtocolHandler};
 
 // ============================================================================
 // Connection State
@@ -369,14 +369,18 @@ impl ConnectionPool {
         // Check if pool is full
         if connections.len() >= self.max_connections {
             return Err(DbError::ResourceExhausted(
-                "Connection pool is full".to_string()
+                "Connection pool is full".to_string(),
             ));
         }
 
         let id = connection.id().await;
         connections.insert(id.clone(), connection);
 
-        tracing::info!("Connection {} added to pool (total: {})", id, connections.len());
+        tracing::info!(
+            "Connection {} added to pool (total: {})",
+            id,
+            connections.len()
+        );
         Ok(())
     }
 
@@ -386,7 +390,11 @@ impl ConnectionPool {
         let connection = connections.remove(id);
 
         if connection.is_some() {
-            tracing::info!("Connection {} removed from pool (total: {})", id, connections.len());
+            tracing::info!(
+                "Connection {} removed from pool (total: {})",
+                id,
+                connections.len()
+            );
         }
 
         connection
@@ -541,7 +549,9 @@ impl ConnectionPool {
         let connections = self.connections.write().await;
 
         for connection in connections.values() {
-            connection.close(1000, "Server shutting down".to_string()).await?;
+            connection
+                .close(1000, "Server shutting down".to_string())
+                .await?;
         }
 
         tracing::info!("All connections shut down gracefully");

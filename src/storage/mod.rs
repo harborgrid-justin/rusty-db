@@ -1,20 +1,20 @@
-pub mod disk;
 pub mod buffer;
+pub mod columnar;
+pub mod disk;
+pub mod json;
+pub mod lsm;
 pub mod page;
 pub mod partitioning;
-pub mod json;
 pub mod tiered;
-pub mod lsm;
-pub mod columnar;
 
-pub use disk::{DiskManager, IoPriority, DirectIoConfig};
 pub use buffer::{BufferPoolManager, BufferPoolStats};
-pub use page::{Page, SlottedPage, PageSplitter, PageMerger};
-pub use partitioning::{PartitionManager, PartitionStrategy, PartitionPruner};
-pub use json::{JsonData, JsonPath, JsonOperators};
-pub use tiered::{TieredStorageManager, StorageTier, TierStats};
-pub use lsm::{LsmTree, LsmStats};
-pub use columnar::{ColumnarTable, ColumnDef, ColumnType, ColumnValue};
+pub use columnar::{ColumnDef, ColumnType, ColumnValue, ColumnarTable};
+pub use disk::{DirectIoConfig, DiskManager, IoPriority};
+pub use json::{JsonData, JsonOperators, JsonPath};
+pub use lsm::{LsmStats, LsmTree};
+pub use page::{Page, PageMerger, PageSplitter, SlottedPage};
+pub use partitioning::{PartitionManager, PartitionPruner, PartitionStrategy};
+pub use tiered::{StorageTier, TierStats, TieredStorageManager};
 // Re-export PageId from common for convenience
 pub use crate::common::PageId;
 

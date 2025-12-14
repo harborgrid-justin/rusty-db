@@ -3,12 +3,12 @@
 // Generates health reports, exports metrics, and provides status endpoints
 // for monitoring and observability.
 
+use super::aggregator::HealthScore;
+use crate::common::{HealthStatus, MetricValue, NodeId};
 use crate::error::{DbError, Result};
-use crate::common::{NodeId, HealthStatus, MetricValue};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
-use super::aggregator::HealthScore;
 
 /// Health report for a single node
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -255,14 +255,20 @@ impl HealthReporter {
         if report.cluster_score.score < self.alert_thresholds.critical_score {
             alerts.push(HealthAlert {
                 severity: AlertSeverity::Critical,
-                message: format!("Cluster health critical: score {:.2}", report.cluster_score.score),
+                message: format!(
+                    "Cluster health critical: score {:.2}",
+                    report.cluster_score.score
+                ),
                 triggered_at: SystemTime::now(),
                 alert_type: AlertType::Custom("cluster_critical".to_string()),
             });
         } else if report.cluster_score.score < self.alert_thresholds.degraded_score {
             alerts.push(HealthAlert {
                 severity: AlertSeverity::Warning,
-                message: format!("Cluster health degraded: score {:.2}", report.cluster_score.score),
+                message: format!(
+                    "Cluster health degraded: score {:.2}",
+                    report.cluster_score.score
+                ),
                 triggered_at: SystemTime::now(),
                 alert_type: AlertType::Custom("cluster_degraded".to_string()),
             });
@@ -291,7 +297,9 @@ impl HealthReporter {
             }
 
             // Low availability
-            if node_report.score.availability < self.alert_thresholds.low_availability_percent / 100.0 {
+            if node_report.score.availability
+                < self.alert_thresholds.low_availability_percent / 100.0
+            {
                 alerts.push(HealthAlert {
                     severity: AlertSeverity::Warning,
                     message: format!(
@@ -322,10 +330,14 @@ impl HealthReporter {
     /// Export metrics in Prometheus format
     pub async fn export_metrics(&self) -> Result<String> {
         if !self.metrics_enabled {
-            return Err(DbError::InvalidOperation("Metrics export disabled".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Metrics export disabled".to_string(),
+            ));
         }
 
-        let latest_report = self.report_history.last()
+        let latest_report = self
+            .report_history
+            .last()
             .ok_or_else(|| DbError::NotFound("No reports available".to_string()))?;
 
         let mut metrics = String::new();
@@ -377,14 +389,12 @@ impl HealthReporter {
         for (node_id, node_report) in &latest_report.node_reports {
             metrics.push_str(&format!(
                 "rustydb_node_health_score{{node=\"{}\"}} {}\n",
-                node_id,
-                node_report.score.score
+                node_id, node_report.score.score
             ));
 
             metrics.push_str(&format!(
                 "rustydb_node_availability{{node=\"{}\"}} {}\n",
-                node_id,
-                node_report.score.availability
+                node_id, node_report.score.availability
             ));
         }
 
@@ -393,17 +403,34 @@ impl HealthReporter {
 
     /// Export metrics as JSON
     pub async fn export_metrics_json(&self) -> Result<serde_json::Value> {
-        let latest_report = self.report_history.last()
+        let latest_report = self
+            .report_history
+            .last()
             .ok_or_else(|| DbError::NotFound("No reports available".to_string()))?;
 
         let mut metrics = HashMap::new();
 
         // Cluster metrics
-        metrics.insert("cluster_health_score".to_string(), MetricValue::Gauge(latest_report.cluster_score.score));
-        metrics.insert("cluster_availability".to_string(), MetricValue::Gauge(latest_report.cluster_score.availability));
-        metrics.insert("total_nodes".to_string(), MetricValue::Counter(latest_report.statistics.total_nodes as u64));
-        metrics.insert("healthy_nodes".to_string(), MetricValue::Counter(latest_report.statistics.healthy_nodes as u64));
-        metrics.insert("unhealthy_nodes".to_string(), MetricValue::Counter(latest_report.statistics.unhealthy_nodes as u64));
+        metrics.insert(
+            "cluster_health_score".to_string(),
+            MetricValue::Gauge(latest_report.cluster_score.score),
+        );
+        metrics.insert(
+            "cluster_availability".to_string(),
+            MetricValue::Gauge(latest_report.cluster_score.availability),
+        );
+        metrics.insert(
+            "total_nodes".to_string(),
+            MetricValue::Counter(latest_report.statistics.total_nodes as u64),
+        );
+        metrics.insert(
+            "healthy_nodes".to_string(),
+            MetricValue::Counter(latest_report.statistics.healthy_nodes as u64),
+        );
+        metrics.insert(
+            "unhealthy_nodes".to_string(),
+            MetricValue::Counter(latest_report.statistics.unhealthy_nodes as u64),
+        );
 
         Ok(serde_json::to_value(&metrics)?)
     }
@@ -421,7 +448,8 @@ impl HealthReporter {
 
     /// Get alerts by severity
     pub fn get_alerts_by_severity(&self, severity: AlertSeverity) -> Vec<HealthAlert> {
-        self.alert_history.iter()
+        self.alert_history
+            .iter()
             .filter(|a| a.severity == severity)
             .cloned()
             .collect()
@@ -430,12 +458,11 @@ impl HealthReporter {
     /// Clear old alerts
     pub fn clear_old_alerts(&mut self, older_than: Duration) {
         let now = SystemTime::now();
-        self.alert_history.retain(|alert| {
-            match now.duration_since(alert.triggered_at) {
+        self.alert_history
+            .retain(|alert| match now.duration_since(alert.triggered_at) {
                 Ok(age) => age < older_than,
                 Err(_) => true,
-            }
-        });
+            });
     }
 
     /// Enable/disable metrics export

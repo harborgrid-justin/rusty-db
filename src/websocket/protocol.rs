@@ -22,10 +22,10 @@
 // let handler = protocol.create_handler();
 // ```
 
-use serde::{Deserialize, Serialize};
+use super::message::WebSocketMessage;
 use crate::error::{DbError, Result};
 use crate::execution::QueryResult;
-use super::message::WebSocketMessage;
+use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // Protocol Types
@@ -288,8 +288,8 @@ impl ProtocolHandler for JsonRpcHandler {
         match msg {
             WebSocketMessage::Text(text) => {
                 // Parse JSON-RPC request
-                let request: JsonRpcRequest = serde_json::from_str(text)
-                    .map_err(|e| DbError::ParseError(e.to_string()))?;
+                let request: JsonRpcRequest =
+                    serde_json::from_str(text).map_err(|e| DbError::ParseError(e.to_string()))?;
 
                 // Process request
                 let response = self.process_request(request)?;
@@ -301,7 +301,7 @@ impl ProtocolHandler for JsonRpcHandler {
                 Ok(Some(WebSocketMessage::text(response_json)))
             }
             _ => Err(DbError::InvalidInput(
-                "JSON-RPC requires text messages".to_string()
+                "JSON-RPC requires text messages".to_string(),
             )),
         }
     }
@@ -319,7 +319,7 @@ impl ProtocolHandler for JsonRpcHandler {
                 Ok(())
             }
             _ => Err(DbError::Validation(
-                "JSON-RPC requires text messages".to_string()
+                "JSON-RPC requires text messages".to_string(),
             )),
         }
     }
@@ -382,9 +382,10 @@ impl ProtocolHandler for RustyDbHandler {
         match msg {
             WebSocketMessage::Binary(data) => {
                 // Decode binary message
-                let decoded: RustyDbMessage = bincode::decode_from_slice(data, bincode::config::standard())
-                    .map_err(|e| DbError::Serialization(e.to_string()))?
-                    .0;
+                let decoded: RustyDbMessage =
+                    bincode::decode_from_slice(data, bincode::config::standard())
+                        .map_err(|e| DbError::Serialization(e.to_string()))?
+                        .0;
 
                 // Process based on message type
                 // This is a placeholder - actual implementation would route to handlers
@@ -402,7 +403,7 @@ impl ProtocolHandler for RustyDbHandler {
                 Ok(Some(WebSocketMessage::binary(encoded)))
             }
             _ => Err(DbError::InvalidInput(
-                "RustyDB protocol requires binary messages".to_string()
+                "RustyDB protocol requires binary messages".to_string(),
             )),
         }
     }
@@ -415,13 +416,16 @@ impl ProtocolHandler for RustyDbHandler {
         match msg {
             WebSocketMessage::Binary(data) => {
                 // Validate message structure
-                let _: RustyDbMessage = bincode::decode_from_slice(data, bincode::config::standard())
-                    .map_err(|e| DbError::Validation(format!("Invalid RustyDB message: {}", e)))?
-                    .0;
+                let _: RustyDbMessage =
+                    bincode::decode_from_slice(data, bincode::config::standard())
+                        .map_err(|e| {
+                            DbError::Validation(format!("Invalid RustyDB message: {}", e))
+                        })?
+                        .0;
                 Ok(())
             }
             _ => Err(DbError::Validation(
-                "RustyDB protocol requires binary messages".to_string()
+                "RustyDB protocol requires binary messages".to_string(),
             )),
         }
     }
@@ -566,7 +570,10 @@ mod tests {
     fn test_protocol_from_str() {
         assert_eq!(Protocol::from_str("jsonrpc"), Some(Protocol::JsonRpc));
         assert_eq!(Protocol::from_str("rustydb"), Some(Protocol::RustyDb));
-        assert_eq!(Protocol::from_str("graphql-transport-ws"), Some(Protocol::GraphQL));
+        assert_eq!(
+            Protocol::from_str("graphql-transport-ws"),
+            Some(Protocol::GraphQL)
+        );
         assert_eq!(Protocol::from_str("invalid"), None);
     }
 

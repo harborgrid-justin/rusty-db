@@ -3,13 +3,13 @@
 // Comprehensive monitoring for replication lag, throughput,
 // error rates, and health dashboards.
 
-use std::collections::VecDeque;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
-use parking_lot::RwLock;
-use std::time::{SystemTime, UNIX_EPOCH};
 use crate::error::DbError;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 type Result<T> = std::result::Result<T, DbError>;
 
@@ -272,8 +272,16 @@ impl ReplicationMonitor {
         self.cleanup_old_measurements(&mut measurements, metrics.period_end);
 
         // Record in time series
-        self.record_time_series("changes_per_second", metrics.period_end, metrics.changes_per_second);
-        self.record_time_series("bytes_per_second", metrics.period_end, metrics.bytes_per_second);
+        self.record_time_series(
+            "changes_per_second",
+            metrics.period_end,
+            metrics.changes_per_second,
+        );
+        self.record_time_series(
+            "bytes_per_second",
+            metrics.period_end,
+            metrics.bytes_per_second,
+        );
 
         // Check thresholds
         self.check_throughput_thresholds(&metrics)?;
@@ -334,7 +342,9 @@ impl ReplicationMonitor {
     /// Record time series data
     fn record_time_series(&self, metric: &str, timestamp: u64, value: f64) {
         let mut time_series = self.time_series.write();
-        let series = time_series.entry(metric.to_string()).or_insert_with(VecDeque::new);
+        let series = time_series
+            .entry(metric.to_string())
+            .or_insert_with(VecDeque::new);
 
         series.push_back(TimeSeriesPoint { timestamp, value });
 
@@ -415,7 +425,11 @@ impl ReplicationMonitor {
             }
 
             if threshold.metric == MetricType::ErrorRate {
-                if self.threshold_exceeded(metrics.error_rate, threshold.threshold, &threshold.operator) {
+                if self.threshold_exceeded(
+                    metrics.error_rate,
+                    threshold.threshold,
+                    &threshold.operator,
+                ) {
                     self.trigger_alert(threshold, metrics.error_rate)?;
                 }
             }
@@ -434,7 +448,11 @@ impl ReplicationMonitor {
             }
 
             if threshold.metric == MetricType::ConflictRate {
-                if self.threshold_exceeded(metrics.conflict_rate, threshold.threshold, &threshold.operator) {
+                if self.threshold_exceeded(
+                    metrics.conflict_rate,
+                    threshold.threshold,
+                    &threshold.operator,
+                ) {
                     self.trigger_alert(threshold, metrics.conflict_rate)?;
                 }
             }
@@ -444,7 +462,12 @@ impl ReplicationMonitor {
     }
 
     /// Check if threshold is exceeded
-    fn threshold_exceeded(&self, value: f64, threshold: f64, operator: &ComparisonOperator) -> bool {
+    fn threshold_exceeded(
+        &self,
+        value: f64,
+        threshold: f64,
+        operator: &ComparisonOperator,
+    ) -> bool {
         match operator {
             ComparisonOperator::GreaterThan => value > threshold,
             ComparisonOperator::LessThan => value < threshold,
@@ -489,10 +512,9 @@ impl ReplicationMonitor {
     pub fn acknowledge_alert(&self, alert_id: &str) -> Result<()> {
         let mut alerts = self.active_alerts.write();
 
-        let alert = alerts.get_mut(alert_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Alert {} not found", alert_id)
-            ))?;
+        let alert = alerts
+            .get_mut(alert_id)
+            .ok_or_else(|| DbError::Replication(format!("Alert {} not found", alert_id)))?;
 
         alert.acknowledged = true;
         Ok(())
@@ -528,8 +550,14 @@ impl ReplicationMonitor {
         let overall_health = if channels.is_empty() {
             ChannelHealth::Offline
         } else {
-            let critical_count = channels.iter().filter(|c| c.health == ChannelHealth::Critical).count();
-            let warning_count = channels.iter().filter(|c| c.health == ChannelHealth::Warning).count();
+            let critical_count = channels
+                .iter()
+                .filter(|c| c.health == ChannelHealth::Critical)
+                .count();
+            let warning_count = channels
+                .iter()
+                .filter(|c| c.health == ChannelHealth::Warning)
+                .count();
 
             if critical_count > 0 {
                 ChannelHealth::Critical
@@ -541,7 +569,9 @@ impl ReplicationMonitor {
         };
 
         // Get latest metrics
-        let throughput = self.throughput_measurements.read()
+        let throughput = self
+            .throughput_measurements
+            .read()
             .back()
             .cloned()
             .unwrap_or_else(|| ThroughputMetrics {
@@ -555,7 +585,9 @@ impl ReplicationMonitor {
                 transactions_per_second: 0.0,
             });
 
-        let error_rate = self.error_measurements.read()
+        let error_rate = self
+            .error_measurements
+            .read()
             .back()
             .cloned()
             .unwrap_or_else(|| ErrorRateMetrics {
@@ -567,7 +599,9 @@ impl ReplicationMonitor {
                 errors_by_type: HashMap::new(),
             });
 
-        let conflict_rate = self.conflict_measurements.read()
+        let conflict_rate = self
+            .conflict_measurements
+            .read()
             .back()
             .cloned()
             .unwrap_or_else(|| ConflictRateMetrics {
@@ -594,7 +628,8 @@ impl ReplicationMonitor {
 
     /// Get time series data
     pub fn get_time_series(&self, metric: &str) -> Vec<TimeSeriesPoint> {
-        self.time_series.read()
+        self.time_series
+            .read()
             .get(metric)
             .map(|series| series.iter().cloned().collect())
             .unwrap_or_default()
@@ -647,7 +682,7 @@ impl Default for ReplicationMonitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_record_lag() {

@@ -16,22 +16,22 @@
 // and coordinate recovery. One instance is elected as the recovery coordinator
 // to apply redo logs, release locks, and remaster resources from the failed instance.
 
-use std::sync::Mutex;
-use std::collections::VecDeque;
-use std::time::Instant;
-use std::collections::HashSet;
-use std::time::SystemTime;
+use crate::common::{LogSequenceNumber, NodeId, TransactionId};
 use crate::error::DbError;
-use crate::common::{NodeId, TransactionId, LogSequenceNumber};
 use crate::rac::cache_fusion::ResourceId;
 use crate::rac::grd::GlobalResourceDirectory;
 use crate::rac::interconnect::ClusterInterconnect;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::sync::Arc;
-use std::time::{Duration};
-use parking_lot::{RwLock};
-use tokio::sync::{mpsc};
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
+use tokio::sync::mpsc;
 
 // ============================================================================
 // Constants
@@ -335,10 +335,10 @@ impl Default for RecoveryConfig {
             redo_batch_size: REDO_BATCH_SIZE,
             enable_parallel: true,
             recovery_timeout: MAX_RECOVERY_TIME,
-            parallel_redo_threads: 8,                         // 8 parallel threads
-            enable_checkpoints: true,                         // Enable checkpointing
-            checkpoint_interval: Duration::from_secs(300),    // Every 5 minutes
-            priority_recovery: true,                          // Priority-based recovery
+            parallel_redo_threads: 8, // 8 parallel threads
+            enable_checkpoints: true, // Enable checkpointing
+            checkpoint_interval: Duration::from_secs(300), // Every 5 minutes
+            priority_recovery: true,  // Priority-based recovery
         }
     }
 }
@@ -474,28 +474,53 @@ impl InstanceRecoveryManager {
 
         while let Some(message) = rx.recv().await {
             match message {
-                RecoveryMessage::InitiateRecovery { failed_instance, reason } => {
+                RecoveryMessage::InitiateRecovery {
+                    failed_instance,
+                    reason,
+                } => {
                     let _ = self.initiate_recovery(failed_instance, reason).await;
                 }
 
-                RecoveryMessage::VoteCoordinator { failed_instance, candidate, ballot } => {
-                    let _ = self.handle_coordinator_vote(failed_instance, candidate, ballot).await;
+                RecoveryMessage::VoteCoordinator {
+                    failed_instance,
+                    candidate,
+                    ballot,
+                } => {
+                    let _ = self
+                        .handle_coordinator_vote(failed_instance, candidate, ballot)
+                        .await;
                 }
 
-                RecoveryMessage::CoordinatorElected { failed_instance, coordinator } => {
-                    let _ = self.handle_coordinator_elected(failed_instance, coordinator).await;
+                RecoveryMessage::CoordinatorElected {
+                    failed_instance,
+                    coordinator,
+                } => {
+                    let _ = self
+                        .handle_coordinator_elected(failed_instance, coordinator)
+                        .await;
                 }
 
-                RecoveryMessage::RequestRedoLogs { failed_instance, from_lsn } => {
+                RecoveryMessage::RequestRedoLogs {
+                    failed_instance,
+                    from_lsn,
+                } => {
                     let _ = self.handle_redo_request(failed_instance, from_lsn).await;
                 }
 
-                RecoveryMessage::SendRedoLogs { failed_instance, logs } => {
+                RecoveryMessage::SendRedoLogs {
+                    failed_instance,
+                    logs,
+                } => {
                     let _ = self.handle_redo_logs(failed_instance, logs).await;
                 }
 
-                RecoveryMessage::RecoveryComplete { failed_instance, success } => {
-                    let _ = self.handle_recovery_complete(failed_instance, success).await;
+                RecoveryMessage::RecoveryComplete {
+                    failed_instance,
+                    success,
+                } => {
+                    let _ = self
+                        .handle_recovery_complete(failed_instance, success)
+                        .await;
                 }
             }
         }
@@ -519,7 +544,9 @@ impl InstanceRecoveryManager {
         {
             let recoveries = self.active_recoveries.read();
             if recoveries.len() >= self.config.max_concurrent_recoveries {
-                return Err(DbError::Internal("Too many concurrent recoveries".to_string()));
+                return Err(DbError::Internal(
+                    "Too many concurrent recoveries".to_string(),
+                ));
             }
         }
 
@@ -536,7 +563,9 @@ impl InstanceRecoveryManager {
             estimated_remaining: None,
         };
 
-        self.active_recoveries.write().insert(failed_instance.clone(), state);
+        self.active_recoveries
+            .write()
+            .insert(failed_instance.clone(), state);
 
         // Start coordinator election
         self.elect_recovery_coordinator(failed_instance).await?;
@@ -560,7 +589,8 @@ impl InstanceRecoveryManager {
         candidates.push(self.node_id.clone());
         candidates.sort();
 
-        let coordinator = candidates.first()
+        let coordinator = candidates
+            .first()
             .ok_or_else(|| DbError::Internal("No candidates for coordinator".to_string()))?
             .clone();
 
@@ -572,7 +602,8 @@ impl InstanceRecoveryManager {
 
         // If we are coordinator, start recovery
         if coordinator == self.node_id {
-            self.handle_coordinator_elected(failed_instance, coordinator).await?;
+            self.handle_coordinator_elected(failed_instance, coordinator)
+                .await?;
         }
 
         Ok(())
@@ -633,8 +664,7 @@ impl InstanceRecoveryManager {
         let mut stats = self.stats.write();
         stats.total_recoveries += 1;
         stats.successful_recoveries += 1;
-        stats.avg_recovery_time_secs =
-            (stats.avg_recovery_time_secs + elapsed) / 2;
+        stats.avg_recovery_time_secs = (stats.avg_recovery_time_secs + elapsed) / 2;
         stats.max_recovery_time_secs = stats.max_recovery_time_secs.max(elapsed);
 
         // Mark recovery complete
@@ -710,14 +740,20 @@ impl InstanceRecoveryManager {
 
     // NEW: Parallel redo apply for 10x faster recovery
     // Partitions redo logs by resource and applies in parallel
-    async fn apply_redo_parallel(&self, failed_instance: &NodeId, logs: Vec<RedoLogEntry>) -> Result<(), DbError> {
-
+    async fn apply_redo_parallel(
+        &self,
+        failed_instance: &NodeId,
+        logs: Vec<RedoLogEntry>,
+    ) -> Result<(), DbError> {
         // Partition logs by resource to avoid conflicts
         let mut partitions: HashMap<u32, Vec<RedoLogEntry>> = HashMap::new();
 
         for log in logs {
             let partition_key = log.resource_id.file_id % self.config.parallel_redo_threads as u32;
-            partitions.entry(partition_key).or_insert_with(Vec::new).push(log);
+            partitions
+                .entry(partition_key)
+                .or_insert_with(Vec::new)
+                .push(log);
         }
 
         // Spawn parallel workers
@@ -755,7 +791,9 @@ impl InstanceRecoveryManager {
 
         // Wait for all workers to complete
         for handle in handles {
-            handle.await.map_err(|e| DbError::Internal(format!("Recovery task failed: {}", e)))??;
+            handle
+                .await
+                .map_err(|e| DbError::Internal(format!("Recovery task failed: {}", e)))??;
         }
 
         Ok(())

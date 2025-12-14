@@ -129,11 +129,11 @@
 // Module Declarations
 // ============================================================================
 
-pub mod time_travel;
-pub mod versions;
-pub mod table_restore;
 pub mod database;
+pub mod table_restore;
+pub mod time_travel;
 pub mod transaction;
+pub mod versions;
 
 // ============================================================================
 // Re-exports
@@ -141,75 +141,34 @@ pub mod transaction;
 
 // Time Travel exports
 pub use time_travel::{
-    TimeTravelEngine,
-    TimeTravelConfig,
-    TimeTravelStats,
-    RowVersion,
-    VersionChain,
-    BiTemporalMetadata,
-    BiTemporalRow,
-    HistoricalRow,
-    TemporalPredicate,
-    TemporalBTreeIndex,
-    TemporalIndexEntry,
-    TemporalOperation,
-    SCN,
-    Timestamp,
-    VersionId,
-    current_timestamp,
-    system_time_to_timestamp,
-    timestamp_to_system_time,
+    current_timestamp, system_time_to_timestamp, timestamp_to_system_time, BiTemporalMetadata,
+    BiTemporalRow, HistoricalRow, RowVersion, TemporalBTreeIndex, TemporalIndexEntry,
+    TemporalOperation, TemporalPredicate, TimeTravelConfig, TimeTravelEngine, TimeTravelStats,
+    Timestamp, VersionChain, VersionId, SCN,
 };
 
 // Versions exports
 pub use versions::{
-    VersionManager,
-    VersionConfig,
-    VersionStats,
-    VersionRow,
-    VersionOperation,
-    VersionBound,
-    VersionRetentionPolicy,
-    VersionMetadata,
-    VersionComparison,
-    ColumnChange,
-    UndoRecord,
-    GarbageCollectionResult,
-    VersionJoinExecutor,
-    JoinCondition,
-    JoinedVersionRow,
+    ColumnChange, GarbageCollectionResult, JoinCondition, JoinedVersionRow, UndoRecord,
+    VersionBound, VersionComparison, VersionConfig, VersionJoinExecutor, VersionManager,
+    VersionMetadata, VersionOperation, VersionRetentionPolicy, VersionRow, VersionStats,
 };
 
 // Table Restore exports
 pub use table_restore::{
-    TableRestoreManager,
-    TableRestoreConfig,
-    TableRestoreStats,
-    FlashbackOptions,
-    FlashbackResult,
+    FlashbackOptions, FlashbackResult, TableRestoreConfig, TableRestoreManager, TableRestoreStats,
 };
 
 // Database Flashback exports
 pub use database::{
-    DatabaseFlashbackManager,
-    DatabaseFlashbackConfig,
-    DatabaseFlashbackStats,
-    DatabaseFlashbackResult,
-    Incarnation,
-    IncarnationStatus,
-    GuaranteedRestorePoint,
+    DatabaseFlashbackConfig, DatabaseFlashbackManager, DatabaseFlashbackResult,
+    DatabaseFlashbackStats, GuaranteedRestorePoint, Incarnation, IncarnationStatus,
 };
 
 // Transaction Flashback exports
 pub use transaction::{
-    TransactionFlashbackManager,
-    TransactionFlashbackStats,
-    TransactionOperation,
-    OperationType,
-    TransactionHistory,
-    DependencyGraph,
-    FlashbackTransactionResult,
-    TransactionImpactAnalysis,
+    DependencyGraph, FlashbackTransactionResult, OperationType, TransactionFlashbackManager,
+    TransactionFlashbackStats, TransactionHistory, TransactionImpactAnalysis, TransactionOperation,
 };
 
 // ============================================================================
@@ -231,13 +190,9 @@ pub struct FlashbackCoordinator {
 impl FlashbackCoordinator {
     /// Create a new flashback coordinator with default configurations
     pub fn new() -> Self {
-        let time_travel = std::sync::Arc::new(TimeTravelEngine::new(
-            TimeTravelConfig::default()
-        ));
+        let time_travel = std::sync::Arc::new(TimeTravelEngine::new(TimeTravelConfig::default()));
 
-        let version_manager = std::sync::Arc::new(VersionManager::new(
-            VersionConfig::default()
-        ));
+        let version_manager = std::sync::Arc::new(VersionManager::new(VersionConfig::default()));
 
         let table_restore = std::sync::Arc::new(TableRestoreManager::new(
             time_travel.clone(),

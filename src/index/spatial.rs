@@ -10,8 +10,8 @@
 
 use crate::error::{DbError, Result};
 use parking_lot::RwLock;
-use std::sync::Arc;
 use std::cmp::Ordering;
+use std::sync::Arc;
 
 // R-Tree Spatial Index
 pub struct RTree<T: Clone> {
@@ -268,7 +268,10 @@ impl<T: Clone> RTree<T> {
     }
 
     // Quadratic split algorithm
-    fn quadratic_split(&self, entries: &mut Vec<Entry<T>>) -> Result<(Vec<Entry<T>>, Vec<Entry<T>>)> {
+    fn quadratic_split(
+        &self,
+        entries: &mut Vec<Entry<T>>,
+    ) -> Result<(Vec<Entry<T>>, Vec<Entry<T>>)> {
         if entries.len() < 2 {
             return Err(DbError::Internal("Not enough entries to split".into()));
         }
@@ -315,9 +318,7 @@ impl<T: Clone> RTree<T> {
         for i in 0..entries.len() {
             for j in (i + 1)..entries.len() {
                 let combined = entries[i].bbox.union(&entries[j].bbox);
-                let waste = combined.area()
-                    - entries[i].bbox.area()
-                    - entries[j].bbox.area();
+                let waste = combined.area() - entries[i].bbox.area() - entries[j].bbox.area();
 
                 if waste > max_waste {
                     max_waste = waste;
@@ -632,9 +633,24 @@ mod tests {
     fn test_nearest_neighbors() {
         let rtree: RTree<String> = RTree::new();
 
-        rtree.insert(BoundingBox::from_point(&Point::new(0.0, 0.0)), "p1".to_string()).unwrap();
-        rtree.insert(BoundingBox::from_point(&Point::new(10.0, 10.0)), "p2".to_string()).unwrap();
-        rtree.insert(BoundingBox::from_point(&Point::new(5.0, 5.0)), "p3".to_string()).unwrap();
+        rtree
+            .insert(
+                BoundingBox::from_point(&Point::new(0.0, 0.0)),
+                "p1".to_string(),
+            )
+            .unwrap();
+        rtree
+            .insert(
+                BoundingBox::from_point(&Point::new(10.0, 10.0)),
+                "p2".to_string(),
+            )
+            .unwrap();
+        rtree
+            .insert(
+                BoundingBox::from_point(&Point::new(5.0, 5.0)),
+                "p3".to_string(),
+            )
+            .unwrap();
 
         let query_point = Point::new(4.0, 4.0);
         let neighbors = rtree.nearest_neighbors(&query_point, 2).unwrap();

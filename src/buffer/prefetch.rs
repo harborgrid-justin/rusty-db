@@ -25,13 +25,13 @@
 // - Strided access: 60-85% I/O reduction
 // - Read latency: <10us (prefetched) vs ~100us (SSD) or ~10ms (HDD)
 
-use std::collections::HashSet;
 use crate::common::PageId;
+use parking_lot::{Mutex, RwLock};
+use std::collections::HashSet;
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use parking_lot::{Mutex, RwLock};
 use tokio::sync::mpsc;
 
 // ============================================================================
@@ -210,7 +210,8 @@ impl PatternDetector {
         }
 
         // Calculate strides
-        let strides: Vec<i64> = self.history
+        let strides: Vec<i64> = self
+            .history
             .iter()
             .collect::<Vec<_>>()
             .windows(2)
@@ -228,12 +229,14 @@ impl PatternDetector {
             *stride_counts.entry(stride).or_insert(0) += 1;
         }
 
-        let (most_common_stride, count) = stride_counts
-            .iter()
-            .max_by_key(|&(_, count)| count)?;
+        let (most_common_stride, count) = stride_counts.iter().max_by_key(|&(_, count)| count)?;
 
         // At least 70% of strides match
-        if *count >= strides.len() * 7 / 10 && *most_common_stride != 0 && *most_common_stride != 1 && *most_common_stride != -1 {
+        if *count >= strides.len() * 7 / 10
+            && *most_common_stride != 0
+            && *most_common_stride != 1
+            && *most_common_stride != -1
+        {
             Some(*most_common_stride)
         } else {
             None
@@ -488,11 +491,9 @@ impl PrefetchEngine {
 
         // Get or create detector for this context
         let mut detectors = self.detectors.write();
-        let detector = detectors
-            .entry(context.to_string())
-            .or_insert_with(|| {
-                PatternDetector::new(self.config.history_size, self.config.detection_interval)
-            });
+        let detector = detectors.entry(context.to_string()).or_insert_with(|| {
+            PatternDetector::new(self.config.history_size, self.config.detection_interval)
+        });
 
         detector.record_access(page_id);
 
@@ -649,7 +650,10 @@ mod tests {
         }
 
         detector.detect_pattern();
-        assert_eq!(detector.current_pattern(), AccessPattern::SequentialBackward);
+        assert_eq!(
+            detector.current_pattern(),
+            AccessPattern::SequentialBackward
+        );
     }
 
     #[test]
@@ -681,7 +685,10 @@ mod tests {
         }
 
         detector.detect_pattern();
-        assert!(matches!(detector.current_pattern(), AccessPattern::Temporal { .. }));
+        assert!(matches!(
+            detector.current_pattern(),
+            AccessPattern::Temporal { .. }
+        ));
     }
 
     #[test]

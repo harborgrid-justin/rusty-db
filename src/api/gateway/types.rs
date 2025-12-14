@@ -27,18 +27,20 @@
 // └─────────────────────────────────────────────────────────────┘
 // ```
 
-use std::sync::Mutex;
-use std::time::Instant;
-use std::time::SystemTime;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
-use parking_lot::{RwLock};
-use serde::{Deserialize, Serialize};
-use crate::api::gateway::{AuthorizationEngine, SecurityFilter, AuthenticationManager, AuditLogger};
+use crate::api::gateway::{
+    AuditLogger, AuthenticationManager, AuthorizationEngine, SecurityFilter,
+};
 use crate::api::{RateLimitConfig, RateLimiter};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // API Gateway Core - Request Routing and Protocol Translation

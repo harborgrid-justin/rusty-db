@@ -3,8 +3,8 @@
 // Implements heartbeat tracking with RTT measurement, failure counting,
 // and adaptive intervals for distributed node health monitoring.
 
-use crate::error::{DbError, Result};
 use crate::common::NodeId;
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
@@ -183,13 +183,15 @@ impl HeartbeatState {
         }
 
         let avg = self.avg_latency.as_secs_f64();
-        let variance: f64 = self.latency_history
+        let variance: f64 = self
+            .latency_history
             .iter()
             .map(|d| {
                 let diff = d.as_secs_f64() - avg;
                 diff * diff
             })
-            .sum::<f64>() / self.latency_history.len() as f64;
+            .sum::<f64>()
+            / self.latency_history.len() as f64;
 
         Duration::from_secs_f64(variance.sqrt())
     }
@@ -224,7 +226,10 @@ impl HeartbeatManager {
     /// Register a new peer
     pub fn register_peer(&mut self, node_id: NodeId) -> Result<()> {
         if self.peers.contains_key(&node_id) {
-            return Err(DbError::AlreadyExists(format!("Peer {} already registered", node_id)));
+            return Err(DbError::AlreadyExists(format!(
+                "Peer {} already registered",
+                node_id
+            )));
         }
 
         let state = HeartbeatState::new(self.interval);
@@ -234,7 +239,8 @@ impl HeartbeatManager {
 
     /// Unregister a peer
     pub fn unregister_peer(&mut self, node_id: &NodeId) -> Result<()> {
-        self.peers.remove(node_id)
+        self.peers
+            .remove(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Peer {} not found", node_id)))?;
         Ok(())
     }
@@ -245,8 +251,14 @@ impl HeartbeatManager {
     }
 
     /// Record a heartbeat with measured latency
-    pub fn record_heartbeat_with_latency(&mut self, node_id: NodeId, latency: Duration) -> Result<()> {
-        let state = self.peers.entry(node_id.clone())
+    pub fn record_heartbeat_with_latency(
+        &mut self,
+        node_id: NodeId,
+        latency: Duration,
+    ) -> Result<()> {
+        let state = self
+            .peers
+            .entry(node_id.clone())
             .or_insert_with(|| HeartbeatState::new(self.interval));
 
         state.record_heartbeat(latency);
@@ -279,7 +291,8 @@ impl HeartbeatManager {
 
     /// Get all failed nodes
     pub fn get_failed_nodes(&self) -> Vec<NodeId> {
-        self.peers.iter()
+        self.peers
+            .iter()
             .filter(|(_, state)| state.status == PeerStatus::Failed)
             .map(|(id, _)| id.clone())
             .collect()
@@ -287,7 +300,8 @@ impl HeartbeatManager {
 
     /// Get all suspected nodes
     pub fn get_suspected_nodes(&self) -> Vec<NodeId> {
-        self.peers.iter()
+        self.peers
+            .iter()
             .filter(|(_, state)| state.status == PeerStatus::Suspected)
             .map(|(id, _)| id.clone())
             .collect()
@@ -295,7 +309,8 @@ impl HeartbeatManager {
 
     /// Get all healthy nodes
     pub fn get_healthy_nodes(&self) -> Vec<NodeId> {
-        self.peers.iter()
+        self.peers
+            .iter()
             .filter(|(_, state)| state.status == PeerStatus::Healthy)
             .map(|(id, _)| id.clone())
             .collect()
@@ -312,9 +327,7 @@ impl HeartbeatManager {
             return Duration::from_secs(0);
         }
 
-        let sum: Duration = self.peers.values()
-            .map(|s| s.avg_latency)
-            .sum();
+        let sum: Duration = self.peers.values().map(|s| s.avg_latency).sum();
 
         sum / self.peers.len() as u32
     }
@@ -325,9 +338,7 @@ impl HeartbeatManager {
             return 1.0;
         }
 
-        let total_score: f64 = self.peers.values()
-            .map(|s| s.success_rate())
-            .sum();
+        let total_score: f64 = self.peers.values().map(|s| s.success_rate()).sum();
 
         total_score / self.peers.len() as f64
     }
@@ -397,10 +408,7 @@ mod tests {
 
     #[test]
     fn test_heartbeat_manager() {
-        let mut manager = HeartbeatManager::new(
-            Duration::from_secs(1),
-            Duration::from_secs(5)
-        );
+        let mut manager = HeartbeatManager::new(Duration::from_secs(1), Duration::from_secs(5));
 
         let node_id = "node1".to_string();
         assert!(manager.register_peer(node_id.clone()).is_ok());
@@ -412,10 +420,7 @@ mod tests {
 
     #[test]
     fn test_cluster_health_score() {
-        let mut manager = HeartbeatManager::new(
-            Duration::from_secs(1),
-            Duration::from_secs(5)
-        );
+        let mut manager = HeartbeatManager::new(Duration::from_secs(1), Duration::from_secs(5));
 
         manager.register_peer("node1".to_string()).unwrap();
         manager.register_peer("node2".to_string()).unwrap();

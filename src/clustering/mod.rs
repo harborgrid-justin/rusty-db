@@ -18,33 +18,38 @@
 
 // Core clustering functionality
 pub mod coordinator;
-pub mod query_execution;
 pub mod failover;
 pub mod migration;
+pub mod query_execution;
 pub mod transactions;
 
 // Supporting modules
-pub mod node;
-pub mod raft;
+pub mod dht;
+pub mod geo_replication;
 pub mod health;
 pub mod load_balancer;
 pub mod membership;
-pub mod dht;
-pub mod geo_replication;
+pub mod node;
+pub mod raft;
 
 // Re-export key types for easier access
-pub use coordinator::{QueryId, ShardId, ExecutionStrategy, JoinStrategy};
-pub use query_execution::{DistributedQueryExecutor, DistributedQueryProcessor, ExecutionPlan};
-pub use failover::{ClusterFailoverManager, FailoverManager, FailoverConfig, FailoverEvent};
+pub use coordinator::{ExecutionStrategy, JoinStrategy, QueryId, ShardId};
+pub use dht::{DhtNodeId, HashPosition, HashStrategy};
+pub use failover::{ClusterFailoverManager, FailoverConfig, FailoverEvent, FailoverManager};
+pub use geo_replication::{
+    ConflictResolution, ConsistencyLevel, DatacenterId, LogicalTimestamp, StreamId,
+};
+pub use health::{ClusterHealth, ClusterStatus, HealthIssueType, IssueSeverity};
+pub use load_balancer::{BackendId, BackendStatus, ConnectionId, LoadBalanceStrategy};
+pub use membership::{Incarnation, Member, MemberId, MemberMetadata, MemberState};
 pub use migration::{DataMigrationManager, MigrationCoordinator, MigrationTask};
-pub use transactions::{ClusterTransactionCoordinator, DistributedTransactionManager, TransactionId, DistributedTransaction};
-pub use node::{NodeId, NodeRole, NodeStatus, NodeInfo, NodeLifecycle};
-pub use raft::{RaftNodeId, Term, LogIndex, RaftState, LogEntry};
-pub use health::{ClusterStatus, ClusterHealth, HealthIssueType, IssueSeverity};
-pub use load_balancer::{BackendId, ConnectionId, LoadBalanceStrategy, BackendStatus};
-pub use membership::{MemberId, Incarnation, MemberState, Member, MemberMetadata};
-pub use dht::{HashPosition, DhtNodeId, HashStrategy};
-pub use geo_replication::{DatacenterId, StreamId, LogicalTimestamp, ConsistencyLevel, ConflictResolution};
+pub use node::{NodeId, NodeInfo, NodeLifecycle, NodeRole, NodeStatus};
+pub use query_execution::{DistributedQueryExecutor, DistributedQueryProcessor, ExecutionPlan};
+pub use raft::{LogEntry, LogIndex, RaftNodeId, RaftState, Term};
+pub use transactions::{
+    ClusterTransactionCoordinator, DistributedTransaction, DistributedTransactionManager,
+    TransactionId,
+};
 
 use crate::error::DbError;
 use std::sync::Arc;
@@ -67,7 +72,7 @@ impl ClusterManager {
         // This requires proper coordinator implementations to be provided
         // For now, return not implemented
         Err(DbError::NotImplemented(
-            "ClusterManager::new requires coordinator implementations".to_string()
+            "ClusterManager::new requires coordinator implementations".to_string(),
         ))
     }
 

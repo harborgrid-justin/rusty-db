@@ -2,31 +2,25 @@
 //
 // Comprehensive auto-recovery system with modular components.
 
-pub mod recovery_strategies;
 pub mod checkpoint_management;
-pub mod state_restoration;
 pub mod manager;
+pub mod recovery_strategies;
+pub mod state_restoration;
 
 // Re-export main types
 pub use recovery_strategies::{
-    FailureSeverity, FailureType, RecoveryState, RecoveryStrategy,
-    DetectedFailure, RecoveryPlan, RecoveryResult,
-    CrashDetector, CrashStats, ProcessHealth,
-    TransactionRollbackManager, TransactionState, TransactionOperation, RollbackStats,
-    CorruptionDetector, PageCorruption, CorruptionStats,
-    DataRepairer, ReplicaInfo, RepairStats,
+    CorruptionDetector, CorruptionStats, CrashDetector, CrashStats, DataRepairer, DetectedFailure,
+    FailureSeverity, FailureType, PageCorruption, ProcessHealth, RecoveryPlan, RecoveryResult,
+    RecoveryState, RecoveryStrategy, RepairStats, ReplicaInfo, RollbackStats, TransactionOperation,
+    TransactionRollbackManager, TransactionState,
 };
 
-pub use checkpoint_management::{
-    StateSnapshotManager, Snapshot, SnapshotStats,
-};
+pub use checkpoint_management::{Snapshot, SnapshotStats, StateSnapshotManager};
 
 pub use state_restoration::{
-    HealthMonitor, HealthScore, HealthMetrics,
-    SelfHealer, HealingAction, HealingStats,
+    HealingAction, HealingStats, HealthMetrics, HealthMonitor, HealthScore, SelfHealer,
 };
 
 pub use manager::{
-    AutoRecoveryManager, AutoRecoveryConfig,
-    RecoveryStatistics, ComprehensiveRecoveryStats,
+    AutoRecoveryConfig, AutoRecoveryManager, ComprehensiveRecoveryStats, RecoveryStatistics,
 };

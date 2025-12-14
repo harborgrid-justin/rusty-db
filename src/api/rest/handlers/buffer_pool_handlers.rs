@@ -408,3 +408,114 @@ pub async fn unpin_page(
     // Mock unpin operation
     Ok(StatusCode::OK)
 }
+
+/// Prefetch request
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct PrefetchRequest {
+    pub page_ids: Vec<u64>,
+    pub async_prefetch: bool,
+}
+
+/// Prefetch response
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct PrefetchResponse {
+    pub pages_requested: usize,
+    pub pages_prefetched: usize,
+    pub pages_already_cached: usize,
+    pub duration_ms: u64,
+}
+
+/// Prefetch pages into buffer pool
+///
+/// Prefetches specified pages into the buffer pool to improve future access latency.
+#[utoipa::path(
+    post,
+    path = "/api/v1/buffer-pool/prefetch",
+    request_body = PrefetchRequest,
+    responses(
+        (status = 200, description = "Pages prefetched successfully", body = PrefetchResponse),
+        (status = 400, description = "Invalid request", body = ApiError),
+        (status = 500, description = "Internal server error", body = ApiError)
+    ),
+    tag = "buffer-pool"
+)]
+pub async fn prefetch_pages(
+    AxumJson(request): AxumJson<PrefetchRequest>,
+) -> Result<AxumJson<PrefetchResponse>, (StatusCode, AxumJson<ApiError>)> {
+    if request.page_ids.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            AxumJson(ApiError::new(
+                "INVALID_REQUEST",
+                "Page IDs list cannot be empty",
+            )),
+        ));
+    }
+
+    if request.page_ids.len() > 1000 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            AxumJson(ApiError::new(
+                "INVALID_REQUEST",
+                "Cannot prefetch more than 1000 pages at once",
+            )),
+        ));
+    }
+
+    // Mock prefetch operation
+    let pages_requested = request.page_ids.len();
+    let pages_already_cached = pages_requested / 4; // 25% already cached
+    let pages_prefetched = pages_requested - pages_already_cached;
+
+    let response = PrefetchResponse {
+        pages_requested,
+        pages_prefetched,
+        pages_already_cached,
+        duration_ms: if request.async_prefetch { 5 } else { 50 },
+    };
+
+    Ok(AxumJson(response))
+}
+
+/// Hit ratio response
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct HitRatioResponse {
+    pub hit_ratio: f64,
+    pub miss_ratio: f64,
+    pub total_hits: u64,
+    pub total_misses: u64,
+    pub total_accesses: u64,
+    pub measurement_period_seconds: u64,
+}
+
+/// Get buffer pool hit ratio
+///
+/// Returns the current buffer pool hit ratio and related statistics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/buffer-pool/hit-ratio",
+    responses(
+        (status = 200, description = "Buffer pool hit ratio", body = HitRatioResponse),
+        (status = 500, description = "Internal server error", body = ApiError)
+    ),
+    tag = "buffer-pool"
+)]
+pub async fn get_hit_ratio() -> Result<AxumJson<HitRatioResponse>, (StatusCode, AxumJson<ApiError>)> {
+    // Mock hit ratio statistics
+    let total_hits = 1234567u64;
+    let total_misses = 56789u64;
+    let total_accesses = total_hits + total_misses;
+    let hit_ratio = total_hits as f64 / total_accesses as f64;
+    let miss_ratio = total_misses as f64 / total_accesses as f64;
+
+    let response = HitRatioResponse {
+        hit_ratio,
+        miss_ratio,
+        total_hits,
+        total_misses,
+        total_accesses,
+        measurement_period_seconds: 3600, // Last hour
+    };
+
+    Ok(AxumJson(response))
+}

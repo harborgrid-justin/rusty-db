@@ -2,12 +2,12 @@
 //
 // Part of the Enterprise Integration Layer for RustyDB
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock, Mutex};
-use std::time::{Duration, Instant, SystemTime};
 use std::fmt;
+use std::sync::{Arc, Mutex, RwLock};
+use std::time::{Duration, Instant, SystemTime};
 use tokio::time::sleep;
-use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
 use crate::error::DbError;
@@ -261,7 +261,13 @@ impl CentralizedLogger {
         }
     }
 
-    pub async fn log(&self, level: LogLevel, service: &str, message: &str, fields: HashMap<String, String>) {
+    pub async fn log(
+        &self,
+        level: LogLevel,
+        service: &str,
+        message: &str,
+        fields: HashMap<String, String>,
+    ) {
         let current_level = *self.log_level.read().unwrap();
         if level < current_level {
             return;
@@ -467,16 +473,13 @@ impl CircuitBreakerCoordinator {
         breakers.get(name).cloned()
     }
 
-    pub async fn execute_with_breaker<F, T, E>(
-        &self,
-        name: &str,
-        f: F,
-    ) -> Result<T, String>
+    pub async fn execute_with_breaker<F, T, E>(&self, name: &str, f: F) -> Result<T, String>
     where
         F: FnOnce() -> Result<T, E>,
         E: fmt::Display,
     {
-        let breaker = self.get_breaker(name)
+        let breaker = self
+            .get_breaker(name)
             .ok_or_else(|| format!("Circuit breaker not found: {}", name))?;
 
         if breaker.is_open() {

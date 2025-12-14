@@ -1,14 +1,14 @@
 // Real-Time Dashboard Data
 // WebSocket-ready metrics streaming, top queries, connection pool status, replication lag
 
-use std::time::Instant;
-use std::collections::VecDeque;
-use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // Real-time metric data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,15 +71,21 @@ impl TimeSeriesMetric {
     }
 
     pub fn get_min(&self) -> Option<f64> {
-        self.data_points.iter().map(|p| p.value).fold(None, |min, v| {
-            Some(min.map_or(v, |m| if v < m { v } else { m }))
-        })
+        self.data_points
+            .iter()
+            .map(|p| p.value)
+            .fold(None, |min, v| {
+                Some(min.map_or(v, |m| if v < m { v } else { m }))
+            })
     }
 
     pub fn get_max(&self) -> Option<f64> {
-        self.data_points.iter().map(|p| p.value).fold(None, |max, v| {
-            Some(max.map_or(v, |m| if v > m { v } else { m }))
-        })
+        self.data_points
+            .iter()
+            .map(|p| p.value)
+            .fold(None, |max, v| {
+                Some(max.map_or(v, |m| if v > m { v } else { m }))
+            })
     }
 }
 
@@ -197,7 +203,13 @@ impl ReplicationLag {
         }
     }
 
-    pub fn update_lag(&mut self, lag_seconds: f64, lag_bytes: u64, received_lsn: u64, applied_lsn: u64) {
+    pub fn update_lag(
+        &mut self,
+        lag_seconds: f64,
+        lag_bytes: u64,
+        received_lsn: u64,
+        applied_lsn: u64,
+    ) {
         self.lag_seconds = lag_seconds;
         self.lag_bytes = lag_bytes;
         self.last_received_lsn = received_lsn;
@@ -404,7 +416,9 @@ impl DashboardDataAggregator {
 
     // Replication operations
     pub fn register_replica(&self, replica: ReplicationLag) {
-        self.replication_lags.write().insert(replica.replica_id.clone(), replica);
+        self.replication_lags
+            .write()
+            .insert(replica.replica_id.clone(), replica);
     }
 
     pub fn update_replica_lag(
@@ -529,13 +543,29 @@ pub struct DashboardSnapshot {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum DashboardMessage {
-    FullSnapshot { data: DashboardSnapshot },
-    MetricUpdate { name: String, value: f64, timestamp: SystemTime },
-    QueryUpdate { query: TopQuery },
-    ConnectionUpdate { stats: ConnectionPoolStats },
-    ReplicationUpdate { lags: Vec<ReplicationLag> },
-    ResourceUpdate { snapshot: ResourceSnapshot },
-    PerformanceUpdate { summary: PerformanceSummary },
+    FullSnapshot {
+        data: DashboardSnapshot,
+    },
+    MetricUpdate {
+        name: String,
+        value: f64,
+        timestamp: SystemTime,
+    },
+    QueryUpdate {
+        query: TopQuery,
+    },
+    ConnectionUpdate {
+        stats: ConnectionPoolStats,
+    },
+    ReplicationUpdate {
+        lags: Vec<ReplicationLag>,
+    },
+    ResourceUpdate {
+        snapshot: ResourceSnapshot,
+    },
+    PerformanceUpdate {
+        summary: PerformanceSummary,
+    },
 }
 
 // Dashboard update streamer for WebSocket connections

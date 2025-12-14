@@ -4,7 +4,6 @@
 
 use super::common::*;
 
-
 // Size class information for slab allocation
 #[derive(Debug, Clone)]
 struct SizeClass {
@@ -233,9 +232,7 @@ impl ThreadLocalCache {
         F: FnOnce(&mut Option<ThreadLocalCache>) -> R,
     {
         Self::ensure_initialized();
-        THREAD_CACHE.with(|cache| {
-            f(&mut *cache.borrow_mut())
-        })
+        THREAD_CACHE.with(|cache| f(&mut *cache.borrow_mut()))
     }
 }
 
@@ -396,16 +393,20 @@ impl SlabAllocator {
     // Allocate memory from slab allocator
     pub fn allocate(&self, size: usize) -> Result<NonNull<u8>> {
         if size > MAX_SLAB_SIZE {
-            return Err(DbError::InvalidArgument(
-                format!("Size {} exceeds slab max {}", size, MAX_SLAB_SIZE)
-            ));
+            return Err(DbError::InvalidArgument(format!(
+                "Size {} exceeds slab max {}",
+                size, MAX_SLAB_SIZE
+            )));
         }
 
-        let size_class = self.size_to_class(size)
+        let size_class = self
+            .size_to_class(size)
             .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?;
 
         self.stats.allocations.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_allocated.fetch_add(size as u64, Ordering::Relaxed);
+        self.stats
+            .bytes_allocated
+            .fetch_add(size as u64, Ordering::Relaxed);
 
         unsafe { self.allocate_from_class(size_class) }
     }
@@ -462,14 +463,17 @@ impl SlabAllocator {
                 self.stats.slab_allocations.fetch_add(1, Ordering::Relaxed);
                 Ok(ptr)
             } else {
-                Err(DbError::OutOfMemory("Failed to allocate from slab".to_string()))
+                Err(DbError::OutOfMemory(
+                    "Failed to allocate from slab".to_string(),
+                ))
             }
         })
     }
 
     // Deallocate memory back to slab allocator
     pub unsafe fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> Result<()> {
-        let size_class = self.size_to_class(size)
+        let size_class = self
+            .size_to_class(size)
             .ok_or_else(|| DbError::InvalidArgument(format!("Invalid size: {}", size)))?;
 
         self.stats.deallocations.fetch_add(1, Ordering::Relaxed);
@@ -521,7 +525,8 @@ impl SlabAllocator {
         let total_allocs = self.stats.allocations.load(Ordering::Relaxed);
         let total_deallocs = self.stats.deallocations.load(Ordering::Relaxed);
         let bytes_alloc = self.stats.bytes_allocated.load(Ordering::Relaxed);
-        let bytes_dealloc = total_deallocs.saturating_mul(bytes_alloc.saturating_div(total_allocs.max(1)));
+        let bytes_dealloc =
+            total_deallocs.saturating_mul(bytes_alloc.saturating_div(total_allocs.max(1)));
         let current_usage = bytes_alloc.saturating_sub(bytes_dealloc);
         let peak_usage = bytes_alloc; // Approximate peak
 
@@ -532,7 +537,11 @@ impl SlabAllocator {
             total_frag += self.calculate_fragmentation(i);
             class_count += 1;
         }
-        let avg_fragmentation = if class_count > 0 { total_frag / class_count as f64 } else { 0.0 };
+        let avg_fragmentation = if class_count > 0 {
+            total_frag / class_count as f64
+        } else {
+            0.0
+        };
 
         SlabAllocatorStats {
             total_allocations: total_allocs,
@@ -583,5 +592,5 @@ pub struct SlabAllocatorStats {
     pub allocation_count: u64,
     pub deallocation_count: u64,
     pub peak_usage: u64,
-    pub fragmentation: f64
+    pub fragmentation: f64,
 }

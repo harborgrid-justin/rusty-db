@@ -98,41 +98,41 @@
 pub mod cache_fusion;
 pub mod grd;
 pub mod interconnect;
-pub mod recovery;
 pub mod parallel_query;
+pub mod recovery;
 
-use crate::error::DbError;
 use crate::common::{NodeId, Tuple};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::time::{Duration};
+use crate::error::DbError;
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
 
 // Re-export key types for convenience
 pub use cache_fusion::{
-    GlobalCacheService, GlobalEnqueueService, CacheFusionCoordinator,
-    BlockMode, LockType, ResourceId, GcsConfig, GcsStatistics,
+    BlockMode, CacheFusionCoordinator, GcsConfig, GcsStatistics, GlobalCacheService,
+    GlobalEnqueueService, LockType, ResourceId,
 };
 
 pub use grd::{
-    GlobalResourceDirectory, GrdConfig, GrdStatistics, ClusterTopology,
-    ResourceEntry, AccessStatistics, AffinityScore,
+    AccessStatistics, AffinityScore, ClusterTopology, GlobalResourceDirectory, GrdConfig,
+    GrdStatistics, ResourceEntry,
 };
 
 pub use interconnect::{
-    ClusterInterconnect, InterconnectConfig, InterconnectStatistics,
-    ClusterView, NodeState, MessagePriority, MessageType,
+    ClusterInterconnect, ClusterView, InterconnectConfig, InterconnectStatistics, MessagePriority,
+    MessageType, NodeState,
 };
 
 pub use recovery::{
-    InstanceRecoveryManager, RecoveryConfig, RecoveryStatistics,
-    RecoveryPhase, RecoveryState, InstanceFailure, FailureReason,
+    FailureReason, InstanceFailure, InstanceRecoveryManager, RecoveryConfig, RecoveryPhase,
+    RecoveryState, RecoveryStatistics,
 };
 
 pub use parallel_query::{
-    ParallelQueryCoordinator, ParallelQueryConfig, ParallelQueryStatistics,
-    ParallelQueryPlan, QueryFragment, ExecutionStatus,
+    ExecutionStatus, ParallelQueryConfig, ParallelQueryCoordinator, ParallelQueryPlan,
+    ParallelQueryStatistics, QueryFragment,
 };
 
 // ============================================================================
@@ -425,14 +425,17 @@ impl RacCluster {
 
         // Initialize nodes map
         let mut nodes = HashMap::new();
-        nodes.insert(node_id.clone(), ClusterNode {
-            node_id: node_id.clone(),
-            address: "localhost:5000".to_string(),
-            role: NodeRole::Coordinator,
-            capacity: NodeCapacity::default(),
-            services: vec!["database".to_string()],
-            priority: 100,
-        });
+        nodes.insert(
+            node_id.clone(),
+            ClusterNode {
+                node_id: node_id.clone(),
+                address: "localhost:5000".to_string(),
+                role: NodeRole::Coordinator,
+                capacity: NodeCapacity::default(),
+                services: vec!["database".to_string()],
+                priority: 100,
+            },
+        );
 
         Ok(Self {
             _cluster_name: cluster_name.to_string(),
@@ -484,7 +487,9 @@ impl RacCluster {
     // Add a node to the cluster
     pub async fn add_node(&self, node: ClusterNode) -> Result<(), DbError> {
         // Add to interconnect
-        self.interconnect.add_node(node.node_id.clone(), node.address.clone()).await?;
+        self.interconnect
+            .add_node(node.node_id.clone(), node.address.clone())
+            .await?;
 
         // Add to GRD
         self.grd.add_member(node.node_id.clone())?;
@@ -646,10 +651,9 @@ impl RacCluster {
     // Perform graceful failover from one node to another
     pub async fn failover(&self, from_node: NodeId, _to_node: NodeId) -> Result<(), DbError> {
         // Initiate recovery for the failing node
-        self.recovery.initiate_recovery(
-            from_node.clone(),
-            FailureReason::AdminShutdown,
-        ).await?;
+        self.recovery
+            .initiate_recovery(from_node.clone(), FailureReason::AdminShutdown)
+            .await?;
 
         // Wait for recovery to complete
         // In production, would poll recovery state
@@ -736,7 +740,7 @@ pub enum PlacementPolicy {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_rac_cluster_creation() {

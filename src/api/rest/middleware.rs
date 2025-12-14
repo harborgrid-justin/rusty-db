@@ -11,13 +11,13 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use flate2::write::GzEncoder;
+use flate2::Compression;
+use lazy_static::lazy_static;
+use std::io::Write;
 use std::sync::Arc;
 use std::time::SystemTime;
 use uuid::Uuid;
-use flate2::write::GzEncoder;
-use flate2::Compression;
-use std::io::Write;
-use lazy_static::lazy_static;
 
 use super::types::*;
 
@@ -170,7 +170,7 @@ pub async fn auth_middleware(
 // Validate JWT token using O(1) hash-based session lookup
 async fn validate_jwt_token(token: &str, state: &Arc<ApiState>) -> bool {
     // Use SHA-256 hash of token as session ID for O(1) lookup
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(token.as_bytes());
     let _token_hash = format!("{:x}", hasher.finalize());
@@ -195,7 +195,7 @@ async fn validate_jwt_token(token: &str, state: &Arc<ApiState>) -> bool {
 // Validate API key using O(1) hash-based validation
 async fn validate_api_key(api_key: &str, state: &Arc<ApiState>) -> bool {
     // Use SHA-256 hash for O(1) lookup
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(api_key.as_bytes());
     let _key_hash = hasher.finalize();
@@ -209,7 +209,10 @@ async fn validate_api_key(api_key: &str, state: &Arc<ApiState>) -> bool {
 
     // For now, accept API keys that match expected format
     // In production, would check against API key store with O(1) hash lookup
-    api_key.len() >= 32 && api_key.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_')
+    api_key.len() >= 32
+        && api_key
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '-' || c == '_')
 }
 
 // Authentication middleware trait for extensibility
@@ -258,13 +261,13 @@ impl AuthMiddleware for DefaultAuthMiddleware {
                         roles: vec!["admin".to_string()],
                     }));
                 } else if let Some(ref key) = self.api_key {
-                     if auth_str == key {
+                    if auth_str == key {
                         return Ok(Some(UserInfo {
                             user_id: 1,
                             username: "admin".to_string(),
                             roles: vec!["admin".to_string()],
                         }));
-                     }
+                    }
                 }
             }
         }
@@ -339,7 +342,10 @@ impl ValidationMiddleware {
         if let Some(content_type) = req.headers().get("content-type") {
             if let Ok(ct) = content_type.to_str() {
                 if !ct.contains(expected) {
-                    return Err(DbError::InvalidInput(format!("Expected content type: {}", expected)));
+                    return Err(DbError::InvalidInput(format!(
+                        "Expected content type: {}",
+                        expected
+                    )));
                 }
             }
         }
@@ -362,11 +368,13 @@ impl MetricsMiddleware {
     }
 
     pub fn record_request(&self) {
-        self.request_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        self.request_count
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     }
 
     pub fn record_error(&self) {
-        self.error_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        self.error_count
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     }
 
     pub fn get_request_count(&self) -> u64 {
@@ -386,20 +394,11 @@ impl SecurityHeadersMiddleware {
         let headers = response.headers_mut();
 
         // Add security headers
-        headers.insert(
-            "X-Content-Type-Options",
-            "nosniff".parse().unwrap(),
-        );
+        headers.insert("X-Content-Type-Options", "nosniff".parse().unwrap());
 
-        headers.insert(
-            "X-Frame-Options",
-            "DENY".parse().unwrap(),
-        );
+        headers.insert("X-Frame-Options", "DENY".parse().unwrap());
 
-        headers.insert(
-            "X-XSS-Protection",
-            "1; mode=block".parse().unwrap(),
-        );
+        headers.insert("X-XSS-Protection", "1; mode=block".parse().unwrap());
 
         headers.insert(
             "Strict-Transport-Security",
@@ -422,10 +421,8 @@ impl RequestIdMiddleware {
     pub fn add_request_id<B>(mut req: Request<B>) -> Request<B> {
         let request_id = Uuid::new_v4().to_string();
 
-        req.headers_mut().insert(
-            "X-Request-ID",
-            request_id.parse().unwrap(),
-        );
+        req.headers_mut()
+            .insert("X-Request-ID", request_id.parse().unwrap());
 
         req
     }
@@ -452,14 +449,21 @@ impl CompressionMiddleware {
 
     pub async fn compress_response(response: Response<Body>) -> Result<Response<Body>, DbError> {
         let (mut parts, body) = response.into_parts();
-        let bytes = axum::body::to_bytes(body, usize::MAX).await
+        let bytes = axum::body::to_bytes(body, usize::MAX)
+            .await
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
         let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-        encoder.write_all(&bytes).map_err(|e| DbError::Serialization(e.to_string()))?;
-        let compressed_bytes = encoder.finish().map_err(|e| DbError::Serialization(e.to_string()))?;
+        encoder
+            .write_all(&bytes)
+            .map_err(|e| DbError::Serialization(e.to_string()))?;
+        let compressed_bytes = encoder
+            .finish()
+            .map_err(|e| DbError::Serialization(e.to_string()))?;
 
-        parts.headers.insert("Content-Encoding", "gzip".parse().unwrap());
+        parts
+            .headers
+            .insert("Content-Encoding", "gzip".parse().unwrap());
         Ok(Response::from_parts(parts, Body::from(compressed_bytes)))
     }
 }
@@ -469,10 +473,9 @@ pub struct CacheMiddleware;
 
 impl CacheMiddleware {
     pub fn add_cache_headers<B>(mut response: Response<B>, cache_control: &str) -> Response<B> {
-        response.headers_mut().insert(
-            "Cache-Control",
-            cache_control.parse().unwrap(),
-        );
+        response
+            .headers_mut()
+            .insert("Cache-Control", cache_control.parse().unwrap());
         response
     }
 
@@ -511,29 +514,38 @@ impl HealthCheckMiddleware {
         let mut checks = std::collections::HashMap::new();
 
         // Database health check
-        checks.insert("database".to_string(), ComponentHealth {
-            status: "healthy".to_string(),
-            message: Some("Database is operational".to_string()),
-            last_check: SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as i64,
-        });
+        checks.insert(
+            "database".to_string(),
+            ComponentHealth {
+                status: "healthy".to_string(),
+                message: Some("Database is operational".to_string()),
+                last_check: SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64,
+            },
+        );
 
         // Storage health check
-        checks.insert("storage".to_string(), ComponentHealth {
-            status: "healthy".to_string(),
-            message: None,
-            last_check: SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as i64,
-        });
+        checks.insert(
+            "storage".to_string(),
+            ComponentHealth {
+                status: "healthy".to_string(),
+                message: None,
+                last_check: SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64,
+            },
+        );
 
         Ok(HealthResponse {
             status: "healthy".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
-            uptime_seconds: SystemTime::now().duration_since(*START_TIME).unwrap_or_default().as_secs(),
+            uptime_seconds: SystemTime::now()
+                .duration_since(*START_TIME)
+                .unwrap_or_default()
+                .as_secs(),
             checks,
         })
     }
@@ -541,11 +553,14 @@ impl HealthCheckMiddleware {
 
 #[cfg(test)]
 mod tests {
+    use crate::api::rest_api::{
+        AuthMiddleware, DefaultAuthMiddleware, HealthCheckMiddleware, MetricsMiddleware,
+        RateLimiter,
+    };
     use axum::body::Body;
-use std::time::Duration;
-use std::time::UNIX_EPOCH;
-use std::collections::HashMap;
-    use crate::api::rest_api::{AuthMiddleware, DefaultAuthMiddleware, HealthCheckMiddleware, MetricsMiddleware, RateLimiter};
+    use std::collections::HashMap;
+    use std::time::Duration;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_rate_limiter() {
@@ -601,7 +616,9 @@ use std::collections::HashMap;
 
     #[tokio::test]
     async fn test_health_check_middleware() {
-        let health = HealthCheckMiddleware::perform_health_checks().await.unwrap();
+        let health = HealthCheckMiddleware::perform_health_checks()
+            .await
+            .unwrap();
 
         assert_eq!(health.status, "healthy");
         assert!(health.checks.contains_key("database"));

@@ -3,8 +3,8 @@
 // Advanced time series capabilities including ARIMA-like forecasting,
 // exponential smoothing, seasonality detection, trend analysis, and anomaly detection.
 
-use crate::error::Result;
 use super::Algorithm;
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 
@@ -41,7 +41,13 @@ pub enum SeasonalityType {
 }
 
 impl ExponentialSmoothing {
-    pub fn new(alpha: f64, beta: f64, gamma: f64, season_length: usize, model_type: SeasonalityType) -> Self {
+    pub fn new(
+        alpha: f64,
+        beta: f64,
+        gamma: f64,
+        season_length: usize,
+        model_type: SeasonalityType,
+    ) -> Self {
         Self {
             alpha,
             beta,
@@ -56,7 +62,9 @@ impl ExponentialSmoothing {
 
     pub fn fit(&mut self, series: &[f64]) -> Result<()> {
         if series.len() < self.season_length * 2 {
-            return Err(crate::DbError::InvalidInput("Insufficient data for seasonal model".into()));
+            return Err(crate::DbError::InvalidInput(
+                "Insufficient data for seasonal model".into(),
+            ));
         }
 
         // Initialize level, trend, and seasonal components
@@ -70,8 +78,10 @@ impl ExponentialSmoothing {
             match self.model_type {
                 SeasonalityType::None => {
                     let prev_level = self.level;
-                    self.level = self.alpha * observation + (1.0 - self.alpha) * (prev_level + self.trend);
-                    self.trend = self.beta * (self.level - prev_level) + (1.0 - self.beta) * self.trend;
+                    self.level =
+                        self.alpha * observation + (1.0 - self.alpha) * (prev_level + self.trend);
+                    self.trend =
+                        self.beta * (self.level - prev_level) + (1.0 - self.beta) * self.trend;
                 }
                 SeasonalityType::Additive => {
                     let prev_level = self.level;
@@ -79,8 +89,8 @@ impl ExponentialSmoothing {
 
                     self.level = self.alpha * (observation - prev_seasonal)
                         + (1.0 - self.alpha) * (prev_level + self.trend);
-                    self.trend = self.beta * (self.level - prev_level)
-                        + (1.0 - self.beta) * self.trend;
+                    self.trend =
+                        self.beta * (self.level - prev_level) + (1.0 - self.beta) * self.trend;
                     self.seasonal[season_idx] = self.gamma * (observation - self.level)
                         + (1.0 - self.gamma) * prev_seasonal;
                 }
@@ -90,8 +100,8 @@ impl ExponentialSmoothing {
 
                     self.level = self.alpha * (observation / prev_seasonal)
                         + (1.0 - self.alpha) * (prev_level + self.trend);
-                    self.trend = self.beta * (self.level - prev_level)
-                        + (1.0 - self.beta) * self.trend;
+                    self.trend =
+                        self.beta * (self.level - prev_level) + (1.0 - self.beta) * self.trend;
                     self.seasonal[season_idx] = self.gamma * (observation / self.level)
                         + (1.0 - self.gamma) * prev_seasonal;
                 }
@@ -106,9 +116,7 @@ impl ExponentialSmoothing {
 
         for h in 1..=horizon {
             let forecast = match self.model_type {
-                SeasonalityType::None => {
-                    self.level + h as f64 * self.trend
-                }
+                SeasonalityType::None => self.level + h as f64 * self.trend,
                 SeasonalityType::Additive => {
                     let season_idx = (h - 1) % self.season_length;
                     self.level + h as f64 * self.trend + self.seasonal[season_idx]
@@ -127,15 +135,19 @@ impl ExponentialSmoothing {
 
     fn initialize_components(&mut self, series: &[f64]) -> Result<()> {
         // Initialize level as average of first season
-        self.level = series.iter().take(self.season_length).sum::<f64>() / self.season_length as f64;
+        self.level =
+            series.iter().take(self.season_length).sum::<f64>() / self.season_length as f64;
 
         // Initialize trend using linear regression on first two seasons
         if series.len() >= 2 * self.season_length {
-            let first_avg = series.iter().take(self.season_length).sum::<f64>() / self.season_length as f64;
-            let second_avg = series.iter()
+            let first_avg =
+                series.iter().take(self.season_length).sum::<f64>() / self.season_length as f64;
+            let second_avg = series
+                .iter()
                 .skip(self.season_length)
                 .take(self.season_length)
-                .sum::<f64>() / self.season_length as f64;
+                .sum::<f64>()
+                / self.season_length as f64;
             self.trend = (second_avg - first_avg) / self.season_length as f64;
         } else {
             self.trend = 0.0;
@@ -207,7 +219,9 @@ impl ARIMAModel {
 
     pub fn fit(&mut self, series: &[f64]) -> Result<()> {
         if series.len() < self.p + self.d + self.q + 1 {
-            return Err(crate::DbError::InvalidInput("Insufficient data for ARIMA model".into()));
+            return Err(crate::DbError::InvalidInput(
+                "Insufficient data for ARIMA model".into(),
+            ));
         }
 
         // Difference the series d times
@@ -450,12 +464,12 @@ impl TrendAnalyzer {
 
     fn detrend(&self, series: &[f64], trend: &[f64]) -> Vec<f64> {
         match self.method {
-            DecompositionMethod::Additive => {
-                series.iter().zip(trend).map(|(s, t)| s - t).collect()
-            }
-            DecompositionMethod::Multiplicative => {
-                series.iter().zip(trend).map(|(s, t)| if t.abs() > 1e-10 { s / t } else { 0.0 }).collect()
-            }
+            DecompositionMethod::Additive => series.iter().zip(trend).map(|(s, t)| s - t).collect(),
+            DecompositionMethod::Multiplicative => series
+                .iter()
+                .zip(trend)
+                .map(|(s, t)| if t.abs() > 1e-10 { s / t } else { 0.0 })
+                .collect(),
         }
     }
 
@@ -476,28 +490,32 @@ impl TrendAnalyzer {
         }
 
         // Replicate to match series length
-        detrended.iter().enumerate()
+        detrended
+            .iter()
+            .enumerate()
             .map(|(i, _)| seasonal[i % period])
             .collect()
     }
 
     fn compute_residual(&self, series: &[f64], trend: &[f64], seasonal: &[f64]) -> Vec<f64> {
         match self.method {
-            DecompositionMethod::Additive => {
-                series.iter()
-                    .zip(trend.iter().zip(seasonal))
-                    .map(|(s, (t, sea))| s - t - sea)
-                    .collect()
-            }
-            DecompositionMethod::Multiplicative => {
-                series.iter()
-                    .zip(trend.iter().zip(seasonal))
-                    .map(|(s, (t, sea))| {
-                        let denom = t * sea;
-                        if denom.abs() > 1e-10 { s / denom } else { 0.0 }
-                    })
-                    .collect()
-            }
+            DecompositionMethod::Additive => series
+                .iter()
+                .zip(trend.iter().zip(seasonal))
+                .map(|(s, (t, sea))| s - t - sea)
+                .collect(),
+            DecompositionMethod::Multiplicative => series
+                .iter()
+                .zip(trend.iter().zip(seasonal))
+                .map(|(s, (t, sea))| {
+                    let denom = t * sea;
+                    if denom.abs() > 1e-10 {
+                        s / denom
+                    } else {
+                        0.0
+                    }
+                })
+                .collect(),
         }
     }
 }
@@ -547,9 +565,11 @@ impl AnomalyDetector {
 
     fn detect_zscore(&self, series: &[f64]) -> Vec<Anomaly> {
         let mean = series.iter().sum::<f64>() / series.len() as f64;
-        let std = (series.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / series.len() as f64).sqrt();
+        let std =
+            (series.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / series.len() as f64).sqrt();
 
-        series.iter()
+        series
+            .iter()
             .enumerate()
             .filter_map(|(i, &value)| {
                 let z_score = ((value - mean) / std).abs();
@@ -580,7 +600,8 @@ impl AnomalyDetector {
         let lower_bound = q1 - self.threshold * iqr;
         let upper_bound = q3 + self.threshold * iqr;
 
-        series.iter()
+        series
+            .iter()
             .enumerate()
             .filter_map(|(i, &value)| {
                 if value < lower_bound || value > upper_bound {
@@ -673,9 +694,8 @@ impl TimeSeriesEngine {
     ) -> Result<Vec<f64>> {
         match algorithm {
             Algorithm::ExponentialSmoothing => {
-                let mut model = ExponentialSmoothing::new(
-                    0.2, 0.1, 0.1, 12, SeasonalityType::Additive
-                );
+                let mut model =
+                    ExponentialSmoothing::new(0.2, 0.1, 0.1, 12, SeasonalityType::Additive);
                 model.fit(&series)?;
                 Ok(model.forecast(horizon))
             }
@@ -684,7 +704,9 @@ impl TimeSeriesEngine {
                 model.fit(&series)?;
                 Ok(model.forecast(horizon))
             }
-            _ => Err(crate::DbError::InvalidInput("Unsupported time series algorithm".into())),
+            _ => Err(crate::DbError::InvalidInput(
+                "Unsupported time series algorithm".into(),
+            )),
         }
     }
 
@@ -713,11 +735,13 @@ impl Default for TimeSeriesEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::collections::HashMap;
+    use std::collections::HashMap;
 
     #[test]
     fn test_exponential_smoothing() {
-        let series = vec![10.0, 12.0, 13.0, 11.0, 14.0, 15.0, 16.0, 14.0, 17.0, 18.0, 19.0, 17.0];
+        let series = vec![
+            10.0, 12.0, 13.0, 11.0, 14.0, 15.0, 16.0, 14.0, 17.0, 18.0, 19.0, 17.0,
+        ];
         let mut model = ExponentialSmoothing::new(0.2, 0.1, 0.1, 4, SeasonalityType::Additive);
         model.fit(&series).unwrap();
 

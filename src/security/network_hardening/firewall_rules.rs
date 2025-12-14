@@ -2,14 +2,14 @@
 //
 // IP reputation checking and connection guard for network security.
 
-use std::time::Instant;
-use std::collections::{HashSet, VecDeque, HashMap};
 use crate::Result;
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use serde::{Serialize, Deserialize};
+use std::time::Instant;
 
 // Constants
 const MAX_CONNECTIONS_PER_IP: usize = 100;
@@ -148,14 +148,16 @@ impl IPReputationChecker {
         }
 
         let mut reputations = self.reputations.write();
-        reputations.entry(*ip)
+        reputations
+            .entry(*ip)
             .or_insert_with(|| IPReputation::new(*ip))
             .clone()
     }
 
     pub fn record_request(&self, ip: IpAddr, success: bool) {
         let mut reputations = self.reputations.write();
-        let reputation = reputations.entry(ip)
+        let reputation = reputations
+            .entry(ip)
             .or_insert_with(|| IPReputation::new(ip));
 
         reputation.record_request(success);
@@ -168,7 +170,8 @@ impl IPReputationChecker {
 
     pub fn record_violation(&self, ip: IpAddr, violation: ViolationType) {
         let mut reputations = self.reputations.write();
-        let reputation = reputations.entry(ip)
+        let reputation = reputations
+            .entry(ip)
             .or_insert_with(|| IPReputation::new(ip));
 
         reputation.record_violation(violation);
@@ -293,7 +296,9 @@ impl ConnectionGuard {
                 return Ok(false);
             }
 
-            let recent_count = info.timestamps.iter()
+            let recent_count = info
+                .timestamps
+                .iter()
                 .filter(|&&t| t.elapsed() < self.limits.rate_window)
                 .count();
 
@@ -353,7 +358,8 @@ impl ConnectionGuard {
         connections.retain(|_, info| {
             if info.last_activity.elapsed() > self.limits.idle_timeout {
                 stats.timed_out_connections += 1;
-                stats.active_connections = stats.active_connections.saturating_sub(info.count as u64);
+                stats.active_connections =
+                    stats.active_connections.saturating_sub(info.count as u64);
                 false
             } else {
                 true

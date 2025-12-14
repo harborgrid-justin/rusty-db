@@ -4,15 +4,15 @@
 // Supports multiple strategies including CRDT-based conflict-free resolution.
 // Optimized with per-core sharding and lock-free operations for maximum throughput.
 
-use std::collections::VecDeque;
+use crate::error::DbError;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
-use parking_lot::RwLock;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::collections::VecDeque;
 use std::hash::{Hash, Hasher};
-use crate::error::DbError;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 type Result<T> = std::result::Result<T, DbError>;
 
@@ -151,16 +151,21 @@ impl CrdtType {
     pub fn merge(&mut self, other: &CrdtType) -> Result<()> {
         match (self, other) {
             (
-                CrdtType::LwwRegister { value, timestamp, site_id },
+                CrdtType::LwwRegister {
+                    value,
+                    timestamp,
+                    site_id,
+                },
                 CrdtType::LwwRegister {
                     value: other_value,
                     timestamp: other_timestamp,
-                    site_id: other_site_id
+                    site_id: other_site_id,
                 },
             ) => {
                 // Last writer wins, use site_id as tie-breaker
-                if other_timestamp > timestamp ||
-                   (other_timestamp == timestamp && other_site_id > site_id) {
+                if other_timestamp > timestamp
+                    || (other_timestamp == timestamp && other_site_id > site_id)
+                {
                     *value = other_value.clone();
                     *timestamp = *other_timestamp;
                     *site_id = other_site_id.clone();
@@ -177,7 +182,10 @@ impl CrdtType {
             }
             (
                 CrdtType::PnCounter { positive, negative },
-                CrdtType::PnCounter { positive: other_pos, negative: other_neg },
+                CrdtType::PnCounter {
+                    positive: other_pos,
+                    negative: other_neg,
+                },
             ) => {
                 // Merge positive and negative counters separately
                 for (site, count) in other_pos {
@@ -201,7 +209,10 @@ impl CrdtType {
             }
             (
                 CrdtType::TwoPhaseSet { added, removed },
-                CrdtType::TwoPhaseSet { added: other_added, removed: other_removed },
+                CrdtType::TwoPhaseSet {
+                    added: other_added,
+                    removed: other_removed,
+                },
             ) => {
                 // Merge added and removed sets
                 for elem in other_added {
@@ -216,7 +227,12 @@ impl CrdtType {
                 }
                 Ok(())
             }
-            (CrdtType::OrSet { elements }, CrdtType::OrSet { elements: other_elements }) => {
+            (
+                CrdtType::OrSet { elements },
+                CrdtType::OrSet {
+                    elements: other_elements,
+                },
+            ) => {
                 // Merge element tags
                 for (elem, tags) in other_elements {
                     let entry = elements.entry(elem.clone()).or_insert_with(Vec::new);
@@ -229,7 +245,7 @@ impl CrdtType {
                 Ok(())
             }
             _ => Err(DbError::Replication(
-                "CRDT type mismatch during merge".to_string()
+                "CRDT type mismatch during merge".to_string(),
             )),
         }
     }
@@ -254,7 +270,8 @@ impl CrdtType {
                 Ok(encoded)
             }
             CrdtType::TwoPhaseSet { added, removed } => {
-                let current: Vec<_> = added.iter()
+                let current: Vec<_> = added
+                    .iter()
                     .filter(|e| !removed.contains(e))
                     .cloned()
                     .collect();
@@ -277,7 +294,9 @@ pub struct ConflictResolver {
     /// Per-core shards to minimize contention
     shards: Arc<Vec<ConflictShard>>,
     /// Custom resolution handlers
-    custom_handlers: Arc<RwLock<HashMap<String, Box<dyn Fn(&Conflict) -> Result<ConflictResolution> + Send + Sync>>>>,
+    custom_handlers: Arc<
+        RwLock<HashMap<String, Box<dyn Fn(&Conflict) -> Result<ConflictResolution> + Send + Sync>>>,
+    >,
     /// CRDT state for conflict-free columns
     crdt_state: Arc<RwLock<HashMap<String, CrdtType>>>,
 }
@@ -464,7 +483,12 @@ impl ConflictResolver {
         local: &ConflictingChange,
         remote: &ConflictingChange,
     ) -> ConflictType {
-        match (&local.old_value, &local.new_value, &remote.old_value, &remote.new_value) {
+        match (
+            &local.old_value,
+            &local.new_value,
+            &remote.old_value,
+            &remote.new_value,
+        ) {
             (Some(_), Some(_), Some(_), Some(_)) => ConflictType::UpdateUpdate,
             (Some(_), Some(_), Some(_), None) => ConflictType::UpdateDelete,
             (Some(_), None, Some(_), Some(_)) => ConflictType::DeleteUpdate,
@@ -477,38 +501,24 @@ impl ConflictResolver {
     /// Resolve a conflict using the specified strategy
     pub fn resolve_conflict(&self, conflict: &mut Conflict) -> Result<ConflictResolution> {
         let resolution = match &conflict.strategy {
-            ConflictResolutionStrategy::LastWriterWins => {
-                self.resolve_lww(conflict)?
-            }
-            ConflictResolutionStrategy::FirstWriterWins => {
-                self.resolve_fww(conflict)?
-            }
-            ConflictResolutionStrategy::PriorityBased(_) => {
-                self.resolve_priority(conflict)?
-            }
+            ConflictResolutionStrategy::LastWriterWins => self.resolve_lww(conflict)?,
+            ConflictResolutionStrategy::FirstWriterWins => self.resolve_fww(conflict)?,
+            ConflictResolutionStrategy::PriorityBased(_) => self.resolve_priority(conflict)?,
             ConflictResolutionStrategy::Custom(handler_name) => {
                 self.resolve_custom(conflict, handler_name)?
             }
-            ConflictResolutionStrategy::CrdtMerge => {
-                self.resolve_crdt(conflict)?
-            }
+            ConflictResolutionStrategy::CrdtMerge => self.resolve_crdt(conflict)?,
             ConflictResolutionStrategy::Manual => {
                 // Add to manual resolution queue
                 let shard = self.select_shard(&conflict.id);
                 shard.pending_conflicts.write().push_back(conflict.clone());
                 return Err(DbError::Replication(
-                    "Conflict requires manual resolution".to_string()
+                    "Conflict requires manual resolution".to_string(),
                 ));
             }
-            ConflictResolutionStrategy::MaxValue => {
-                self.resolve_max_value(conflict)?
-            }
-            ConflictResolutionStrategy::MinValue => {
-                self.resolve_min_value(conflict)?
-            }
-            ConflictResolutionStrategy::Additive => {
-                self.resolve_additive(conflict)?
-            }
+            ConflictResolutionStrategy::MaxValue => self.resolve_max_value(conflict)?,
+            ConflictResolutionStrategy::MinValue => self.resolve_min_value(conflict)?,
+            ConflictResolutionStrategy::Additive => self.resolve_additive(conflict)?,
         };
 
         conflict.resolved = true;
@@ -530,7 +540,10 @@ impl ConflictResolver {
                 shard.stats.crdt_resolutions.fetch_add(1, Ordering::Relaxed);
             }
             ConflictResolutionStrategy::Custom(_) => {
-                shard.stats.custom_resolutions.fetch_add(1, Ordering::Relaxed);
+                shard
+                    .stats
+                    .custom_resolutions
+                    .fetch_add(1, Ordering::Relaxed);
             }
             _ => {}
         }
@@ -609,32 +622,37 @@ impl ConflictResolver {
     }
 
     /// Custom handler resolution
-    fn resolve_custom(&self, conflict: &Conflict, handler_name: &str) -> Result<ConflictResolution> {
+    fn resolve_custom(
+        &self,
+        conflict: &Conflict,
+        handler_name: &str,
+    ) -> Result<ConflictResolution> {
         let handlers = self.custom_handlers.read();
-        let handler = handlers.get(handler_name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Custom handler '{}' not found", handler_name)
-            ))?;
+        let handler = handlers.get(handler_name).ok_or_else(|| {
+            DbError::Replication(format!("Custom handler '{}' not found", handler_name))
+        })?;
 
         handler(conflict)
     }
 
     /// CRDT-based resolution
     fn resolve_crdt(&self, conflict: &Conflict) -> Result<ConflictResolution> {
-        let key = format!("{}:{}",
-                         conflict.local_change.table,
-                         String::from_utf8_lossy(&conflict.local_change.row_key));
+        let key = format!(
+            "{}:{}",
+            conflict.local_change.table,
+            String::from_utf8_lossy(&conflict.local_change.row_key)
+        );
 
         let mut crdt_state = self.crdt_state.write();
 
         // Get or create CRDT for this key
-        let crdt = crdt_state.entry(key.clone()).or_insert_with(|| {
-            CrdtType::LwwRegister {
+        let crdt = crdt_state
+            .entry(key.clone())
+            .or_insert_with(|| CrdtType::LwwRegister {
                 value: conflict.local_change.new_value.clone().unwrap_or_default(),
                 timestamp: conflict.local_change.timestamp,
                 site_id: conflict.local_change.site_id.clone(),
-            }
-        });
+            });
 
         // Create CRDT from remote change
         let remote_crdt = CrdtType::LwwRegister {
@@ -659,9 +677,15 @@ impl ConflictResolver {
 
     /// Max value resolution
     fn resolve_max_value(&self, conflict: &Conflict) -> Result<ConflictResolution> {
-        let local_val = conflict.local_change.new_value.as_ref()
+        let local_val = conflict
+            .local_change
+            .new_value
+            .as_ref()
             .ok_or_else(|| DbError::Replication("No local value".to_string()))?;
-        let remote_val = conflict.remote_change.new_value.as_ref()
+        let remote_val = conflict
+            .remote_change
+            .new_value
+            .as_ref()
             .ok_or_else(|| DbError::Replication("No remote value".to_string()))?;
 
         let winning_change = if remote_val > local_val {
@@ -681,9 +705,15 @@ impl ConflictResolver {
 
     /// Min value resolution
     fn resolve_min_value(&self, conflict: &Conflict) -> Result<ConflictResolution> {
-        let local_val = conflict.local_change.new_value.as_ref()
+        let local_val = conflict
+            .local_change
+            .new_value
+            .as_ref()
             .ok_or_else(|| DbError::Replication("No local value".to_string()))?;
-        let remote_val = conflict.remote_change.new_value.as_ref()
+        let remote_val = conflict
+            .remote_change
+            .new_value
+            .as_ref()
             .ok_or_else(|| DbError::Replication("No remote value".to_string()))?;
 
         let winning_change = if remote_val < local_val {
@@ -704,9 +734,15 @@ impl ConflictResolver {
     /// Additive resolution (for counters)
     fn resolve_additive(&self, conflict: &Conflict) -> Result<ConflictResolution> {
         // Try to parse as integers and add them
-        let local_val = conflict.local_change.new_value.as_ref()
+        let local_val = conflict
+            .local_change
+            .new_value
+            .as_ref()
             .ok_or_else(|| DbError::Replication("No local value".to_string()))?;
-        let remote_val = conflict.remote_change.new_value.as_ref()
+        let remote_val = conflict
+            .remote_change
+            .new_value
+            .as_ref()
             .ok_or_else(|| DbError::Replication("No remote value".to_string()))?;
 
         // Assuming 8-byte integers
@@ -723,7 +759,9 @@ impl ConflictResolver {
                 manual: false,
             })
         } else {
-            Err(DbError::Replication("Values are not compatible for additive resolution".to_string()))
+            Err(DbError::Replication(
+                "Values are not compatible for additive resolution".to_string(),
+            ))
         }
     }
 
@@ -770,7 +808,10 @@ impl ConflictResolver {
     #[cold]
     #[inline(never)]
     fn conflict_not_found_error(&self, conflict_id: &str) -> Result<()> {
-        Err(DbError::Replication(format!("Conflict {} not found", conflict_id)))
+        Err(DbError::Replication(format!(
+            "Conflict {} not found",
+            conflict_id
+        )))
     }
 
     /// Get conflict statistics aggregated across all shards
@@ -802,7 +843,8 @@ impl ConflictResolver {
             let original_len = resolved.len();
 
             resolved.retain(|c| {
-                c.resolution.as_ref()
+                c.resolution
+                    .as_ref()
                     .map(|r| r.resolved_at >= cutoff)
                     .unwrap_or(true)
             });
@@ -831,7 +873,7 @@ impl Default for ConflictResolver {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_lww_resolution() {
@@ -893,7 +935,12 @@ use std::time::UNIX_EPOCH;
 
         lww1.merge(&lww2).unwrap();
 
-        if let CrdtType::LwwRegister { value, timestamp, site_id } = lww1 {
+        if let CrdtType::LwwRegister {
+            value,
+            timestamp,
+            site_id,
+        } = lww1
+        {
             assert_eq!(value, vec![4, 5, 6]);
             assert_eq!(timestamp, 2000);
             assert_eq!(site_id, "site-b");
@@ -905,13 +952,17 @@ use std::time::UNIX_EPOCH;
         let mut gc1 = CrdtType::GCounter(
             vec![("site-a".to_string(), 5), ("site-b".to_string(), 3)]
                 .into_iter()
-                .collect()
+                .collect(),
         );
 
         let gc2 = CrdtType::GCounter(
-            vec![("site-a".to_string(), 4), ("site-b".to_string(), 6), ("site-c".to_string(), 2)]
-                .into_iter()
-                .collect()
+            vec![
+                ("site-a".to_string(), 4),
+                ("site-b".to_string(), 6),
+                ("site-c".to_string(), 2),
+            ]
+            .into_iter()
+            .collect(),
         );
 
         gc1.merge(&gc2).unwrap();

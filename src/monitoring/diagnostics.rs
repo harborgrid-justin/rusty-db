@@ -1,14 +1,14 @@
 // Diagnostic Dumps
 // Automatic diagnostic repository, incident packaging, core dump analysis, health checks
 
-use std::fmt;
-use std::collections::VecDeque;
-use std::time::SystemTime;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use std::time::{Instant, Duration};
+use std::time::SystemTime;
+use std::time::{Duration, Instant};
 
 use std::path::PathBuf;
 
@@ -137,7 +137,9 @@ impl Incident {
 
     pub fn duration(&self) -> Duration {
         let end_time = self.resolved_at.unwrap_or_else(SystemTime::now);
-        end_time.duration_since(self.timestamp).unwrap_or(Duration::ZERO)
+        end_time
+            .duration_since(self.timestamp)
+            .unwrap_or(Duration::ZERO)
     }
 }
 
@@ -240,7 +242,11 @@ pub struct HealthCheckResult {
 }
 
 impl HealthCheckResult {
-    pub fn new(check_name: impl Into<String>, status: HealthStatus, message: impl Into<String>) -> Self {
+    pub fn new(
+        check_name: impl Into<String>,
+        status: HealthStatus,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             check_name: check_name.into(),
             status,
@@ -295,11 +301,20 @@ impl HealthCheck for ConnectionHealthCheck {
         let usage = (current as f64 / self.max_connections as f64) * 100.0;
 
         let (status, message) = if usage >= 95.0 {
-            (HealthStatus::Critical, format!("Connection pool at {:.1}% capacity", usage))
+            (
+                HealthStatus::Critical,
+                format!("Connection pool at {:.1}% capacity", usage),
+            )
         } else if usage >= 80.0 {
-            (HealthStatus::Warning, format!("Connection pool at {:.1}% capacity", usage))
+            (
+                HealthStatus::Warning,
+                format!("Connection pool at {:.1}% capacity", usage),
+            )
         } else {
-            (HealthStatus::Healthy, format!("Connection pool healthy ({:.1}% used)", usage))
+            (
+                HealthStatus::Healthy,
+                format!("Connection pool healthy ({:.1}% used)", usage),
+            )
         };
 
         let mut result = HealthCheckResult::new(self.name(), status, message);
@@ -342,11 +357,20 @@ impl HealthCheck for MemoryHealthCheck {
         let usage = (current as f64 / self.max_memory_bytes as f64) * 100.0;
 
         let (status, message) = if usage >= 95.0 {
-            (HealthStatus::Critical, format!("Memory usage at {:.1}%", usage))
+            (
+                HealthStatus::Critical,
+                format!("Memory usage at {:.1}%", usage),
+            )
         } else if usage >= 85.0 {
-            (HealthStatus::Warning, format!("Memory usage at {:.1}%", usage))
+            (
+                HealthStatus::Warning,
+                format!("Memory usage at {:.1}%", usage),
+            )
         } else {
-            (HealthStatus::Healthy, format!("Memory usage healthy ({:.1}%)", usage))
+            (
+                HealthStatus::Healthy,
+                format!("Memory usage healthy ({:.1}%)", usage),
+            )
         };
 
         let mut result = HealthCheckResult::new(self.name(), status, message);
@@ -508,7 +532,10 @@ impl DiagnosticRepository {
         let mut dump = String::new();
         dump.push_str("=== SYSTEM STATE DUMP ===\n\n");
         dump.push_str(&format!("Timestamp: {:?}\n", SystemTime::now()));
-        dump.push_str(&format!("Active Incidents: {}\n", self.get_active_incidents().len()));
+        dump.push_str(&format!(
+            "Active Incidents: {}\n",
+            self.get_active_incidents().len()
+        ));
         dump.push_str("\n");
         dump
     }
@@ -684,7 +711,10 @@ mod tests {
 
         let incident = repo.get_incident(incident_id).unwrap();
         assert!(incident.resolved);
-        assert_eq!(incident.resolution, Some("Restarted background process".to_string()));
+        assert_eq!(
+            incident.resolution,
+            Some("Restarted background process".to_string())
+        );
     }
 
     #[test]

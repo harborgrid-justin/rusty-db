@@ -1,7 +1,6 @@
 /// Event Correlation Module
 ///
 /// Event correlation engine for detecting related events across streams.
-
 use super::super::Event;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -64,7 +63,10 @@ impl CorrelationEngine {
     }
 
     pub fn correlate(&mut self, event: Event) -> Vec<CorrelatedEvent> {
-        let correlation_key = event.correlation_id.clone().unwrap_or_else(|| event.id.to_string());
+        let correlation_key = event
+            .correlation_id
+            .clone()
+            .unwrap_or_else(|| event.id.to_string());
 
         // Add to buffer
         self.buffer

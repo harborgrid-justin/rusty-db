@@ -2,14 +2,14 @@
 //
 // Unified security core orchestration and security dashboard.
 
-use std::sync::Arc;
-use serde::{Serialize, Deserialize};
 use crate::Result;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 use super::super::IntegratedSecurityManager;
-use super::threat_detection::*;
 use super::access_control::*;
 use super::security_policies::*;
+use super::threat_detection::*;
 
 // ============================================================================
 // Unified Security Core
@@ -29,7 +29,8 @@ pub struct UnifiedSecurityCore {
 
 impl UnifiedSecurityCore {
     pub fn new(security_manager: Arc<IntegratedSecurityManager>) -> Self {
-        let defense_orchestrator = Arc::new(DefenseOrchestrator::new(Arc::clone(&security_manager)));
+        let defense_orchestrator =
+            Arc::new(DefenseOrchestrator::new(Arc::clone(&security_manager)));
 
         Self {
             security_manager: Arc::clone(&security_manager),
@@ -62,7 +63,8 @@ impl UnifiedSecurityCore {
     }
 
     pub fn validate_compliance(&self, framework_id: &str) -> Result<f64> {
-        self.compliance_validator.calculate_framework_score(framework_id)
+        self.compliance_validator
+            .calculate_framework_score(framework_id)
     }
 
     pub fn run_security_tests(&self) -> Result<PenTestReport> {
@@ -154,15 +156,30 @@ impl SecurityDashboard {
     }
 
     pub fn get_dashboard_data(&self) -> DashboardData {
-        let active_incidents = self.security_core.get_event_correlator().get_active_incidents();
-        let threat_level = self.security_core.get_defense_orchestrator().get_threat_level();
+        let active_incidents = self
+            .security_core
+            .get_event_correlator()
+            .get_active_incidents();
+        let threat_level = self
+            .security_core
+            .get_defense_orchestrator()
+            .get_threat_level();
         let security_posture = self.security_core.get_security_posture();
-        let compliance_summary = self.security_core.get_compliance_validator().get_compliance_summary();
-        let defense_coverage = self.security_core.get_defense_orchestrator().validate_coverage();
+        let compliance_summary = self
+            .security_core
+            .get_compliance_validator()
+            .get_compliance_summary();
+        let defense_coverage = self
+            .security_core
+            .get_defense_orchestrator()
+            .validate_coverage();
         let pen_test_summary = self.security_core.get_pen_test_harness().get_test_summary();
         let correlator_stats = self.security_core.get_event_correlator().get_statistics();
         let policy_stats = self.security_core.get_policy_engine().get_statistics();
-        let threat_intel_stats = self.security_core.get_threat_intelligence().get_statistics();
+        let threat_intel_stats = self
+            .security_core
+            .get_threat_intelligence()
+            .get_statistics();
 
         DashboardData {
             active_threats: active_incidents.len(),

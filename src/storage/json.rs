@@ -7,8 +7,8 @@
 // - JSON indexing for fast queries
 // - JSON aggregation functions
 
-use crate::error::{Result, DbError};
-use serde_json::{Value as JsonValue, json};
+use crate::error::{DbError, Result};
+use serde_json::{json, Value as JsonValue};
 use std::collections::HashMap;
 
 // JSON data wrapper
@@ -132,7 +132,7 @@ impl JsonPath {
 
         if !path.starts_with('$') {
             return Err(DbError::InvalidInput(
-                "JSON path must start with '$'".to_string()
+                "JSON path must start with '$'".to_string(),
             ));
         }
 
@@ -166,10 +166,9 @@ impl JsonPath {
                     if index_str == "*" {
                         tokens.push(PathToken::Index(-1)); // Use -1 for wildcard
                     } else {
-                        let index = index_str.parse::<i32>()
-                            .map_err(|_| DbError::InvalidInput(
-                                format!("Invalid array index: {}", index_str)
-                            ))?;
+                        let index = index_str.parse::<i32>().map_err(|_| {
+                            DbError::InvalidInput(format!("Invalid array index: {}", index_str))
+                        })?;
                         tokens.push(PathToken::Index(index));
                     }
                 }
@@ -182,11 +181,9 @@ impl JsonPath {
 
     fn navigate<'a>(value: &'a JsonValue, token: &PathToken) -> Result<&'a JsonValue> {
         match token {
-            PathToken::Field(field) => {
-                value.get(field).ok_or_else(|| {
-                    DbError::NotFound(format!("Field '{}' not found", field))
-                })
-            }
+            PathToken::Field(field) => value
+                .get(field)
+                .ok_or_else(|| DbError::NotFound(format!("Field '{}' not found", field))),
             PathToken::Index(idx) => {
                 if let JsonValue::Array(arr) = value {
                     let index = if *idx < 0 {
@@ -200,7 +197,7 @@ impl JsonPath {
                     })
                 } else {
                     Err(DbError::InvalidOperation(
-                        "Cannot index non-array value".to_string()
+                        "Cannot index non-array value".to_string(),
                     ))
                 }
             }
@@ -248,7 +245,7 @@ impl JsonOperators {
         match &json.value {
             JsonValue::Array(arr) => Ok(arr.len()),
             _ => Err(DbError::InvalidOperation(
-                "JSON value is not an array".to_string()
+                "JSON value is not an array".to_string(),
             )),
         }
     }
@@ -258,7 +255,7 @@ impl JsonOperators {
         match &json.value {
             JsonValue::Object(obj) => Ok(obj.keys().cloned().collect()),
             _ => Err(DbError::InvalidOperation(
-                "JSON value is not an object".to_string()
+                "JSON value is not an object".to_string(),
             )),
         }
     }
@@ -289,17 +286,21 @@ impl JsonOperators {
                     }
 
                     if is_last {
-                        current.as_object_mut().unwrap().insert(field.clone(), new_value);
+                        current
+                            .as_object_mut()
+                            .unwrap()
+                            .insert(field.clone(), new_value);
                         return Ok(());
                     } else {
-                        current = current.get_mut(field)
-                            .ok_or_else(|| DbError::NotFound(format!("Field '{}' not found", field)))?;
+                        current = current.get_mut(field).ok_or_else(|| {
+                            DbError::NotFound(format!("Field '{}' not found", field))
+                        })?;
                     }
                 }
                 PathToken::Index(idx) => {
                     if !current.is_array() {
                         return Err(DbError::InvalidOperation(
-                            "Cannot index non-array value".to_string()
+                            "Cannot index non-array value".to_string(),
                         ));
                     }
 
@@ -316,8 +317,9 @@ impl JsonOperators {
                         }
                         return Ok(());
                     } else {
-                        current = arr.get_mut(index)
-                            .ok_or_else(|| DbError::NotFound(format!("Index {} out of bounds", idx)))?;
+                        current = arr.get_mut(index).ok_or_else(|| {
+                            DbError::NotFound(format!("Index {} out of bounds", idx))
+                        })?;
                     }
                 }
             }
@@ -363,18 +365,21 @@ impl JsonOperators {
         for token in parent_path {
             match token {
                 PathToken::Field(field) => {
-                    current = current.get_mut(&field)
+                    current = current
+                        .get_mut(&field)
                         .ok_or_else(|| DbError::NotFound(format!("Field '{}' not found", field)))?;
                 }
                 PathToken::Index(idx) => {
-                    let arr = current.as_array_mut()
+                    let arr = current
+                        .as_array_mut()
                         .ok_or_else(|| DbError::InvalidOperation("Not an array".to_string()))?;
                     let index = if idx < 0 {
                         (arr.len() as i32 + idx) as usize
                     } else {
                         idx as usize
                     };
-                    current = arr.get_mut(index)
+                    current = arr
+                        .get_mut(index)
                         .ok_or_else(|| DbError::NotFound(format!("Index {} out of bounds", idx)))?;
                 }
             }
@@ -410,12 +415,8 @@ impl JsonOperators {
         }
 
         match haystack {
-            JsonValue::Array(arr) => {
-                arr.iter().any(|v| Self::contains_value(v, needle))
-            }
-            JsonValue::Object(obj) => {
-                obj.values().any(|v| Self::contains_value(v, needle))
-            }
+            JsonValue::Array(arr) => arr.iter().any(|v| Self::contains_value(v, needle)),
+            JsonValue::Object(obj) => obj.values().any(|v| Self::contains_value(v, needle)),
             _ => false,
         }
     }
@@ -682,7 +683,10 @@ mod tests {
     #[test]
     fn test_json_builder() {
         let obj = JsonBuilder::build_object(vec![
-            ("name".to_string(), JsonData::from_str(r#""Alice""#).unwrap()),
+            (
+                "name".to_string(),
+                JsonData::from_str(r#""Alice""#).unwrap(),
+            ),
             ("age".to_string(), JsonData::from_str("30").unwrap()),
         ]);
 

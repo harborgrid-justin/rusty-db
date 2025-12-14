@@ -4,11 +4,11 @@
 // both physical and logical replication with monitoring, health checks, and
 // automatic cleanup.
 
-mod errors;
-mod types;
 mod config;
+mod errors;
 mod manager;
 mod manager_impl;
+mod types;
 
 // Re-export public types
 // pub use config::SlotManagerConfig;
@@ -77,7 +77,12 @@ mod tests {
         let replica_id = ReplicaId::new("test_replica").unwrap();
 
         manager
-            .create_slot(slot_name.clone(), replica_id.clone(), SlotType::Physical, None)
+            .create_slot(
+                slot_name.clone(),
+                replica_id.clone(),
+                SlotType::Physical,
+                None,
+            )
             .await
             .unwrap();
 

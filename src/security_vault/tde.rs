@@ -23,13 +23,13 @@
 
 use crate::{DbError, Result};
 use aes_gcm::{
-    aead::{Aead, KeyInit, generic_array::GenericArray},
+    aead::{generic_array::GenericArray, Aead, KeyInit},
     Aes256Gcm,
 };
 use chacha20poly1305::ChaCha20Poly1305;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
 
 // Cache-aligned crypto buffer for high-performance encryption
 // Aligned to 64 bytes (typical cache line size) to avoid false sharing
@@ -306,10 +306,9 @@ impl TdeEngine {
             dek: dek.to_vec(),
         };
 
-        self.tablespace_configs.write().insert(
-            tablespace_name.to_string(),
-            ts_encryption,
-        );
+        self.tablespace_configs
+            .write()
+            .insert(tablespace_name.to_string(), ts_encryption);
 
         Ok(())
     }
@@ -332,10 +331,7 @@ impl TdeEngine {
             )));
         }
 
-        let config = TdeConfig::new(
-            algo.clone(),
-            format!("col_{}_{}", table_name, column_name),
-        );
+        let config = TdeConfig::new(algo.clone(), format!("col_{}_{}", table_name, column_name));
 
         let col_encryption = ColumnEncryption {
             table_name: table_name.to_string(),
@@ -358,23 +354,22 @@ impl TdeEngine {
         plaintext: &[u8],
     ) -> Result<EncryptedData> {
         let configs = self.tablespace_configs.read();
-        let ts_enc = configs.get(tablespace_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Tablespace encryption not configured: {}", tablespace_name
-            )))?;
+        let ts_enc = configs.get(tablespace_name).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Tablespace encryption not configured: {}",
+                tablespace_name
+            ))
+        })?;
 
         if !ts_enc.config.enabled {
             return Err(DbError::InvalidInput(format!(
-                "Encryption disabled for tablespace: {}", tablespace_name
+                "Encryption disabled for tablespace: {}",
+                tablespace_name
             )));
         }
 
-        let result = self.encrypt_internal(
-            &ts_enc.config.algorithm,
-            &ts_enc.dek,
-            plaintext,
-            None,
-        )?;
+        let result =
+            self.encrypt_internal(&ts_enc.config.algorithm, &ts_enc.dek, plaintext, None)?;
 
         // Update metrics
         let mut metrics = self.metrics.write();
@@ -398,10 +393,12 @@ impl TdeEngine {
         encrypted: &EncryptedData,
     ) -> Result<Vec<u8>> {
         let configs = self.tablespace_configs.read();
-        let ts_enc = configs.get(tablespace_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Tablespace encryption not configured: {}", tablespace_name
-            )))?;
+        let ts_enc = configs.get(tablespace_name).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Tablespace encryption not configured: {}",
+                tablespace_name
+            ))
+        })?;
 
         let plaintext = self.decrypt_internal(
             &encrypted.algorithm,
@@ -429,14 +426,17 @@ impl TdeEngine {
     ) -> Result<EncryptedData> {
         let key = format!("{}:{}", table_name, column_name);
         let configs = self.column_configs.read();
-        let col_enc = configs.get(&key)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Column encryption not configured: {}.{}", table_name, column_name
-            )))?;
+        let col_enc = configs.get(&key).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Column encryption not configured: {}.{}",
+                table_name, column_name
+            ))
+        })?;
 
         if !col_enc.config.enabled {
             return Err(DbError::InvalidInput(format!(
-                "Encryption disabled for column: {}.{}", table_name, column_name
+                "Encryption disabled for column: {}.{}",
+                table_name, column_name
             )));
         }
 
@@ -473,10 +473,12 @@ impl TdeEngine {
     ) -> Result<Vec<u8>> {
         let key = format!("{}:{}", table_name, column_name);
         let configs = self.column_configs.read();
-        let col_enc = configs.get(&key)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Column encryption not configured: {}.{}", table_name, column_name
-            )))?;
+        let col_enc = configs.get(&key).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Column encryption not configured: {}.{}",
+                table_name, column_name
+            ))
+        })?;
 
         let plaintext = self.decrypt_internal(
             &encrypted.algorithm,
@@ -502,14 +504,17 @@ impl TdeEngine {
         plaintexts: &[&[u8]],
     ) -> Result<Vec<EncryptedData>> {
         let configs = self.tablespace_configs.read();
-        let ts_enc = configs.get(tablespace_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Tablespace encryption not configured: {}", tablespace_name
-            )))?;
+        let ts_enc = configs.get(tablespace_name).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Tablespace encryption not configured: {}",
+                tablespace_name
+            ))
+        })?;
 
         if !ts_enc.config.enabled {
             return Err(DbError::InvalidInput(format!(
-                "Encryption disabled for tablespace: {}", tablespace_name
+                "Encryption disabled for tablespace: {}",
+                tablespace_name
             )));
         }
 
@@ -517,12 +522,8 @@ impl TdeEngine {
 
         // Amortize setup cost by reusing cipher instance
         for plaintext in plaintexts {
-            let result = self.encrypt_internal(
-                &ts_enc.config.algorithm,
-                &ts_enc.dek,
-                plaintext,
-                None,
-            )?;
+            let result =
+                self.encrypt_internal(&ts_enc.config.algorithm, &ts_enc.dek, plaintext, None)?;
 
             results.push(EncryptedData {
                 algorithm: ts_enc.config.algorithm.clone(),
@@ -550,10 +551,12 @@ impl TdeEngine {
         encrypted_blocks: &[EncryptedData],
     ) -> Result<Vec<Vec<u8>>> {
         let configs = self.tablespace_configs.read();
-        let ts_enc = configs.get(tablespace_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Tablespace encryption not configured: {}", tablespace_name
-            )))?;
+        let ts_enc = configs.get(tablespace_name).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Tablespace encryption not configured: {}",
+                tablespace_name
+            ))
+        })?;
 
         let mut results = Vec::with_capacity(encrypted_blocks.len());
 
@@ -577,16 +580,14 @@ impl TdeEngine {
     }
 
     // Rotate encryption key for a tablespace
-    pub fn rotate_tablespace_key(
-        &mut self,
-        tablespace_name: &str,
-        new_dek: &[u8],
-    ) -> Result<()> {
+    pub fn rotate_tablespace_key(&mut self, tablespace_name: &str, new_dek: &[u8]) -> Result<()> {
         let mut configs = self.tablespace_configs.write();
-        let ts_enc = configs.get_mut(tablespace_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Tablespace encryption not configured: {}", tablespace_name
-            )))?;
+        let ts_enc = configs.get_mut(tablespace_name).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Tablespace encryption not configured: {}",
+                tablespace_name
+            ))
+        })?;
 
         if new_dek.len() != ts_enc.config.algorithm.key_size() {
             return Err(DbError::InvalidInput("Invalid key size".to_string()));
@@ -608,10 +609,12 @@ impl TdeEngine {
     ) -> Result<()> {
         let key = format!("{}:{}", table_name, column_name);
         let mut configs = self.column_configs.write();
-        let col_enc = configs.get_mut(&key)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Column encryption not configured: {}.{}", table_name, column_name
-            )))?;
+        let col_enc = configs.get_mut(&key).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Column encryption not configured: {}.{}",
+                table_name, column_name
+            ))
+        })?;
 
         if new_dek.len() != col_enc.config.algorithm.key_size() {
             return Err(DbError::InvalidInput("Invalid key size".to_string()));
@@ -634,12 +637,8 @@ impl TdeEngine {
         aad: Option<&[u8]>,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
         match algorithm {
-            EncryptionAlgorithm::Aes256Gcm => {
-                self.encrypt_aes_gcm(key, plaintext, aad)
-            }
-            EncryptionAlgorithm::ChaCha20Poly1305 => {
-                self.encrypt_chacha20(key, plaintext, aad)
-            }
+            EncryptionAlgorithm::Aes256Gcm => self.encrypt_aes_gcm(key, plaintext, aad),
+            EncryptionAlgorithm::ChaCha20Poly1305 => self.encrypt_chacha20(key, plaintext, aad),
         }
     }
 
@@ -654,9 +653,7 @@ impl TdeEngine {
         aad: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
         match algorithm {
-            EncryptionAlgorithm::Aes256Gcm => {
-                self.decrypt_aes_gcm(key, nonce, ciphertext, aad)
-            }
+            EncryptionAlgorithm::Aes256Gcm => self.decrypt_aes_gcm(key, nonce, ciphertext, aad),
             EncryptionAlgorithm::ChaCha20Poly1305 => {
                 self.decrypt_chacha20(key, nonce, ciphertext, aad)
             }
@@ -678,10 +675,13 @@ impl TdeEngine {
         let nonce = GenericArray::from_slice(&nonce_bytes);
 
         let ciphertext = if let Some(aad_data) = aad {
-            cipher.encrypt(nonce, aes_gcm::aead::Payload {
-                msg: plaintext,
-                aad: aad_data,
-            })
+            cipher.encrypt(
+                nonce,
+                aes_gcm::aead::Payload {
+                    msg: plaintext,
+                    aad: aad_data,
+                },
+            )
         } else {
             cipher.encrypt(nonce, plaintext)
         };
@@ -701,21 +701,22 @@ impl TdeEngine {
         ciphertext: &[u8],
         aad: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
-
         let cipher = Aes256Gcm::new(GenericArray::from_slice(key));
         let nonce = GenericArray::from_slice(nonce);
 
         let plaintext = if let Some(aad_data) = aad {
-            cipher.decrypt(nonce, aes_gcm::aead::Payload {
-                msg: ciphertext,
-                aad: aad_data,
-            })
+            cipher.decrypt(
+                nonce,
+                aes_gcm::aead::Payload {
+                    msg: ciphertext,
+                    aad: aad_data,
+                },
+            )
         } else {
             cipher.decrypt(nonce, ciphertext)
         };
 
-        plaintext
-            .map_err(|e| DbError::Encryption(format!("AES-GCM decryption failed: {}", e)))
+        plaintext.map_err(|e| DbError::Encryption(format!("AES-GCM decryption failed: {}", e)))
     }
 
     // Encrypt using ChaCha20-Poly1305
@@ -726,17 +727,19 @@ impl TdeEngine {
         plaintext: &[u8],
         aad: Option<&[u8]>,
     ) -> Result<(Vec<u8>, Vec<u8>)> {
-
         let cipher = ChaCha20Poly1305::new(GenericArray::from_slice(key));
 
         let nonce_bytes = self.generate_nonce(12);
         let nonce = GenericArray::from_slice(&nonce_bytes);
 
         let ciphertext = if let Some(aad_data) = aad {
-            cipher.encrypt(nonce, chacha20poly1305::aead::Payload {
-                msg: plaintext,
-                aad: aad_data,
-            })
+            cipher.encrypt(
+                nonce,
+                chacha20poly1305::aead::Payload {
+                    msg: plaintext,
+                    aad: aad_data,
+                },
+            )
         } else {
             cipher.encrypt(nonce, plaintext)
         };
@@ -756,21 +759,22 @@ impl TdeEngine {
         ciphertext: &[u8],
         aad: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
-
         let cipher = ChaCha20Poly1305::new(GenericArray::from_slice(key));
         let nonce = GenericArray::from_slice(nonce);
 
         let plaintext = if let Some(aad_data) = aad {
-            cipher.decrypt(nonce, chacha20poly1305::aead::Payload {
-                msg: ciphertext,
-                aad: aad_data,
-            })
+            cipher.decrypt(
+                nonce,
+                chacha20poly1305::aead::Payload {
+                    msg: ciphertext,
+                    aad: aad_data,
+                },
+            )
         } else {
             cipher.decrypt(nonce, ciphertext)
         };
 
-        plaintext
-            .map_err(|e| DbError::Encryption(format!("ChaCha20 decryption failed: {}", e)))
+        plaintext.map_err(|e| DbError::Encryption(format!("ChaCha20 decryption failed: {}", e)))
     }
 
     // Generate cryptographically secure nonce
@@ -799,7 +803,8 @@ impl TdeEngine {
 
     // List all encrypted columns
     pub fn list_encrypted_columns(&self) -> Vec<(String, String)> {
-        self.column_configs.read()
+        self.column_configs
+            .read()
             .values()
             .map(|c| (c.table_name.clone(), c.column_name.clone()))
             .collect()
@@ -808,29 +813,37 @@ impl TdeEngine {
     // Get encryption metrics
     pub fn get_metrics(&self) -> (u64, u64, u64, u64) {
         let m = self.metrics.read();
-        (m.total_encryptions, m.total_decryptions, m.bytes_encrypted, m.bytes_decrypted)
+        (
+            m.total_encryptions,
+            m.total_decryptions,
+            m.bytes_encrypted,
+            m.bytes_decrypted,
+        )
     }
 
     // Disable tablespace encryption (must re-encrypt data first)
     pub fn disable_tablespace_encryption(&mut self, tablespace_name: &str) -> Result<()> {
-        self.tablespace_configs.write().remove(tablespace_name)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Tablespace encryption not found: {}", tablespace_name
-            )))?;
+        self.tablespace_configs
+            .write()
+            .remove(tablespace_name)
+            .ok_or_else(|| {
+                DbError::NotFound(format!(
+                    "Tablespace encryption not found: {}",
+                    tablespace_name
+                ))
+            })?;
         Ok(())
     }
 
     // Disable column encryption
-    pub fn disable_column_encryption(
-        &mut self,
-        table_name: &str,
-        column_name: &str,
-    ) -> Result<()> {
+    pub fn disable_column_encryption(&mut self, table_name: &str, column_name: &str) -> Result<()> {
         let key = format!("{}:{}", table_name, column_name);
-        self.column_configs.write().remove(&key)
-            .ok_or_else(|| DbError::NotFound(format!(
-                "Column encryption not found: {}.{}", table_name, column_name
-            )))?;
+        self.column_configs.write().remove(&key).ok_or_else(|| {
+            DbError::NotFound(format!(
+                "Column encryption not found: {}.{}",
+                table_name, column_name
+            ))
+        })?;
         Ok(())
     }
 }
@@ -858,14 +871,20 @@ mod tests {
         let key = vec![0u8; 32];
 
         // Enable encryption
-        engine.enable_tablespace_encryption("users_ts", "AES256GCM", &key).unwrap();
+        engine
+            .enable_tablespace_encryption("users_ts", "AES256GCM", &key)
+            .unwrap();
 
         // Encrypt data
         let plaintext = b"sensitive data";
-        let encrypted = engine.encrypt_tablespace_data("users_ts", plaintext).unwrap();
+        let encrypted = engine
+            .encrypt_tablespace_data("users_ts", plaintext)
+            .unwrap();
 
         // Decrypt data
-        let decrypted = engine.decrypt_tablespace_data("users_ts", &encrypted).unwrap();
+        let decrypted = engine
+            .decrypt_tablespace_data("users_ts", &encrypted)
+            .unwrap();
 
         assert_eq!(plaintext.as_slice(), decrypted.as_slice());
     }
@@ -876,17 +895,23 @@ mod tests {
         let key = vec![0u8; 32];
 
         // Enable column encryption
-        engine.enable_column_encryption("customers", "ssn", "CHACHA20", &key).unwrap();
+        engine
+            .enable_column_encryption("customers", "ssn", "CHACHA20", &key)
+            .unwrap();
 
         // Encrypt column data
         let plaintext = b"123-45-6789";
-        let encrypted = engine.encrypt_column_data("customers", "ssn", plaintext).unwrap();
+        let encrypted = engine
+            .encrypt_column_data("customers", "ssn", plaintext)
+            .unwrap();
 
         // Verify AAD is set
         assert!(encrypted.aad.is_some());
 
         // Decrypt column data
-        let decrypted = engine.decrypt_column_data("customers", "ssn", &encrypted).unwrap();
+        let decrypted = engine
+            .decrypt_column_data("customers", "ssn", &encrypted)
+            .unwrap();
 
         assert_eq!(plaintext.as_slice(), decrypted.as_slice());
     }
@@ -897,11 +922,15 @@ mod tests {
         let key1 = vec![0u8; 32];
         let key2 = vec![1u8; 32];
 
-        engine.enable_tablespace_encryption("data_ts", "AES256GCM", &key1).unwrap();
+        engine
+            .enable_tablespace_encryption("data_ts", "AES256GCM", &key1)
+            .unwrap();
 
         // Encrypt with key1
         let plaintext = b"test data";
-        let encrypted = engine.encrypt_tablespace_data("data_ts", plaintext).unwrap();
+        let encrypted = engine
+            .encrypt_tablespace_data("data_ts", plaintext)
+            .unwrap();
         assert_eq!(encrypted.key_version, 1);
 
         // Rotate to key2
@@ -916,11 +945,17 @@ mod tests {
         let mut engine = TdeEngine::new().unwrap();
         let key = vec![0u8; 32];
 
-        engine.enable_tablespace_encryption("test_ts", "AES256GCM", &key).unwrap();
+        engine
+            .enable_tablespace_encryption("test_ts", "AES256GCM", &key)
+            .unwrap();
 
         let plaintext = b"test";
-        let encrypted = engine.encrypt_tablespace_data("test_ts", plaintext).unwrap();
-        engine.decrypt_tablespace_data("test_ts", &encrypted).unwrap();
+        let encrypted = engine
+            .encrypt_tablespace_data("test_ts", plaintext)
+            .unwrap();
+        engine
+            .decrypt_tablespace_data("test_ts", &encrypted)
+            .unwrap();
 
         let (enc_ops, dec_ops, enc_bytes, dec_bytes) = engine.get_metrics();
         assert_eq!(enc_ops, 1);
@@ -934,9 +969,15 @@ mod tests {
         let mut engine = TdeEngine::new().unwrap();
         let key = vec![0u8; 32];
 
-        engine.enable_tablespace_encryption("ts1", "AES256GCM", &key).unwrap();
-        engine.enable_tablespace_encryption("ts2", "AES256GCM", &key).unwrap();
-        engine.enable_column_encryption("table1", "col1", "AES256GCM", &key).unwrap();
+        engine
+            .enable_tablespace_encryption("ts1", "AES256GCM", &key)
+            .unwrap();
+        engine
+            .enable_tablespace_encryption("ts2", "AES256GCM", &key)
+            .unwrap();
+        engine
+            .enable_column_encryption("table1", "col1", "AES256GCM", &key)
+            .unwrap();
 
         let tablespaces = engine.list_encrypted_tablespaces();
         assert_eq!(tablespaces.len(), 2);

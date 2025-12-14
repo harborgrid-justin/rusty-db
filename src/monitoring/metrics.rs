@@ -1,14 +1,13 @@
 // Metrics Collection System
 // Prometheus-compatible metrics exposition with custom metric registration
 
-use std::time::SystemTime;
-use std::time::Instant;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use std::time::{Duration};
-
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // Metric types supported by the system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -350,7 +349,9 @@ impl MetricRegistry {
     pub fn register_counter(&self, name: impl Into<String>, help: impl Into<String>) -> Counter {
         let full_name = format!("{}_{}", self.prefix, name.into());
         let counter = Counter::new(full_name.clone(), help);
-        self.metrics.write().insert(full_name, Metric::Counter(counter.clone()));
+        self.metrics
+            .write()
+            .insert(full_name, Metric::Counter(counter.clone()));
         counter
     }
 
@@ -362,14 +363,18 @@ impl MetricRegistry {
     ) -> Counter {
         let full_name = format!("{}_{}", self.prefix, name.into());
         let counter = Counter::new(full_name.clone(), help).with_labels(labels);
-        self.metrics.write().insert(full_name, Metric::Counter(counter.clone()));
+        self.metrics
+            .write()
+            .insert(full_name, Metric::Counter(counter.clone()));
         counter
     }
 
     pub fn register_gauge(&self, name: impl Into<String>, help: impl Into<String>) -> Gauge {
         let full_name = format!("{}_{}", self.prefix, name.into());
         let gauge = Gauge::new(full_name.clone(), help);
-        self.metrics.write().insert(full_name, Metric::Gauge(gauge.clone()));
+        self.metrics
+            .write()
+            .insert(full_name, Metric::Gauge(gauge.clone()));
         gauge
     }
 
@@ -381,7 +386,9 @@ impl MetricRegistry {
     ) -> Gauge {
         let full_name = format!("{}_{}", self.prefix, name.into());
         let gauge = Gauge::new(full_name.clone(), help).with_labels(labels);
-        self.metrics.write().insert(full_name, Metric::Gauge(gauge.clone()));
+        self.metrics
+            .write()
+            .insert(full_name, Metric::Gauge(gauge.clone()));
         gauge
     }
 
@@ -393,7 +400,9 @@ impl MetricRegistry {
     ) -> Histogram {
         let full_name = format!("{}_{}", self.prefix, name.into());
         let histogram = Histogram::new(full_name.clone(), help, buckets);
-        self.metrics.write().insert(full_name, Metric::Histogram(histogram.clone()));
+        self.metrics
+            .write()
+            .insert(full_name, Metric::Histogram(histogram.clone()));
         histogram
     }
 
@@ -406,14 +415,18 @@ impl MetricRegistry {
     ) -> Histogram {
         let full_name = format!("{}_{}", self.prefix, name.into());
         let histogram = Histogram::new(full_name.clone(), help, buckets).with_labels(labels);
-        self.metrics.write().insert(full_name, Metric::Histogram(histogram.clone()));
+        self.metrics
+            .write()
+            .insert(full_name, Metric::Histogram(histogram.clone()));
         histogram
     }
 
     pub fn register_summary(&self, name: impl Into<String>, help: impl Into<String>) -> Summary {
         let full_name = format!("{}_{}", self.prefix, name.into());
         let summary = Summary::new(full_name.clone(), help);
-        self.metrics.write().insert(full_name, Metric::Summary(summary.clone()));
+        self.metrics
+            .write()
+            .insert(full_name, Metric::Summary(summary.clone()));
         summary
     }
 
@@ -459,7 +472,11 @@ impl MetricRegistry {
                     ));
                 }
                 Metric::Histogram(histogram) => {
-                    output.push_str(&format!("# HELP {} {}\n", histogram.name(), histogram.help()));
+                    output.push_str(&format!(
+                        "# HELP {} {}\n",
+                        histogram.name(),
+                        histogram.help()
+                    ));
                     output.push_str(&format!("# TYPE {} histogram\n", histogram.name()));
 
                     let buckets = histogram.get_buckets();
@@ -586,18 +603,26 @@ impl MetricAggregator {
     pub fn get_max(&self, metric_name: &str) -> Option<f64> {
         let aggs = self.aggregations.read();
         aggs.get(metric_name).and_then(|entries| {
-            entries.iter().map(|(_, v)| v).cloned().fold(None, |max, v| {
-                Some(max.map_or(v, |m| if v > m { v } else { m }))
-            })
+            entries
+                .iter()
+                .map(|(_, v)| v)
+                .cloned()
+                .fold(None, |max, v| {
+                    Some(max.map_or(v, |m| if v > m { v } else { m }))
+                })
         })
     }
 
     pub fn get_min(&self, metric_name: &str) -> Option<f64> {
         let aggs = self.aggregations.read();
         aggs.get(metric_name).and_then(|entries| {
-            entries.iter().map(|(_, v)| v).cloned().fold(None, |min, v| {
-                Some(min.map_or(v, |m| if v < m { v } else { m }))
-            })
+            entries
+                .iter()
+                .map(|(_, v)| v)
+                .cloned()
+                .fold(None, |min, v| {
+                    Some(min.map_or(v, |m| if v < m { v } else { m }))
+                })
         })
     }
 

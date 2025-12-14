@@ -2,18 +2,23 @@
 // Tests all newly implemented SQL features for 100% compliance
 
 use rusty_db::{
+    catalog::{Catalog, Column, DataType, Schema},
+    constraints::ConstraintManager,
+    execution::executor::Executor,
+    index::IndexManager,
     parser::SqlParser,
     parser::SqlStatement,
-    catalog::{Catalog, Schema, Column, DataType},
-    execution::executor::Executor,
     transaction::TransactionManager,
-    index::IndexManager,
-    constraints::ConstraintManager,
     Result,
 };
 use std::sync::Arc;
 
-fn setup_test_environment() -> (Arc<Catalog>, Arc<TransactionManager>, Arc<IndexManager>, Arc<ConstraintManager>) {
+fn setup_test_environment() -> (
+    Arc<Catalog>,
+    Arc<TransactionManager>,
+    Arc<IndexManager>,
+    Arc<ConstraintManager>,
+) {
     let catalog = Arc::new(Catalog::new());
     let txn_manager = Arc::new(TransactionManager::new());
     let index_manager = Arc::new(IndexManager::new());
@@ -63,7 +68,12 @@ fn test_select_distinct() -> Result<()> {
 
     assert_eq!(stmts.len(), 1);
     match &stmts[0] {
-        SqlStatement::Select { table, columns, distinct, .. } => {
+        SqlStatement::Select {
+            table,
+            columns,
+            distinct,
+            ..
+        } => {
             assert_eq!(table, "users");
             assert_eq!(columns.len(), 1);
             assert_eq!(columns[0], "email");
@@ -150,7 +160,12 @@ fn test_create_index_parsing() -> Result<()> {
 
     assert_eq!(stmts.len(), 1);
     match &stmts[0] {
-        SqlStatement::CreateIndex { name, table, columns, unique } => {
+        SqlStatement::CreateIndex {
+            name,
+            table,
+            columns,
+            unique,
+        } => {
             assert_eq!(name, "idx_users_email");
             assert_eq!(table, "users");
             assert_eq!(columns.len(), 1);
@@ -392,7 +407,10 @@ fn test_drop_nonexistent_view_error() -> Result<()> {
 
     // Attempt to drop non-existent view
     let result = catalog.drop_view("nonexistent");
-    assert!(result.is_err(), "Should error when dropping non-existent view");
+    assert!(
+        result.is_err(),
+        "Should error when dropping non-existent view"
+    );
 
     Ok(())
 }
@@ -429,20 +447,18 @@ fn test_enterprise_constraint_validation() -> Result<()> {
     let (catalog, txn_manager, index_manager, constraint_manager) = setup_test_environment();
     create_test_table(&catalog)?;
 
-    let executor = Executor::new_with_managers(
-        catalog,
-        txn_manager,
-        index_manager,
-        constraint_manager,
-    );
+    let executor =
+        Executor::new_with_managers(catalog, txn_manager, index_manager, constraint_manager);
 
     // Test INSERT with constraint validation
     let stmt = SqlStatement::Insert {
         table: "users".to_string(),
         columns: vec!["id".to_string(), "email".to_string(), "name".to_string()],
-        values: vec![
-            vec!["1".to_string(), "test@example.com".to_string(), "Test User".to_string()],
-        ],
+        values: vec![vec![
+            "1".to_string(),
+            "test@example.com".to_string(),
+            "Test User".to_string(),
+        ]],
     };
 
     let result = executor.execute(stmt)?;
@@ -477,10 +493,12 @@ fn test_select_group_by_having() -> Result<()> {
     let stmts = parser.parse(sql)?;
 
     match &stmts[0] {
-        SqlStatement::Select { group_by, having, .. } => {
+        SqlStatement::Select {
+            group_by, having, ..
+        } => {
             assert_eq!(group_by.len(), 1);
             assert_eq!(group_by[0], "name");
-            
+
             assert!(having.is_some());
             let having_str = having.as_ref().unwrap();
             assert!(having_str.contains("COUNT(*) > 5"));

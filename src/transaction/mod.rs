@@ -71,24 +71,24 @@
 // =============================================================================
 
 // Core types and errors
-pub mod types;
 pub mod error;
 pub mod traits;
+pub mod types;
 
 // Transaction lifecycle
-pub mod manager;
 pub mod lock_manager;
+pub mod manager;
 pub mod timeout;
 
 // Durability and recovery
-pub mod wal_manager;
 pub mod recovery_manager;
+pub mod wal_manager;
 
 // Concurrency control
-pub mod version_store;
-pub mod snapshot;
 pub mod deadlock;
 pub mod occ_manager;
+pub mod snapshot;
+pub mod version_store;
 
 // Distributed transactions
 pub mod two_phase_commit;
@@ -97,29 +97,23 @@ pub mod two_phase_commit;
 pub mod statistics;
 
 // Legacy submodules (existing)
-pub mod mvcc;
 pub mod distributed;
-pub mod wal;
 pub mod locks;
-pub mod recovery;
+pub mod mvcc;
 pub mod occ;
+pub mod recovery;
+pub mod wal;
 
 // =============================================================================
 // Re-exports for convenient access
 // =============================================================================
 
 // Re-export common types for legacy submodule compatibility
-pub use crate::common::{TransactionId, LogSequenceNumber};
+pub use crate::common::{LogSequenceNumber, TransactionId};
 
 // Core types
 pub use types::{
-    IsolationLevel,
-    LockGranularity,
-    LockMode,
-    Savepoint,
-    Transaction,
-    TransactionState,
-    Version,
+    IsolationLevel, LockGranularity, LockMode, Savepoint, Transaction, TransactionState, Version,
 };
 
 // Error types
@@ -127,15 +121,8 @@ pub use error::{TransactionError, TransactionResult};
 
 // Traits
 pub use traits::{
-    DeadlockDetection,
-    LockManagement,
-    Recovery,
-    SnapshotManagement,
-    TimeoutManagement,
-    TransactionEventListener,
-    TransactionLifecycle,
-    Validation,
-    WriteAheadLog,
+    DeadlockDetection, LockManagement, Recovery, SnapshotManagement, TimeoutManagement,
+    TransactionEventListener, TransactionLifecycle, Validation, WriteAheadLog,
 };
 
 // Transaction manager
@@ -143,25 +130,18 @@ pub use manager::TransactionManager;
 
 // Lock management
 pub use lock_manager::{
-    LockEscalationManager,
-    LockManager,
-    LockRequest,
-    LockTableEntry,
-    ReadWriteLockManager,
+    LockEscalationManager, LockManager, LockRequest, LockTableEntry, ReadWriteLockManager,
 };
 
 // WAL
 pub use wal_manager::{WALConfig, WALEntry, WALManager};
 
 // Version store
-pub use version_store::{GarbageCollector, GCStats, VersionStore};
+pub use version_store::{GCStats, GarbageCollector, VersionStore};
 
 // Deadlock detection
 pub use deadlock::{
-    DeadlockDetector,
-    DeadlockDetectorConfig,
-    DeadlockStats,
-    VictimSelectionPolicy,
+    DeadlockDetector, DeadlockDetectorConfig, DeadlockStats, VictimSelectionPolicy,
 };
 
 // Snapshot isolation
@@ -172,10 +152,7 @@ pub use recovery_manager::{RecoveryManager, RecoveryStats};
 
 // Two-phase commit
 pub use two_phase_commit::{
-    ParticipantInfo,
-    ParticipantState,
-    TwoPhaseCommitCoordinator,
-    TwoPhaseCommitStats,
+    ParticipantInfo, ParticipantState, TwoPhaseCommitCoordinator, TwoPhaseCommitStats,
 };
 
 // OCC
@@ -183,10 +160,7 @@ pub use occ_manager::{OCCStats, OptimisticConcurrencyControl};
 
 // Statistics
 pub use statistics::{
-    LockStatistics,
-    LockStatisticsSummary,
-    StatisticsSummary,
-    TransactionStatistics,
+    LockStatistics, LockStatisticsSummary, StatisticsSummary, TransactionStatistics,
 };
 
 // Timeout

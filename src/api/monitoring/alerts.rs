@@ -2,11 +2,11 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::{Arc};
-use std::collections::{HashMap, BTreeMap, VecDeque};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::sync::Arc;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::error::DbError;
 
@@ -49,14 +49,16 @@ pub struct Alert {
 }
 
 impl Alert {
-    pub fn new(
-        rule_name: String,
-        severity: AlertSeverity,
-        message: String,
-        value: f64,
-    ) -> Self {
+    pub fn new(rule_name: String, severity: AlertSeverity, message: String, value: f64) -> Self {
         let id = uuid::Uuid::new_v4().to_string();
-        let fingerprint = format!("{}{}", rule_name, SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        let fingerprint = format!(
+            "{}{}",
+            rule_name,
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+        );
 
         Self {
             id,
@@ -182,12 +184,7 @@ impl ThresholdAlertRule {
                         value
                     );
 
-                    let mut alert = Alert::new(
-                        self.name.clone(),
-                        self.severity,
-                        message,
-                        value,
-                    );
+                    let mut alert = Alert::new(self.name.clone(), self.severity, message, value);
 
                     for (k, v) in &self.labels {
                         alert = alert.with_label(k.clone(), v.clone());
@@ -238,9 +235,12 @@ impl MultiConditionAlertRule {
             return None;
         }
 
-        let results: Vec<bool> = self.conditions.iter()
+        let results: Vec<bool> = self
+            .conditions
+            .iter()
             .map(|cond| {
-                metric_values.get(&cond.metric_name)
+                metric_values
+                    .get(&cond.metric_name)
                     .map(|&value| cond.operator.evaluate(value, cond.threshold))
                     .unwrap_or(false)
             })
@@ -293,7 +293,9 @@ impl AlertRoute {
         }
 
         self.matchers.iter().all(|matcher| {
-            alert.labels.get(&matcher.label)
+            alert
+                .labels
+                .get(&matcher.label)
                 .map(|v| {
                     if matcher.is_regex {
                         // Simple string contains for now
@@ -330,7 +332,9 @@ impl AlertSilence {
         }
 
         self.matchers.iter().all(|matcher| {
-            alert.labels.get(&matcher.label)
+            alert
+                .labels
+                .get(&matcher.label)
                 .map(|v| v == &matcher.value)
                 .unwrap_or(false)
         })
@@ -411,7 +415,10 @@ impl NotificationChannel for EmailChannel {
     }
 
     fn send(&self, alert: &Alert) -> Result<(), DbError> {
-        println!("Sending email alert from {} to {:?}: {}", self.from, self.to, alert.message);
+        println!(
+            "Sending email alert from {} to {:?}: {}",
+            self.from, self.to, alert.message
+        );
         Ok(())
     }
 }
@@ -491,7 +498,9 @@ impl AlertManager {
     }
 
     pub fn add_channel(&self, channel: Arc<dyn NotificationChannel>) {
-        self.channels.write().insert(channel.name().to_string(), channel);
+        self.channels
+            .write()
+            .insert(channel.name().to_string(), channel);
     }
 
     pub fn evaluate_rules(&self, metrics: &HashMap<String, f64>) {
@@ -524,7 +533,9 @@ impl AlertManager {
         let fingerprint = alert.fingerprint.clone();
 
         // Add to active alerts
-        self.active_alerts.write().insert(fingerprint, alert.clone());
+        self.active_alerts
+            .write()
+            .insert(fingerprint, alert.clone());
 
         // Add to history
         let mut history = self.alert_history.write();

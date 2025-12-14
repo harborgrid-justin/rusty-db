@@ -3,13 +3,15 @@
 // This module provides compilation, validation, semantic analysis, and dependency
 // tracking for stored procedures, functions, packages, and triggers.
 
-use std::collections::HashSet;
-use crate::{Result, DbError};
-use crate::procedures::parser::{PlSqlParser, PlSqlBlock, Statement, Expression, PlSqlType, LiteralValue, BinaryOperator};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
+use crate::procedures::parser::{
+    BinaryOperator, Expression, LiteralValue, PlSqlBlock, PlSqlParser, PlSqlType, Statement,
+};
+use crate::{DbError, Result};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
 
 // Compilation result
 #[derive(Debug, Clone)]
@@ -237,7 +239,12 @@ impl PlSqlCompiler {
                 self.analyze_expression(value, symbol_table, result)?;
             }
 
-            Statement::If { condition, then_block, elsif_blocks, else_block } => {
+            Statement::If {
+                condition,
+                then_block,
+                elsif_blocks,
+                else_block,
+            } => {
                 self.analyze_expression(condition, symbol_table, result)?;
 
                 for stmt in then_block {
@@ -264,14 +271,23 @@ impl PlSqlCompiler {
                 }
             }
 
-            Statement::While { condition, statements } => {
+            Statement::While {
+                condition,
+                statements,
+            } => {
                 self.analyze_expression(condition, symbol_table, result)?;
                 for stmt in statements {
                     self.analyze_statement(stmt, symbol_table, result)?;
                 }
             }
 
-            Statement::ForNumeric { iterator, start, end, statements, .. } => {
+            Statement::ForNumeric {
+                iterator,
+                start,
+                end,
+                statements,
+                ..
+            } => {
                 // Add iterator to symbol table temporarily
                 symbol_table.add_variable(iterator.clone(), PlSqlType::Integer);
 
@@ -296,7 +312,12 @@ impl PlSqlCompiler {
                 }
             }
 
-            Statement::SelectInto { columns: _columns, into_vars, from, where_clause } => {
+            Statement::SelectInto {
+                columns: _columns,
+                into_vars,
+                from,
+                where_clause,
+            } => {
                 // Add table dependency
                 result.add_dependency(from.clone());
 
@@ -318,7 +339,11 @@ impl PlSqlCompiler {
                 }
             }
 
-            Statement::Case { selector, when_clauses, else_clause } => {
+            Statement::Case {
+                selector,
+                when_clauses,
+                else_clause,
+            } => {
                 if let Some(sel) = selector {
                     self.analyze_expression(sel, symbol_table, result)?;
                 }
@@ -438,40 +463,59 @@ impl PlSqlCompiler {
     fn infer_expression_type(&self, expr: &Expression, _symbol_table: &SymbolTable) -> PlSqlType {
         match expr {
             Expression::Literal(lit) => match lit {
-                LiteralValue::Integer(_) | LiteralValue::Float(_) => PlSqlType::Number { precision: None, scale: None },
+                LiteralValue::Integer(_) | LiteralValue::Float(_) => PlSqlType::Number {
+                    precision: None,
+                    scale: None,
+                },
                 LiteralValue::String(_) => PlSqlType::Varchar2(4000),
                 LiteralValue::Boolean(_) => PlSqlType::Boolean,
                 LiteralValue::Null => PlSqlType::Varchar2(1), // Null can be any type
                 LiteralValue::Date(_) => PlSqlType::Date,
                 LiteralValue::Timestamp(_) => PlSqlType::Timestamp,
             },
-            Expression::Variable(name) => {
-                _symbol_table.get_type(name).cloned().unwrap_or(PlSqlType::Varchar2(4000))
-            },
+            Expression::Variable(name) => _symbol_table
+                .get_type(name)
+                .cloned()
+                .unwrap_or(PlSqlType::Varchar2(4000)),
             Expression::BinaryOp { op, .. } => {
                 // Arithmetic ops return Number, comparisons return Boolean, concat returns Varchar2
                 match op {
-                    BinaryOperator::Add | BinaryOperator::Subtract | BinaryOperator::Multiply |
-                    BinaryOperator::Divide | BinaryOperator::Modulo | BinaryOperator::Power => {
-                        PlSqlType::Number { precision: None, scale: None }
-                    }
+                    BinaryOperator::Add
+                    | BinaryOperator::Subtract
+                    | BinaryOperator::Multiply
+                    | BinaryOperator::Divide
+                    | BinaryOperator::Modulo
+                    | BinaryOperator::Power => PlSqlType::Number {
+                        precision: None,
+                        scale: None,
+                    },
                     BinaryOperator::Concat => PlSqlType::Varchar2(4000),
-                    BinaryOperator::Equal | BinaryOperator::NotEqual | BinaryOperator::LessThan |
-                    BinaryOperator::LessThanOrEqual | BinaryOperator::GreaterThan |
-                    BinaryOperator::GreaterThanOrEqual | BinaryOperator::And | BinaryOperator::Or |
-                    BinaryOperator::Like | BinaryOperator::In | BinaryOperator::NotIn => PlSqlType::Boolean,
+                    BinaryOperator::Equal
+                    | BinaryOperator::NotEqual
+                    | BinaryOperator::LessThan
+                    | BinaryOperator::LessThanOrEqual
+                    | BinaryOperator::GreaterThan
+                    | BinaryOperator::GreaterThanOrEqual
+                    | BinaryOperator::And
+                    | BinaryOperator::Or
+                    | BinaryOperator::Like
+                    | BinaryOperator::In
+                    | BinaryOperator::NotIn => PlSqlType::Boolean,
                 }
-            },
+            }
             Expression::FunctionCall { name, .. } => {
                 // Common function return types
                 match name.to_uppercase().as_str() {
-                    "TO_NUMBER" | "LENGTH" | "INSTR" | "NVL2" => PlSqlType::Number { precision: None, scale: None },
+                    "TO_NUMBER" | "LENGTH" | "INSTR" | "NVL2" => PlSqlType::Number {
+                        precision: None,
+                        scale: None,
+                    },
                     "TO_CHAR" | "SUBSTR" | "UPPER" | "LOWER" | "TRIM" => PlSqlType::Varchar2(4000),
                     "TO_DATE" | "SYSDATE" | "CURRENT_DATE" => PlSqlType::Date,
                     "NVL" => PlSqlType::Varchar2(4000), // Depends on args
                     _ => PlSqlType::Varchar2(4000),
                 }
-            },
+            }
             _ => PlSqlType::Varchar2(4000),
         }
     }
@@ -495,14 +539,23 @@ impl PlSqlCompiler {
     }
 
     // Check types in a statement
-    fn check_statement_types(&self, _stmt: &Statement, _symbol_table: &SymbolTable, _result: &mut CompilationResult) -> Result<()> {
+    fn check_statement_types(
+        &self,
+        _stmt: &Statement,
+        _symbol_table: &SymbolTable,
+        _result: &mut CompilationResult,
+    ) -> Result<()> {
         // Statement-level type checking would go here
         // For now, expression-level checking is sufficient
         Ok(())
     }
 
     // Analyze dependencies
-    fn analyze_dependencies(&self, _block: &PlSqlBlock, result: &mut CompilationResult) -> Result<()> {
+    fn analyze_dependencies(
+        &self,
+        _block: &PlSqlBlock,
+        result: &mut CompilationResult,
+    ) -> Result<()> {
         // Dependencies were collected during semantic analysis
         // Here we could perform additional dependency-related checks
 
@@ -622,7 +675,9 @@ impl PlSqlCompiler {
         let mut to_recompile: Vec<(String, Option<PlSqlBlock>)> = Vec::new();
 
         for (name, obj) in objects.iter() {
-            if obj.status == CompilationStatus::Invalid || obj.status == CompilationStatus::NeedsRecompilation {
+            if obj.status == CompilationStatus::Invalid
+                || obj.status == CompilationStatus::NeedsRecompilation
+            {
                 // Get source code for object and queue for recompilation
                 // In a full implementation, source would be stored in the CompiledObject
                 // or retrieved from a source code repository
@@ -746,9 +801,7 @@ impl DependencyGraph {
     // Add a dependency edge
     pub fn add_dependency(&self, from: String, to: String) {
         let mut graph = self.graph.write();
-        graph.entry(from)
-            .or_insert_with(HashSet::new)
-            .insert(to);
+        graph.entry(from).or_insert_with(HashSet::new).insert(to);
     }
 
     // Get all dependencies of an object
@@ -772,7 +825,8 @@ impl DependencyGraph {
         }
 
         // Find nodes with in-degree 0
-        let mut queue: Vec<String> = in_degree.iter()
+        let mut queue: Vec<String> = in_degree
+            .iter()
             .filter(|(_, &deg)| deg == 0)
             .map(|(node, _)| node.clone())
             .collect();
@@ -794,7 +848,9 @@ impl DependencyGraph {
 
         // Check for cycles
         if result.len() != in_degree.len() {
-            return Err(DbError::InvalidInput("Circular dependency detected".to_string()));
+            return Err(DbError::InvalidInput(
+                "Circular dependency detected".to_string(),
+            ));
         }
 
         Ok(result)
@@ -844,7 +900,10 @@ mod tests {
         let result = compiler.compile(source)?;
 
         assert!(!result.success);
-        assert!(result.errors.iter().any(|e| e.error_type == ErrorType::UndefinedVariable));
+        assert!(result
+            .errors
+            .iter()
+            .any(|e| e.error_type == ErrorType::UndefinedVariable));
 
         Ok(())
     }
@@ -868,7 +927,13 @@ mod tests {
         let mut table = SymbolTable::new();
 
         table.add_variable("x".to_string(), PlSqlType::Integer);
-        table.add_constant("PI".to_string(), PlSqlType::Number { precision: None, scale: None });
+        table.add_constant(
+            "PI".to_string(),
+            PlSqlType::Number {
+                precision: None,
+                scale: None,
+            },
+        );
 
         assert!(table.is_defined("x"));
         assert!(table.is_defined("PI"));

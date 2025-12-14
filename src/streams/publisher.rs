@@ -3,18 +3,18 @@
 // Kafka-like event publishing with topics, partitions, ordering guarantees,
 // acknowledgments, and backpressure management.
 
+use crate::error::{DbError, Result};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::hash::{Hash, Hasher};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Instant, SystemTime};
-use std::hash::{Hash, Hasher};
-use parking_lot::{RwLock};
-use serde::{Deserialize, Serialize};
-use tokio::sync::{Semaphore};
-use crate::error::{DbError, Result};
+use tokio::sync::Semaphore;
 
 // Event serialization format
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -110,7 +110,7 @@ impl TopicConfig {
             num_partitions,
             replication_factor: 1,
             retention_period: Duration::from_secs(7 * 24 * 3600), // 7 days
-            max_message_size: 1024 * 1024, // 1 MB
+            max_message_size: 1024 * 1024,                        // 1 MB
             compression_enabled: true,
             ordering: OrderingGuarantee::PartitionOrdered,
         }
@@ -245,7 +245,8 @@ impl Topic {
             }
             _ => {
                 // Round-robin or random for unordered
-                (self.total_events.load(Ordering::Relaxed) % self.config.num_partitions as u64) as u32
+                (self.total_events.load(Ordering::Relaxed) % self.config.num_partitions as u64)
+                    as u32
             }
         }
     }
@@ -363,9 +364,10 @@ impl EventPublisher {
 
         let mut topics = self.topics.write();
         if topics.contains_key(&topic_name) {
-            return Err(DbError::InvalidOperation(
-                format!("Topic '{}' already exists", topic_name)
-            ));
+            return Err(DbError::InvalidOperation(format!(
+                "Topic '{}' already exists",
+                topic_name
+            )));
         }
 
         topics.insert(topic_name, topic);
@@ -375,7 +377,8 @@ impl EventPublisher {
     // Delete a topic
     pub async fn delete_topic(&self, topic_name: &str) -> Result<()> {
         let mut topics = self.topics.write();
-        topics.remove(topic_name)
+        topics
+            .remove(topic_name)
             .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?;
         Ok(())
     }
@@ -388,7 +391,8 @@ impl EventPublisher {
     // Get topic configuration
     pub fn get_topic_config(&self, topic_name: &str) -> Result<TopicConfig> {
         let topics = self.topics.read();
-        let topic = topics.get(topic_name)
+        let topic = topics
+            .get(topic_name)
             .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?;
         Ok(topic.config.clone())
     }
@@ -408,7 +412,8 @@ impl EventPublisher {
 
         // Get topic
         let topics = self.topics.read();
-        let topic = topics.get(&event.topic)
+        let topic = topics
+            .get(&event.topic)
             .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", event.topic)))?
             .clone();
         drop(topics);
@@ -425,10 +430,9 @@ impl EventPublisher {
         event.partition = partition_id;
 
         // Get partition
-        let partition = topic.get_partition(partition_id)
-            .ok_or_else(|| DbError::InvalidOperation(
-                format!("Partition {} not found", partition_id)
-            ))?;
+        let partition = topic.get_partition(partition_id).ok_or_else(|| {
+            DbError::InvalidOperation(format!("Partition {} not found", partition_id))
+        })?;
 
         // Allocate offset
         let offset = partition.allocate_offset();
@@ -444,7 +448,9 @@ impl EventPublisher {
             stats.total_events += 1;
             stats.total_bytes += event_size as u64;
             topic.total_events.fetch_add(1, Ordering::SeqCst);
-            topic.total_bytes.fetch_add(event_size as u64, Ordering::SeqCst);
+            topic
+                .total_bytes
+                .fetch_add(event_size as u64, Ordering::SeqCst);
 
             let latency_ms = start_time.elapsed().as_millis() as f64;
             stats.avg_publish_latency_ms =
@@ -491,7 +497,8 @@ impl EventPublisher {
         F: FnOnce(&PublishedEvent, u32) -> u32,
     {
         let topics = self.topics.read();
-        let topic = topics.get(&event.topic)
+        let topic = topics
+            .get(&event.topic)
             .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", event.topic)))?;
 
         let num_partitions = topic.config.num_partitions;
@@ -511,13 +518,13 @@ impl EventPublisher {
         max_events: usize,
     ) -> Result<Vec<PublishedEvent>> {
         let topics = self.topics.read();
-        let topic = topics.get(topic_name)
+        let topic = topics
+            .get(topic_name)
             .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?;
 
-        let partition = topic.get_partition(partition_id)
-            .ok_or_else(|| DbError::InvalidOperation(
-                format!("Partition {} not found", partition_id)
-            ))?;
+        let partition = topic.get_partition(partition_id).ok_or_else(|| {
+            DbError::InvalidOperation(format!("Partition {} not found", partition_id))
+        })?;
 
         Ok(partition.dequeue_batch(max_events))
     }
@@ -525,13 +532,13 @@ impl EventPublisher {
     // Get partition offset
     pub fn get_partition_offset(&self, topic_name: &str, partition_id: u32) -> Result<u64> {
         let topics = self.topics.read();
-        let topic = topics.get(topic_name)
+        let topic = topics
+            .get(topic_name)
             .ok_or_else(|| DbError::NotFound(format!("Topic '{}' not found", topic_name)))?;
 
-        let partition = topic.get_partition(partition_id)
-            .ok_or_else(|| DbError::InvalidOperation(
-                format!("Partition {} not found", partition_id)
-            ))?;
+        let partition = topic.get_partition(partition_id).ok_or_else(|| {
+            DbError::InvalidOperation(format!("Partition {} not found", partition_id))
+        })?;
 
         Ok(partition.next_offset.load(Ordering::SeqCst))
     }
@@ -574,7 +581,9 @@ impl EventPublisher {
         }
 
         // Simplified compression (use proper compression in production)
-        event.headers.insert("compressed".to_string(), "true".to_string());
+        event
+            .headers
+            .insert("compressed".to_string(), "true".to_string());
         Ok(event)
     }
 }
@@ -582,7 +591,11 @@ impl EventPublisher {
 // Event serializer trait
 pub trait EventSerializer {
     fn serialize<T: Serialize>(&self, value: &T, format: SerializationFormat) -> Result<Vec<u8>>;
-    fn deserialize<T: for<'de> Deserialize<'de>>(&self, data: &[u8], format: SerializationFormat) -> Result<T>;
+    fn deserialize<T: for<'de> Deserialize<'de>>(
+        &self,
+        data: &[u8],
+        format: SerializationFormat,
+    ) -> Result<T>;
 }
 
 // Default event serializer
@@ -592,38 +605,40 @@ impl EventSerializer for DefaultSerializer {
     fn serialize<T: Serialize>(&self, value: &T, format: SerializationFormat) -> Result<Vec<u8>> {
         match format {
             SerializationFormat::Json => {
-                serde_json::to_vec(value)
-                    .map_err(|e| DbError::SerializationError(e.to_string()))
+                serde_json::to_vec(value).map_err(|e| DbError::SerializationError(e.to_string()))
             }
             SerializationFormat::MessagePack => {
-                rmp_serde::to_vec(value)
-                    .map_err(|e| DbError::SerializationError(e.to_string()))
+                rmp_serde::to_vec(value).map_err(|e| DbError::SerializationError(e.to_string()))
             }
             SerializationFormat::Binary => {
                 // Use JSON as fallback for binary format to avoid bincode trait requirements
-                serde_json::to_vec(value)
-                    .map_err(|e| DbError::SerializationError(e.to_string()))
+                serde_json::to_vec(value).map_err(|e| DbError::SerializationError(e.to_string()))
             }
-            _ => Err(DbError::NotImplemented("Serialization format not supported".to_string())),
+            _ => Err(DbError::NotImplemented(
+                "Serialization format not supported".to_string(),
+            )),
         }
     }
 
-    fn deserialize<T: for<'de> Deserialize<'de>>(&self, data: &[u8], format: SerializationFormat) -> Result<T> {
+    fn deserialize<T: for<'de> Deserialize<'de>>(
+        &self,
+        data: &[u8],
+        format: SerializationFormat,
+    ) -> Result<T> {
         match format {
             SerializationFormat::Json => {
-                serde_json::from_slice(data)
-                    .map_err(|e| DbError::SerializationError(e.to_string()))
+                serde_json::from_slice(data).map_err(|e| DbError::SerializationError(e.to_string()))
             }
             SerializationFormat::MessagePack => {
-                rmp_serde::from_slice(data)
-                    .map_err(|e| DbError::SerializationError(e.to_string()))
+                rmp_serde::from_slice(data).map_err(|e| DbError::SerializationError(e.to_string()))
             }
             SerializationFormat::Binary => {
                 // Use JSON as fallback for binary format to avoid bincode trait requirements
-                serde_json::from_slice(data)
-                    .map_err(|e| DbError::SerializationError(e.to_string()))
+                serde_json::from_slice(data).map_err(|e| DbError::SerializationError(e.to_string()))
             }
-            _ => Err(DbError::NotImplemented("Deserialization format not supported".to_string())),
+            _ => Err(DbError::NotImplemented(
+                "Deserialization format not supported".to_string(),
+            )),
         }
     }
 }
@@ -736,8 +751,12 @@ mod tests {
         }
 
         let data = TestData { value: 42 };
-        let bytes = serializer.serialize(&data, SerializationFormat::Json).unwrap();
-        let deserialized: TestData = serializer.deserialize(&bytes, SerializationFormat::Json).unwrap();
+        let bytes = serializer
+            .serialize(&data, SerializationFormat::Json)
+            .unwrap();
+        let deserialized: TestData = serializer
+            .deserialize(&bytes, SerializationFormat::Json)
+            .unwrap();
 
         assert_eq!(data, deserialized);
     }

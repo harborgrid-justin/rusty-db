@@ -21,12 +21,12 @@
 // ```
 
 use std::collections::BTreeMap;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::error::{Result, DbError};
+use crate::common::{RowId, TableId, TransactionId, Value};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Type Aliases
@@ -122,7 +122,10 @@ impl TimeTravelEngine {
         stats.total_query_time_ms += elapsed.as_millis() as u64;
 
         // Cache results
-        self.query_cache.write().unwrap().insert(cache_key, results.clone());
+        self.query_cache
+            .write()
+            .unwrap()
+            .insert(cache_key, results.clone());
 
         Ok(results)
     }
@@ -322,7 +325,9 @@ impl ScnTimeline {
             .range(..=timestamp)
             .next_back()
             .map(|(_, &scn)| scn)
-            .ok_or_else(|| DbError::Validation(format!("No SCN found for timestamp: {}", timestamp)))
+            .ok_or_else(|| {
+                DbError::Validation(format!("No SCN found for timestamp: {}", timestamp))
+            })
     }
 
     fn get_latest_scn(&self) -> SCN {
@@ -347,14 +352,11 @@ impl VersionIndex {
         }
     }
 
-    fn add_version(
-        &mut self,
-        table_id: TableId,
-        row_id: RowId,
-        version: RowVersion,
-    ) -> Result<()> {
+    fn add_version(&mut self, table_id: TableId, row_id: RowId, version: RowVersion) -> Result<()> {
         let table_chains = self.chains.entry(table_id).or_insert_with(HashMap::new);
-        let chain = table_chains.entry(row_id).or_insert_with(|| VersionChain::new(row_id));
+        let chain = table_chains
+            .entry(row_id)
+            .or_insert_with(|| VersionChain::new(row_id));
         chain.add_version(version);
         Ok(())
     }
@@ -408,7 +410,8 @@ impl VersionChain {
 
     fn add_version(&mut self, version: RowVersion) {
         // Insert in SCN order
-        let pos = self.versions
+        let pos = self
+            .versions
             .binary_search_by_key(&version.scn_created, |v| v.scn_created)
             .unwrap_or_else(|e| e);
         self.versions.insert(pos, version);
@@ -423,19 +426,15 @@ impl VersionChain {
         self.versions
             .iter()
             .rev()
-            .find(|v| {
-                v.scn_created <= scn &&
-                v.scn_deleted.map(|del| del > scn).unwrap_or(true)
-            })
+            .find(|v| v.scn_created <= scn && v.scn_deleted.map(|del| del > scn).unwrap_or(true))
     }
 
     /// Filter versions by SCN range
     fn filter_by_scn_range(&self, start_scn: SCN, end_scn: SCN) -> VersionChain {
-        let filtered_versions: Vec<RowVersion> = self.versions
+        let filtered_versions: Vec<RowVersion> = self
+            .versions
             .iter()
-            .filter(|v| {
-                v.scn_created >= start_scn && v.scn_created <= end_scn
-            })
+            .filter(|v| v.scn_created >= start_scn && v.scn_created <= end_scn)
             .cloned()
             .collect();
 
@@ -454,9 +453,9 @@ impl VersionChain {
 
         let mut keep_indices = Vec::new();
         for (i, version) in self.versions.iter().enumerate() {
-            let should_keep = version.scn_deleted.is_none() ||
-                             i == self.versions.len() - 1 ||
-                             self.versions[i + 1].scn_created != version.scn_deleted.unwrap();
+            let should_keep = version.scn_deleted.is_none()
+                || i == self.versions.len() - 1
+                || self.versions[i + 1].scn_created != version.scn_deleted.unwrap();
 
             if should_keep {
                 keep_indices.push(i);
@@ -514,8 +513,7 @@ pub struct BiTemporalMetadata {
 
 impl BiTemporalMetadata {
     fn is_valid_at(&self, timestamp: Timestamp) -> bool {
-        timestamp >= self.valid_from &&
-        self.valid_to.map(|to| timestamp < to).unwrap_or(true)
+        timestamp >= self.valid_from && self.valid_to.map(|to| timestamp < to).unwrap_or(true)
     }
 }
 
@@ -624,12 +622,8 @@ impl TemporalPredicate {
             TemporalPredicate::LessThan(col, val) => {
                 values.get(*col).map(|v| v < val).unwrap_or(false)
             }
-            TemporalPredicate::And(left, right) => {
-                left.evaluate(values) && right.evaluate(values)
-            }
-            TemporalPredicate::Or(left, right) => {
-                left.evaluate(values) || right.evaluate(values)
-            }
+            TemporalPredicate::And(left, right) => left.evaluate(values) && right.evaluate(values),
+            TemporalPredicate::Or(left, right) => left.evaluate(values) || right.evaluate(values),
         }
     }
 }
@@ -687,7 +681,7 @@ pub struct TimeTravelStats {
     /// Compacted versions
     pub versions_compacted: u64,
     pub current_scn: (),
-    pub oldest_scn: ()
+    pub oldest_scn: (),
 }
 
 impl TimeTravelStats {
@@ -765,9 +759,7 @@ pub fn current_timestamp() -> Timestamp {
 
 /// Convert system time to timestamp
 pub fn system_time_to_timestamp(time: SystemTime) -> Timestamp {
-    time.duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_micros() as i64
+    time.duration_since(UNIX_EPOCH).unwrap().as_micros() as i64
 }
 
 /// Convert timestamp to system time
@@ -879,7 +871,10 @@ mod tests {
 
         let pred = TemporalPredicate::And(
             Box::new(TemporalPredicate::Equals(0, Value::Integer(10))),
-            Box::new(TemporalPredicate::Equals(1, Value::String("test".to_string()))),
+            Box::new(TemporalPredicate::Equals(
+                1,
+                Value::String("test".to_string()),
+            )),
         );
         assert!(pred.evaluate(&values));
     }

@@ -16,21 +16,21 @@
 // cluster nodes using multiple transport protocols (TCP, UDP, RDMA-like) with
 // automatic failover and adaptive routing based on network conditions.
 
-use tokio::sync::oneshot;
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::time::Instant;
-use crate::error::DbError;
 use crate::common::NodeId;
+use crate::error::DbError;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::Arc;
-use std::time::{Duration};
-use parking_lot::{RwLock};
-use tokio::sync::broadcast;
-use tokio::net::{TcpListener, TcpStream};
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::broadcast;
+use tokio::sync::oneshot;
 
 // ============================================================================
 // Constants
@@ -104,7 +104,18 @@ pub struct Message {
 }
 
 // Message type classification
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Hash,
+    bincode::Encode,
+    bincode::Decode,
+)]
 pub enum MessageType {
     // Heartbeat message
     Heartbeat,
@@ -132,7 +143,19 @@ pub enum MessageType {
 }
 
 // Message priority levels
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    bincode::Encode,
+    bincode::Decode,
+)]
 pub enum MessagePriority {
     // Low priority - background tasks
     Low = 0,
@@ -242,9 +265,7 @@ impl NodeHealth {
 
     /// Reserved for health monitoring
 
-
     #[allow(dead_code)]
-
 
     fn update_heartbeat(&mut self) {
         let now = Instant::now();
@@ -280,17 +301,22 @@ impl NodeHealth {
 
         // Calculate mean and std dev
         if self.heartbeat_intervals.len() > 1 {
-            let sum: f64 = self.heartbeat_intervals.iter()
+            let sum: f64 = self
+                .heartbeat_intervals
+                .iter()
                 .map(|d| d.as_millis() as f64)
                 .sum();
             self.mean_interval_ms = sum / self.heartbeat_intervals.len() as f64;
 
-            let variance: f64 = self.heartbeat_intervals.iter()
+            let variance: f64 = self
+                .heartbeat_intervals
+                .iter()
                 .map(|d| {
                     let diff = d.as_millis() as f64 - self.mean_interval_ms;
                     diff * diff
                 })
-                .sum::<f64>() / self.heartbeat_intervals.len() as f64;
+                .sum::<f64>()
+                / self.heartbeat_intervals.len() as f64;
 
             self.std_dev_interval_ms = variance.sqrt().max(1.0); // Avoid division by zero
         }
@@ -431,11 +457,15 @@ impl Connection {
 
                 // Send length prefix
                 let len = data.len() as u32;
-                stream.write_u32(len).await
+                stream
+                    .write_u32(len)
+                    .await
                     .map_err(|e| DbError::Network(e.to_string()))?;
 
                 // Send data
-                stream.write_all(&data).await
+                stream
+                    .write_all(&data)
+                    .await
                     .map_err(|e| DbError::Network(e.to_string()))?;
 
                 // Update statistics
@@ -456,7 +486,9 @@ impl Connection {
 
         if let Some(stream) = stream_guard.as_mut() {
             // Read length prefix
-            let len = stream.read_u32().await
+            let len = stream
+                .read_u32()
+                .await
                 .map_err(|e| DbError::Network(e.to_string()))?;
 
             if len > MAX_MESSAGE_SIZE as u32 {
@@ -465,7 +497,9 @@ impl Connection {
 
             // Read data
             let mut buffer = vec![0u8; len as usize];
-            stream.read_exact(&mut buffer).await
+            stream
+                .read_exact(&mut buffer)
+                .await
                 .map_err(|e| DbError::Network(e.to_string()))?;
 
             // Deserialize
@@ -495,9 +529,7 @@ impl Connection {
 
     /// Reserved for performance monitoring
 
-
     #[allow(dead_code)]
-
 
     fn average_latency(&self) -> u64 {
         let samples = self.latency_samples.lock().unwrap();
@@ -593,10 +625,10 @@ impl Default for InterconnectConfig {
             adaptive_routing: true,
             max_retries: 3,
             enable_compression: false,
-            enable_batching: true,        // Enable message batching
-            batch_window_ms: 1,           // 1ms batching window
-            max_batch_size: 100,          // Up to 100 messages per batch
-            phi_threshold: 8.0,           // Phi threshold for failure detection
+            enable_batching: true, // Enable message batching
+            batch_window_ms: 1,    // 1ms batching window
+            max_batch_size: 100,   // Up to 100 messages per batch
+            phi_threshold: 8.0,    // Phi threshold for failure detection
         }
     }
 }
@@ -660,11 +692,7 @@ pub struct InterconnectStatistics {
 
 impl ClusterInterconnect {
     // Create a new cluster interconnect
-    pub fn new(
-        node_id: NodeId,
-        listen_address: String,
-        config: InterconnectConfig,
-    ) -> Self {
+    pub fn new(node_id: NodeId, listen_address: String, config: InterconnectConfig) -> Self {
         let (shutdown_tx, _) = broadcast::channel(1);
 
         Self {
@@ -684,7 +712,8 @@ impl ClusterInterconnect {
     // Start the interconnect service
     pub async fn start(&self) -> Result<(), DbError> {
         // Start listener
-        let listener = TcpListener::bind(&self.listen_address).await
+        let listener = TcpListener::bind(&self.listen_address)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to bind: {}", e)))?;
 
         // Start heartbeat monitor
@@ -748,10 +777,9 @@ impl ClusterInterconnect {
         self.connections.write().insert(node_id.clone(), conn);
 
         // Initialize health tracking
-        self.node_health.write().insert(
-            node_id.clone(),
-            NodeHealth::new(node_id),
-        );
+        self.node_health
+            .write()
+            .insert(node_id.clone(), NodeHealth::new(node_id));
 
         Ok(())
     }
@@ -838,7 +866,8 @@ impl ClusterInterconnect {
         let start = Instant::now();
 
         let connections = self.connections.read();
-        let conn = connections.get(&destination)
+        let conn = connections
+            .get(&destination)
             .ok_or_else(|| DbError::Network("Node not connected".to_string()))?;
 
         conn.send_message(message).await?;
@@ -860,10 +889,9 @@ impl ClusterInterconnect {
     where
         F: Fn(Message) -> Result<Vec<u8>, DbError> + Send + Sync + 'static,
     {
-        self.message_handlers.write().insert(
-            message_type,
-            Arc::new(handler),
-        );
+        self.message_handlers
+            .write()
+            .insert(message_type, Arc::new(handler));
     }
 
     // Start heartbeat monitoring
@@ -931,9 +959,11 @@ impl ClusterInterconnect {
         let health = self.node_health.read();
         let total_nodes = health.len() + 1; // +1 for local node
 
-        let healthy_nodes = health.values()
+        let healthy_nodes = health
+            .values()
             .filter(|h| h.state == NodeState::Healthy)
-            .count() + 1; // +1 for local node
+            .count()
+            + 1; // +1 for local node
 
         let quorum = (total_nodes as f64 * QUORUM_PERCENTAGE).ceil() as usize;
 
@@ -945,17 +975,20 @@ impl ClusterInterconnect {
     pub fn get_cluster_view(&self) -> ClusterView {
         let health = self.node_health.read();
 
-        let healthy_nodes: Vec<_> = health.iter()
+        let healthy_nodes: Vec<_> = health
+            .iter()
             .filter(|(_, h)| h.state == NodeState::Healthy)
             .map(|(id, _)| id.clone())
             .collect();
 
-        let suspected_nodes: Vec<_> = health.iter()
+        let suspected_nodes: Vec<_> = health
+            .iter()
             .filter(|(_, h)| h.state == NodeState::Suspected)
             .map(|(id, _)| id.clone())
             .collect();
 
-        let down_nodes: Vec<_> = health.iter()
+        let down_nodes: Vec<_> = health
+            .iter()
             .filter(|(_, h)| h.state == NodeState::Down)
             .map(|(id, _)| id.clone())
             .collect();

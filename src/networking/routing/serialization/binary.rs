@@ -94,7 +94,10 @@ impl BinaryCodec {
     }
 
     /// Deserialize a message from bytes
-    pub fn decode<T: for<'de> Deserialize<'de> + bincode::Decode<()>>(&self, data: &[u8]) -> Result<T> {
+    pub fn decode<T: for<'de> Deserialize<'de> + bincode::Decode<()>>(
+        &self,
+        data: &[u8],
+    ) -> Result<T> {
         if data.is_empty() {
             return Err(DbError::Serialization("Empty data".to_string()));
         }
@@ -125,7 +128,9 @@ impl BinaryCodec {
         // Read and verify checksum if enabled
         if self.checksum {
             if data.len() < offset + 4 {
-                return Err(DbError::Serialization("Incomplete checksum field".to_string()));
+                return Err(DbError::Serialization(
+                    "Incomplete checksum field".to_string(),
+                ));
             }
             let expected_checksum = u32::from_le_bytes([
                 data[offset],
@@ -209,9 +214,9 @@ impl BinaryCodec {
                 use flate2::Compression;
 
                 let mut encoder = DeflateEncoder::new(Vec::new(), Compression::fast());
-                encoder
-                    .write_all(data)
-                    .map_err(|e| DbError::Serialization(format!("LZ4 compression failed: {}", e)))?;
+                encoder.write_all(data).map_err(|e| {
+                    DbError::Serialization(format!("LZ4 compression failed: {}", e))
+                })?;
                 encoder
                     .finish()
                     .map_err(|e| DbError::Serialization(format!("LZ4 compression failed: {}", e)))
@@ -222,12 +227,12 @@ impl BinaryCodec {
                 use flate2::Compression;
 
                 let mut encoder = DeflateEncoder::new(Vec::new(), Compression::fast());
-                encoder
-                    .write_all(data)
-                    .map_err(|e| DbError::Serialization(format!("Snappy compression failed: {}", e)))?;
-                encoder
-                    .finish()
-                    .map_err(|e| DbError::Serialization(format!("Snappy compression failed: {}", e)))
+                encoder.write_all(data).map_err(|e| {
+                    DbError::Serialization(format!("Snappy compression failed: {}", e))
+                })?;
+                encoder.finish().map_err(|e| {
+                    DbError::Serialization(format!("Snappy compression failed: {}", e))
+                })
             }
             CompressionType::Zstd => {
                 // Zstd compression not available in current deps, use deflate
@@ -235,9 +240,9 @@ impl BinaryCodec {
                 use flate2::Compression;
 
                 let mut encoder = DeflateEncoder::new(Vec::new(), Compression::best());
-                encoder
-                    .write_all(data)
-                    .map_err(|e| DbError::Serialization(format!("Zstd compression failed: {}", e)))?;
+                encoder.write_all(data).map_err(|e| {
+                    DbError::Serialization(format!("Zstd compression failed: {}", e))
+                })?;
                 encoder
                     .finish()
                     .map_err(|e| DbError::Serialization(format!("Zstd compression failed: {}", e)))
@@ -316,8 +321,8 @@ mod tests {
 
     #[test]
     fn test_compression() {
-        let codec = BinaryCodec::with_compression(CompressionType::Lz4)
-            .with_compression_threshold(10);
+        let codec =
+            BinaryCodec::with_compression(CompressionType::Lz4).with_compression_threshold(10);
 
         let message = TestMessage {
             id: 42,

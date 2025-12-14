@@ -202,11 +202,7 @@ impl DeliveryTracker {
     }
 
     /// Mark an idempotency key as processed
-    pub fn mark_idempotency_key_processed(
-        &self,
-        key: IdempotencyKey,
-        response: Option<Vec<u8>>,
-    ) {
+    pub fn mark_idempotency_key_processed(&self, key: IdempotencyKey, response: Option<Vec<u8>>) {
         let mut inner = self.inner.write();
 
         inner.processed_keys.insert(
@@ -338,10 +334,7 @@ mod tests {
         let response = vec![1, 2, 3, 4];
         tracker.mark_idempotency_key_processed(key.clone(), Some(response.clone()));
 
-        assert_eq!(
-            tracker.is_idempotency_key_processed(&key),
-            Some(response)
-        );
+        assert_eq!(tracker.is_idempotency_key_processed(&key), Some(response));
     }
 
     #[test]

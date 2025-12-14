@@ -1,17 +1,17 @@
 // Point-in-Time Recovery (PITR) - Oracle-style recovery capabilities
 // Supports recovery to specific timestamp, transaction, or SCN with log mining
 
-use std::collections::HashSet;
-use std::collections::BTreeMap;
-use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::time::{SystemTime};
-use std::collections::{HashMap};
-use parking_lot::{Mutex, RwLock};
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::{Mutex, RwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Recovery target specification
 #[repr(C)]
@@ -102,7 +102,8 @@ impl RecoverySession {
     }
 
     pub fn duration(&self) -> Option<Duration> {
-        self.end_time.and_then(|end| end.duration_since(self.start_time).ok())
+        self.end_time
+            .and_then(|end| end.duration_since(self.start_time).ok())
     }
 }
 
@@ -282,7 +283,10 @@ impl LogMiner {
             };
 
             entries.insert(scn, entry.clone());
-            active_txns.entry(txn_id).or_insert_with(Vec::new).push(entry);
+            active_txns
+                .entry(txn_id)
+                .or_insert_with(Vec::new)
+                .push(entry);
         }
 
         Ok(())
@@ -317,7 +321,8 @@ impl LogMiner {
 
     // Get all log entries until a specific SCN
     pub fn get_entries_until_scn(&self, scn: u64) -> Vec<TransactionLogEntry> {
-        self.log_entries.read()
+        self.log_entries
+            .read()
             .range(..=scn)
             .map(|(_, entry)| entry.clone())
             .collect()
@@ -325,7 +330,8 @@ impl LogMiner {
 
     // Get entries for a specific transaction
     pub fn get_transaction_entries(&self, transaction_id: &str) -> Vec<TransactionLogEntry> {
-        self.active_transactions.read()
+        self.active_transactions
+            .read()
             .get(transaction_id)
             .cloned()
             .unwrap_or_default()
@@ -389,7 +395,10 @@ impl PitrManager {
 
         let mut restore_points = self.restore_points.write();
         if restore_points.contains_key(&name) {
-            return Err(DbError::BackupError(format!("Restore point {} already exists", name)));
+            return Err(DbError::BackupError(format!(
+                "Restore point {} already exists",
+                name
+            )));
         }
 
         restore_points.insert(name, restore_point.clone());
@@ -399,7 +408,8 @@ impl PitrManager {
     // Drop a restore point
     pub fn drop_restore_point(&self, name: &str) -> Result<()> {
         let mut restore_points = self.restore_points.write();
-        restore_points.remove(name)
+        restore_points
+            .remove(name)
             .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?;
         Ok(())
     }
@@ -429,24 +439,22 @@ impl PitrManager {
         // Determine target SCN based on recovery target
         session.target_scn = match &recovery_target {
             RecoveryTarget::Scn(scn) => Some(*scn),
-            RecoveryTarget::Timestamp(timestamp) => {
-                self.timestamp_to_scn(*timestamp)?
-            }
-            RecoveryTarget::Transaction(txn_id) => {
-                self.transaction_to_scn(txn_id)?
-            }
+            RecoveryTarget::Timestamp(timestamp) => self.timestamp_to_scn(*timestamp)?,
+            RecoveryTarget::Transaction(txn_id) => self.transaction_to_scn(txn_id)?,
             RecoveryTarget::RestorePoint(name) => {
                 let restore_points = self.restore_points.read();
-                restore_points.get(name)
-                    .map(|rp| rp.scn)
-                    .ok_or_else(|| DbError::BackupError(format!("Restore point {} not found", name)))?;
+                restore_points.get(name).map(|rp| rp.scn).ok_or_else(|| {
+                    DbError::BackupError(format!("Restore point {} not found", name))
+                })?;
                 restore_points.get(name).map(|rp| rp.scn)
             }
             RecoveryTarget::Latest => None,
         };
 
         // Add to active sessions
-        self.active_sessions.write().insert(session_id.clone(), session);
+        self.active_sessions
+            .write()
+            .insert(session_id.clone(), session);
 
         Ok(session_id)
     }
@@ -454,7 +462,8 @@ impl PitrManager {
     // Perform the recovery
     pub fn perform_recovery(&self, session_id: &str) -> Result<()> {
         let mut sessions = self.active_sessions.write();
-        let session = sessions.get_mut(session_id)
+        let session = sessions
+            .get_mut(session_id)
             .ok_or_else(|| DbError::BackupError("Recovery session not found".to_string()))?;
 
         // Phase 1: Restore backup
@@ -499,7 +508,8 @@ impl PitrManager {
 
     fn apply_logs(&self, session: &mut RecoverySession, target_scn: u64) -> Result<()> {
         // Start log mining
-        self.log_miner.start_mining(session.current_scn, Some(target_scn))?;
+        self.log_miner
+            .start_mining(session.current_scn, Some(target_scn))?;
 
         // Get log entries to apply
         let entries = self.log_miner.get_entries_until_scn(target_scn);
@@ -531,10 +541,10 @@ impl PitrManager {
         // Validate that recovery reached the target
         if let Some(target_scn) = session.target_scn {
             if session.current_scn != target_scn {
-                return Err(DbError::BackupError(
-                    format!("Recovery did not reach target SCN. Current: {}, Target: {}",
-                        session.current_scn, target_scn)
-                ));
+                return Err(DbError::BackupError(format!(
+                    "Recovery did not reach target SCN. Current: {}, Target: {}",
+                    session.current_scn, target_scn
+                )));
             }
         }
 
@@ -562,15 +572,17 @@ impl PitrManager {
     }
 
     // Perform flashback query
-    pub fn flashback_query(&self, table_name: String, target: RecoveryTarget) -> Result<FlashbackQuery> {
+    pub fn flashback_query(
+        &self,
+        table_name: String,
+        target: RecoveryTarget,
+    ) -> Result<FlashbackQuery> {
         let (target_time, target_scn) = match target {
             RecoveryTarget::Timestamp(ts) => {
                 let scn = self.timestamp_to_scn(ts)?.unwrap_or(0);
                 (ts, scn)
             }
-            RecoveryTarget::Scn(scn) => {
-                (SystemTime::now(), scn)
-            }
+            RecoveryTarget::Scn(scn) => (SystemTime::now(), scn),
             _ => return Err(DbError::BackupError("Invalid flashback target".to_string())),
         };
 
@@ -632,7 +644,9 @@ mod tests {
     fn test_pitr_manager() {
         let manager = PitrManager::new(PathBuf::from("/tmp/logs"));
 
-        let rp = manager.create_restore_point("test".to_string(), false).unwrap();
+        let rp = manager
+            .create_restore_point("test".to_string(), false)
+            .unwrap();
         assert_eq!(rp.name, "test");
 
         let restore_points = manager.list_restore_points();

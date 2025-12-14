@@ -1,17 +1,17 @@
 // Backup Verification - Integrity checking, restore testing, and corruption detection
 // Ensures backup reliability and recoverability
 
-use std::collections::BTreeMap;
-use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::fs::metadata;
-use std::time::{SystemTime};
-use std::collections::{HashMap};
-use parking_lot::RwLock;
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::fs::metadata;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Verification type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -55,7 +55,11 @@ pub struct VerificationResult {
 }
 
 impl VerificationResult {
-    pub fn new(verification_id: String, backup_id: String, verification_type: VerificationType) -> Self {
+    pub fn new(
+        verification_id: String,
+        backup_id: String,
+        verification_type: VerificationType,
+    ) -> Self {
         Self {
             verification_id,
             backup_id,
@@ -78,7 +82,8 @@ impl VerificationResult {
     }
 
     pub fn duration(&self) -> Option<Duration> {
-        self.end_time.and_then(|end| end.duration_since(self.start_time).ok())
+        self.end_time
+            .and_then(|end| end.duration_since(self.start_time).ok())
     }
 }
 
@@ -211,9 +216,8 @@ impl VerificationSchedule {
     }
 
     pub fn update_next_execution(&mut self) {
-        self.next_execution = Some(
-            SystemTime::now() + Duration::from_secs(self.frequency_hours * 3600)
-        );
+        self.next_execution =
+            Some(SystemTime::now() + Duration::from_secs(self.frequency_hours * 3600));
     }
 }
 
@@ -313,7 +317,9 @@ impl VerificationManager {
             result.status = VerificationStatus::Passed;
         }
 
-        self.verification_results.write().insert(verification_id.clone(), result);
+        self.verification_results
+            .write()
+            .insert(verification_id.clone(), result);
 
         Ok(verification_id)
     }
@@ -361,9 +367,10 @@ impl VerificationManager {
         if !corrupted.is_empty() {
             result.corruption_detected = true;
             result.corrupted_blocks = corrupted;
-            result.errors.push(
-                format!("Found {} corrupted blocks", result.corrupted_blocks.len())
-            );
+            result.errors.push(format!(
+                "Found {} corrupted blocks",
+                result.corrupted_blocks.len()
+            ));
         }
 
         Ok(())
@@ -376,7 +383,8 @@ impl VerificationManager {
         backup_path: &Path,
     ) -> Result<()> {
         // Perform actual restore test
-        let test_result = self.perform_restore_test(backup_id.to_string(), backup_path.to_path_buf())?;
+        let test_result =
+            self.perform_restore_test(backup_id.to_string(), backup_path.to_path_buf())?;
 
         result.restore_successful = Some(test_result.success);
 
@@ -385,7 +393,9 @@ impl VerificationManager {
         }
 
         if !test_result.data_integrity_verified {
-            result.warnings.push("Data integrity could not be fully verified".to_string());
+            result
+                .warnings
+                .push("Data integrity could not be fully verified".to_string());
         }
 
         Ok(())
@@ -409,7 +419,11 @@ impl VerificationManager {
         Ok(true)
     }
 
-    fn verify_all_blocks(&self, backup_id: &str, _backup_path: &Path) -> Result<Vec<CorruptedBlock>> {
+    fn verify_all_blocks(
+        &self,
+        backup_id: &str,
+        _backup_path: &Path,
+    ) -> Result<Vec<CorruptedBlock>> {
         let mut corrupted = Vec::new();
 
         // Get stored checksums
@@ -471,7 +485,8 @@ impl VerificationManager {
         }
 
         let end_time = SystemTime::now();
-        let restore_duration = end_time.duration_since(start_time)
+        let restore_duration = end_time
+            .duration_since(start_time)
             .unwrap_or_default()
             .as_secs();
 
@@ -487,7 +502,9 @@ impl VerificationManager {
             errors,
         };
 
-        self.restore_tests.write().insert(test_id, test_result.clone());
+        self.restore_tests
+            .write()
+            .insert(test_id, test_result.clone());
 
         Ok(test_result)
     }
@@ -523,11 +540,8 @@ impl VerificationManager {
                 let backup_id = "BACKUP-1".to_string();
                 let backup_path = PathBuf::from("/tmp/backup-1");
 
-                let verification_id = self.verify_backup(
-                    backup_id,
-                    backup_path,
-                    schedule.verification_type.clone(),
-                )?;
+                let verification_id =
+                    self.verify_backup(backup_id, backup_path, schedule.verification_type.clone())?;
 
                 verification_ids.push(verification_id);
 
@@ -541,7 +555,10 @@ impl VerificationManager {
 
     // Get verification result
     pub fn get_verification_result(&self, verification_id: &str) -> Option<VerificationResult> {
-        self.verification_results.read().get(verification_id).cloned()
+        self.verification_results
+            .read()
+            .get(verification_id)
+            .cloned()
     }
 
     // List all verification results
@@ -618,11 +635,13 @@ mod tests {
         let config = RestoreTestConfig::default();
         let manager = VerificationManager::new(config);
 
-        let checksums = manager.compute_checksums(
-            "test-backup".to_string(),
-            Path::new("/tmp/test"),
-            ChecksumAlgorithm::SHA256,
-        ).unwrap();
+        let checksums = manager
+            .compute_checksums(
+                "test-backup".to_string(),
+                Path::new("/tmp/test"),
+                ChecksumAlgorithm::SHA256,
+            )
+            .unwrap();
 
         assert!(!checksums.is_empty());
     }

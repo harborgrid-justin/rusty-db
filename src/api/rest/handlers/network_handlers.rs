@@ -4,16 +4,16 @@
 
 use axum::{
     extract::{Path, State},
-    response::Json as AxumJson,
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use utoipa::ToSchema;
-use parking_lot::RwLock;
 
 use super::super::types::*;
 
@@ -40,7 +40,7 @@ pub struct NetworkConnectionInfo {
     pub remote_address: String,
     pub local_address: String,
     pub protocol: String, // tcp, websocket
-    pub state: String, // established, closing, closed
+    pub state: String,    // established, closing, closed
     pub session_id: Option<SessionId>,
     pub connected_at: i64,
     pub bytes_sent: u64,
@@ -86,7 +86,7 @@ pub struct ClusterNode {
     pub node_id: String,
     pub address: String,
     pub port: u16,
-    pub role: String, // leader, follower, candidate
+    pub role: String,   // leader, follower, candidate
     pub status: String, // healthy, degraded, unhealthy, offline
     pub version: String,
     pub uptime_seconds: u64,
@@ -303,7 +303,10 @@ pub async fn get_connection(
     if let Some(conn) = connections.get(&id) {
         Ok(AxumJson(conn.clone()))
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Connection {} not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Connection {} not found", id),
+        ))
     }
 }
 
@@ -329,7 +332,10 @@ pub async fn kill_connection(
     if connections.remove(&id).is_some() {
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Connection {} not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Connection {} not found", id),
+        ))
     }
 }
 
@@ -395,7 +401,10 @@ pub async fn get_cluster_status(
 ) -> ApiResult<AxumJson<ClusterStatus>> {
     let nodes = CLUSTER_NODES.read();
     let healthy_count = nodes.values().filter(|n| n.status == "healthy").count();
-    let leader = nodes.values().find(|n| n.role == "leader").map(|n| n.node_id.clone());
+    let leader = nodes
+        .values()
+        .find(|n| n.role == "leader")
+        .map(|n| n.node_id.clone());
 
     let status = ClusterStatus {
         cluster_id: "cluster-main".to_string(),
@@ -452,7 +461,10 @@ pub async fn add_cluster_node(
         status: "healthy".to_string(),
         version: "1.0.0".to_string(),
         uptime_seconds: 0,
-        last_heartbeat: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
+        last_heartbeat: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         cpu_usage: 0.0,
         memory_usage_mb: 0,
         disk_usage_percent: 0.0,
@@ -506,26 +518,22 @@ pub async fn get_loadbalancer_stats(
         algorithm: "round_robin".to_string(),
         total_requests: 1_000_000,
         requests_per_second: 1500.0,
-        backend_pools: vec![
-            BackendPool {
-                pool_id: "pool1".to_string(),
-                backends: vec![
-                    Backend {
-                        backend_id: "backend1".to_string(),
-                        address: "192.168.1.10:5432".to_string(),
-                        weight: 100,
-                        active: true,
-                        health_status: "healthy".to_string(),
-                        active_connections: 50,
-                        total_requests: 500_000,
-                        failed_requests: 10,
-                        avg_response_time_ms: 12.5,
-                    },
-                ],
-                active_requests: 150,
+        backend_pools: vec![BackendPool {
+            pool_id: "pool1".to_string(),
+            backends: vec![Backend {
+                backend_id: "backend1".to_string(),
+                address: "192.168.1.10:5432".to_string(),
+                weight: 100,
+                active: true,
+                health_status: "healthy".to_string(),
+                active_connections: 50,
                 total_requests: 500_000,
-            },
-        ],
+                failed_requests: 10,
+                avg_response_time_ms: 12.5,
+            }],
+            active_requests: 150,
+            total_requests: 500_000,
+        }],
     };
 
     Ok(AxumJson(stats))

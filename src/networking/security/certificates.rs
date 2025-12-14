@@ -207,8 +207,7 @@ impl CertificateStore {
 
     /// Add certificate
     pub fn add(&mut self, metadata: CertificateMetadata) {
-        self.certificates
-            .insert(metadata.subject.clone(), metadata);
+        self.certificates.insert(metadata.subject.clone(), metadata);
     }
 
     /// Get certificate by subject
@@ -354,13 +353,11 @@ impl CertificateManager {
 
         // In a real implementation, use rcgen or similar to generate certificates
         // For now, create placeholder files
-        std::fs::write(&cert_path, b"CERT").map_err(|e| {
-            DbError::Configuration(format!("Failed to write certificate: {}", e))
-        })?;
+        std::fs::write(&cert_path, b"CERT")
+            .map_err(|e| DbError::Configuration(format!("Failed to write certificate: {}", e)))?;
 
-        std::fs::write(&key_path, b"KEY").map_err(|e| {
-            DbError::Configuration(format!("Failed to write key: {}", e))
-        })?;
+        std::fs::write(&key_path, b"KEY")
+            .map_err(|e| DbError::Configuration(format!("Failed to write key: {}", e)))?;
 
         let mut metadata = CertificateMetadata::new(subject.to_string(), cert_path, key_path);
         metadata.issuer = subject.to_string();
@@ -403,9 +400,9 @@ impl CertificateManager {
     /// Rotate certificate
     pub async fn rotate_certificate(&self, subject: &str) -> Result<CertificateMetadata> {
         let store = self.store.read().await;
-        let _existing = store.get(subject).ok_or_else(|| {
-            DbError::NotFound(format!("Certificate not found: {}", subject))
-        })?;
+        let _existing = store
+            .get(subject)
+            .ok_or_else(|| DbError::NotFound(format!("Certificate not found: {}", subject)))?;
 
         let san_dns = vec![subject.to_string()];
         drop(store);
@@ -523,10 +520,7 @@ mod tests {
             .with_renewal_threshold(Duration::from_secs(7 * 24 * 3600))
             .with_rotation(Duration::from_secs(90 * 24 * 3600));
 
-        assert_eq!(
-            config.renewal_threshold,
-            Duration::from_secs(7 * 24 * 3600)
-        );
+        assert_eq!(config.renewal_threshold, Duration::from_secs(7 * 24 * 3600));
         assert!(config.rotation_interval.is_some());
     }
 }

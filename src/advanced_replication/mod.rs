@@ -348,49 +348,45 @@ pub mod xa;
 
 // Re-export commonly used types
 pub use multi_master::{
-    MultiMasterReplication, ReplicationGroup, SiteInfo, ReplicationOp,
-    OpType, QuorumResult, ConvergenceReport, MultiMasterStats,
+    ConvergenceReport, MultiMasterReplication, MultiMasterStats, OpType, QuorumResult,
+    ReplicationGroup, ReplicationOp, SiteInfo,
 };
 
 pub use logical::{
-    LogicalReplication, Publication, TablePublication, Subscription,
-    LogicalChange, ChangeType, Transformation, MaskType,
-    SubscriptionState, LogicalReplicationStats,
+    ChangeType, LogicalChange, LogicalReplication, LogicalReplicationStats, MaskType, Publication,
+    Subscription, SubscriptionState, TablePublication, Transformation,
 };
 
 pub use sharding::{
-    ShardingEngine, ShardedTable, ShardingStrategy, Shard, ShardStatus,
-    ShardKey, CrossShardQuery, RebalancePlan, RebalanceState,
-    ShardKeyAdvice, ShardStatistics, HashFunction,
+    CrossShardQuery, HashFunction, RebalancePlan, RebalanceState, Shard, ShardKey, ShardKeyAdvice,
+    ShardStatistics, ShardStatus, ShardedTable, ShardingEngine, ShardingStrategy,
 };
 
 pub use gds::{
-    GlobalDataServices, GlobalService, ServiceRegion, DatabaseInstance,
-    LoadBalancingStrategy, FailoverPolicy, RoutingDecision,
-    ConnectionRequest, RequestType, GeoLocation, HealthStatus,
-    InstanceRole, RegionRole, ServiceState, GdsStats,
+    ConnectionRequest, DatabaseInstance, FailoverPolicy, GdsStats, GeoLocation, GlobalDataServices,
+    GlobalService, HealthStatus, InstanceRole, LoadBalancingStrategy, RegionRole, RequestType,
+    RoutingDecision, ServiceRegion, ServiceState,
 };
 
 pub use conflicts::{
-    ConflictResolver, Conflict, ConflictingChange, ConflictResolution,
-    ConflictResolutionStrategy, ConflictType, CrdtType, ConflictStats,
+    Conflict, ConflictResolution, ConflictResolutionStrategy, ConflictResolver, ConflictStats,
+    ConflictType, ConflictingChange, CrdtType,
 };
 
 pub use monitoring::{
-    ReplicationMonitor, ReplicationLag, ThroughputMetrics, ErrorRateMetrics,
-    ConflictRateMetrics, AlertThreshold, Alert, AlertSeverity,
-    ChannelStatus, ChannelHealth, DashboardData, TimeSeriesPoint,
-    MetricType, ComparisonOperator,
+    Alert, AlertSeverity, AlertThreshold, ChannelHealth, ChannelStatus, ComparisonOperator,
+    ConflictRateMetrics, DashboardData, ErrorRateMetrics, MetricType, ReplicationLag,
+    ReplicationMonitor, ThroughputMetrics, TimeSeriesPoint,
 };
 
 pub use apply::{
-    ApplyEngine, ApplyChange, OperationType, ApplyConfig, ApplyCheckpoint,
-    TransactionGroup, GroupState, ApplyStats, ApplyError,
+    ApplyChange, ApplyCheckpoint, ApplyConfig, ApplyEngine, ApplyError, ApplyStats, GroupState,
+    OperationType, TransactionGroup,
 };
 
 pub use xa::{
-    XaTransactionManager, XaTransaction, Xid, XaState, ResourceManager,
-    RmState, Vote, HeuristicDecision, XaStats, LogEntryType,
+    HeuristicDecision, LogEntryType, ResourceManager, RmState, Vote, XaState, XaStats,
+    XaTransaction, XaTransactionManager, Xid,
 };
 
 /// Advanced replication configuration

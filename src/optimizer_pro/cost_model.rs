@@ -9,10 +9,10 @@
 // - Selectivity estimation
 // - Multi-column statistics
 
-use crate::common::{TableId, IndexId, Value};
-use crate::error::{Result, DbError};
+use crate::common::{IndexId, TableId, Value};
+use crate::error::{DbError, Result};
 use crate::optimizer_pro::{
-    PhysicalOperator, Expression, BinaryOperator, JoinType, CostParameters,
+    BinaryOperator, CostParameters, Expression, JoinType, PhysicalOperator,
 };
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -118,7 +118,9 @@ impl CostModel {
                 index_id,
                 key_conditions,
                 filter,
-            } => self.estimate_index_scan_cost(*table_id, *index_id, key_conditions, filter.as_ref()),
+            } => {
+                self.estimate_index_scan_cost(*table_id, *index_id, key_conditions, filter.as_ref())
+            }
             PhysicalOperator::IndexOnlyScan {
                 index_id,
                 key_conditions,
@@ -128,7 +130,9 @@ impl CostModel {
                 table_id,
                 bitmap_index_scans,
                 filter,
-            } => self.estimate_bitmap_heap_scan_cost(*table_id, bitmap_index_scans, filter.as_ref()),
+            } => {
+                self.estimate_bitmap_heap_scan_cost(*table_id, bitmap_index_scans, filter.as_ref())
+            }
             PhysicalOperator::NestedLoopJoin {
                 left,
                 right,
@@ -141,14 +145,22 @@ impl CostModel {
                 hash_keys,
                 condition,
                 join_type,
-            } => self.estimate_hash_join_cost(left, right, hash_keys, condition.as_ref(), *join_type),
+            } => {
+                self.estimate_hash_join_cost(left, right, hash_keys, condition.as_ref(), *join_type)
+            }
             PhysicalOperator::MergeJoin {
                 left,
                 right,
                 merge_keys,
                 condition,
                 join_type,
-            } => self.estimate_merge_join_cost(left, right, merge_keys, condition.as_ref(), *join_type),
+            } => self.estimate_merge_join_cost(
+                left,
+                right,
+                merge_keys,
+                condition.as_ref(),
+                *join_type,
+            ),
             PhysicalOperator::Sort { input, sort_keys } => {
                 self.estimate_sort_cost(input, sort_keys.len())
             }
@@ -162,12 +174,12 @@ impl CostModel {
                 group_by,
                 aggregates,
             } => self.estimate_hash_aggregate_cost(input, group_by.len(), aggregates.len()),
-            PhysicalOperator::Materialize { input } => {
-                self.estimate_materialize_cost(input)
-            }
-            PhysicalOperator::Limit { input, limit, offset } => {
-                self.estimate_limit_cost(input, *limit, *offset)
-            }
+            PhysicalOperator::Materialize { input } => self.estimate_materialize_cost(input),
+            PhysicalOperator::Limit {
+                input,
+                limit,
+                offset,
+            } => self.estimate_limit_cost(input, *limit, *offset),
             PhysicalOperator::SubqueryScan { subquery, .. } => {
                 self.estimate_cost(&subquery.operator)
             }
@@ -221,7 +233,8 @@ impl CostModel {
         let index_stats = self.get_index_stats(index_id)?;
 
         // Estimate index selectivity from key conditions
-        let index_selectivity = self.selectivity_estimator
+        let index_selectivity = self
+            .selectivity_estimator
             .estimate_index_selectivity(key_conditions, &index_stats)?;
 
         // I/O cost: index pages + heap pages (random access)
@@ -232,8 +245,8 @@ impl CostModel {
             + (heap_pages as f64 * self.params.random_page_cost);
 
         // CPU cost
-        let cpu_cost = (table_stats.num_tuples as f64 * index_selectivity)
-            * self.params.cpu_tuple_cost;
+        let cpu_cost =
+            (table_stats.num_tuples as f64 * index_selectivity) * self.params.cpu_tuple_cost;
 
         // Apply additional filter if present
         let final_selectivity = if let Some(filter) = filter {
@@ -265,7 +278,8 @@ impl CostModel {
         let index_stats = self.get_index_stats(index_id)?;
 
         // Estimate selectivity
-        let selectivity = self.selectivity_estimator
+        let selectivity = self
+            .selectivity_estimator
             .estimate_index_selectivity(key_conditions, &index_stats)?;
 
         // I/O cost: only index pages (no heap access)
@@ -273,8 +287,7 @@ impl CostModel {
         let io_cost = index_pages as f64 * self.params.seq_page_cost;
 
         // CPU cost
-        let cpu_cost = (index_stats.num_entries as f64 * selectivity)
-            * self.params.cpu_tuple_cost;
+        let cpu_cost = (index_stats.num_entries as f64 * selectivity) * self.params.cpu_tuple_cost;
 
         let cardinality = (index_stats.num_entries as f64 * selectivity) as usize;
 
@@ -307,12 +320,12 @@ impl CostModel {
         combined_selectivity = 1.0 - combined_selectivity;
 
         // I/O cost: bitmap creation + heap access
-        let io_cost = (table_stats.num_tuples as f64 * combined_selectivity)
-            * self.params.random_page_cost;
+        let io_cost =
+            (table_stats.num_tuples as f64 * combined_selectivity) * self.params.random_page_cost;
 
         // CPU cost
-        let cpu_cost = (table_stats.num_tuples as f64 * combined_selectivity)
-            * self.params.cpu_tuple_cost;
+        let cpu_cost =
+            (table_stats.num_tuples as f64 * combined_selectivity) * self.params.cpu_tuple_cost;
 
         let cardinality = (table_stats.num_tuples as f64 * combined_selectivity) as usize;
 
@@ -335,9 +348,8 @@ impl CostModel {
         _join_type: JoinType,
     ) -> Result<CostEstimate> {
         // CPU cost: outer * inner * comparison cost
-        let cpu_cost = (left.cardinality as f64)
-            * (right.cardinality as f64)
-            * self.params.cpu_operator_cost;
+        let cpu_cost =
+            (left.cardinality as f64) * (right.cardinality as f64) * self.params.cpu_operator_cost;
 
         // I/O cost: rescan inner for each outer tuple
         let io_cost = (left.cardinality as f64) * right.cost;
@@ -349,9 +361,8 @@ impl CostModel {
             1.0
         };
 
-        let cardinality = ((left.cardinality as f64)
-            * (right.cardinality as f64)
-            * selectivity) as usize;
+        let cardinality =
+            ((left.cardinality as f64) * (right.cardinality as f64) * selectivity) as usize;
 
         Ok(CostEstimate::new(
             cpu_cost,
@@ -385,14 +396,14 @@ impl CostModel {
         let cpu_cost = build_cost + probe_cost;
 
         // Memory cost: hash table size
-        let hash_table_size_mb = (build_side.cardinality * build_side.schema.columns.len()) / (1024 * 1024);
+        let hash_table_size_mb =
+            (build_side.cardinality * build_side.schema.columns.len()) / (1024 * 1024);
         let memory_cost = hash_table_size_mb as f64 * self.params.memory_mb_cost;
 
         // Estimate output cardinality
         let selectivity = 0.1; // Simplified
-        let cardinality = ((left.cardinality as f64)
-            * (right.cardinality as f64)
-            * selectivity) as usize;
+        let cardinality =
+            ((left.cardinality as f64) * (right.cardinality as f64) * selectivity) as usize;
 
         Ok(CostEstimate::new(
             cpu_cost,
@@ -414,14 +425,12 @@ impl CostModel {
         _join_type: JoinType,
     ) -> Result<CostEstimate> {
         // CPU cost: merge both sorted inputs
-        let cpu_cost = ((left.cardinality + right.cardinality) as f64)
-            * self.params.cpu_tuple_cost;
+        let cpu_cost = ((left.cardinality + right.cardinality) as f64) * self.params.cpu_tuple_cost;
 
         // Estimate output cardinality
         let selectivity = 0.1; // Simplified
-        let cardinality = ((left.cardinality as f64)
-            * (right.cardinality as f64)
-            * selectivity) as usize;
+        let cardinality =
+            ((left.cardinality as f64) * (right.cardinality as f64) * selectivity) as usize;
 
         Ok(CostEstimate::new(
             cpu_cost,
@@ -466,9 +475,8 @@ impl CostModel {
         num_aggregates: usize,
     ) -> Result<CostEstimate> {
         // CPU cost: process each input tuple
-        let cpu_cost = (input.cardinality as f64)
-            * (num_aggregates as f64)
-            * self.params.cpu_operator_cost;
+        let cpu_cost =
+            (input.cardinality as f64) * (num_aggregates as f64) * self.params.cpu_operator_cost;
 
         // Estimate output cardinality (number of groups)
         let cardinality = if num_group_by > 0 {
@@ -495,9 +503,8 @@ impl CostModel {
         num_aggregates: usize,
     ) -> Result<CostEstimate> {
         // CPU cost: hash table operations
-        let cpu_cost = (input.cardinality as f64)
-            * (num_aggregates as f64)
-            * self.params.cpu_operator_cost;
+        let cpu_cost =
+            (input.cardinality as f64) * (num_aggregates as f64) * self.params.cpu_operator_cost;
 
         // Estimate number of groups
         let num_groups = if num_group_by > 0 {
@@ -762,7 +769,10 @@ impl CardinalityEstimator {
             _bias: 0.0,
         };
 
-        self.ml_models.write().unwrap().insert(query_signature, model);
+        self.ml_models
+            .write()
+            .unwrap()
+            .insert(query_signature, model);
     }
 
     /// Use ML model for cardinality prediction
@@ -823,9 +833,7 @@ impl SelectivityEstimator {
             Expression::BinaryOp { op, left, right } => {
                 self.estimate_binary_op(*op, left, right, table_stats)
             }
-            Expression::UnaryOp { op, expr } => {
-                self.estimate_unary_op(*op, expr, table_stats)
-            }
+            Expression::UnaryOp { op, expr } => self.estimate_unary_op(*op, expr, table_stats),
             Expression::In { expr: _, list } => {
                 Ok(list.len() as f64 / 100.0) // Simplified
             }
@@ -951,11 +959,7 @@ impl SimdCardinalityEstimator {
 
     /// Estimate cardinality for multiple predicates (fallback non-SIMD)
     #[inline]
-    pub fn estimate_batch(
-        &self,
-        selectivities: &[f64],
-        row_counts: &[usize],
-    ) -> Vec<usize> {
+    pub fn estimate_batch(&self, selectivities: &[f64], row_counts: &[usize]) -> Vec<usize> {
         selectivities
             .iter()
             .zip(row_counts.iter())
@@ -1028,12 +1032,7 @@ mod tests {
     #[test]
     fn test_cardinality_estimator() {
         let estimator = CardinalityEstimator::new();
-        let card = estimator.estimate_join_cardinality(
-            1000,
-            2000,
-            JoinType::Inner,
-            &[],
-        );
+        let card = estimator.estimate_join_cardinality(1000, 2000, JoinType::Inner, &[]);
         assert!(card > 0);
     }
 }

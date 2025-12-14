@@ -19,23 +19,21 @@
 // - Timing attack resistance
 // - Side-channel attack mitigation
 
-use std::sync::Mutex;
+use crate::error::DbError;
+use crate::Result;
 use aes_gcm::{
     aead::{Aead, KeyInit, Payload},
     Aes256Gcm, Nonce as AesNonce,
 };
-use chacha20poly1305::{
-    ChaCha20Poly1305, Nonce as ChaChaNonce,
-};
-use sha2::{Digest, Sha256};
+use chacha20poly1305::{ChaCha20Poly1305, Nonce as ChaChaNonce};
 use hmac::{Hmac, Mac};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use parking_lot::{RwLock};
-use std::sync::Arc;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
-use crate::error::DbError;
 
 // ============================================================================
 // Type Aliases
@@ -60,7 +58,7 @@ pub type AuthTag = [u8; 16];
 // ============================================================================
 
 const KEY_SIZE: usize = 32; // 256 bits
-const IV_SIZE: usize = 12;  // 96 bits
+const IV_SIZE: usize = 12; // 96 bits
 const TAG_SIZE: usize = 16; // 128 bits
 const SALT_SIZE: usize = 32;
 
@@ -86,7 +84,10 @@ impl Algorithm {
         match value {
             1 => Ok(Algorithm::Aes256Gcm),
             2 => Ok(Algorithm::ChaCha20Poly1305),
-            _ => Err(DbError::InvalidInput(format!("Unknown algorithm: {}", value))),
+            _ => Err(DbError::InvalidInput(format!(
+                "Unknown algorithm: {}",
+                value
+            ))),
         }
     }
 
@@ -165,7 +166,10 @@ impl Ciphertext {
 
         let version = bytes[0];
         if version != CIPHERTEXT_VERSION {
-            return Err(DbError::InvalidInput(format!("Unsupported version: {}", version)));
+            return Err(DbError::InvalidInput(format!(
+                "Unsupported version: {}",
+                version
+            )));
         }
 
         let algorithm = Algorithm::from_u8(bytes[1])?;
@@ -241,7 +245,12 @@ impl EncryptionEngine {
     }
 
     // Encrypt data with default algorithm
-    pub fn encrypt(&self, key: &KeyMaterial, plaintext: &[u8], aad: Option<&[u8]>) -> Result<Ciphertext> {
+    pub fn encrypt(
+        &self,
+        key: &KeyMaterial,
+        plaintext: &[u8],
+        aad: Option<&[u8]>,
+    ) -> Result<Ciphertext> {
         self.encrypt_with_algorithm(self.default_algorithm, key, plaintext, aad)
     }
 
@@ -263,7 +272,12 @@ impl EncryptionEngine {
     }
 
     // Decrypt data (algorithm auto-detected from ciphertext)
-    pub fn decrypt(&self, key: &KeyMaterial, ciphertext: &Ciphertext, aad: Option<&[u8]>) -> Result<Vec<u8>> {
+    pub fn decrypt(
+        &self,
+        key: &KeyMaterial,
+        ciphertext: &Ciphertext,
+        aad: Option<&[u8]>,
+    ) -> Result<Vec<u8>> {
         // Increment counter
         *self.decrypt_counter.write() += 1;
 
@@ -309,7 +323,12 @@ impl EncryptionEngine {
         let ciphertext_data = ciphertext_with_tag[..ciphertext_len].to_vec();
         let tag = ciphertext_with_tag[ciphertext_len..].to_vec();
 
-        Ok(Ciphertext::new(Algorithm::Aes256Gcm, iv.to_vec(), tag, ciphertext_data))
+        Ok(Ciphertext::new(
+            Algorithm::Aes256Gcm,
+            iv.to_vec(),
+            tag,
+            ciphertext_data,
+        ))
     }
 
     // Decrypt with AES-256-GCM
@@ -320,7 +339,9 @@ impl EncryptionEngine {
         aad: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
         if ciphertext.iv.len() != IV_SIZE {
-            return Err(DbError::InvalidInput("Invalid IV size for AES-GCM".to_string()));
+            return Err(DbError::InvalidInput(
+                "Invalid IV size for AES-GCM".to_string(),
+            ));
         }
 
         // Create cipher
@@ -403,7 +424,9 @@ impl EncryptionEngine {
         aad: Option<&[u8]>,
     ) -> Result<Vec<u8>> {
         if ciphertext.iv.len() != IV_SIZE {
-            return Err(DbError::InvalidInput("Invalid nonce size for ChaCha20".to_string()));
+            return Err(DbError::InvalidInput(
+                "Invalid nonce size for ChaCha20".to_string(),
+            ));
         }
 
         // Create cipher
@@ -540,9 +563,7 @@ impl KeyManager {
             *counter
         };
 
-        let id = keyid.unwrap_or_else(|| {
-            format!("KEY_{:08X}_{}", version, uuid::Uuid::new_v4())
-        });
+        let id = keyid.unwrap_or_else(|| format!("KEY_{:08X}_{}", version, uuid::Uuid::new_v4()));
 
         let key = SecureKey {
             id: id.clone(),
@@ -635,7 +656,8 @@ impl KeyManager {
     // Derive a child key from parent
     pub fn derive_key(&self, parent_key_id: &str, context: &[u8]) -> Result<KeyMaterial> {
         let parent = self.get_key(parent_key_id)?;
-        let derived = KeyDerivation::hkdf_expand(parent.key_material.as_bytes(), context, KEY_SIZE)?;
+        let derived =
+            KeyDerivation::hkdf_expand(parent.key_material.as_bytes(), context, KEY_SIZE)?;
 
         let mut key_material = [0u8; KEY_SIZE];
         key_material.copy_from_slice(&derived);
@@ -688,8 +710,8 @@ impl KeyDerivation {
 
     // Derive key from password using Argon2id
     pub fn derive_from_password(password: &str, salt: &[u8]) -> Result<KeyMaterial> {
-        use argon2::{Argon2, PasswordHasher};
         use argon2::password_hash::SaltString;
+        use argon2::{Argon2, PasswordHasher};
 
         let argon2 = Argon2::default();
 
@@ -702,7 +724,8 @@ impl KeyDerivation {
             .map_err(|e| DbError::Internal(format!("Argon2 error: {}", e)))?;
 
         // Extract hash bytes
-        let hash = password_hash.hash
+        let hash = password_hash
+            .hash
             .ok_or_else(|| DbError::Internal("No hash produced".to_string()))?;
 
         let mut key_material = [0u8; KEY_SIZE];
@@ -806,7 +829,9 @@ impl ColumnEncryptor {
         column_id: &str,
     ) -> Result<Vec<u8>> {
         // Use column ID as AAD for binding
-        let ciphertext = self.engine.encrypt(key, plaintext, Some(column_id.as_bytes()))?;
+        let ciphertext = self
+            .engine
+            .encrypt(key, plaintext, Some(column_id.as_bytes()))?;
         Ok(ciphertext.to_bytes())
     }
 
@@ -818,7 +843,8 @@ impl ColumnEncryptor {
         column_id: &str,
     ) -> Result<Vec<u8>> {
         let ciphertext = Ciphertext::from_bytes(ciphertext_bytes)?;
-        self.engine.decrypt(key, &ciphertext, Some(column_id.as_bytes()))
+        self.engine
+            .decrypt(key, &ciphertext, Some(column_id.as_bytes()))
     }
 
     // Encrypt column data (deterministic - same plaintext = same ciphertext)
@@ -854,7 +880,9 @@ impl ColumnEncryptor {
         column_id: &str,
     ) -> Result<Vec<u8>> {
         if ciphertext.is_empty() || ciphertext[0] != 0xFF {
-            return Err(DbError::InvalidInput("Invalid deterministic ciphertext".to_string()));
+            return Err(DbError::InvalidInput(
+                "Invalid deterministic ciphertext".to_string(),
+            ));
         }
 
         // Derive same deterministic key
@@ -863,9 +891,9 @@ impl ColumnEncryptor {
         let cipher = Aes256Gcm::new(&det_key.into());
         let nonce = AesNonce::from_slice(&[0u8; IV_SIZE]);
 
-        let plaintext = cipher
-            .decrypt(nonce, &ciphertext[1..])
-            .map_err(|e| DbError::InvalidInput(format!("Deterministic decryption failed: {}", e)))?;
+        let plaintext = cipher.decrypt(nonce, &ciphertext[1..]).map_err(|e| {
+            DbError::InvalidInput(format!("Deterministic decryption failed: {}", e))
+        })?;
 
         Ok(plaintext)
     }
@@ -891,21 +919,14 @@ impl TransparentEncryption {
     }
 
     // Encrypt a storage page
-    pub fn encrypt_page(
-        &self,
-        key_id: &str,
-        page_data: &[u8],
-        page_id: u64,
-    ) -> Result<Vec<u8>> {
+    pub fn encrypt_page(&self, key_id: &str, page_data: &[u8], page_id: u64) -> Result<Vec<u8>> {
         let key = self.key_manager.get_key(key_id)?;
 
         // Use page ID as AAD
         let aad = format!("PAGE:{}", page_id);
-        let ciphertext = self.engine.encrypt(
-            key.key_material.as_bytes(),
-            page_data,
-            Some(aad.as_bytes()),
-        )?;
+        let ciphertext =
+            self.engine
+                .encrypt(key.key_material.as_bytes(), page_data, Some(aad.as_bytes()))?;
 
         Ok(ciphertext.to_bytes())
     }
@@ -954,11 +975,9 @@ impl KeyRotator {
         let old_key = self.key_manager.get_key(old_key_id)?;
 
         // Generate new key with same algorithm
-        let new_key_id = self.key_manager.generate_key(
-            None,
-            old_key.algorithm,
-            Some(old_key_id.to_string()),
-        )?;
+        let new_key_id =
+            self.key_manager
+                .generate_key(None, old_key.algorithm, Some(old_key_id.to_string()))?;
 
         Ok(new_key_id)
     }
@@ -974,11 +993,15 @@ impl KeyRotator {
         // Decrypt with old key
         let old_key = self.key_manager.get_key(old_key_id)?;
         let ciphertext = Ciphertext::from_bytes(encrypted_data)?;
-        let plaintext = self.engine.decrypt(old_key.key_material.as_bytes(), &ciphertext, aad)?;
+        let plaintext = self
+            .engine
+            .decrypt(old_key.key_material.as_bytes(), &ciphertext, aad)?;
 
         // Encrypt with new key
         let new_key = self.key_manager.get_key(new_key_id)?;
-        let new_ciphertext = self.engine.encrypt(new_key.key_material.as_bytes(), &plaintext, aad)?;
+        let new_ciphertext =
+            self.engine
+                .encrypt(new_key.key_material.as_bytes(), &plaintext, aad)?;
 
         Ok(new_ciphertext.to_bytes())
     }
@@ -1014,10 +1037,8 @@ impl EncryptedIndex {
         let key = self.key_manager.get_key(key_id)?;
 
         // Use deterministic derivation for searchable token
-        let token_key = KeyDerivation::derive_deterministic(
-            key.key_material.as_bytes(),
-            column_id.as_bytes(),
-        )?;
+        let token_key =
+            KeyDerivation::derive_deterministic(key.key_material.as_bytes(), column_id.as_bytes())?;
 
         // Hash the value with the token key
         let mut mac = <HmacSha256 as Mac>::new_from_slice(&token_key)
@@ -1159,7 +1180,9 @@ mod tests {
     fn test_key_manager() {
         let manager = KeyManager::new();
 
-        let key_id = manager.generate_key(None, Algorithm::Aes256Gcm, None).unwrap();
+        let key_id = manager
+            .generate_key(None, Algorithm::Aes256Gcm, None)
+            .unwrap();
         let key = manager.get_key(&key_id).unwrap();
 
         assert_eq!(key.id, key_id);
@@ -1173,14 +1196,20 @@ mod tests {
         let plaintext = b"test@example.com";
         let column_id = "email";
 
-        let ct1 = encryptor.encrypt_deterministic(&key, plaintext, column_id).unwrap();
-        let ct2 = encryptor.encrypt_deterministic(&key, plaintext, column_id).unwrap();
+        let ct1 = encryptor
+            .encrypt_deterministic(&key, plaintext, column_id)
+            .unwrap();
+        let ct2 = encryptor
+            .encrypt_deterministic(&key, plaintext, column_id)
+            .unwrap();
 
         // Same plaintext should produce same ciphertext
         assert_eq!(ct1, ct2);
 
         // Should decrypt correctly
-        let decrypted = encryptor.decrypt_deterministic(&key, &ct1, column_id).unwrap();
+        let decrypted = encryptor
+            .decrypt_deterministic(&key, &ct1, column_id)
+            .unwrap();
         assert_eq!(plaintext.as_ref(), decrypted.as_slice());
     }
 
@@ -1191,8 +1220,12 @@ mod tests {
         let plaintext = b"sensitive data";
         let column_id = "ssn";
 
-        let ct1 = encryptor.encrypt_randomized(&key, plaintext, column_id).unwrap();
-        let ct2 = encryptor.encrypt_randomized(&key, plaintext, column_id).unwrap();
+        let ct1 = encryptor
+            .encrypt_randomized(&key, plaintext, column_id)
+            .unwrap();
+        let ct2 = encryptor
+            .encrypt_randomized(&key, plaintext, column_id)
+            .unwrap();
 
         // Same plaintext should produce different ciphertext
         assert_ne!(ct1, ct2);
@@ -1241,23 +1274,31 @@ mod tests {
         let manager = Arc::new(KeyManager::new());
         let rotator = KeyRotator::new(manager.clone());
 
-        let old_key_id = manager.generate_key(None, Algorithm::Aes256Gcm, None).unwrap();
+        let old_key_id = manager
+            .generate_key(None, Algorithm::Aes256Gcm, None)
+            .unwrap();
 
         // Encrypt some data
         let engine = EncryptionEngine::new_aes();
         let old_key = manager.get_key(&old_key_id).unwrap();
         let plaintext = b"important data";
-        let ciphertext = engine.encrypt(old_key.key_material.as_bytes(), plaintext, None).unwrap();
+        let ciphertext = engine
+            .encrypt(old_key.key_material.as_bytes(), plaintext, None)
+            .unwrap();
         let old_encrypted = ciphertext.to_bytes();
 
         // Rotate key
         let new_key_id = rotator.start_rotation(&old_key_id).unwrap();
-        let new_encrypted = rotator.reencrypt_data(&old_key_id, &new_key_id, &old_encrypted, None).unwrap();
+        let new_encrypted = rotator
+            .reencrypt_data(&old_key_id, &new_key_id, &old_encrypted, None)
+            .unwrap();
 
         // Decrypt with new key
         let new_key = manager.get_key(&new_key_id).unwrap();
         let new_ciphertext = Ciphertext::from_bytes(&new_encrypted).unwrap();
-        let decrypted = engine.decrypt(new_key.key_material.as_bytes(), &new_ciphertext, None).unwrap();
+        let decrypted = engine
+            .decrypt(new_key.key_material.as_bytes(), &new_ciphertext, None)
+            .unwrap();
 
         assert_eq!(plaintext.as_ref(), decrypted.as_slice());
     }
@@ -1267,19 +1308,27 @@ mod tests {
         let manager = Arc::new(KeyManager::new());
         let index = EncryptedIndex::new(manager.clone());
 
-        let key_id = manager.generate_key(None, Algorithm::Aes256Gcm, None).unwrap();
+        let key_id = manager
+            .generate_key(None, Algorithm::Aes256Gcm, None)
+            .unwrap();
         let value = b"search@example.com";
         let column_id = "email";
 
         // Generate search tokens
-        let token1 = index.generate_search_token(&key_id, value, column_id).unwrap();
-        let token2 = index.generate_search_token(&key_id, value, column_id).unwrap();
+        let token1 = index
+            .generate_search_token(&key_id, value, column_id)
+            .unwrap();
+        let token2 = index
+            .generate_search_token(&key_id, value, column_id)
+            .unwrap();
 
         // Same value should produce same token
         assert_eq!(token1, token2);
 
         // Different value should produce different token
-        let token3 = index.generate_search_token(&key_id, b"other@example.com", column_id).unwrap();
+        let token3 = index
+            .generate_search_token(&key_id, b"other@example.com", column_id)
+            .unwrap();
         assert_ne!(token1, token3);
     }
 }

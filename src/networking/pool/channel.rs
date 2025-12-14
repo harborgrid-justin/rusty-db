@@ -3,14 +3,14 @@
 // Channel-based connection pooling using mpsc channels for request queuing.
 // Provides fair scheduling, timeout handling, and backpressure management.
 
+use super::PoolConfig;
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
-use super::PoolConfig;
-use std::sync::Arc;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::{mpsc, oneshot, Semaphore, Mutex};
-use serde::{Serialize, Deserialize};
+use tokio::sync::{mpsc, oneshot, Mutex, Semaphore};
 
 /// Channel-based connection pool
 pub struct ChannelPool {
@@ -68,20 +68,20 @@ impl ChannelPool {
         };
 
         // Send request to queue
-        self.request_tx.send(channel_request).map_err(|_| {
-            DbError::Internal("Request channel closed".to_string())
-        })?;
+        self.request_tx
+            .send(channel_request)
+            .map_err(|_| DbError::Internal("Request channel closed".to_string()))?;
 
         // Wait for response with timeout
         tokio::time::timeout(self.config.acquire_timeout, response_rx)
             .await
-            .map_err(|_| DbError::Timeout(format!(
-                "Request {} timed out after {:?}",
-                request_id, self.config.acquire_timeout
-            )))?
-            .map_err(|_| DbError::Internal(
-                "Response channel closed".to_string()
-            ))?
+            .map_err(|_| {
+                DbError::Timeout(format!(
+                    "Request {} timed out after {:?}",
+                    request_id, self.config.acquire_timeout
+                ))
+            })?
+            .map_err(|_| DbError::Internal("Response channel closed".to_string()))?
     }
 
     /// Submit request with custom timeout
@@ -103,26 +103,23 @@ impl ChannelPool {
             submitted_at: Instant::now(),
         };
 
-        self.request_tx.send(channel_request).map_err(|_| {
-            DbError::Internal("Request channel closed".to_string())
-        })?;
+        self.request_tx
+            .send(channel_request)
+            .map_err(|_| DbError::Internal("Request channel closed".to_string()))?;
 
         tokio::time::timeout(timeout, response_rx)
             .await
-            .map_err(|_| DbError::Timeout(format!(
-                "Request {} timed out after {:?}",
-                request_id, timeout
-            )))?
-            .map_err(|_| DbError::Internal(
-                "Response channel closed".to_string()
-            ))?
+            .map_err(|_| {
+                DbError::Timeout(format!(
+                    "Request {} timed out after {:?}",
+                    request_id, timeout
+                ))
+            })?
+            .map_err(|_| DbError::Internal("Response channel closed".to_string()))?
     }
 
     /// Start worker tasks to process requests
-    fn start_workers(
-        &mut self,
-        request_rx: mpsc::UnboundedReceiver<ChannelRequest>,
-    ) {
+    fn start_workers(&mut self, request_rx: mpsc::UnboundedReceiver<ChannelRequest>) {
         let worker_count = self.config.max_connections;
         let semaphore = Arc::new(Semaphore::new(worker_count));
 
@@ -152,11 +149,8 @@ impl ChannelPool {
                     }; // Lock is released here
 
                     // Process request
-                    let response = Self::process_request(
-                        worker_id,
-                        &node_id,
-                        request.payload,
-                    ).await;
+                    let response =
+                        Self::process_request(worker_id, &node_id, request.payload).await;
 
                     // Send response
                     let _ = request.response_tx.send(response);
@@ -349,11 +343,9 @@ impl RequestChannel {
 
     /// Submit a request using defaults
     pub async fn submit(&self, payload: RequestPayload) -> Result<ResponsePayload> {
-        self.pool.submit_request_timeout(
-            payload,
-            self.default_priority,
-            self.default_timeout,
-        ).await
+        self.pool
+            .submit_request_timeout(payload, self.default_priority, self.default_timeout)
+            .await
     }
 
     /// Submit a request with custom priority
@@ -362,11 +354,9 @@ impl RequestChannel {
         payload: RequestPayload,
         priority: RequestPriority,
     ) -> Result<ResponsePayload> {
-        self.pool.submit_request_timeout(
-            payload,
-            priority,
-            self.default_timeout,
-        ).await
+        self.pool
+            .submit_request_timeout(payload, priority, self.default_timeout)
+            .await
     }
 
     /// Submit a request with custom timeout
@@ -375,11 +365,9 @@ impl RequestChannel {
         payload: RequestPayload,
         timeout: Duration,
     ) -> Result<ResponsePayload> {
-        self.pool.submit_request_timeout(
-            payload,
-            self.default_priority,
-            timeout,
-        ).await
+        self.pool
+            .submit_request_timeout(payload, self.default_priority, timeout)
+            .await
     }
 }
 
@@ -417,9 +405,9 @@ impl FairScheduler {
     pub fn enqueue(&self, request: ChannelRequest) -> Result<()> {
         let priority_idx = request.priority as usize;
 
-        self.queues[priority_idx].send(request).map_err(|_| {
-            DbError::Internal("Priority queue closed".to_string())
-        })?;
+        self.queues[priority_idx]
+            .send(request)
+            .map_err(|_| DbError::Internal("Priority queue closed".to_string()))?;
 
         self.counters[priority_idx].fetch_add(1, Ordering::Relaxed);
 

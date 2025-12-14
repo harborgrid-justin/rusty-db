@@ -310,8 +310,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_slow_start() {
-        let balancer =
-            LeastConnectionsBalancer::new().with_slow_start(Duration::from_secs(60));
+        let balancer = LeastConnectionsBalancer::new().with_slow_start(Duration::from_secs(60));
 
         let backends = vec![
             create_backend_with_conns("node0", 5, 100),
@@ -326,7 +325,10 @@ mod tests {
         if let Some(slow_start) = &balancer.slow_start {
             let tracker = slow_start.read().await;
             let multiplier = tracker.get_multiplier(&backend.id);
-            assert!(multiplier > 1.0, "New backend should have slow start penalty");
+            assert!(
+                multiplier > 1.0,
+                "New backend should have slow start penalty"
+            );
         }
     }
 
@@ -349,7 +351,10 @@ mod tests {
 
         // node1 should have significantly more selections
         let node1_count = selections.get("node1").unwrap_or(&0);
-        assert!(*node1_count > 50, "node1 should be selected majority of the time");
+        assert!(
+            *node1_count > 50,
+            "node1 should be selected majority of the time"
+        );
     }
 
     #[tokio::test]

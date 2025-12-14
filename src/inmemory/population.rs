@@ -7,15 +7,15 @@
 // - Memory pressure handling
 // - Repopulation after modifications
 
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::collections::{HashMap, BinaryHeap};
-use std::time::Duration;
 use parking_lot::RwLock;
+use std::collections::VecDeque;
+use std::collections::{BinaryHeap, HashMap};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
 use std::thread;
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::inmemory::column_store::ColumnStore;
 use crate::inmemory::compression::HybridCompressor;
@@ -333,9 +333,7 @@ impl PopulationWorker {
             task.column_ids.len(),
         );
 
-        self.progress_tracker
-            .write()
-            .insert(task.task_id, progress);
+        self.progress_tracker.write().insert(task.task_id, progress);
 
         // Simulate population from disk
         for (_idx, &column_id) in task.column_ids.iter().enumerate() {
@@ -468,7 +466,12 @@ impl PopulationManager {
         stats.queued_tasks += 1;
     }
 
-    pub fn schedule_column(&self, store_name: String, column_id: u32, priority: PopulationPriority) {
+    pub fn schedule_column(
+        &self,
+        store_name: String,
+        column_id: u32,
+        priority: PopulationPriority,
+    ) {
         let task_id = self.next_task_id.fetch_add(1, Ordering::SeqCst);
 
         let task = PopulationTask::new(

@@ -1,15 +1,15 @@
 // Disaster Recovery - Standby database, failover, and RTO/RPO management
 // Provides comprehensive disaster recovery capabilities
 
-use std::collections::VecDeque;
-use serde::{Deserialize, Serialize};
-use std::time::{Instant, Duration, SystemTime};
-use std::collections::{HashMap};
-use std::net::SocketAddr;
-use parking_lot::{Mutex, RwLock};
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::{Mutex, RwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::net::SocketAddr;
+use std::sync::Arc;
+use std::time::{Duration, Instant, SystemTime};
 
 // Standby database configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -102,7 +102,7 @@ pub struct RtoConfig {
 impl Default for RtoConfig {
     fn default() -> Self {
         Self {
-            target_seconds: 300, // 5 minutes
+            target_seconds: 300,         // 5 minutes
             max_acceptable_seconds: 600, // 10 minutes
             measured_recovery_time_seconds: Vec::new(),
             last_test: None,
@@ -152,7 +152,7 @@ pub struct RpoConfig {
 impl Default for RpoConfig {
     fn default() -> Self {
         Self {
-            target_seconds: 60, // 1 minute
+            target_seconds: 60,                    // 1 minute
             max_acceptable_data_loss_seconds: 300, // 5 minutes
             measured_data_loss_seconds: Vec::new(),
             current_lag_seconds: 0,
@@ -231,11 +231,7 @@ pub struct FailoverEvent {
 }
 
 impl FailoverEvent {
-    pub fn new(
-        trigger: FailoverTrigger,
-        old_primary: String,
-        new_primary: String,
-    ) -> Self {
+    pub fn new(trigger: FailoverTrigger, old_primary: String, new_primary: String) -> Self {
         Self {
             event_id: format!("FAILOVER-{}", uuid::Uuid::new_v4()),
             trigger,
@@ -275,11 +271,7 @@ pub struct DisasterRecoveryManager {
 }
 
 impl DisasterRecoveryManager {
-    pub fn new(
-        config: StandbyConfig,
-        rto_config: RtoConfig,
-        rpo_config: RpoConfig,
-    ) -> Self {
+    pub fn new(config: StandbyConfig, rto_config: RtoConfig, rpo_config: RpoConfig) -> Self {
         Self {
             config,
             rto_config,
@@ -319,7 +311,8 @@ impl DisasterRecoveryManager {
         primary_lsn: u64,
     ) -> Result<()> {
         let mut standbys = self.standbys.write();
-        let standby = standbys.get_mut(standby_name)
+        let standby = standbys
+            .get_mut(standby_name)
             .ok_or_else(|| DbError::BackupError("Standby not found".to_string()))?;
 
         let _old_lsn = standby.last_applied_lsn;
@@ -349,7 +342,8 @@ impl DisasterRecoveryManager {
     // Perform health check on standby
     pub fn health_check(&self, standby_name: &str) -> Result<bool> {
         let mut standbys = self.standbys.write();
-        let standby = standbys.get_mut(standby_name)
+        let standby = standbys
+            .get_mut(standby_name)
             .ok_or_else(|| DbError::BackupError("Standby not found".to_string()))?;
 
         // Simulate health check
@@ -378,28 +372,30 @@ impl DisasterRecoveryManager {
         {
             let role = self.current_role.read();
             if *role == DatabaseRole::Standby {
-                return Err(DbError::BackupError("Already running as standby".to_string()));
+                return Err(DbError::BackupError(
+                    "Already running as standby".to_string(),
+                ));
             }
         }
 
         // Verify target standby exists and is healthy
         let standby_healthy = {
             let standbys = self.standbys.read();
-            let standby = standbys.get(target_standby)
+            let standby = standbys
+                .get(target_standby)
                 .ok_or_else(|| DbError::BackupError("Target standby not found".to_string()))?;
             standby.is_healthy
         };
 
         if !standby_healthy && !matches!(trigger, FailoverTrigger::Manual) {
-            return Err(DbError::BackupError("Target standby is not healthy".to_string()));
+            return Err(DbError::BackupError(
+                "Target standby is not healthy".to_string(),
+            ));
         }
 
         // Create failover event
-        let mut event = FailoverEvent::new(
-            trigger,
-            "primary".to_string(),
-            target_standby.to_string(),
-        );
+        let mut event =
+            FailoverEvent::new(trigger, "primary".to_string(), target_standby.to_string());
 
         let event_id = event.event_id.clone();
         let start_time = Instant::now();
@@ -415,7 +411,9 @@ impl DisasterRecoveryManager {
             step: FailoverStep::StoppingReplication,
         };
         self.stop_replication(target_standby)?;
-        event.steps_completed.push("StoppingReplication".to_string());
+        event
+            .steps_completed
+            .push("StoppingReplication".to_string());
 
         event.status = FailoverStatus::InProgress {
             step: FailoverStep::PromotingStandby,
@@ -427,7 +425,9 @@ impl DisasterRecoveryManager {
             step: FailoverStep::ReconfigurationClients,
         };
         self.reconfigure_clients(target_standby)?;
-        event.steps_completed.push("ReconfigurationClients".to_string());
+        event
+            .steps_completed
+            .push("ReconfigurationClients".to_string());
 
         event.status = FailoverStatus::InProgress {
             step: FailoverStep::VerifyingPromoted,
@@ -441,7 +441,9 @@ impl DisasterRecoveryManager {
 
         // Update RTO metrics
         let mut rto_config = self.rto_config.clone();
-        rto_config.measured_recovery_time_seconds.push(recovery_time);
+        rto_config
+            .measured_recovery_time_seconds
+            .push(recovery_time);
         rto_config.last_test = Some(SystemTime::now());
 
         // Store failover event
@@ -456,13 +458,15 @@ impl DisasterRecoveryManager {
     fn validate_standby(&self, standby_name: &str) -> Result<()> {
         // Verify standby is reachable and has recent data
         let standbys = self.standbys.read();
-        let standby = standbys.get(standby_name)
+        let standby = standbys
+            .get(standby_name)
             .ok_or_else(|| DbError::BackupError("Standby not found".to_string()))?;
 
         if standby.replication_lag_seconds > self.config.max_lag_tolerance_seconds {
-            return Err(DbError::BackupError(
-                format!("Standby lag too high: {} seconds", standby.replication_lag_seconds)
-            ));
+            return Err(DbError::BackupError(format!(
+                "Standby lag too high: {} seconds",
+                standby.replication_lag_seconds
+            )));
         }
 
         Ok(())
@@ -494,11 +498,14 @@ impl DisasterRecoveryManager {
     fn verify_promoted(&self, standby_name: &str) -> Result<()> {
         // Verify promoted standby is accepting connections
         let standbys = self.standbys.read();
-        let standby = standbys.get(standby_name)
+        let standby = standbys
+            .get(standby_name)
             .ok_or_else(|| DbError::BackupError("Standby not found".to_string()))?;
 
         if standby.role != DatabaseRole::Primary {
-            return Err(DbError::BackupError("Promotion verification failed".to_string()));
+            return Err(DbError::BackupError(
+                "Promotion verification failed".to_string(),
+            ));
         }
 
         Ok(())
@@ -538,18 +545,19 @@ impl DisasterRecoveryManager {
         // Check if standby is healthy
         for (name, standby) in self.standbys.read().iter() {
             if !standby.is_healthy {
-                test_result.issues_found.push(
-                    format!("Standby {} is not healthy", name)
-                );
+                test_result
+                    .issues_found
+                    .push(format!("Standby {} is not healthy", name));
             }
 
             if standby.is_lagging(self.config.max_lag_tolerance_seconds) {
-                test_result.issues_found.push(
-                    format!("Standby {} has excessive lag: {} seconds", name, standby.replication_lag_seconds)
-                );
-                test_result.recommendations.push(
-                    "Increase replication bandwidth or reduce write load".to_string()
-                );
+                test_result.issues_found.push(format!(
+                    "Standby {} has excessive lag: {} seconds",
+                    name, standby.replication_lag_seconds
+                ));
+                test_result
+                    .recommendations
+                    .push("Increase replication bandwidth or reduce write load".to_string());
             }
         }
 
@@ -557,10 +565,10 @@ impl DisasterRecoveryManager {
         if let Some(avg_rto) = self.rto_config.average_recovery_time() {
             test_result.rto_target_met = avg_rto <= self.rto_config.target_seconds;
             if !test_result.rto_target_met {
-                test_result.recommendations.push(
-                    format!("RTO not meeting target. Average: {}s, Target: {}s",
-                        avg_rto, self.rto_config.target_seconds)
-                );
+                test_result.recommendations.push(format!(
+                    "RTO not meeting target. Average: {}s, Target: {}s",
+                    avg_rto, self.rto_config.target_seconds
+                ));
             }
         }
 
@@ -568,7 +576,8 @@ impl DisasterRecoveryManager {
         test_result.rpo_target_met = self.rpo_config.is_within_target();
         if !test_result.rpo_target_met {
             test_result.recommendations.push(
-                "RPO not meeting target. Consider more frequent backups or synchronous replication".to_string()
+                "RPO not meeting target. Consider more frequent backups or synchronous replication"
+                    .to_string(),
             );
         }
 
@@ -600,7 +609,8 @@ impl DisasterRecoveryManager {
         }
 
         let cutoff = SystemTime::now() - Duration::from_secs(period_hours * 3600);
-        let recent_checks: Vec<_> = health_checks.iter()
+        let recent_checks: Vec<_> = health_checks
+            .iter()
             .filter(|(time, _)| *time >= cutoff)
             .collect();
 

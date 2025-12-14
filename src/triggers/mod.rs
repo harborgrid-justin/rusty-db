@@ -1,9 +1,9 @@
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
 use std::sync::Arc;
-use crate::Result;
-use crate::error::DbError;
 
 // Trigger timing
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -54,7 +54,8 @@ impl TriggerManager {
     // Create a new trigger
     pub fn create_trigger(&self, trigger: Trigger) -> Result<()> {
         let mut triggers = self.triggers.write();
-        triggers.entry(trigger.table.clone())
+        triggers
+            .entry(trigger.table.clone())
             .or_insert_with(Vec::new)
             .push(trigger);
         Ok(())
@@ -86,9 +87,7 @@ impl TriggerManager {
     // Get all triggers for a table
     pub fn get_triggers(&self, table: &str) -> Vec<Trigger> {
         let triggers = self.triggers.read();
-        triggers.get(table)
-            .map(|t| t.clone())
-            .unwrap_or_default()
+        triggers.get(table).map(|t| t.clone()).unwrap_or_default()
     }
 
     // Execute triggers for a specific event
@@ -103,10 +102,7 @@ impl TriggerManager {
 
         if let Some(table_triggers) = triggers.get(table) {
             for trigger in table_triggers {
-                if trigger.enabled
-                    && trigger.event == event
-                    && trigger.timing == timing
-                {
+                if trigger.enabled && trigger.event == event && trigger.timing == timing {
                     // Check condition if present
                     if let Some(condition) = &trigger.condition {
                         if !self.evaluate_condition(condition, context)? {
@@ -165,7 +161,17 @@ impl TriggerManager {
         let rest = condition.strip_prefix(prefix).unwrap_or(condition);
 
         // Find operator
-        let operators = ["<>", "!=", ">=", "<=", "=", ">", "<", " IS NOT NULL", " IS NULL"];
+        let operators = [
+            "<>",
+            "!=",
+            ">=",
+            "<=",
+            "=",
+            ">",
+            "<",
+            " IS NOT NULL",
+            " IS NULL",
+        ];
         for op in operators {
             if let Some(pos) = rest.find(op) {
                 let column = rest[..pos].trim();
@@ -191,7 +197,11 @@ impl TriggerManager {
     }
 
     // Helper to compare NEW and OLD values
-    fn evaluate_new_old_comparison(&self, condition: &str, context: &TriggerContext) -> Result<bool> {
+    fn evaluate_new_old_comparison(
+        &self,
+        condition: &str,
+        context: &TriggerContext,
+    ) -> Result<bool> {
         // Handle: NEW.column <> OLD.column (detect changes)
         if let (Some(new_values), Some(old_values)) = (&context.new_values, &context.old_values) {
             // Parse NEW.col <> OLD.col pattern

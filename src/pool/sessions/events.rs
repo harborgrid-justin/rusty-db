@@ -1,7 +1,7 @@
 // Session lifecycle events module
-use serde::{Serialize, Deserialize};
-use std::sync::Arc;
 use crate::error::Result;
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SessionEvent {

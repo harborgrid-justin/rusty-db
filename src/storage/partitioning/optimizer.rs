@@ -96,11 +96,13 @@ impl PartitionStrategyRecommender {
     }
 
     pub fn recommend_strategy(&self, column: &str) -> PartitionStrategy {
-        let has_date_access = self.workload_patterns
+        let has_date_access = self
+            .workload_patterns
             .iter()
             .any(|p| matches!(p.access_pattern, AccessPattern::ByDate));
 
-        let has_key_access = self.workload_patterns
+        let has_key_access = self
+            .workload_patterns
             .iter()
             .any(|p| matches!(p.access_pattern, AccessPattern::ByKey));
 
@@ -154,7 +156,8 @@ impl PartitionRouter {
         }
 
         let target_partitions = all_partitions.to_vec();
-        self.routing_cache.insert(cache_key, target_partitions.clone());
+        self.routing_cache
+            .insert(cache_key, target_partitions.clone());
         target_partitions
     }
 
@@ -216,8 +219,14 @@ impl PartitionSqlGenerator {
                 }
                 sql
             }
-            PartitionStrategy::Hash { column, num_partitions } => {
-                format!("PARTITION BY HASH ({}) PARTITIONS {}", column, num_partitions)
+            PartitionStrategy::Hash {
+                column,
+                num_partitions,
+            } => {
+                format!(
+                    "PARTITION BY HASH ({}) PARTITIONS {}",
+                    column, num_partitions
+                )
             }
             PartitionStrategy::List { column, lists } => {
                 let mut sql = format!("PARTITION BY LIST ({})", column);
@@ -235,9 +244,7 @@ impl PartitionSqlGenerator {
                 }
                 sql
             }
-            PartitionStrategy::Composite { primary, .. } => {
-                Self::strategy_to_sql(primary)
-            }
+            PartitionStrategy::Composite { primary, .. } => Self::strategy_to_sql(primary),
         }
     }
 }
@@ -253,39 +260,42 @@ impl PartitionValidator {
             PartitionStrategy::Range { column, ranges } => {
                 if column.is_empty() {
                     return Err(DbError::InvalidInput(
-                        "Partition column cannot be empty".to_string()
+                        "Partition column cannot be empty".to_string(),
                     ));
                 }
                 for range in ranges {
                     if range.name.is_empty() {
                         return Err(DbError::InvalidInput(
-                            "Partition name cannot be empty".to_string()
+                            "Partition name cannot be empty".to_string(),
                         ));
                     }
                 }
             }
-            PartitionStrategy::Hash { column, num_partitions } => {
+            PartitionStrategy::Hash {
+                column,
+                num_partitions,
+            } => {
                 if column.is_empty() {
                     return Err(DbError::InvalidInput(
-                        "Partition column cannot be empty".to_string()
+                        "Partition column cannot be empty".to_string(),
                     ));
                 }
                 if *num_partitions == 0 {
                     return Err(DbError::InvalidInput(
-                        "Number of partitions must be > 0".to_string()
+                        "Number of partitions must be > 0".to_string(),
                     ));
                 }
             }
             PartitionStrategy::List { column, lists } => {
                 if column.is_empty() {
                     return Err(DbError::InvalidInput(
-                        "Partition column cannot be empty".to_string()
+                        "Partition column cannot be empty".to_string(),
                     ));
                 }
                 for list in lists {
                     if list.name.is_empty() {
                         return Err(DbError::InvalidInput(
-                            "Partition name cannot be empty".to_string()
+                            "Partition name cannot be empty".to_string(),
                         ));
                     }
                     if list.values.is_empty() {

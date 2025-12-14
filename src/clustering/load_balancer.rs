@@ -16,14 +16,14 @@
 // - Latency-based
 // - Locality-aware
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 use tokio::sync::Semaphore;
 
 // Backend node identifier
@@ -122,8 +122,7 @@ impl Backend {
 
     // Check if backend can accept new connections
     pub fn can_accept_connection(&self) -> bool {
-        self.status == BackendStatus::Healthy
-            && self.active_connections < self.max_connections
+        self.status == BackendStatus::Healthy && self.active_connections < self.max_connections
     }
 
     // Get utilization ratio
@@ -188,7 +187,10 @@ impl ConnectionPool {
 
     async fn acquire(&self, next_conn_id: &mut ConnectionId) -> Result<Connection, DbError> {
         // Wait for available slot
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|_| DbError::Internal("Failed to acquire connection".into()))?;
 
         // Try to get from available pool
@@ -413,7 +415,10 @@ impl LoadBalancer {
         let backend_id = backend.id.clone();
 
         // Add backend
-        self.backends.write().unwrap().insert(backend_id.clone(), backend);
+        self.backends
+            .write()
+            .unwrap()
+            .insert(backend_id.clone(), backend);
 
         // Create connection pool
         let pool = ConnectionPool::new(
@@ -428,7 +433,10 @@ impl LoadBalancer {
             self.config.circuit_breaker_threshold,
             self.config.circuit_breaker_timeout,
         );
-        self.circuit_breakers.write().unwrap().insert(backend_id, breaker);
+        self.circuit_breakers
+            .write()
+            .unwrap()
+            .insert(backend_id, breaker);
 
         Ok(())
     }
@@ -474,7 +482,10 @@ impl LoadBalancer {
                     created_at: SystemTime::now(),
                     last_accessed: SystemTime::now(),
                 };
-                self.sessions.write().unwrap().insert(sid.to_string(), session);
+                self.sessions
+                    .write()
+                    .unwrap()
+                    .insert(sid.to_string(), session);
             }
         }
 
@@ -509,7 +520,10 @@ impl LoadBalancer {
             .values()
             .filter(|b| self.is_backend_available(&b.id))
             .min_by_key(|b| {
-                pools.get(&b.id).map(|p| p.active_count()).unwrap_or(usize::MAX)
+                pools
+                    .get(&b.id)
+                    .map(|p| p.active_count())
+                    .unwrap_or(usize::MAX)
             })
             .ok_or_else(|| DbError::Internal("No available backends".into()))?;
 
@@ -627,11 +641,15 @@ impl LoadBalancer {
     }
 
     // Acquire a connection
-    pub async fn acquire_connection(&self, session_id: Option<&str>) -> Result<(BackendId, ConnectionId), DbError> {
+    pub async fn acquire_connection(
+        &self,
+        session_id: Option<&str>,
+    ) -> Result<(BackendId, ConnectionId), DbError> {
         let backend_id = self.select_backend(session_id)?;
 
         let pools = self.pools.read().unwrap();
-        let pool = pools.get(&backend_id)
+        let pool = pools
+            .get(&backend_id)
             .ok_or_else(|| DbError::Internal("Pool not found".into()))?;
 
         let mut next_id = self.next_conn_id.write().unwrap();
@@ -680,8 +698,8 @@ impl LoadBalancer {
             backend.avg_latency_ms = alpha * latency_ms + (1.0 - alpha) * backend.avg_latency_ms;
 
             // Update success rate
-            backend.success_rate = alpha * (if success { 1.0 } else { 0.0 })
-                + (1.0 - alpha) * backend.success_rate;
+            backend.success_rate =
+                alpha * (if success { 1.0 } else { 0.0 }) + (1.0 - alpha) * backend.success_rate;
 
             // Update status based on circuit breaker
             if let Some(breaker) = circuit_breakers.get(backend_id) {

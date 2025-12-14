@@ -8,9 +8,9 @@
 // - ANY and ALL operators
 // - Subquery decorrelation optimization
 
-use crate::error::DbError;
 use super::planner::PlanNode;
 use super::QueryResult;
+use crate::error::DbError;
 
 // Subquery type classification
 #[derive(Debug, Clone, PartialEq)]
@@ -33,7 +33,7 @@ pub struct SubqueryExpr {
     pub subquery_type: SubqueryType,
     pub plan: Box<PlanNode>,
     pub outer_refs: Vec<String>, // Columns referenced from outer query
-    pub negated: bool, // For NOT EXISTS, NOT IN
+    pub negated: bool,           // For NOT EXISTS, NOT IN
 }
 
 impl SubqueryExpr {
@@ -90,29 +90,23 @@ pub struct InEvaluator;
 impl InEvaluator {
     // Evaluate IN subquery
     // Check if value exists in subquery result set
-    pub fn evaluate(
-        value: &str,
-        result: &QueryResult,
-        negated: bool,
-    ) -> Result<bool, DbError> {
+    pub fn evaluate(value: &str, result: &QueryResult, negated: bool) -> Result<bool, DbError> {
         if result.columns.len() != 1 {
             return Err(DbError::InvalidInput(
-                "IN subquery must return exactly one column".to_string()
+                "IN subquery must return exactly one column".to_string(),
             ));
         }
 
-        let in_set = result.rows.iter().any(|row| {
-            row.get(0).map(|v| v == value).unwrap_or(false)
-        });
+        let in_set = result
+            .rows
+            .iter()
+            .any(|row| row.get(0).map(|v| v == value).unwrap_or(false));
 
         Ok(if negated { !in_set } else { in_set })
     }
 
     // Convert IN subquery to semi-join for optimization
-    pub fn convert_to_semijoin(
-        outer_column: String,
-        subquery: SubqueryExpr,
-    ) -> PlanNode {
+    pub fn convert_to_semijoin(outer_column: String, subquery: SubqueryExpr) -> PlanNode {
         // Semi-join: returns rows from outer where match exists in inner
         // This is more efficient than nested loop evaluation
 
@@ -137,13 +131,13 @@ impl ScalarSubqueryEvaluator {
     pub fn evaluate(result: &QueryResult) -> Result<Option<String>, DbError> {
         if result.columns.len() > 1 {
             return Err(DbError::InvalidInput(
-                "Scalar subquery must return exactly one column".to_string()
+                "Scalar subquery must return exactly one column".to_string(),
             ));
         }
 
         if result.rows.len() > 1 {
             return Err(DbError::InvalidInput(
-                "Scalar subquery returned more than one row".to_string()
+                "Scalar subquery returned more than one row".to_string(),
             ));
         }
 
@@ -168,7 +162,7 @@ impl QuantifiedComparisonEvaluator {
     ) -> Result<bool, DbError> {
         if result.columns.len() != 1 {
             return Err(DbError::InvalidInput(
-                "Quantified comparison subquery must return exactly one column".to_string()
+                "Quantified comparison subquery must return exactly one column".to_string(),
             ));
         }
 
@@ -192,7 +186,7 @@ impl QuantifiedComparisonEvaluator {
     ) -> Result<bool, DbError> {
         if result.columns.len() != 1 {
             return Err(DbError::InvalidInput(
-                "Quantified comparison subquery must return exactly one column".to_string()
+                "Quantified comparison subquery must return exactly one column".to_string(),
             ));
         }
 
@@ -404,9 +398,7 @@ impl SubqueryOptimizer {
     ) -> f64 {
         match strategy {
             SubqueryExecutionStrategy::ExecuteOnce => inner_cardinality as f64,
-            SubqueryExecutionStrategy::NestedLoop => {
-                (outer_cardinality * inner_cardinality) as f64
-            }
+            SubqueryExecutionStrategy::NestedLoop => (outer_cardinality * inner_cardinality) as f64,
             SubqueryExecutionStrategy::Decorrelate => {
                 // Join-based execution
                 (outer_cardinality + inner_cardinality) as f64 * 1.5
@@ -500,14 +492,11 @@ impl SubqueryContext {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::collections::HashMap;
+    use std::collections::HashMap;
 
     #[test]
     fn test_exists_evaluator() {
-        let result = QueryResult::new(
-            vec!["id".to_string()],
-            vec![vec!["1".to_string()]],
-        );
+        let result = QueryResult::new(vec!["id".to_string()], vec![vec!["1".to_string()]]);
 
         assert!(ExistsEvaluator::evaluate(&result, false));
         assert!(!ExistsEvaluator::evaluate(&result, true)); // NOT EXISTS
@@ -536,10 +525,7 @@ use std::collections::HashMap;
     #[test]
     fn test_scalar_subquery_evaluator() {
         // Valid scalar subquery
-        let result = QueryResult::new(
-            vec!["count".to_string()],
-            vec![vec!["42".to_string()]],
-        );
+        let result = QueryResult::new(vec!["count".to_string()], vec![vec!["42".to_string()]]);
 
         let value = ScalarSubqueryEvaluator::evaluate(&result).unwrap();
         assert_eq!(value, Some("42".to_string()));
@@ -552,10 +538,7 @@ use std::collections::HashMap;
         // Too many rows - should error
         let multi_row = QueryResult::new(
             vec!["count".to_string()],
-            vec![
-                vec!["1".to_string()],
-                vec!["2".to_string()],
-            ],
+            vec![vec!["1".to_string()], vec!["2".to_string()]],
         );
 
         assert!(ScalarSubqueryEvaluator::evaluate(&multi_row).is_err());
@@ -573,25 +556,20 @@ use std::collections::HashMap;
         );
 
         // 15 < ANY (10, 20, 30) -> true (15 < 20 and 15 < 30)
-        assert!(QuantifiedComparisonEvaluator::evaluate_any(
-            "15",
-            ComparisonOp::Less,
-            &result
-        ).unwrap());
+        assert!(
+            QuantifiedComparisonEvaluator::evaluate_any("15", ComparisonOp::Less, &result).unwrap()
+        );
 
         // 5 < ALL (10, 20, 30) -> true
-        assert!(QuantifiedComparisonEvaluator::evaluate_all(
-            "5",
-            ComparisonOp::Less,
-            &result
-        ).unwrap());
+        assert!(
+            QuantifiedComparisonEvaluator::evaluate_all("5", ComparisonOp::Less, &result).unwrap()
+        );
 
         // 25 < ALL (10, 20, 30) -> false (25 not < 10)
-        assert!(!QuantifiedComparisonEvaluator::evaluate_all(
-            "25",
-            ComparisonOp::Less,
-            &result
-        ).unwrap());
+        assert!(
+            !QuantifiedComparisonEvaluator::evaluate_all("25", ComparisonOp::Less, &result)
+                .unwrap()
+        );
     }
 
     #[test]
@@ -613,10 +591,7 @@ use std::collections::HashMap;
     fn test_subquery_cache() {
         let mut cache = SubqueryCache::new(10);
 
-        let result = QueryResult::new(
-            vec!["id".to_string()],
-            vec![vec!["1".to_string()]],
-        );
+        let result = QueryResult::new(vec!["id".to_string()], vec![vec!["1".to_string()]]);
 
         cache.put("key1".to_string(), result.clone());
 

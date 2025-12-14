@@ -25,11 +25,7 @@ use super::{Backend, LoadBalancerContext};
 #[async_trait]
 pub trait LoadBalancingStrategy: Send + Sync {
     /// Select a backend from the available pool
-    async fn select(
-        &self,
-        backends: &[Backend],
-        context: &LoadBalancerContext,
-    ) -> Result<Backend>;
+    async fn select(&self, backends: &[Backend], context: &LoadBalancerContext) -> Result<Backend>;
 
     /// Get the name of this strategy
     fn name(&self) -> &str;

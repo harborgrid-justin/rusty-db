@@ -25,9 +25,9 @@
 // }
 // ```
 
-use std::collections::HashSet;
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 // Quality dimension for analysis.
@@ -294,11 +294,7 @@ impl DataQualityAnalyzer {
     }
 
     // Analyzes a column for data quality.
-    pub fn analyze_column(
-        &self,
-        column_name: &str,
-        values: &[Option<String>],
-    ) -> QualityMetrics {
+    pub fn analyze_column(&self, column_name: &str, values: &[Option<String>]) -> QualityMetrics {
         let mut metrics = QualityMetrics::new(column_name);
         metrics.row_count = values.len();
 
@@ -310,7 +306,13 @@ impl DataQualityAnalyzer {
         let non_null_count = values.iter().filter(|v| v.is_some()).count();
         metrics.completeness = non_null_count as f64 / values.len() as f64;
 
-        if metrics.completeness < self.thresholds.get(&QualityDimension::Completeness).copied().unwrap_or(0.95) {
+        if metrics.completeness
+            < self
+                .thresholds
+                .get(&QualityDimension::Completeness)
+                .copied()
+                .unwrap_or(0.95)
+        {
             let missing = values.len() - non_null_count;
             metrics.add_issue(QualityIssue {
                 issue_type: QualityIssueType::MissingValues,
@@ -324,7 +326,9 @@ impl DataQualityAnalyzer {
                 columns: vec![column_name.to_string()],
                 affected_rows: missing,
                 examples: Vec::new(),
-                suggested_fix: Some("Consider adding NOT NULL constraint or default value".to_string()),
+                suggested_fix: Some(
+                    "Consider adding NOT NULL constraint or default value".to_string(),
+                ),
             });
         }
 
@@ -351,13 +355,14 @@ impl DataQualityAnalyzer {
                 metrics.add_issue(QualityIssue {
                     issue_type: QualityIssueType::Duplicates,
                     severity: 2,
-                    description: format!(
-                        "{} has {} duplicate values",
-                        column_name, dup_count
-                    ),
+                    description: format!("{} has {} duplicate values", column_name, dup_count),
                     columns: vec![column_name.to_string()],
                     affected_rows: dup_count,
-                    examples: duplicates.iter().take(3).map(|(v, _)| v.to_string()).collect(),
+                    examples: duplicates
+                        .iter()
+                        .take(3)
+                        .map(|(v, _)| v.to_string())
+                        .collect(),
                     suggested_fix: None,
                 });
             }
@@ -416,9 +421,7 @@ impl DataQualityAnalyzer {
     // Counts values that violate a rule.
     fn count_invalid_by_rule(&self, rule: &ValidationRule, values: &[Option<String>]) -> usize {
         match &rule.rule_type {
-            ValidationRuleType::NotNull => {
-                values.iter().filter(|v| v.is_none()).count()
-            }
+            ValidationRuleType::NotNull => values.iter().filter(|v| v.is_none()).count(),
             ValidationRuleType::Pattern(pattern) => {
                 if let Ok(regex) = regex::Regex::new(pattern) {
                     values
@@ -430,14 +433,12 @@ impl DataQualityAnalyzer {
                     0
                 }
             }
-            ValidationRuleType::Range { min, max } => {
-                values
-                    .iter()
-                    .flatten()
-                    .filter_map(|v| v.parse::<f64>().ok())
-                    .filter(|v| *v < *min || *v > *max)
-                    .count()
-            }
+            ValidationRuleType::Range { min, max } => values
+                .iter()
+                .flatten()
+                .filter_map(|v| v.parse::<f64>().ok())
+                .filter(|v| *v < *min || *v > *max)
+                .count(),
             ValidationRuleType::AllowedValues(allowed) => {
                 let allowed_set: HashSet<&str> = allowed.iter().map(|s| s.as_str()).collect();
                 values
@@ -477,10 +478,7 @@ impl DataQualityAnalyzer {
     }
 
     // Analyzes multiple columns and returns aggregate metrics.
-    pub fn analyze_table(
-        &self,
-        columns: &[(&str, &[Option<String>])],
-    ) -> TableQualityReport {
+    pub fn analyze_table(&self, columns: &[(&str, &[Option<String>])]) -> TableQualityReport {
         let mut column_metrics: Vec<QualityMetrics> = Vec::new();
 
         for (name, values) in columns {
@@ -636,7 +634,10 @@ impl QueryPerformanceTracker {
             p95_time_ms: p95,
             p99_time_ms: p99,
             stddev_ms: variance.sqrt(),
-            slow_count: samples.iter().filter(|&&t| t >= self.slow_threshold_ms).count(),
+            slow_count: samples
+                .iter()
+                .filter(|&&t| t >= self.slow_threshold_ms)
+                .count(),
         })
     }
 
@@ -691,7 +692,7 @@ pub struct PerformanceMetrics {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Instant;
+    use std::time::Instant;
 
     #[test]
     fn test_quality_metrics_calculation() {

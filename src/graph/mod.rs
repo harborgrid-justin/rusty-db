@@ -169,82 +169,37 @@ pub mod analytics;
 
 // Property Graph
 pub use property_graph::{
-    PropertyGraph,
-    Vertex,
-    Edge,
-    Properties,
-    VertexId,
-    EdgeId,
-    EdgeDirection,
-    HyperEdge,
-    GraphStats,
-    PartitioningStrategy,
+    Edge, EdgeDirection, EdgeId, GraphStats, HyperEdge, PartitioningStrategy, Properties,
+    PropertyGraph, Vertex, VertexId,
 };
 
 // Query Engine
 pub use query_engine::{
-    QueryExecutor,
-    PatternMatcher,
-    PathFinder,
-    GraphTraversal,
-    GraphQuery,
-    QueryResult,
-    MatchClause,
-    GraphPattern,
-    VertexPattern,
-    EdgePattern,
-    PropertyConstraint,
+    EdgePattern, GraphPattern, GraphQuery, GraphTraversal, MatchClause, OrderByClause, PathFinder,
+    PatternMatcher, PropertyConstraint, QueryExecutor, QueryResult, ReturnClause, VertexPattern,
     WhereClause,
-    ReturnClause,
-    OrderByClause,
 };
 
 // Algorithms
 pub use algorithms::{
-    PageRank,
-    PageRankConfig,
-    PageRankResult,
-    ConnectedComponentsAlgorithm,
-    ConnectedComponents,
-    CentralityAlgorithms,
-    BetweennessCentrality,
-    ClosenessCentrality,
-    DegreeCentrality,
-    LouvainAlgorithm,
-    CommunityDetectionResult,
+    common_neighbors, cosine_similarity, jaccard_similarity, BetweennessCentrality,
+    CentralityAlgorithms, ClosenessCentrality, ClusteringCoefficient,
+    ClusteringCoefficientAlgorithm, CommunityDetectionResult, ConnectedComponents,
+    ConnectedComponentsAlgorithm, DegreeCentrality, InfluenceMaximization, InfluenceModel,
+    LouvainAlgorithm, PageRank, PageRankConfig, PageRankResult, TriangleCountResult,
     TriangleCounting,
-    TriangleCountResult,
-    ClusteringCoefficientAlgorithm,
-    ClusteringCoefficient,
-    InfluenceMaximization,
-    InfluenceModel,
-    jaccard_similarity,
-    cosine_similarity,
-    common_neighbors,
 };
 
 // Storage
 pub use storage::{
-    StorageFormat,
-    AdjacencyList,
-    CSRGraph,
-    EdgeCentricStorage,
-    GraphStorageManager,
-    GraphIndex,
-    GraphCompression,
-    MemoryMappedGraph,
+    AdjacencyList, CSRGraph, EdgeCentricStorage, GraphCompression, GraphIndex, GraphStorageManager,
+    MemoryMappedGraph, StorageFormat,
 };
 
 // Analytics
 pub use analytics::{
-    GraphRelationalBridge,
-    MatchExecutor,
-    PathEnumerator,
-    TemporalGraph,
-    TemporalEvent,
-    TemporalMetrics,
-    GraphEmbedding,
-    RecommendationEngine,
+    GraphEmbedding, GraphRelationalBridge, MatchExecutor, PathEnumerator, RecommendationEngine,
+    TemporalEvent, TemporalGraph, TemporalMetrics,
 };
 
 // ============================================================================
@@ -257,10 +212,7 @@ pub fn new_graph() -> PropertyGraph {
 }
 
 // Create a property graph with partitioning
-pub fn new_partitioned_graph(
-    strategy: PartitioningStrategy,
-    num_partitions: u32,
-) -> PropertyGraph {
+pub fn new_partitioned_graph(strategy: PartitioningStrategy, num_partitions: u32) -> PropertyGraph {
     PropertyGraph::with_partitioning(strategy, num_partitions)
 }
 
@@ -324,13 +276,15 @@ mod tests {
         assert_eq!(graph.vertex_count(), 2);
 
         // Add edge
-        let edge = graph.add_edge(
-            v1,
-            v2,
-            "KNOWS".to_string(),
-            Properties::new(),
-            EdgeDirection::Directed,
-        ).unwrap();
+        let edge = graph
+            .add_edge(
+                v1,
+                v2,
+                "KNOWS".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         assert_eq!(graph.edge_count(), 1);
 
@@ -344,12 +298,34 @@ mod tests {
     fn test_graph_stats() {
         let mut graph = new_graph();
 
-        let v1 = graph.add_vertex(vec!["Person".to_string()], Properties::new()).unwrap();
-        let v2 = graph.add_vertex(vec!["Person".to_string()], Properties::new()).unwrap();
-        let v3 = graph.add_vertex(vec!["Person".to_string()], Properties::new()).unwrap();
+        let v1 = graph
+            .add_vertex(vec!["Person".to_string()], Properties::new())
+            .unwrap();
+        let v2 = graph
+            .add_vertex(vec!["Person".to_string()], Properties::new())
+            .unwrap();
+        let v3 = graph
+            .add_vertex(vec!["Person".to_string()], Properties::new())
+            .unwrap();
 
-        graph.add_edge(v1, v2, "KNOWS".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
-        graph.add_edge(v2, v3, "KNOWS".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "KNOWS".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v2,
+                v3,
+                "KNOWS".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         let stats = graph.get_stats();
         assert_eq!(stats.num_vertices, 3);
@@ -365,9 +341,33 @@ mod tests {
         let v2 = graph.add_vertex(vec![], Properties::new()).unwrap();
         let v3 = graph.add_vertex(vec![], Properties::new()).unwrap();
 
-        graph.add_edge(v1, v2, "link".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
-        graph.add_edge(v2, v3, "link".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
-        graph.add_edge(v3, v1, "link".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v2,
+                v3,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v3,
+                v1,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         let config = PageRankConfig::default();
         let result = PageRank::compute(&graph, &config).unwrap();
@@ -391,24 +391,58 @@ mod tests {
         let v4 = graph.add_vertex(vec![], Properties::new()).unwrap();
 
         // Create two separate components
-        graph.add_edge(v1, v2, "link".to_string(), Properties::new(), EdgeDirection::Undirected).unwrap();
-        graph.add_edge(v3, v4, "link".to_string(), Properties::new(), EdgeDirection::Undirected).unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Undirected,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v3,
+                v4,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Undirected,
+            )
+            .unwrap();
 
         let result = ConnectedComponentsAlgorithm::compute(&graph).unwrap();
 
         assert_eq!(result.num_components, 2);
-        assert!(ConnectedComponentsAlgorithm::same_component(&result, v1, v2));
-        assert!(ConnectedComponentsAlgorithm::same_component(&result, v3, v4));
-        assert!(!ConnectedComponentsAlgorithm::same_component(&result, v1, v3));
+        assert!(ConnectedComponentsAlgorithm::same_component(
+            &result, v1, v2
+        ));
+        assert!(ConnectedComponentsAlgorithm::same_component(
+            &result, v3, v4
+        ));
+        assert!(!ConnectedComponentsAlgorithm::same_component(
+            &result, v1, v3
+        ));
     }
 
     #[test]
     fn test_adjacency_list_storage() {
         let mut graph = new_graph();
 
-        let v1 = graph.add_vertex(vec!["A".to_string()], Properties::new()).unwrap();
-        let v2 = graph.add_vertex(vec!["B".to_string()], Properties::new()).unwrap();
-        graph.add_edge(v1, v2, "E".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
+        let v1 = graph
+            .add_vertex(vec!["A".to_string()], Properties::new())
+            .unwrap();
+        let v2 = graph
+            .add_vertex(vec!["B".to_string()], Properties::new())
+            .unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "E".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         let adj_list = AdjacencyList::from_graph(&graph);
 
@@ -432,8 +466,24 @@ mod tests {
         let v2 = graph.add_vertex(vec![], Properties::new()).unwrap();
         let v3 = graph.add_vertex(vec![], Properties::new()).unwrap();
 
-        graph.add_edge(v1, v2, "E".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
-        graph.add_edge(v1, v3, "E".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "E".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v1,
+                v3,
+                "E".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         let adj_list = AdjacencyList::from_graph(&graph);
         let csr = CSRGraph::from_adjacency_list(&adj_list);

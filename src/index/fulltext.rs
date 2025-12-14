@@ -57,11 +57,13 @@ impl FullTextIndex {
         let term_freqs = Self::calculate_term_frequencies(&tokens);
 
         // Store document
-        self.document_store.add_document(doc_id, text.clone(), term_freqs.clone());
+        self.document_store
+            .add_document(doc_id, text.clone(), term_freqs.clone());
 
         // Update inverted index
         for term in term_freqs.keys() {
-            self.inverted_index.add_term_occurrence(term.clone(), doc_id);
+            self.inverted_index
+                .add_term_occurrence(term.clone(), doc_id);
         }
 
         Ok(())
@@ -192,7 +194,8 @@ impl FullTextIndex {
 
     fn calculate_inverse_document_frequency(&self, term: &str) -> f64 {
         let total_docs = self.document_store.document_count() as f64;
-        let doc_freq = self.inverted_index
+        let doc_freq = self
+            .inverted_index
             .get_document_frequency(term)
             .unwrap_or(1) as f64;
 
@@ -291,10 +294,7 @@ impl DocumentStore {
     }
 
     fn add_document(&mut self, doc_id: DocumentId, text: String, term_freqs: HashMap<String, u32>) {
-        let tokens: Vec<String> = text
-            .split_whitespace()
-            .map(|s| s.to_lowercase())
-            .collect();
+        let tokens: Vec<String> = text.split_whitespace().map(|s| s.to_lowercase()).collect();
 
         self.documents.insert(
             doc_id,
@@ -393,9 +393,8 @@ impl Tokenizer {
 
     fn default_stop_words() -> HashSet<String> {
         [
-            "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
-            "has", "he", "in", "is", "it", "its", "of", "on", "that", "the",
-            "to", "was", "will", "with",
+            "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "he", "in",
+            "is", "it", "its", "of", "on", "that", "the", "to", "was", "will", "with",
         ]
         .iter()
         .map(|&s| s.to_string())
@@ -554,10 +553,7 @@ pub struct BooleanSearchEvaluator;
 
 impl BooleanSearchEvaluator {
     // Evaluate a boolean query (AND, OR, NOT)
-    pub fn evaluate(
-        index: &FullTextIndex,
-        query: &ParsedQuery,
-    ) -> Result<Vec<SearchResult>> {
+    pub fn evaluate(index: &FullTextIndex, query: &ParsedQuery) -> Result<Vec<SearchResult>> {
         let mut result_docs: HashSet<DocumentId> = HashSet::new();
         let mut initialized = false;
 
@@ -641,9 +637,11 @@ impl Highlighter {
             // Case-insensitive replacement
             let pattern = regex::escape(term);
             if let Ok(re) = regex::Regex::new(&format!("(?i){}", pattern)) {
-                result = re.replace_all(&result, |caps: &regex::Captures| {
-                    format!("{}{}{}", prefix, &caps[0], suffix)
-                }).to_string();
+                result = re
+                    .replace_all(&result, |caps: &regex::Captures| {
+                        format!("{}{}{}", prefix, &caps[0], suffix)
+                    })
+                    .to_string();
             }
         }
 
@@ -680,9 +678,15 @@ mod tests {
     fn test_full_text_index() {
         let mut index = FullTextIndex::new("articles".to_string(), "content".to_string());
 
-        index.index_document(1, "The quick brown fox".to_string()).unwrap();
-        index.index_document(2, "The lazy dog sleeps".to_string()).unwrap();
-        index.index_document(3, "Quick brown dogs".to_string()).unwrap();
+        index
+            .index_document(1, "The quick brown fox".to_string())
+            .unwrap();
+        index
+            .index_document(2, "The lazy dog sleeps".to_string())
+            .unwrap();
+        index
+            .index_document(3, "Quick brown dogs".to_string())
+            .unwrap();
 
         let results = index.search("quick").unwrap();
         assert!(results.len() >= 1);
@@ -696,8 +700,12 @@ mod tests {
     fn test_phrase_search() {
         let mut index = FullTextIndex::new("articles".to_string(), "content".to_string());
 
-        index.index_document(1, "the quick brown fox".to_string()).unwrap();
-        index.index_document(2, "brown quick fox".to_string()).unwrap();
+        index
+            .index_document(1, "the quick brown fox".to_string())
+            .unwrap();
+        index
+            .index_document(2, "brown quick fox".to_string())
+            .unwrap();
 
         let results = index.search_phrase("quick brown").unwrap();
 
@@ -710,8 +718,12 @@ mod tests {
     fn test_wildcard_search() {
         let mut index = FullTextIndex::new("articles".to_string(), "content".to_string());
 
-        index.index_document(1, "database management".to_string()).unwrap();
-        index.index_document(2, "data processing".to_string()).unwrap();
+        index
+            .index_document(1, "database management".to_string())
+            .unwrap();
+        index
+            .index_document(2, "data processing".to_string())
+            .unwrap();
 
         let results = index.search_wildcard("data*").unwrap();
         assert!(results.len() >= 1);

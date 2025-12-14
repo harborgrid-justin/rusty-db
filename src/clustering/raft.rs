@@ -11,13 +11,13 @@
 // - Raft Paper: https://raft.github.io/raft.pdf
 // - Diego Ongaro's PhD thesis on consensus
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
 use crate::error::DbError;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Raft node identifier
 pub type RaftNodeId = u64;
@@ -367,7 +367,11 @@ impl LeaderState {
 
         // Find median - this is the highest index replicated on a majority
         let majority_index = indices.len() / 2;
-        indices.get(majority_index).copied().unwrap_or(current_commit).max(current_commit)
+        indices
+            .get(majority_index)
+            .copied()
+            .unwrap_or(current_commit)
+            .max(current_commit)
     }
 }
 
@@ -526,7 +530,11 @@ impl RaftNode {
     }
 
     // Handle vote response
-    pub fn handle_vote_response(&self, from: RaftNodeId, response: VoteResponse) -> Result<bool, DbError> {
+    pub fn handle_vote_response(
+        &self,
+        from: RaftNodeId,
+        response: VoteResponse,
+    ) -> Result<bool, DbError> {
         let mut state = self.state.write().unwrap();
         let mut persistent = self.persistent.write().unwrap();
 
@@ -836,7 +844,10 @@ impl RaftNode {
     }
 
     // Install snapshot from leader
-    pub fn install_snapshot(&self, request: InstallSnapshotRequest) -> Result<InstallSnapshotResponse, DbError> {
+    pub fn install_snapshot(
+        &self,
+        request: InstallSnapshotRequest,
+    ) -> Result<InstallSnapshotResponse, DbError> {
         let mut persistent = self.persistent.write().unwrap();
         let mut state = self.state.write().unwrap();
 

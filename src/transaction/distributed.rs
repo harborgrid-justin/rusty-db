@@ -2,19 +2,19 @@
 // Implements two-phase commit, saga pattern, distributed deadlock detection,
 // and cross-shard transaction routing for distributed database systems
 
-use std::collections::VecDeque;
-use std::collections::BTreeMap;
-use std::collections::HashSet;
-use std::time::Instant;
-use std::sync::Mutex;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{SystemTime};
-use parking_lot::{RwLock};
-use serde::{Deserialize, Serialize};
-use crate::error::DbError;
 use super::TransactionId;
+use crate::error::DbError;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Instant;
+use std::time::SystemTime;
 
 /// Distributed transaction identifier
 pub type GlobalTxnId = (u64, u32); // (sequence, coordinator_node_id)
@@ -32,7 +32,11 @@ pub struct ParticipantNode {
 impl ParticipantNode {
     #[inline]
     pub fn new(node_id: u32, address: String, shard_id: Option<u32>) -> Self {
-        Self { node_id, address, shard_id }
+        Self {
+            node_id,
+            address,
+            shard_id,
+        }
     }
 }
 
@@ -78,13 +82,9 @@ pub enum TwoPhaseMessage {
         vote: Vote,
     },
     /// Coordinator -> Participant: Final decision
-    Commit {
-        global_txn_id: GlobalTxnId,
-    },
+    Commit { global_txn_id: GlobalTxnId },
     /// Coordinator -> Participant: Final decision
-    Abort {
-        global_txn_id: GlobalTxnId,
-    },
+    Abort { global_txn_id: GlobalTxnId },
     /// Participant -> Coordinator: Acknowledgment
     Ack {
         global_txn_id: GlobalTxnId,
@@ -177,7 +177,7 @@ impl TwoPhaseCommitCoordinator {
         // Check concurrent transaction limit
         if self.active_txns.read().len() >= self.config.max_concurrent_txns {
             return Err(DbError::Transaction(
-                "Maximum concurrent distributed transactions reached".to_string()
+                "Maximum concurrent distributed transactions reached".to_string(),
             ));
         }
 
@@ -244,7 +244,11 @@ impl TwoPhaseCommitCoordinator {
     }
 
     /// Execute commit phase
-    pub async fn commit_phase(&self, global_txn_id: GlobalTxnId, commit: bool) -> Result<(), DbError> {
+    pub async fn commit_phase(
+        &self,
+        global_txn_id: GlobalTxnId,
+        commit: bool,
+    ) -> Result<(), DbError> {
         let mut txn = {
             let txns = self.active_txns.read();
             txns.get(&global_txn_id)
@@ -287,18 +291,20 @@ impl TwoPhaseCommitCoordinator {
         if let Some(prepare_time) = txn.prepare_time {
             let prepare_duration = prepare_time.duration_since(txn.start_time).as_millis() as f64;
             let mut stats = self.stats.write();
-            stats.avg_prepare_time_ms =
-                (stats.avg_prepare_time_ms * (stats.total_transactions - 1) as f64 + prepare_duration)
-                    / stats.total_transactions as f64;
+            stats.avg_prepare_time_ms = (stats.avg_prepare_time_ms
+                * (stats.total_transactions - 1) as f64
+                + prepare_duration)
+                / stats.total_transactions as f64;
         }
 
         if let Some(commit_time) = txn.commit_time {
             if let Some(prepare_time) = txn.prepare_time {
                 let commit_duration = commit_time.duration_since(prepare_time).as_millis() as f64;
                 let mut stats = self.stats.write();
-                stats.avg_commit_time_ms =
-                    (stats.avg_commit_time_ms * (stats.committed_transactions - 1) as f64 + commit_duration)
-                        / stats.committed_transactions.max(1) as f64;
+                stats.avg_commit_time_ms = (stats.avg_commit_time_ms
+                    * (stats.committed_transactions - 1) as f64
+                    + commit_duration)
+                    / stats.committed_transactions.max(1) as f64;
             }
         }
 
@@ -409,7 +415,7 @@ impl SagaCoordinator {
     pub fn begin_saga(&self, steps: Vec<SagaStep>) -> Result<u64, DbError> {
         if self.active_sagas.read().len() >= self.config.max_concurrent_sagas {
             return Err(DbError::Transaction(
-                "Maximum concurrent sagas reached".to_string()
+                "Maximum concurrent sagas reached".to_string(),
             ));
         }
 
@@ -432,7 +438,8 @@ impl SagaCoordinator {
     pub async fn execute_saga(&self, saga_id: u64) -> Result<bool, DbError> {
         let mut saga = {
             let sagas = self.active_sagas.read();
-            sagas.get(&saga_id)
+            sagas
+                .get(&saga_id)
                 .ok_or_else(|| DbError::Transaction("Saga not found".to_string()))?
                 .clone()
         };
@@ -469,7 +476,8 @@ impl SagaCoordinator {
     async fn compensate_saga(&self, saga_id: u64) -> Result<bool, DbError> {
         let mut saga = {
             let sagas = self.active_sagas.read();
-            sagas.get(&saga_id)
+            sagas
+                .get(&saga_id)
                 .ok_or_else(|| DbError::Transaction("Saga not found".to_string()))?
                 .clone()
         };
@@ -570,9 +578,16 @@ impl WaitForGraph {
 
     /// Add a wait edge
     pub fn add_edge(&mut self, waiter: TransactionId, holder: TransactionId) {
-        self.edges.entry(waiter).or_insert_with(HashSet::new).insert(holder);
-        self.timestamps.entry(waiter).or_insert_with(SystemTime::now);
-        self.timestamps.entry(holder).or_insert_with(SystemTime::now);
+        self.edges
+            .entry(waiter)
+            .or_insert_with(HashSet::new)
+            .insert(holder);
+        self.timestamps
+            .entry(waiter)
+            .or_insert_with(SystemTime::now);
+        self.timestamps
+            .entry(holder)
+            .or_insert_with(SystemTime::now);
     }
 
     /// Remove a transaction from the graph
@@ -594,7 +609,8 @@ impl WaitForGraph {
 
         for &txn_id in self.edges.keys() {
             if !visited.contains(&txn_id) {
-                if let Some(cycle) = self.dfs_cycle(txn_id, &mut visited, &mut rec_stack, &mut path) {
+                if let Some(cycle) = self.dfs_cycle(txn_id, &mut visited, &mut rec_stack, &mut path)
+                {
                     return Some(cycle);
                 }
             }
@@ -642,19 +658,22 @@ impl WaitForGraph {
         match strategy {
             VictimSelectionStrategy::YoungestFirst => {
                 // Select transaction with most recent timestamp
-                *cycle.iter()
+                *cycle
+                    .iter()
                     .max_by_key(|&&txn_id| self.timestamps.get(&txn_id))
                     .unwrap()
             }
             VictimSelectionStrategy::OldestFirst => {
                 // Select transaction with oldest timestamp
-                *cycle.iter()
+                *cycle
+                    .iter()
                     .min_by_key(|&&txn_id| self.timestamps.get(&txn_id))
                     .unwrap()
             }
             VictimSelectionStrategy::MinimumCost | VictimSelectionStrategy::Random => {
                 // For simplicity, use youngest first
-                *cycle.iter()
+                *cycle
+                    .iter()
                     .max_by_key(|&&txn_id| self.timestamps.get(&txn_id))
                     .unwrap()
             }
@@ -688,7 +707,10 @@ impl DistributedDeadlockDetector {
     pub fn detect_deadlock(&self) -> Option<TransactionId> {
         // Check local graph first
         if let Some(cycle) = self.local_graph.read().detect_cycle() {
-            let victim = self.local_graph.read().select_victim(&cycle, self.config.victim_selection_strategy);
+            let victim = self
+                .local_graph
+                .read()
+                .select_victim(&cycle, self.config.victim_selection_strategy);
 
             let mut stats = self.stats.write();
             stats.deadlocks_detected += 1;
@@ -701,7 +723,10 @@ impl DistributedDeadlockDetector {
         // Check global graph if distributed detection enabled
         if self.config.enable_distributed_detection {
             if let Some(cycle) = self.global_graph.read().detect_cycle() {
-                let victim = self.global_graph.read().select_victim(&cycle, self.config.victim_selection_strategy);
+                let victim = self
+                    .global_graph
+                    .read()
+                    .select_victim(&cycle, self.config.victim_selection_strategy);
 
                 let mut stats = self.stats.write();
                 stats.deadlocks_detected += 1;
@@ -813,9 +838,9 @@ impl CrossShardRouter {
             stats.cross_shard_txns += 1;
         }
 
-        stats.avg_shards_per_txn =
-            (stats.avg_shards_per_txn * (stats.total_routed - 1) as f64 + participants.len() as f64)
-                / stats.total_routed as f64;
+        stats.avg_shards_per_txn = (stats.avg_shards_per_txn * (stats.total_routed - 1) as f64
+            + participants.len() as f64)
+            / stats.total_routed as f64;
 
         participants
     }
@@ -911,5 +936,3 @@ mod tests {
         assert_eq!(participants.len(), 2);
     }
 }
-
-

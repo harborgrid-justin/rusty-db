@@ -2,14 +2,11 @@
 //
 // Handler functions for authentication operations
 
-use axum::{
-    extract::State,
-    response::Json as AxumJson,
-};
+use axum::{extract::State, response::Json as AxumJson};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::super::types::*;
@@ -93,13 +90,11 @@ pub async fn login(
                 username: "admin".to_string(),
                 display_name: "Administrator".to_string(),
                 email: Some("admin@rustydb.local".to_string()),
-                roles: vec![
-                    RoleInfo {
-                        id: "1".to_string(),
-                        name: "admin".to_string(),
-                        permissions: vec!["*".to_string()],
-                    }
-                ],
+                roles: vec![RoleInfo {
+                    id: "1".to_string(),
+                    name: "admin".to_string(),
+                    permissions: vec!["*".to_string()],
+                }],
             },
             session: SessionInfo {
                 token: format!("token_{}", Uuid::new_v4()),
@@ -114,7 +109,10 @@ pub async fn login(
             "data": response_data
         })))
     } else {
-        Err(ApiError::new("UNAUTHORIZED", "Invalid username or password"))
+        Err(ApiError::new(
+            "UNAUTHORIZED",
+            "Invalid username or password",
+        ))
     }
 }
 
@@ -127,9 +125,7 @@ pub async fn login(
         (status = 200, description = "Logout successful"),
     )
 )]
-pub async fn logout(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<AxumJson<serde_json::Value>> {
+pub async fn logout(State(_state): State<Arc<ApiState>>) -> ApiResult<AxumJson<serde_json::Value>> {
     Ok(AxumJson(serde_json::json!({
         "message": "Logged out successfully"
     })))
@@ -144,9 +140,7 @@ pub async fn logout(
         (status = 200, description = "Token refreshed", body = SessionInfo),
     )
 )]
-pub async fn refresh(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<AxumJson<SessionInfo>> {
+pub async fn refresh(State(_state): State<Arc<ApiState>>) -> ApiResult<AxumJson<SessionInfo>> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()

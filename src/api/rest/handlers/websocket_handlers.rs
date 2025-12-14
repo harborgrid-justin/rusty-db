@@ -3,25 +3,28 @@
 // WebSocket upgrade handlers for real-time streaming of queries, metrics, events, and replication data
 
 use axum::{
-    extract::{Path, Query, State, ws::{WebSocket, WebSocketUpgrade}},
-    response::{Json as AxumJson, Response},
+    extract::{
+        ws::{WebSocket, WebSocketUpgrade},
+        Path, Query, State,
+    },
     http::StatusCode,
+    response::{Json as AxumJson, Response},
 };
+use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use serde_json::json;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde_json::json;
-use futures::{StreamExt, SinkExt};
 use tokio::time::{interval, Duration};
+use utoipa::ToSchema;
 
-use super::super::types::{ApiState, ApiError, ApiResult, SessionId};
-use super::{CATALOG, TXN_MANAGER, SQL_PARSER};
+use super::super::types::{ApiError, ApiResult, ApiState, SessionId};
 use super::websocket_types::{
-    WebSocketStatus, ConnectionInfo, ConnectionList, SubscriptionInfo, SubscriptionList,
-    CreateSubscriptionRequest, CreateSubscriptionResponse, BroadcastRequest, BroadcastResponse,
-    DisconnectRequest, DisconnectResponse, DeleteSubscriptionResponse,
+    BroadcastRequest, BroadcastResponse, ConnectionInfo, ConnectionList, CreateSubscriptionRequest,
+    CreateSubscriptionResponse, DeleteSubscriptionResponse, DisconnectRequest, DisconnectResponse,
+    SubscriptionInfo, SubscriptionList, WebSocketStatus,
 };
+use super::{CATALOG, SQL_PARSER, TXN_MANAGER};
 use crate::execution::Executor;
 
 // ============================================================================
@@ -49,7 +52,7 @@ pub struct MetricsStreamConfig {
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct EventsStreamConfig {
-    pub tables: Option<Vec<String>>, // Filter by tables
+    pub tables: Option<Vec<String>>,      // Filter by tables
     pub event_types: Option<Vec<String>>, // insert, update, delete
 }
 
@@ -96,10 +99,7 @@ pub async fn ws_upgrade_handler(
     ),
     tag = "websocket"
 )]
-pub async fn ws_query_stream(
-    ws: WebSocketUpgrade,
-    State(state): State<Arc<ApiState>>,
-) -> Response {
+pub async fn ws_query_stream(ws: WebSocketUpgrade, State(state): State<Arc<ApiState>>) -> Response {
     ws.on_upgrade(|socket| handle_query_stream_websocket(socket, state))
 }
 
@@ -185,7 +185,11 @@ async fn handle_generic_websocket(mut socket: WebSocket, _state: Arc<ApiState>) 
     };
 
     if let Ok(welcome_json) = serde_json::to_string(&welcome) {
-        if socket.send(Message::Text(welcome_json.into())).await.is_err() {
+        if socket
+            .send(Message::Text(welcome_json.into()))
+            .await
+            .is_err()
+        {
             return;
         }
     }
@@ -206,7 +210,11 @@ async fn handle_generic_websocket(mut socket: WebSocket, _state: Arc<ApiState>) 
                     };
 
                     if let Ok(response_json) = serde_json::to_string(&response) {
-                        if socket.send(Message::Text(response_json.into())).await.is_err() {
+                        if socket
+                            .send(Message::Text(response_json.into()))
+                            .await
+                            .is_err()
+                        {
                             break;
                         }
                     }
@@ -240,7 +248,8 @@ async fn handle_query_stream_websocket(mut socket: WebSocket, _state: Arc<ApiSta
                             let catalog_guard = CATALOG.read();
                             (*catalog_guard).clone()
                         }; // catalog_guard dropped here
-                        let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
+                        let executor =
+                            Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
                         // Execute query
                         match SQL_PARSER.parse(&request.sql) {
@@ -260,11 +269,18 @@ async fn handle_query_stream_websocket(mut socket: WebSocket, _state: Arc<ApiSta
                                                 timestamp: SystemTime::now()
                                                     .duration_since(UNIX_EPOCH)
                                                     .unwrap()
-                                                    .as_secs() as i64,
+                                                    .as_secs()
+                                                    as i64,
                                             };
 
-                                            if let Ok(response_json) = serde_json::to_string(&response) {
-                                                if socket.send(Message::Text(response_json.into())).await.is_err() {
+                                            if let Ok(response_json) =
+                                                serde_json::to_string(&response)
+                                            {
+                                                if socket
+                                                    .send(Message::Text(response_json.into()))
+                                                    .await
+                                                    .is_err()
+                                                {
                                                     break;
                                                 }
                                             }
@@ -279,11 +295,14 @@ async fn handle_query_stream_websocket(mut socket: WebSocket, _state: Arc<ApiSta
                                                 timestamp: SystemTime::now()
                                                     .duration_since(UNIX_EPOCH)
                                                     .unwrap()
-                                                    .as_secs() as i64,
+                                                    .as_secs()
+                                                    as i64,
                                             };
 
                                             if let Ok(error_json) = serde_json::to_string(&error) {
-                                                let _ = socket.send(Message::Text(error_json.into())).await;
+                                                let _ = socket
+                                                    .send(Message::Text(error_json.into()))
+                                                    .await;
                                             }
                                         }
                                     }
@@ -299,7 +318,8 @@ async fn handle_query_stream_websocket(mut socket: WebSocket, _state: Arc<ApiSta
                                     timestamp: SystemTime::now()
                                         .duration_since(UNIX_EPOCH)
                                         .unwrap()
-                                        .as_secs() as i64,
+                                        .as_secs()
+                                        as i64,
                                 };
 
                                 if let Ok(error_json) = serde_json::to_string(&error) {
@@ -368,7 +388,11 @@ async fn handle_metrics_stream_websocket(mut socket: WebSocket, state: Arc<ApiSt
             };
 
             if let Ok(message_json) = serde_json::to_string(&message) {
-                if sender.send(Message::Text(message_json.into())).await.is_err() {
+                if sender
+                    .send(Message::Text(message_json.into()))
+                    .await
+                    .is_err()
+                {
                     break;
                 }
             }
@@ -599,7 +623,7 @@ pub async fn get_websocket_status(
         total_connections_lifetime: 1337,
         messages_sent: 50000,
         messages_received: 48500,
-        bytes_sent: 5242880,  // ~5MB
+        bytes_sent: 5242880,     // ~5MB
         bytes_received: 4718592, // ~4.5MB
         active_subscriptions: 85,
         uptime_seconds: 86400, // 1 day

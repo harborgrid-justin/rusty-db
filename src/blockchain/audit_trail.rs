@@ -9,17 +9,17 @@
 // - Export to compliance formats
 // - Audit log protection
 
-use std::fmt;
-use std::collections::VecDeque;
+use super::crypto::{hash_to_hex, sha256, Hash256};
+use super::ledger::BlockId;
+use crate::common::{RowId, SessionId, TableId};
+use crate::error::DbError;
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::common::{TableId, RowId, SessionId};
-use crate::Result;
-use crate::error::DbError;
-use super::ledger::BlockId;
-use super::crypto::{sha256, Hash256, hash_to_hex};
 
 // ============================================================================
 // Audit Event Types
@@ -127,7 +127,10 @@ impl AuditEvent {
         user: String,
         description: String,
     ) -> Self {
-        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
 
         let mut event = Self {
             event_id,
@@ -294,18 +297,21 @@ impl AuditLogger {
 
         // Update indices
         let mut type_index = self.type_index.write().unwrap();
-        type_index.entry(event.event_type)
+        type_index
+            .entry(event.event_type)
             .or_insert_with(Vec::new)
             .push(event_id);
 
         let mut user_index = self.user_index.write().unwrap();
-        user_index.entry(event.user.clone())
+        user_index
+            .entry(event.user.clone())
             .or_insert_with(Vec::new)
             .push(event_id);
 
         if let Some(table_id) = event.table_id {
             let mut table_index = self.table_index.write().unwrap();
-            table_index.entry(table_id)
+            table_index
+                .entry(table_id)
                 .or_insert_with(Vec::new)
                 .push(event_id);
         }
@@ -354,10 +360,7 @@ impl AuditLogger {
         let events = self.events.read().unwrap();
 
         if let Some(f) = filter {
-            events.iter()
-                .filter(|e| f.matches(e))
-                .cloned()
-                .collect()
+            events.iter().filter(|e| f.matches(e)).cloned().collect()
         } else {
             events.iter().cloned().collect()
         }
@@ -369,7 +372,8 @@ impl AuditLogger {
         let events = self.events.read().unwrap();
 
         if let Some(event_ids) = type_index.get(&event_type) {
-            events.iter()
+            events
+                .iter()
                 .filter(|e| event_ids.contains(&e.event_id))
                 .cloned()
                 .collect()
@@ -384,7 +388,8 @@ impl AuditLogger {
         let events = self.events.read().unwrap();
 
         if let Some(event_ids) = user_index.get(user) {
-            events.iter()
+            events
+                .iter()
                 .filter(|e| event_ids.contains(&e.event_id))
                 .cloned()
                 .collect()
@@ -399,7 +404,8 @@ impl AuditLogger {
         let events = self.events.read().unwrap();
 
         if let Some(event_ids) = table_index.get(&table_id) {
-            events.iter()
+            events
+                .iter()
                 .filter(|e| event_ids.contains(&e.event_id))
                 .cloned()
                 .collect()
@@ -510,8 +516,12 @@ impl AuditReport {
         let mut critical_events = Vec::new();
 
         for event in events {
-            *events_by_type.entry(event.event_type.to_string()).or_insert(0) += 1;
-            *events_by_severity.entry(format!("{:?}", event.severity)).or_insert(0) += 1;
+            *events_by_type
+                .entry(event.event_type.to_string())
+                .or_insert(0) += 1;
+            *events_by_severity
+                .entry(format!("{:?}", event.severity))
+                .or_insert(0) += 1;
             *events_by_user.entry(event.user.clone()).or_insert(0) += 1;
 
             if event.severity == AuditSeverity::Critical {
@@ -521,11 +531,17 @@ impl AuditReport {
 
         let summary = format!(
             "Audit report for period {} - {}: {} total events, {} critical",
-            start_time, end_time, events.len(), critical_events.len()
+            start_time,
+            end_time,
+            events.len(),
+            critical_events.len()
         );
 
         Self {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             period: (start_time, end_time),
             total_events: events.len(),
             events_by_type,
@@ -615,7 +631,10 @@ impl QueryAuditLogger {
 
         let entry = QueryAuditEntry {
             query_id: id,
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             user,
             query,
             execution_time_ms,
@@ -636,20 +655,13 @@ impl QueryAuditLogger {
     // Get recent queries
     pub fn get_recent_queries(&self, count: usize) -> Vec<QueryAuditEntry> {
         let queries = self.queries.read().unwrap();
-        queries.iter()
-            .rev()
-            .take(count)
-            .cloned()
-            .collect()
+        queries.iter().rev().take(count).cloned().collect()
     }
 
     // Get queries by user
     pub fn get_user_queries(&self, user: &str) -> Vec<QueryAuditEntry> {
         let queries = self.queries.read().unwrap();
-        queries.iter()
-            .filter(|q| q.user == user)
-            .cloned()
-            .collect()
+        queries.iter().filter(|q| q.user == user).cloned().collect()
     }
 }
 
@@ -680,12 +692,14 @@ mod tests {
         let config = AuditConfig::default();
         let logger = AuditLogger::new(config);
 
-        logger.log_event(
-            AuditEventType::RowInsert,
-            AuditSeverity::Info,
-            "user1".to_string(),
-            "Test event".to_string(),
-        ).unwrap();
+        logger
+            .log_event(
+                AuditEventType::RowInsert,
+                AuditSeverity::Info,
+                "user1".to_string(),
+                "Test event".to_string(),
+            )
+            .unwrap();
 
         assert_eq!(logger.event_count(), 1);
 

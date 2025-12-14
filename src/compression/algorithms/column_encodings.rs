@@ -1,6 +1,6 @@
 // Column-Oriented Encodings - BitPacker, FOR, Delta, RLE
 
-use crate::compression::{CompressionResult, CompressionStats, CompressionError};
+use crate::compression::{CompressionError, CompressionResult, CompressionStats};
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -208,9 +208,7 @@ impl FOREncoder {
         encoded.push(bit_width);
         encoded.extend_from_slice(&(values.len() as u32).to_le_bytes());
 
-        let relative_values: Vec<u32> = values.iter()
-            .map(|&v| v.saturating_sub(min_val))
-            .collect();
+        let relative_values: Vec<u32> = values.iter().map(|&v| v.saturating_sub(min_val)).collect();
 
         let packer = BitPacker::new();
         let packed = packer.pack_u32(&relative_values, bit_width);
@@ -230,7 +228,7 @@ impl FOREncoder {
 
         if encoded.len() < 9 {
             return Err(CompressionError::DecompressionFailed(
-                "Invalid FOR encoding".to_string()
+                "Invalid FOR encoding".to_string(),
             ));
         }
 
@@ -242,7 +240,8 @@ impl FOREncoder {
         let packer = BitPacker::new();
         let relative_values = packer.unpack_u32_fast(packed, bit_width, count);
 
-        let values: Vec<u32> = relative_values.iter()
+        let values: Vec<u32> = relative_values
+            .iter()
             .map(|&v| v.saturating_add(min_val))
             .collect();
 
@@ -319,7 +318,7 @@ impl DeltaEncoder {
 
         if encoded.len() < 8 {
             return Err(CompressionError::DecompressionFailed(
-                "Invalid delta encoding".to_string()
+                "Invalid delta encoding".to_string(),
             ));
         }
 
@@ -387,9 +386,8 @@ impl RLEEncoder {
             let current = data[i];
             let mut run_length = 1usize;
 
-            while i + run_length < data.len() &&
-                  data[i + run_length] == current &&
-                  run_length < 255 {
+            while i + run_length < data.len() && data[i + run_length] == current && run_length < 255
+            {
                 run_length += 1;
             }
 
@@ -413,7 +411,7 @@ impl RLEEncoder {
 
         if encoded.len() % 2 != 0 {
             return Err(CompressionError::DecompressionFailed(
-                "Invalid RLE encoding".to_string()
+                "Invalid RLE encoding".to_string(),
             ));
         }
 
@@ -449,9 +447,10 @@ impl RLEEncoder {
             let current = values[i];
             let mut run_length = 1usize;
 
-            while i + run_length < values.len() &&
-                  values[i + run_length] == current &&
-                  run_length < 65535 {
+            while i + run_length < values.len()
+                && values[i + run_length] == current
+                && run_length < 65535
+            {
                 run_length += 1;
             }
 
@@ -475,7 +474,7 @@ impl RLEEncoder {
 
         if encoded.len() < 4 {
             return Err(CompressionError::DecompressionFailed(
-                "Invalid RLE encoding".to_string()
+                "Invalid RLE encoding".to_string(),
             ));
         }
 
@@ -485,7 +484,10 @@ impl RLEEncoder {
 
         while pos + 6 <= encoded.len() && decoded.len() < count {
             let value = u32::from_le_bytes([
-                encoded[pos], encoded[pos + 1], encoded[pos + 2], encoded[pos + 3]
+                encoded[pos],
+                encoded[pos + 1],
+                encoded[pos + 2],
+                encoded[pos + 3],
             ]);
             let run_length = u16::from_le_bytes([encoded[pos + 4], encoded[pos + 5]]) as usize;
 
@@ -552,9 +554,7 @@ impl EnhancedDictionaryEncoder {
             encoded.extend_from_slice(entry);
         }
 
-        let indices: Vec<u32> = data.iter()
-            .map(|item| dictionary[item] as u32)
-            .collect();
+        let indices: Vec<u32> = data.iter().map(|item| dictionary[item] as u32).collect();
 
         let packer = BitPacker::new();
         let packed_indices = packer.pack_u32(&indices, bit_width);
@@ -574,12 +574,14 @@ impl EnhancedDictionaryEncoder {
 
         if encoded.len() < 9 {
             return Err(CompressionError::DecompressionFailed(
-                "Invalid dictionary encoding".to_string()
+                "Invalid dictionary encoding".to_string(),
             ));
         }
 
-        let data_count = u32::from_le_bytes([encoded[0], encoded[1], encoded[2], encoded[3]]) as usize;
-        let dict_size = u32::from_le_bytes([encoded[4], encoded[5], encoded[6], encoded[7]]) as usize;
+        let data_count =
+            u32::from_le_bytes([encoded[0], encoded[1], encoded[2], encoded[3]]) as usize;
+        let dict_size =
+            u32::from_le_bytes([encoded[4], encoded[5], encoded[6], encoded[7]]) as usize;
         let bit_width = encoded[8];
 
         let mut pos = 9;
@@ -588,18 +590,21 @@ impl EnhancedDictionaryEncoder {
         for _ in 0..dict_size {
             if pos + 4 > encoded.len() {
                 return Err(CompressionError::DecompressionFailed(
-                    "Truncated dictionary".to_string()
+                    "Truncated dictionary".to_string(),
                 ));
             }
 
             let entry_len = u32::from_le_bytes([
-                encoded[pos], encoded[pos + 1], encoded[pos + 2], encoded[pos + 3]
+                encoded[pos],
+                encoded[pos + 1],
+                encoded[pos + 2],
+                encoded[pos + 3],
             ]) as usize;
             pos += 4;
 
             if pos + entry_len > encoded.len() {
                 return Err(CompressionError::DecompressionFailed(
-                    "Truncated dictionary entry".to_string()
+                    "Truncated dictionary entry".to_string(),
                 ));
             }
 
@@ -614,9 +619,10 @@ impl EnhancedDictionaryEncoder {
         let mut data = Vec::with_capacity(data_count);
         for index in indices {
             if index as usize >= dict_entries.len() {
-                return Err(CompressionError::DecompressionFailed(
-                    format!("Invalid dictionary index: {}", index)
-                ));
+                return Err(CompressionError::DecompressionFailed(format!(
+                    "Invalid dictionary index: {}",
+                    index
+                )));
             }
             data.push(dict_entries[index as usize].clone());
         }

@@ -2,21 +2,21 @@
 // Provides hot/warm/cold data classification with automatic migration
 // and tier-specific compression strategies
 
+use crate::common::PageId;
+use crate::error::{DbError, Result};
+use crate::storage::page::Page;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, SystemTime, Instant};
-use parking_lot::{RwLock};
-use serde::{Deserialize, Serialize};
-use crate::error::{Result, DbError};
-use crate::storage::page::Page;
-use crate::common::PageId;
+use std::time::{Duration, Instant, SystemTime};
 
 // Storage tier classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum StorageTier {
-    Hot,    // SSD/Memory - frequently accessed
-    Warm,   // SSD - occasionally accessed
-    Cold,   // HDD/Cloud - rarely accessed
+    Hot,  // SSD/Memory - frequently accessed
+    Warm, // SSD - occasionally accessed
+    Cold, // HDD/Cloud - rarely accessed
 }
 
 impl StorageTier {
@@ -49,8 +49,8 @@ impl StorageTier {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CompressionLevel {
     None,
-    Fast,    // LZ4 for warm tier
-    Best,    // ZSTD for cold tier
+    Fast, // LZ4 for warm tier
+    Best, // ZSTD for cold tier
 }
 
 // Access pattern tracking for ML-based prediction
@@ -85,7 +85,7 @@ impl AccessPattern {
             if let Ok(interval) = now.duration_since(self.last_access) {
                 // Update moving average
                 self.avg_access_interval = Duration::from_secs(
-                    (self.avg_access_interval.as_secs() + interval.as_secs()) / 2
+                    (self.avg_access_interval.as_secs() + interval.as_secs()) / 2,
                 );
             }
         }
@@ -109,12 +109,14 @@ impl AccessPattern {
     #[allow(dead_code)]
     fn predict_tier(&self) -> StorageTier {
         let now = SystemTime::now();
-        let time_since_last_access = now.duration_since(self.last_access)
+        let time_since_last_access = now
+            .duration_since(self.last_access)
             .unwrap_or(Duration::from_secs(0));
 
         // Hot tier: accessed in last hour or high frequency
-        if time_since_last_access < Duration::from_secs(3600) ||
-           self.access_count > 100 && self.avg_access_interval < Duration::from_secs(60) {
+        if time_since_last_access < Duration::from_secs(3600)
+            || self.access_count > 100 && self.avg_access_interval < Duration::from_secs(60)
+        {
             return StorageTier::Hot;
         }
 
@@ -135,7 +137,9 @@ impl AccessPattern {
         let now = SystemTime::now();
         let time_window = Duration::from_secs(3600); // 1 hour window
 
-        let recent_accesses = self.access_history.iter()
+        let recent_accesses = self
+            .access_history
+            .iter()
             .filter(|&&access_time| {
                 now.duration_since(access_time).unwrap_or(Duration::MAX) < time_window
             })
@@ -164,9 +168,9 @@ struct TierPredictor {
 
 #[derive(Debug, Clone)]
 struct PredictorThresholds {
-    hot_access_freq: f64,      // Accesses per minute for hot tier
-    hot_recency: Duration,      // Max time since access for hot tier
-    warm_recency: Duration,     // Max time since access for warm tier
+    hot_access_freq: f64,   // Accesses per minute for hot tier
+    hot_recency: Duration,  // Max time since access for hot tier
+    warm_recency: Duration, // Max time since access for warm tier
 }
 
 impl Default for PredictorThresholds {
@@ -188,7 +192,8 @@ impl TierPredictor {
 
     fn predict(&self, pattern: &AccessPattern) -> StorageTier {
         let now = SystemTime::now();
-        let recency = now.duration_since(pattern.last_access)
+        let recency = now
+            .duration_since(pattern.last_access)
             .unwrap_or(Duration::MAX);
         let freq = pattern.access_frequency();
 
@@ -207,9 +212,8 @@ impl TierPredictor {
         }
 
         // Adaptive thresholds based on workload
-        let avg_freq: f64 = patterns.values()
-            .map(|p| p.access_frequency())
-            .sum::<f64>() / patterns.len() as f64;
+        let avg_freq: f64 =
+            patterns.values().map(|p| p.access_frequency()).sum::<f64>() / patterns.len() as f64;
 
         self.thresholds.hot_access_freq = avg_freq * 2.0;
     }
@@ -419,7 +423,8 @@ impl TieredStorageManager {
         // Get or create access pattern
         let tier = {
             let mut patterns = self.access_patterns.write();
-            let pattern = patterns.entry(page.id)
+            let pattern = patterns
+                .entry(page.id)
                 .or_insert_with(|| AccessPattern::new(page.id));
             self.predictor.lock().unwrap().predict(pattern)
         };
@@ -447,7 +452,8 @@ impl TieredStorageManager {
         // Record access
         {
             let mut patterns = self.access_patterns.write();
-            let pattern = patterns.entry(page_id)
+            let pattern = patterns
+                .entry(page_id)
                 .or_insert_with(|| AccessPattern::new(page_id));
             pattern.record_access(false);
         }
@@ -472,7 +478,10 @@ impl TieredStorageManager {
             return Ok(Page::from_bytes(page_id, data));
         }
 
-        Err(DbError::Storage(format!("Page {} not found in any tier", page_id)))
+        Err(DbError::Storage(format!(
+            "Page {} not found in any tier",
+            page_id
+        )))
     }
 
     // Record a page write
@@ -480,7 +489,8 @@ impl TieredStorageManager {
         // Record write access
         {
             let mut patterns = self.access_patterns.write();
-            let pattern = patterns.entry(page.id)
+            let pattern = patterns
+                .entry(page.id)
                 .or_insert_with(|| AccessPattern::new(page.id));
             pattern.record_access(true);
         }
@@ -690,7 +700,8 @@ mod tests {
     fn test_compression() {
         let data = vec![1, 1, 1, 2, 2, 3, 3, 3, 3];
         let compressed = CompressionEngine::compress(&data, CompressionLevel::Fast).unwrap();
-        let decompressed = CompressionEngine::decompress(&compressed, CompressionLevel::Fast).unwrap();
+        let decompressed =
+            CompressionEngine::decompress(&compressed, CompressionLevel::Fast).unwrap();
 
         assert_eq!(data, decompressed);
         assert!(compressed.len() <= data.len());
@@ -720,7 +731,9 @@ mod tests {
 
         // Simulate multiple accesses to trigger hot tier
         for _ in 0..150 {
-            manager.access_patterns.write()
+            manager
+                .access_patterns
+                .write()
                 .entry(1)
                 .or_insert_with(|| AccessPattern::new(1))
                 .record_access(false);

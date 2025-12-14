@@ -97,7 +97,9 @@ impl LoadBalancingStrategy for WeightedRoundRobinBalancer {
 
         let total_weight = Self::total_weight(backends);
         if total_weight == 0 {
-            return Err(DbError::Network("All backends have zero weight".to_string()));
+            return Err(DbError::Network(
+                "All backends have zero weight".to_string(),
+            ));
         }
 
         // Get current position in the weighted sequence
@@ -185,7 +187,9 @@ impl SmoothWeightedRoundRobinBalancer {
         let total_weight: i32 = states.iter().map(|s| s.effective_weight).sum();
 
         if total_weight == 0 {
-            return Err(DbError::Network("All backends have zero weight".to_string()));
+            return Err(DbError::Network(
+                "All backends have zero weight".to_string(),
+            ));
         }
 
         // Find backend with highest current_weight
@@ -331,7 +335,10 @@ mod tests {
                 current_consecutive = 0;
             }
         }
-        assert!(max_consecutive < 5, "Should not select same backend 5 times in a row");
+        assert!(
+            max_consecutive < 5,
+            "Should not select same backend 5 times in a row"
+        );
     }
 
     #[tokio::test]

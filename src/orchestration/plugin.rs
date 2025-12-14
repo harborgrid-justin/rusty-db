@@ -20,9 +20,9 @@
 //                            STOPPED → UNLOADED
 // ```
 
-use std::fmt;
 use std::any::Any;
 use std::collections::HashMap;
+use std::fmt;
 
 use std::sync::Arc;
 
@@ -30,7 +30,7 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 
 // Plugin state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -123,11 +123,7 @@ pub struct PluginContext {
 
 impl PluginContext {
     // Create a new plugin context
-    pub fn new(
-        plugin_name: String,
-        config: PluginConfig,
-        event_bus: Arc<PluginEventBus>,
-    ) -> Self {
+    pub fn new(plugin_name: String, config: PluginConfig, event_bus: Arc<PluginEventBus>) -> Self {
         Self {
             plugin_name,
             config: Arc::new(RwLock::new(config)),
@@ -431,10 +427,7 @@ impl PluginRegistry {
             .ok_or_else(|| DbError::Internal(format!("Plugin not found: {}", name)))?;
 
         if instance.state != PluginState::Started {
-            return Err(DbError::Internal(format!(
-                "Plugin {} is not started",
-                name
-            )));
+            return Err(DbError::Internal(format!("Plugin {} is not started", name)));
         }
 
         debug!("Stopping plugin: {}", name);
@@ -636,7 +629,7 @@ pub struct PluginRegistryStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Instant;
+    use std::time::Instant;
 
     struct TestPlugin {
         name: String,

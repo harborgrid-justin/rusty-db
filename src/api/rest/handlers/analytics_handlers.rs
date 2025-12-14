@@ -5,8 +5,8 @@
 
 use axum::{
     extract::{Path, Query, State},
-    response::Json as AxumJson,
     http::StatusCode,
+    response::Json as AxumJson,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -15,9 +15,7 @@ use std::time::SystemTime;
 use utoipa::ToSchema;
 
 use super::super::types::*;
-use crate::analytics::{
-    OlapCubeBuilder, AggregateFunction,
-};
+use crate::analytics::{AggregateFunction, OlapCubeBuilder};
 
 // ============================================================================
 // Request/Response Types - OLAP Operations
@@ -300,7 +298,12 @@ pub async fn create_olap_cube(
             "COUNT" => AggregateFunction::Count,
             "MIN" => AggregateFunction::Min,
             "MAX" => AggregateFunction::Max,
-            _ => return Err(ApiError::new("INVALID_INPUT", "Invalid aggregation function")),
+            _ => {
+                return Err(ApiError::new(
+                    "INVALID_INPUT",
+                    "Invalid aggregation function",
+                ))
+            }
         };
 
         builder.add_measure(measure.column.clone(), agg_fn);
@@ -314,7 +317,10 @@ pub async fn create_olap_cube(
         name: request.name,
         dimensions: request.dimensions,
         measures: request.measures.iter().map(|m| m.column.clone()).collect(),
-        created_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        created_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         size_bytes: 0,
     };
 
@@ -455,7 +461,10 @@ pub async fn analyze_workload(
     // 4. Identify optimization opportunities
 
     let response = WorkloadAnalysisResponse {
-        analysis_timestamp: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        analysis_timestamp: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         total_queries: 0,
         unique_patterns: 0,
         recommendations: vec![],
@@ -484,16 +493,14 @@ pub async fn get_recommendations(
     // 3. Suggest query rewrites
     // 4. Recommend partitioning strategies
 
-    let recommendations = vec![
-        RecommendationEntry {
-            recommendation_type: "INDEX".to_string(),
-            priority: "HIGH".to_string(),
-            description: "Create index on frequently queried columns".to_string(),
-            affected_tables: vec!["users".to_string()],
-            affected_columns: vec!["email".to_string()],
-            estimated_improvement: 0.75,
-        },
-    ];
+    let recommendations = vec![RecommendationEntry {
+        recommendation_type: "INDEX".to_string(),
+        priority: "HIGH".to_string(),
+        description: "Create index on frequently queried columns".to_string(),
+        affected_tables: vec!["users".to_string()],
+        affected_columns: vec!["email".to_string()],
+        estimated_improvement: 0.75,
+    }];
 
     Ok(AxumJson(recommendations))
 }
@@ -530,7 +537,10 @@ pub async fn profile_table(
         row_count: 0,
         column_profiles: vec![],
         index_suggestions: vec![],
-        profiled_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        profiled_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
     };
 
     Ok(AxumJson(response))
@@ -566,7 +576,10 @@ pub async fn get_quality_metrics(
         timeliness: 0.90,
         row_count: 0,
         issue_count: 0,
-        analyzed_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        analyzed_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
     };
 
     Ok(AxumJson(response))
@@ -633,7 +646,10 @@ pub async fn create_materialized_view(
         name: request.name,
         query: request.query,
         row_count: 0,
-        last_refreshed: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        last_refreshed: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         next_refresh: None,
         size_bytes: 0,
         indexes: request.indexes.unwrap_or_default(),
@@ -695,7 +711,10 @@ pub async fn refresh_materialized_view(
         view_name: "example_view".to_string(),
         rows_refreshed: 0,
         refresh_time_ms,
-        refreshed_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        refreshed_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
     };
 
     Ok(AxumJson(response))

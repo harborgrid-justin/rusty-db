@@ -2,11 +2,11 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::{Arc, Mutex};
-use std::collections::{HashMap, VecDeque};
-use std::time::{Duration, SystemTime};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, VecDeque};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, SystemTime};
 
 use super::metrics_core::*;
 
@@ -46,7 +46,8 @@ impl MetricAggregator {
         let cutoff = now - window_duration;
 
         // Filter points within window
-        let recent_points: Vec<_> = points.iter()
+        let recent_points: Vec<_> = points
+            .iter()
             .filter(|(ts, _)| ts >= &cutoff)
             .map(|(_, v)| *v)
             .collect();
@@ -58,7 +59,10 @@ impl MetricAggregator {
         let count = recent_points.len() as u64;
         let sum: f64 = recent_points.iter().sum();
         let min = recent_points.iter().cloned().fold(f64::INFINITY, f64::min);
-        let max = recent_points.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+        let max = recent_points
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max);
         let value = sum / count as f64;
 
         let point = AggregatedMetricPoint {
@@ -72,13 +76,15 @@ impl MetricAggregator {
         };
 
         let mut aggregated = self.aggregated.write();
-        aggregated.entry(window)
+        aggregated
+            .entry(window)
             .or_insert_with(Vec::new)
             .push(point);
     }
 
     pub fn get_aggregated(&self, window: AggregationWindow) -> Vec<AggregatedMetricPoint> {
-        self.aggregated.read()
+        self.aggregated
+            .read()
             .get(&window)
             .cloned()
             .unwrap_or_default()
@@ -140,7 +146,8 @@ impl CardinalityManager {
     }
 
     pub fn get_cardinality(&self, metric_name: &str) -> usize {
-        self.current_cardinality.read()
+        self.current_cardinality
+            .read()
             .get(metric_name)
             .cloned()
             .unwrap_or(0)
@@ -192,9 +199,9 @@ impl MetricsRegistry {
         Self {
             metrics: Arc::new(RwLock::new(HashMap::new())),
             aggregators: Arc::new(RwLock::new(HashMap::new())),
-            cardinality_manager: Arc::new(Mutex::new(
-                CardinalityManager::new(CardinalityEnforcement::Warn)
-            )),
+            cardinality_manager: Arc::new(Mutex::new(CardinalityManager::new(
+                CardinalityEnforcement::Warn,
+            ))),
             retention_policy,
             namespaces: Arc::new(RwLock::new(HashMap::new())),
         }
@@ -213,15 +220,17 @@ impl MetricsRegistry {
         let metric_id = MetricId::new(name, labels);
 
         // Check cardinality
-        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().unwrap().check(&metric_id) {
+        if let CardinalityCheckResult::Drop =
+            self.cardinality_manager.lock().unwrap().check(&metric_id)
+        {
             // Return a dummy counter that doesn't persist
             return Arc::new(CounterMetric::new("dropped"));
         }
 
         let mut metrics = self.metrics.write();
-        let metric = metrics.entry(metric_id).or_insert_with(|| {
-            MetricType::Counter(Arc::new(CounterMetric::new(help)))
-        });
+        let metric = metrics
+            .entry(metric_id)
+            .or_insert_with(|| MetricType::Counter(Arc::new(CounterMetric::new(help))));
 
         if let MetricType::Counter(counter) = metric {
             counter.clone()
@@ -238,14 +247,16 @@ impl MetricsRegistry {
     ) -> Arc<GaugeMetric> {
         let metric_id = MetricId::new(name, labels);
 
-        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().unwrap().check(&metric_id) {
+        if let CardinalityCheckResult::Drop =
+            self.cardinality_manager.lock().unwrap().check(&metric_id)
+        {
             return Arc::new(GaugeMetric::new("dropped"));
         }
 
         let mut metrics = self.metrics.write();
-        let metric = metrics.entry(metric_id).or_insert_with(|| {
-            MetricType::Gauge(Arc::new(GaugeMetric::new(help)))
-        });
+        let metric = metrics
+            .entry(metric_id)
+            .or_insert_with(|| MetricType::Gauge(Arc::new(GaugeMetric::new(help))));
 
         if let MetricType::Gauge(gauge) = metric {
             gauge.clone()
@@ -263,7 +274,9 @@ impl MetricsRegistry {
     ) -> Arc<HistogramMetric> {
         let metric_id = MetricId::new(name, labels);
 
-        if let CardinalityCheckResult::Drop = self.cardinality_manager.lock().unwrap().check(&metric_id) {
+        if let CardinalityCheckResult::Drop =
+            self.cardinality_manager.lock().unwrap().check(&metric_id)
+        {
             return Arc::new(HistogramMetric::new("dropped", buckets));
         }
 
@@ -282,15 +295,18 @@ impl MetricsRegistry {
     pub fn all_metrics(&self) -> HashMap<MetricId, MetricType> {
         // Clone the inner HashMap for external use
         let metrics = self.metrics.read();
-        metrics.iter().map(|(k, v)| {
-            let cloned_type = match v {
-                MetricType::Counter(c) => MetricType::Counter(c.clone()),
-                MetricType::Gauge(g) => MetricType::Gauge(g.clone()),
-                MetricType::Histogram(h) => MetricType::Histogram(h.clone()),
-                MetricType::Summary(s) => MetricType::Summary(s.clone()),
-            };
-            (k.clone(), cloned_type)
-        }).collect()
+        metrics
+            .iter()
+            .map(|(k, v)| {
+                let cloned_type = match v {
+                    MetricType::Counter(c) => MetricType::Counter(c.clone()),
+                    MetricType::Gauge(g) => MetricType::Gauge(g.clone()),
+                    MetricType::Histogram(h) => MetricType::Histogram(h.clone()),
+                    MetricType::Summary(s) => MetricType::Summary(s.clone()),
+                };
+                (k.clone(), cloned_type)
+            })
+            .collect()
     }
 
     pub fn cleanup_old_metrics(&self) {

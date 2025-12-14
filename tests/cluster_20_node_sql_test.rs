@@ -5,43 +5,33 @@
 // failover scenarios, and enterprise-grade SQL features.
 
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 // Import cluster types
-use rusty_db::clustering::{
-    NodeId, NodeRole, NodeStatus, NodeInfo,
-    ClusterMetrics, ClusterManager,
-    ExecutionStrategy, JoinStrategy,
-    DistributedQueryExecutor, DistributedQueryProcessor,
-};
+use rusty_db::clustering::coordinator::{DistributedQueryPlan, QueryId, QueryPlanNode};
+use rusty_db::clustering::dht::HashStrategy;
+use rusty_db::clustering::geo_replication::{ConflictResolution, ConsistencyLevel, DatacenterId};
+use rusty_db::clustering::health::{ClusterHealth, ClusterStatus};
+use rusty_db::clustering::load_balancer::{BackendStatus, LoadBalanceStrategy};
+use rusty_db::clustering::membership::{Incarnation, Member, MemberId, MemberState};
 use rusty_db::clustering::raft::{
-    RaftNodeId, Term, LogIndex, RaftState, LogEntry,
-    VoteRequest, VoteResponse, AppendEntriesRequest, AppendEntriesResponse,
+    AppendEntriesRequest, AppendEntriesResponse, LogEntry, LogIndex, RaftNodeId, RaftState, Term,
+    VoteRequest, VoteResponse,
 };
-use rusty_db::clustering::membership::{
-    MemberId, Incarnation, MemberState, Member,
+use rusty_db::clustering::{
+    ClusterManager, ClusterMetrics, DistributedQueryExecutor, DistributedQueryProcessor,
+    ExecutionStrategy, JoinStrategy, NodeId, NodeInfo, NodeRole, NodeStatus,
 };
-use rusty_db::clustering::health::{ClusterStatus, ClusterHealth};
-use rusty_db::clustering::coordinator::{
-    QueryPlanNode, DistributedQueryPlan, QueryId,
-};
-use rusty_db::clustering::geo_replication::{
-    DatacenterId, ConsistencyLevel, ConflictResolution,
-};
-use rusty_db::clustering::load_balancer::{
-    LoadBalanceStrategy, BackendStatus,
-};
-use rusty_db::clustering::dht::{HashStrategy};
 
 // SQL imports
-use rusty_db::parser::{SqlParser, SqlStatement, AlterAction, ConstraintType};
-use rusty_db::parser::expression::{Expression, LiteralValue, ExpressionEvaluator, BinaryOperator};
-use rusty_db::catalog::{Catalog, DataType, Column, Schema};
-use rusty_db::execution::Executor;
-use rusty_db::transaction::TransactionManager;
-use rusty_db::index::IndexManager;
+use rusty_db::catalog::{Catalog, Column, DataType, Schema};
 use rusty_db::constraints::ConstraintManager;
+use rusty_db::execution::Executor;
+use rusty_db::index::IndexManager;
+use rusty_db::parser::expression::{BinaryOperator, Expression, ExpressionEvaluator, LiteralValue};
+use rusty_db::parser::{AlterAction, ConstraintType, SqlParser, SqlStatement};
+use rusty_db::transaction::TransactionManager;
 
 /// Configuration for a cluster node
 #[derive(Debug, Clone)]
@@ -91,32 +81,35 @@ struct ClusterTestHarness {
 
 impl ClusterTestHarness {
     fn new() -> Self {
-        let nodes: Vec<ClusterNodeConfig> = (0..20)
-            .map(|i| ClusterNodeConfig::new(i))
+        let nodes: Vec<ClusterNodeConfig> = (0..20).map(|i| ClusterNodeConfig::new(i)).collect();
+
+        let node_infos: Vec<NodeInfo> = nodes
+            .iter()
+            .map(|config| {
+                NodeInfo::new(
+                    NodeId::new(config.node_id.clone()),
+                    config.address.clone(),
+                    config.port,
+                )
+            })
             .collect();
 
-        let node_infos: Vec<NodeInfo> = nodes.iter().map(|config| {
-            NodeInfo::new(
-                NodeId::new(config.node_id.clone()),
-                config.address.clone(),
-                config.port,
-            )
-        }).collect();
-
         // Create shards distributed across nodes
-        let shards: Vec<ShardInfo> = (0..10).map(|i| {
-            let primary_idx = i * 2;
-            ShardInfo {
-                shard_id: i as u32,
-                primary_node: format!("node-{:02}", primary_idx),
-                replica_nodes: vec![
-                    format!("node-{:02}", (primary_idx + 1) % 20),
-                    format!("node-{:02}", (primary_idx + 10) % 20),
-                ],
-                key_range_start: i as u64 * 1000,
-                key_range_end: (i as u64 + 1) * 1000 - 1,
-            }
-        }).collect();
+        let shards: Vec<ShardInfo> = (0..10)
+            .map(|i| {
+                let primary_idx = i * 2;
+                ShardInfo {
+                    shard_id: i as u32,
+                    primary_node: format!("node-{:02}", primary_idx),
+                    replica_nodes: vec![
+                        format!("node-{:02}", (primary_idx + 1) % 20),
+                        format!("node-{:02}", (primary_idx + 10) % 20),
+                    ],
+                    key_range_start: i as u64 * 1000,
+                    key_range_end: (i as u64 + 1) * 1000 - 1,
+                }
+            })
+            .collect();
 
         Self {
             nodes,
@@ -150,7 +143,9 @@ impl ClusterTestHarness {
     }
 
     fn check_quorum(&self) -> bool {
-        let healthy_count = self.node_infos.iter()
+        let healthy_count = self
+            .node_infos
+            .iter()
             .filter(|n| n.status == NodeStatus::Healthy)
             .count();
         healthy_count > self.nodes.len() / 2
@@ -190,7 +185,8 @@ impl ClusterTestHarness {
 
     fn get_healthy_nodes_in_dc(&self, dc_index: usize) -> Vec<&NodeInfo> {
         let dc_name = format!("dc-{}", dc_index);
-        self.nodes.iter()
+        self.nodes
+            .iter()
             .enumerate()
             .filter(|(_, config)| config.datacenter == dc_name)
             .filter(|(idx, _)| self.node_infos[*idx].status == NodeStatus::Healthy)
@@ -199,11 +195,15 @@ impl ClusterTestHarness {
     }
 
     fn get_cluster_metrics(&self) -> ClusterMetrics {
-        let healthy_nodes = self.node_infos.iter()
+        let healthy_nodes = self
+            .node_infos
+            .iter()
             .filter(|n| n.status == NodeStatus::Healthy)
             .count();
 
-        let leader = self.node_infos.iter()
+        let leader = self
+            .node_infos
+            .iter()
             .find(|n| n.role == NodeRole::Leader)
             .map(|n| n.id.clone());
 
@@ -223,7 +223,9 @@ impl ClusterTestHarness {
     }
 
     fn find_shard_for_key(&self, key: u64) -> Option<&ShardInfo> {
-        self.shards.iter().find(|s| key >= s.key_range_start && key <= s.key_range_end)
+        self.shards
+            .iter()
+            .find(|s| key >= s.key_range_start && key <= s.key_range_end)
     }
 }
 
@@ -254,7 +256,9 @@ fn test_02_datacenter_distribution() {
 
     // Verify 4 datacenters with 5 nodes each
     for dc in 0..4 {
-        let nodes_in_dc: Vec<_> = harness.nodes.iter()
+        let nodes_in_dc: Vec<_> = harness
+            .nodes
+            .iter()
             .filter(|n| n.datacenter == format!("dc-{}", dc))
             .collect();
         assert_eq!(nodes_in_dc.len(), 5, "Each datacenter should have 5 nodes");
@@ -270,7 +274,11 @@ fn test_03_shard_distribution() {
     assert_eq!(harness.get_shard_count(), 10, "Should have 10 shards");
 
     for shard in &harness.shards {
-        assert_eq!(shard.replica_nodes.len(), 2, "Each shard should have 2 replicas");
+        assert_eq!(
+            shard.replica_nodes.len(),
+            2,
+            "Each shard should have 2 replicas"
+        );
         assert!(shard.key_range_end > shard.key_range_start);
     }
 
@@ -292,7 +300,9 @@ fn test_04_leader_election_20_nodes() {
     assert_eq!(leader.id.as_str(), "node-00");
 
     // Verify only one leader
-    let leader_count = harness.node_infos.iter()
+    let leader_count = harness
+        .node_infos
+        .iter()
         .filter(|n| n.role == NodeRole::Leader)
         .count();
     assert_eq!(leader_count, 1, "Should have exactly one leader");
@@ -305,17 +315,26 @@ fn test_05_quorum_with_majority_failures() {
     let mut harness = ClusterTestHarness::new();
 
     // All healthy - should have quorum
-    assert!(harness.check_quorum(), "Should have quorum with all 20 nodes healthy");
+    assert!(
+        harness.check_quorum(),
+        "Should have quorum with all 20 nodes healthy"
+    );
 
     // Fail 9 nodes (still have 11 healthy = quorum with 20 nodes, need > 10)
     for i in 0..9 {
         harness.simulate_node_failure(i);
     }
-    assert!(harness.check_quorum(), "Should still have quorum with 11 healthy nodes");
+    assert!(
+        harness.check_quorum(),
+        "Should still have quorum with 11 healthy nodes"
+    );
 
     // Fail 1 more (10 healthy = NO quorum, need > 10 for 20 nodes)
     harness.simulate_node_failure(9);
-    assert!(!harness.check_quorum(), "Should NOT have quorum with only 10 healthy nodes");
+    assert!(
+        !harness.check_quorum(),
+        "Should NOT have quorum with only 10 healthy nodes"
+    );
 
     println!("✓ Test 05: Quorum detection verified for 20-node cluster");
 }
@@ -329,14 +348,20 @@ fn test_06_datacenter_failure_quorum() {
 
     let metrics = harness.get_cluster_metrics();
     assert_eq!(metrics.healthy_nodes, 15);
-    assert!(metrics.has_quorum, "Should maintain quorum with 15/20 nodes");
+    assert!(
+        metrics.has_quorum,
+        "Should maintain quorum with 15/20 nodes"
+    );
 
     // Fail datacenter 1 as well (now 10 nodes)
     harness.simulate_datacenter_failure(1);
 
     let metrics = harness.get_cluster_metrics();
     assert_eq!(metrics.healthy_nodes, 10);
-    assert!(!metrics.has_quorum, "Should lose quorum with only 10/20 nodes");
+    assert!(
+        !metrics.has_quorum,
+        "Should lose quorum with only 10/20 nodes"
+    );
 
     println!("✓ Test 06: Datacenter failure quorum handling verified");
 }
@@ -424,9 +449,15 @@ fn test_10_distributed_join_strategies() {
 #[test]
 fn test_11_raft_log_replication() {
     // Test creating entries for 20-node replication
-    let entries: Vec<LogEntry> = (1..=5).map(|i| {
-        LogEntry::new(1, i, format!("INSERT INTO orders VALUES ({})", i).into_bytes())
-    }).collect();
+    let entries: Vec<LogEntry> = (1..=5)
+        .map(|i| {
+            LogEntry::new(
+                1,
+                i,
+                format!("INSERT INTO orders VALUES ({})", i).into_bytes(),
+            )
+        })
+        .collect();
 
     assert_eq!(entries.len(), 5);
     for (i, entry) in entries.iter().enumerate() {
@@ -439,9 +470,9 @@ fn test_11_raft_log_replication() {
 
 #[test]
 fn test_12_append_entries_batch() {
-    let entries: Vec<LogEntry> = (1..=10).map(|i| {
-        LogEntry::new(1, i, format!("COMMAND_{}", i).into_bytes())
-    }).collect();
+    let entries: Vec<LogEntry> = (1..=10)
+        .map(|i| LogEntry::new(1, i, format!("COMMAND_{}", i).into_bytes()))
+        .collect();
 
     let request = AppendEntriesRequest {
         term: 1,
@@ -647,7 +678,9 @@ fn test_20_full_cluster_simulation() {
     println!("Phase 1: Cluster Initialization");
     println!("  - Creating 20 nodes across 4 datacenters...");
     for dc in 0..4 {
-        let nodes_in_dc: Vec<_> = harness.nodes.iter()
+        let nodes_in_dc: Vec<_> = harness
+            .nodes
+            .iter()
             .filter(|n| n.datacenter == format!("dc-{}", dc))
             .collect();
         println!("    DC-{}: {} nodes", dc, nodes_in_dc.len());
@@ -663,8 +696,10 @@ fn test_20_full_cluster_simulation() {
     println!("\nPhase 3: Shard Distribution");
     println!("  - {} shards distributed", harness.shards.len());
     for shard in &harness.shards {
-        println!("    Shard {}: keys {}-{} (primary: {})",
-                 shard.shard_id, shard.key_range_start, shard.key_range_end, shard.primary_node);
+        println!(
+            "    Shard {}: keys {}-{} (primary: {})",
+            shard.shard_id, shard.key_range_start, shard.key_range_end, shard.primary_node
+        );
     }
 
     // Phase 4: Simulate failures
@@ -673,7 +708,10 @@ fn test_20_full_cluster_simulation() {
     harness.simulate_datacenter_failure(0);
 
     let metrics = harness.get_cluster_metrics();
-    println!("  - Healthy nodes: {}/{}", metrics.healthy_nodes, metrics.total_nodes);
+    println!(
+        "  - Healthy nodes: {}/{}",
+        metrics.healthy_nodes, metrics.total_nodes
+    );
     println!("  - Quorum maintained: {}", metrics.has_quorum);
 
     // Phase 5: Recovery
@@ -682,7 +720,10 @@ fn test_20_full_cluster_simulation() {
     harness.simulate_datacenter_recovery(0);
 
     let metrics = harness.get_cluster_metrics();
-    println!("  - Healthy nodes after recovery: {}", metrics.healthy_nodes);
+    println!(
+        "  - Healthy nodes after recovery: {}",
+        metrics.healthy_nodes
+    );
 
     // Phase 6: Final status
     println!("\nPhase 6: Final Cluster Status");
@@ -701,8 +742,10 @@ fn test_20_full_cluster_simulation() {
             NodeRole::Follower => "Follower    ",
             _ => "Other       ",
         };
-        println!("  │ {}  │ {} │ {} │ {}   │",
-                 node.id, status, role, harness.nodes[i].datacenter);
+        println!(
+            "  │ {}  │ {} │ {} │ {}   │",
+            node.id, status, role, harness.nodes[i].datacenter
+        );
     }
     println!("  └──────────┴──────────┴──────────────┴──────────┘");
 
@@ -715,7 +758,12 @@ fn test_20_full_cluster_simulation() {
 // ADVANCED SQL TESTS (Tests 21-70)
 // =============================================================================
 
-fn setup_sql_test_environment() -> (Arc<Catalog>, Arc<TransactionManager>, Arc<IndexManager>, Arc<ConstraintManager>) {
+fn setup_sql_test_environment() -> (
+    Arc<Catalog>,
+    Arc<TransactionManager>,
+    Arc<IndexManager>,
+    Arc<ConstraintManager>,
+) {
     let catalog = Arc::new(Catalog::new());
     let txn_manager = Arc::new(TransactionManager::new());
     let index_manager = Arc::new(IndexManager::new());
@@ -979,7 +1027,9 @@ fn test_35_select_distinct_multiple_columns() {
     let stmts = parser.parse(sql).unwrap();
 
     match &stmts[0] {
-        SqlStatement::Select { distinct, columns, .. } => {
+        SqlStatement::Select {
+            distinct, columns, ..
+        } => {
             assert!(distinct);
             assert_eq!(columns.len(), 2);
         }
@@ -1094,7 +1144,9 @@ fn test_42_expression_case_when() {
                 Expression::Literal(LiteralValue::String("Completed".to_string())),
             ),
         ],
-        else_result: Some(Box::new(Expression::Literal(LiteralValue::String("Unknown".to_string())))),
+        else_result: Some(Box::new(Expression::Literal(LiteralValue::String(
+            "Unknown".to_string(),
+        )))),
     };
 
     let result = evaluator.evaluate(&case_expr).unwrap();
@@ -1126,7 +1178,10 @@ fn test_43_expression_between() {
 #[test]
 fn test_44_expression_in_list() {
     let mut row_data = HashMap::new();
-    row_data.insert("status".to_string(), LiteralValue::String("active".to_string()));
+    row_data.insert(
+        "status".to_string(),
+        LiteralValue::String("active".to_string()),
+    );
 
     let evaluator = ExpressionEvaluator::new(row_data);
 
@@ -1149,13 +1204,18 @@ fn test_44_expression_in_list() {
 #[test]
 fn test_45_expression_like_pattern() {
     let mut row_data = HashMap::new();
-    row_data.insert("email".to_string(), LiteralValue::String("john.doe@example.com".to_string()));
+    row_data.insert(
+        "email".to_string(),
+        LiteralValue::String("john.doe@example.com".to_string()),
+    );
 
     let evaluator = ExpressionEvaluator::new(row_data);
 
     let like_expr = Expression::Like {
         expr: Box::new(Expression::Column("email".to_string())),
-        pattern: Box::new(Expression::Literal(LiteralValue::String("%@example.com".to_string()))),
+        pattern: Box::new(Expression::Literal(LiteralValue::String(
+            "%@example.com".to_string(),
+        ))),
         escape: None,
         negated: false,
     };
@@ -1253,9 +1313,7 @@ fn test_49_expression_not_negation() {
 
     let not_in_expr = Expression::In {
         expr: Box::new(Expression::Column("active".to_string())),
-        list: vec![
-            Expression::Literal(LiteralValue::Boolean(false)),
-        ],
+        list: vec![Expression::Literal(LiteralValue::Boolean(false))],
         negated: true, // NOT IN
     };
 
@@ -1290,7 +1348,8 @@ fn test_50_expression_coalesce_like() {
 #[test]
 fn test_51_aggregation_functions() {
     let parser = SqlParser::new();
-    let sql = "SELECT COUNT(*), SUM(amount), AVG(price), MIN(created_at), MAX(updated_at) FROM orders";
+    let sql =
+        "SELECT COUNT(*), SUM(amount), AVG(price), MIN(created_at), MAX(updated_at) FROM orders";
     let result = parser.parse(sql);
     assert!(result.is_ok());
 
@@ -1300,7 +1359,8 @@ fn test_51_aggregation_functions() {
 #[test]
 fn test_52_subquery_in_where() {
     let parser = SqlParser::new();
-    let sql = "SELECT * FROM orders WHERE customer_id IN (SELECT id FROM customers WHERE active = true)";
+    let sql =
+        "SELECT * FROM orders WHERE customer_id IN (SELECT id FROM customers WHERE active = true)";
     let result = parser.parse(sql);
     assert!(result.is_ok());
 
@@ -1396,7 +1456,8 @@ fn test_59_recursive_cte() {
         println!("✓ Test 59: Recursive CTE");
     } else {
         // Recursive CTE is advanced - test basic self-join concept
-        let sql2 = "SELECT e1.name, e2.name FROM employees e1 JOIN employees e2 ON e1.manager_id = e2.id";
+        let sql2 =
+            "SELECT e1.name, e2.name FROM employees e1 JOIN employees e2 ON e1.manager_id = e2.id";
         if parser.parse(sql2).is_ok() {
             println!("✓ Test 59: Self-join (recursive CTE not supported)");
         } else {
@@ -1548,9 +1609,11 @@ fn test_69_executor_insert_with_constraints() {
     let stmt = SqlStatement::Insert {
         table: "customers".to_string(),
         columns: vec!["id".to_string(), "email".to_string(), "name".to_string()],
-        values: vec![
-            vec!["1".to_string(), "test@example.com".to_string(), "Test User".to_string()],
-        ],
+        values: vec![vec![
+            "1".to_string(),
+            "test@example.com".to_string(),
+            "Test User".to_string(),
+        ]],
     };
 
     let result = executor.execute(stmt);
@@ -1612,8 +1675,12 @@ fn test_70_full_sql_workflow() {
 
     // At least DROP TABLE should work
     assert!(drop_table.is_ok());
-    if drop_view.is_ok() { println!("    DROP VIEW: ✓"); }
-    if drop_idx.is_ok() { println!("    DROP INDEX: ✓"); }
+    if drop_view.is_ok() {
+        println!("    DROP VIEW: ✓");
+    }
+    if drop_idx.is_ok() {
+        println!("    DROP INDEX: ✓");
+    }
     println!("    DROP TABLE: ✓");
     println!("  ✓ DROP operations validated");
 

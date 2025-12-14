@@ -39,14 +39,14 @@
 // }
 // ```
 
-use std::time::Instant;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::time::Duration;
-use parking_lot::{RwLock, Mutex};
+use parking_lot::{Mutex, RwLock};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Core Configuration
@@ -224,8 +224,8 @@ impl Default for MemoryConfig {
     fn default() -> Self {
         Self {
             total_limit_bytes: 4 * 1024 * 1024 * 1024, // 4GB
-            small_arena_size: 4 * 1024 * 1024, // 4MB
-            large_arena_size: 64 * 1024 * 1024, // 64MB
+            small_arena_size: 4 * 1024 * 1024,         // 4MB
+            large_arena_size: 64 * 1024 * 1024,        // 64MB
             numa_aware: false,
             use_huge_pages: false,
             pressure_threshold: 0.85,
@@ -341,26 +341,34 @@ impl DatabaseCore {
         *state.write() = CoreState::InitializingFoundation;
         println!("\n[2/5] Foundation Phase...");
         let memory_arena = Self::initialize_memory_arena(&config.memory_config)?;
-        println!("      ✓ Memory arenas initialized ({} MB)",
-            config.memory_config.total_limit_bytes / (1024 * 1024));
+        println!(
+            "      ✓ Memory arenas initialized ({} MB)",
+            config.memory_config.total_limit_bytes / (1024 * 1024)
+        );
 
         let io_engine = Self::initialize_io_engine(&config.io_config)?;
-        println!("      ✓ I/O engine initialized ({} threads)",
-            config.io_config.num_io_threads);
+        println!(
+            "      ✓ I/O engine initialized ({} threads)",
+            config.io_config.num_io_threads
+        );
 
         // Phase 3: Storage (Buffer Pool)
         *state.write() = CoreState::InitializingStorage;
         println!("\n[3/5] Storage Phase...");
         let buffer_pool = Self::initialize_buffer_pool(&config.buffer_pool)?;
-        println!("      ✓ Buffer pool initialized ({} MB)",
-            config.buffer_pool.size_bytes / (1024 * 1024));
+        println!(
+            "      ✓ Buffer pool initialized ({} MB)",
+            config.buffer_pool.size_bytes / (1024 * 1024)
+        );
 
         // Phase 4: Execution (Worker Pools)
         *state.write() = CoreState::InitializingExecution;
         println!("\n[4/5] Execution Phase...");
         let worker_pool = Self::initialize_worker_pool(&config.worker_config)?;
-        println!("      ✓ Worker pool initialized ({} workers)",
-            config.worker_config.num_workers);
+        println!(
+            "      ✓ Worker pool initialized ({} workers)",
+            config.worker_config.num_workers
+        );
 
         // Phase 5: Monitoring
         println!("\n[5/5] Service Phase...");
@@ -376,7 +384,10 @@ impl DatabaseCore {
 
         let elapsed = start.elapsed();
         println!("\n╔════════════════════════════════════════════════════════╗");
-        println!("║  RustyDB Core Ready ({:.2}s)                      ║", elapsed.as_secs_f64());
+        println!(
+            "║  RustyDB Core Ready ({:.2}s)                      ║",
+            elapsed.as_secs_f64()
+        );
         println!("╚════════════════════════════════════════════════════════╝\n");
 
         Ok(Arc::new(Self {
@@ -676,7 +687,8 @@ impl BufferPoolManager {
                 if frame.pin_count == 0 {
                     if !frame.reference_bit {
                         drop(frame);
-                        self.clock_hand.store((current + 1) % self.num_pages, Ordering::Relaxed);
+                        self.clock_hand
+                            .store((current + 1) % self.num_pages, Ordering::Relaxed);
                         self.stats.evictions.fetch_add(1, Ordering::Relaxed);
                         return Some(current);
                     }
@@ -802,7 +814,9 @@ impl IoEngine {
 
     pub fn write_page(&self, _page_id: u64, _data: &[u8]) -> Result<()> {
         self.stats.writes.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_written.fetch_add(_data.len() as u64, Ordering::Relaxed);
+        self.stats
+            .bytes_written
+            .fetch_add(_data.len() as u64, Ordering::Relaxed);
         Ok(())
     }
 

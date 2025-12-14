@@ -3,10 +3,13 @@
 // Real-time WebSocket handlers for replication and clustering events
 
 use axum::{
-    extract::{ws::{WebSocket, WebSocketUpgrade}, State},
+    extract::{
+        ws::{WebSocket, WebSocketUpgrade},
+        State,
+    },
     response::Response,
 };
-use futures::{StreamExt, SinkExt};
+use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Arc;
@@ -138,10 +141,7 @@ pub async fn ws_cluster_events(
     ),
     tag = "cluster-websocket"
 )]
-pub async fn ws_rac_events(
-    ws: WebSocketUpgrade,
-    State(state): State<Arc<ApiState>>,
-) -> Response {
+pub async fn ws_rac_events(ws: WebSocketUpgrade, State(state): State<Arc<ApiState>>) -> Response {
     ws.on_upgrade(|socket| handle_rac_events_websocket(socket, state))
 }
 
@@ -194,7 +194,11 @@ async fn handle_replication_events_websocket(mut socket: WebSocket, _state: Arc<
     });
 
     if let Ok(welcome_json) = serde_json::to_string(&welcome) {
-        if socket.send(Message::Text(welcome_json.into())).await.is_err() {
+        if socket
+            .send(Message::Text(welcome_json.into()))
+            .await
+            .is_err()
+        {
             return;
         }
     }
@@ -320,7 +324,11 @@ async fn handle_cluster_events_websocket(mut socket: WebSocket, _state: Arc<ApiS
     });
 
     if let Ok(welcome_json) = serde_json::to_string(&welcome) {
-        if socket.send(Message::Text(welcome_json.into())).await.is_err() {
+        if socket
+            .send(Message::Text(welcome_json.into()))
+            .await
+            .is_err()
+        {
             return;
         }
     }
@@ -417,7 +425,11 @@ async fn handle_rac_events_websocket(mut socket: WebSocket, _state: Arc<ApiState
     });
 
     if let Ok(welcome_json) = serde_json::to_string(&welcome) {
-        if socket.send(Message::Text(welcome_json.into())).await.is_err() {
+        if socket
+            .send(Message::Text(welcome_json.into()))
+            .await
+            .is_err()
+        {
             return;
         }
     }
@@ -537,7 +549,11 @@ async fn handle_sharding_events_websocket(mut socket: WebSocket, _state: Arc<Api
     });
 
     if let Ok(welcome_json) = serde_json::to_string(&welcome) {
-        if socket.send(Message::Text(welcome_json.into())).await.is_err() {
+        if socket
+            .send(Message::Text(welcome_json.into()))
+            .await
+            .is_err()
+        {
             return;
         }
     }

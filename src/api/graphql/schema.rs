@@ -4,10 +4,10 @@
 
 use async_graphql::Schema;
 
-use super::queries::QueryRoot;
-use super::mutations::MutationRoot;
-use super::subscriptions::SubscriptionRoot;
 use super::complexity::PerformanceExtension;
+use super::mutations::MutationRoot;
+use super::queries::QueryRoot;
+use super::subscriptions::SubscriptionRoot;
 
 // ============================================================================
 // SCHEMA BUILDER
@@ -24,7 +24,9 @@ pub fn build_schema() -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
 }
 
 // Create schema with custom configuration
-pub fn build_schema_with_config(config: SchemaConfig) -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
+pub fn build_schema_with_config(
+    config: SchemaConfig,
+) -> Schema<QueryRoot, MutationRoot, SubscriptionRoot> {
     let mut builder = Schema::build(QueryRoot, MutationRoot, SubscriptionRoot);
 
     // Apply depth limit for DoS prevention

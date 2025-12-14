@@ -16,9 +16,9 @@
 // - **metrics**: Monitoring and performance metrics
 
 // Core modules
+pub mod connection;
 pub mod message;
 pub mod protocol;
-pub mod connection;
 
 // Enterprise modules
 pub mod auth;
@@ -26,36 +26,17 @@ pub mod metrics;
 pub mod security;
 
 // Re-export core types
-pub use message::{
-    WebSocketMessage,
-    MessageEnvelope,
-    MessageCodec,
-    MessageRouter,
-    MessageHandler,
-};
+pub use message::{MessageCodec, MessageEnvelope, MessageHandler, MessageRouter, WebSocketMessage};
 
 pub use protocol::{
-    Protocol,
-    ProtocolHandler,
-    ProtocolNegotiator,
-    JsonRpcRequest,
-    JsonRpcResponse,
-    JsonRpcError,
-    JsonRpcHandler,
-    RustyDbMessage,
+    GraphQLHandler, JsonRpcError, JsonRpcHandler, JsonRpcRequest, JsonRpcResponse, Protocol,
+    ProtocolHandler, ProtocolNegotiator, RawHandler, RustyDbHandler, RustyDbMessage,
     RustyDbMessageType,
-    RustyDbHandler,
-    GraphQLHandler,
-    RawHandler,
 };
 
 pub use connection::{
+    ConnectionMetadata, ConnectionPool, ConnectionState, ConnectionStats, PoolStats,
     WebSocketConnection,
-    ConnectionState,
-    ConnectionMetadata,
-    ConnectionStats,
-    ConnectionPool,
-    PoolStats,
 };
 
 // Re-export metrics types

@@ -6,12 +6,12 @@
 // - Transaction isolation levels
 // - Cross-shard transaction management
 
-use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo};
+use crate::error::DbError;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
 
 // Trait for distributed transaction coordination
 pub trait DistributedTransactionManager {
@@ -44,23 +44,38 @@ impl ClusterTransactionCoordinator {
         }
     }
 
-    pub fn get_transaction_status(&self, txn_id: &TransactionId) -> Result<TransactionStatus, DbError> {
-        let transactions = self.active_transactions.read()
+    pub fn get_transaction_status(
+        &self,
+        txn_id: &TransactionId,
+    ) -> Result<TransactionStatus, DbError> {
+        let transactions = self
+            .active_transactions
+            .read()
             .map_err(|_| DbError::LockError("Failed to read active transactions".to_string()))?;
 
         if let Some(txn) = transactions.get(txn_id) {
             Ok(txn.status)
         } else {
-            Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0)))
+            Err(DbError::NotFound(format!(
+                "Transaction {} not found",
+                txn_id.0
+            )))
         }
     }
 
     pub fn cleanup_completed_transactions(&self) -> Result<usize, DbError> {
-        let mut transactions = self.active_transactions.write()
+        let mut transactions = self
+            .active_transactions
+            .write()
             .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
 
         let initial_count = transactions.len();
-        transactions.retain(|_, txn| !matches!(txn.status, TransactionStatus::Committed | TransactionStatus::Aborted));
+        transactions.retain(|_, txn| {
+            !matches!(
+                txn.status,
+                TransactionStatus::Committed | TransactionStatus::Aborted
+            )
+        });
 
         Ok(initial_count - transactions.len())
     }
@@ -85,8 +100,9 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
         };
 
         {
-            let mut active = self.active_transactions.write()
-                .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
+            let mut active = self.active_transactions.write().map_err(|_| {
+                DbError::LockError("Failed to write active transactions".to_string())
+            })?;
             active.insert(txn_id.clone(), transaction);
         }
 
@@ -102,13 +118,17 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
 
     fn prepare(&self, txn_id: &TransactionId) -> Result<bool, DbError> {
         let participants = {
-            let transactions = self.active_transactions.read()
-                .map_err(|_| DbError::LockError("Failed to read active transactions".to_string()))?;
+            let transactions = self.active_transactions.read().map_err(|_| {
+                DbError::LockError("Failed to read active transactions".to_string())
+            })?;
 
             if let Some(txn) = transactions.get(txn_id) {
                 txn.participants.clone()
             } else {
-                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0)));
+                return Err(DbError::NotFound(format!(
+                    "Transaction {} not found",
+                    txn_id.0
+                )));
             }
         };
 
@@ -124,8 +144,9 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
 
         // Update transaction status
         {
-            let mut transactions = self.active_transactions.write()
-                .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
+            let mut transactions = self.active_transactions.write().map_err(|_| {
+                DbError::LockError("Failed to write active transactions".to_string())
+            })?;
 
             if let Some(txn) = transactions.get_mut(txn_id) {
                 txn.status = if can_commit {
@@ -152,16 +173,22 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
 
     fn commit(&self, txn_id: &TransactionId) -> Result<bool, DbError> {
         let participants = {
-            let transactions = self.active_transactions.read()
-                .map_err(|_| DbError::LockError("Failed to read active transactions".to_string()))?;
+            let transactions = self.active_transactions.read().map_err(|_| {
+                DbError::LockError("Failed to read active transactions".to_string())
+            })?;
 
             if let Some(txn) = transactions.get(txn_id) {
                 if !matches!(txn.status, TransactionStatus::Prepared) {
-                    return Err(DbError::InvalidOperation("Transaction not prepared".to_string()));
+                    return Err(DbError::InvalidOperation(
+                        "Transaction not prepared".to_string(),
+                    ));
                 }
                 txn.participants.clone()
             } else {
-                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0)));
+                return Err(DbError::NotFound(format!(
+                    "Transaction {} not found",
+                    txn_id.0
+                )));
             }
         };
 
@@ -173,8 +200,9 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
 
         // Update transaction status
         {
-            let mut transactions = self.active_transactions.write()
-                .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
+            let mut transactions = self.active_transactions.write().map_err(|_| {
+                DbError::LockError("Failed to write active transactions".to_string())
+            })?;
 
             if let Some(txn) = transactions.get_mut(txn_id) {
                 txn.status = TransactionStatus::Committed;
@@ -193,13 +221,17 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
 
     fn abort(&self, txn_id: &TransactionId) -> Result<(), DbError> {
         let participants = {
-            let transactions = self.active_transactions.read()
-                .map_err(|_| DbError::LockError("Failed to read active transactions".to_string()))?;
+            let transactions = self.active_transactions.read().map_err(|_| {
+                DbError::LockError("Failed to read active transactions".to_string())
+            })?;
 
             if let Some(txn) = transactions.get(txn_id) {
                 txn.participants.clone()
             } else {
-                return Err(DbError::NotFound(format!("Transaction {} not found", txn_id.0)));
+                return Err(DbError::NotFound(format!(
+                    "Transaction {} not found",
+                    txn_id.0
+                )));
             }
         };
 
@@ -210,8 +242,9 @@ impl DistributedTransactionManager for ClusterTransactionCoordinator {
 
         // Update transaction status
         {
-            let mut transactions = self.active_transactions.write()
-                .map_err(|_| DbError::LockError("Failed to write active transactions".to_string()))?;
+            let mut transactions = self.active_transactions.write().map_err(|_| {
+                DbError::LockError("Failed to write active transactions".to_string())
+            })?;
 
             if let Some(txn) = transactions.get_mut(txn_id) {
                 txn.status = TransactionStatus::Aborted;
@@ -323,9 +356,12 @@ mod tests {
 
         let txn_coord = ClusterTransactionCoordinator::new(coordinator);
 
-        let txn_id = txn_coord.begin_transaction(
-            vec![NodeId("node1".to_string()), NodeId("node2".to_string())]
-        ).unwrap();
+        let txn_id = txn_coord
+            .begin_transaction(vec![
+                NodeId("node1".to_string()),
+                NodeId("node2".to_string()),
+            ])
+            .unwrap();
 
         assert!(txn_coord.prepare(&txn_id).unwrap());
         assert!(txn_coord.commit(&txn_id).unwrap());

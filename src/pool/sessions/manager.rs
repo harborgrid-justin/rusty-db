@@ -1,10 +1,10 @@
 // Main session manager
+use super::auth::AuthenticationProvider;
+use super::state::{SessionState, SID};
+use crate::error::Result;
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::error::Result;
-use super::state::{SID, SessionState};
-use super::auth::AuthenticationProvider;
 
 #[derive(Debug, Clone)]
 pub struct SessionConfig {
@@ -44,7 +44,9 @@ impl SessionManager {
         _password: &str,
         _schema: Option<String>,
     ) -> Result<SID> {
-        let sid = self.next_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let sid = self
+            .next_id
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let schema = username.to_string();
         let state = SessionState::new(sid, username.to_string(), schema);
         self.sessions.write().insert(sid, state);

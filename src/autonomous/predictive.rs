@@ -3,15 +3,15 @@
 // Forecasting and prediction capabilities for storage growth, query performance,
 // resource exhaustion, and capacity planning.
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{Duration};
+use crate::error::DbError;
+use crate::Result;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::Result;
-use crate::error::DbError;
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Time series data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,7 +61,9 @@ impl StorageGrowthPredictor {
         let data = self.historical_data.read();
 
         if data.len() < 3 {
-            return Err(DbError::Internal("Insufficient historical data for prediction".to_string()));
+            return Err(DbError::Internal(
+                "Insufficient historical data for prediction".to_string(),
+            ));
         }
 
         // Use linear regression with exponential smoothing
@@ -141,7 +143,7 @@ impl StorageGrowthPredictor {
                         return Some(days + 1);
                     }
                 }
-                None  // Won't fill in next year
+                None // Won't fill in next year
             }
             Err(_) => None,
         }
@@ -150,7 +152,7 @@ impl StorageGrowthPredictor {
 
 // Query response time predictor
 pub struct ResponseTimePredictor {
-    query_history: Arc<RwLock<HashMap<u64, VecDeque<f64>>>>,  // query_hash -> execution times
+    query_history: Arc<RwLock<HashMap<u64, VecDeque<f64>>>>, // query_hash -> execution times
     max_history_per_query: usize,
 }
 
@@ -187,7 +189,7 @@ impl ResponseTimePredictor {
         }
 
         // Use exponential moving average for prediction
-        let alpha = 0.3;  // Smoothing factor
+        let alpha = 0.3; // Smoothing factor
         let mut ema = times[0];
 
         for &time in times.iter().skip(1) {
@@ -196,7 +198,8 @@ impl ResponseTimePredictor {
 
         // Calculate standard deviation for confidence interval
         let mean: f64 = times.iter().sum::<f64>() / times.len() as f64;
-        let variance: f64 = times.iter().map(|&t| (t - mean).powi(2)).sum::<f64>() / times.len() as f64;
+        let variance: f64 =
+            times.iter().map(|&t| (t - mean).powi(2)).sum::<f64>() / times.len() as f64;
         let std_dev = variance.sqrt();
 
         Some(Forecast {
@@ -303,11 +306,13 @@ impl ResourceExhaustionForecaster {
             alerts.push(alert);
         }
 
-        if let Some(alert) = self.check_resource(&self.disk_io_history, ResourceType::DiskIO, 80.0) {
+        if let Some(alert) = self.check_resource(&self.disk_io_history, ResourceType::DiskIO, 80.0)
+        {
             alerts.push(alert);
         }
 
-        if let Some(alert) = self.check_resource(&self.network_history, ResourceType::Network, 75.0) {
+        if let Some(alert) = self.check_resource(&self.network_history, ResourceType::Network, 75.0)
+        {
             alerts.push(alert);
         }
 
@@ -336,9 +341,10 @@ impl ResourceExhaustionForecaster {
         let slope = self.calculate_trend_slope(&points);
 
         // Predict when resource will be exhausted
-        if slope > 0.1 {  // Resource usage is increasing
+        if slope > 0.1 {
+            // Resource usage is increasing
             let steps_to_exhaustion = ((100.0 - current) / slope).ceil() as u64;
-            let time_until_exhaustion = Duration::from_secs(steps_to_exhaustion * 60);  // Assuming 1-minute intervals
+            let time_until_exhaustion = Duration::from_secs(steps_to_exhaustion * 60); // Assuming 1-minute intervals
 
             if current > threshold || time_until_exhaustion < Duration::from_secs(3600) {
                 let severity = if current > 95.0 {
@@ -352,17 +358,27 @@ impl ResourceExhaustionForecaster {
                 };
 
                 let recommendation = match resource_type {
-                    ResourceType::CPU => "Consider scaling up CPU resources or optimizing queries".to_string(),
-                    ResourceType::Memory => "Increase memory allocation or reduce buffer pool size".to_string(),
-                    ResourceType::DiskIO => "Optimize disk-intensive operations or add more storage devices".to_string(),
-                    ResourceType::Network => "Check for network bottlenecks or reduce replication traffic".to_string(),
-                    ResourceType::Storage => "Expand storage capacity or archive old data".to_string(),
+                    ResourceType::CPU => {
+                        "Consider scaling up CPU resources or optimizing queries".to_string()
+                    }
+                    ResourceType::Memory => {
+                        "Increase memory allocation or reduce buffer pool size".to_string()
+                    }
+                    ResourceType::DiskIO => {
+                        "Optimize disk-intensive operations or add more storage devices".to_string()
+                    }
+                    ResourceType::Network => {
+                        "Check for network bottlenecks or reduce replication traffic".to_string()
+                    }
+                    ResourceType::Storage => {
+                        "Expand storage capacity or archive old data".to_string()
+                    }
                 };
 
                 return Some(ResourceExhaustionAlert {
                     resource_type,
                     current_usage: current,
-                    predicted_usage: current + slope * 10.0,  // 10 steps ahead
+                    predicted_usage: current + slope * 10.0, // 10 steps ahead
                     time_until_exhaustion,
                     severity,
                     recommendation,
@@ -386,7 +402,7 @@ impl ResourceExhaustionForecaster {
 
 // Maintenance window optimizer
 pub struct MaintenanceWindowOptimizer {
-    workload_patterns: Arc<RwLock<HashMap<u8, WorkloadIntensity>>>,  // hour -> intensity
+    workload_patterns: Arc<RwLock<HashMap<u8, WorkloadIntensity>>>, // hour -> intensity
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -413,10 +429,10 @@ impl MaintenanceWindowOptimizer {
                 // Update moving average
                 intensity.avg_queries_per_second =
                     (intensity.avg_queries_per_second * 0.9) + (qps * 0.1);
-                intensity.avg_cpu_usage =
-                    (intensity.avg_cpu_usage * 0.9) + (cpu_usage * 0.1);
-                intensity.avg_connections =
-                    ((intensity.avg_connections as f64 * 0.9) + (connections as f64 * 0.1)) as usize;
+                intensity.avg_cpu_usage = (intensity.avg_cpu_usage * 0.9) + (cpu_usage * 0.1);
+                intensity.avg_connections = ((intensity.avg_connections as f64 * 0.9)
+                    + (connections as f64 * 0.1))
+                    as usize;
             })
             .or_insert(WorkloadIntensity {
                 hour,
@@ -448,7 +464,8 @@ impl MaintenanceWindowOptimizer {
 
                 if let Some(intensity) = patterns.get(&hour) {
                     // Impact is a combination of QPS and CPU usage
-                    total_impact += intensity.avg_queries_per_second * 0.6 + intensity.avg_cpu_usage * 0.4;
+                    total_impact +=
+                        intensity.avg_queries_per_second * 0.6 + intensity.avg_cpu_usage * 0.4;
                     hours_checked += 1;
                 }
             }
@@ -503,7 +520,9 @@ impl CapacityPlanner {
 
     pub fn generate_report(&self, current_capacity_gb: f64) -> Result<CapacityPlanningReport> {
         let storage_forecast = self.storage_predictor.predict_growth(90).ok();
-        let days_until_full = self.storage_predictor.estimate_days_until_full(current_capacity_gb);
+        let days_until_full = self
+            .storage_predictor
+            .estimate_days_until_full(current_capacity_gb);
         let resource_alerts = self.resource_forecaster.read().check_for_alerts();
 
         let mut recommended_actions = Vec::new();
@@ -523,7 +542,10 @@ impl CapacityPlanner {
         }
 
         for alert in &resource_alerts {
-            if matches!(alert.severity, AlertSeverity::Critical | AlertSeverity::High) {
+            if matches!(
+                alert.severity,
+                AlertSeverity::Critical | AlertSeverity::High
+            ) {
                 recommended_actions.push(alert.recommendation.clone());
             }
         }
@@ -539,13 +561,17 @@ impl CapacityPlanner {
         })
     }
 
-    fn estimate_cost_impact(&self, alerts: &[ResourceExhaustionAlert], days_until_full: Option<usize>) -> f64 {
+    fn estimate_cost_impact(
+        &self,
+        alerts: &[ResourceExhaustionAlert],
+        days_until_full: Option<usize>,
+    ) -> f64 {
         let mut cost = 0.0;
 
         // Storage expansion cost
         if let Some(days) = days_until_full {
             if days < 90 {
-                cost += 1000.0;  // Estimated storage expansion cost
+                cost += 1000.0; // Estimated storage expansion cost
             }
         }
 

@@ -276,23 +276,23 @@ pub mod page_cache;
 
 // New advanced buffer pool modules
 pub mod arc;
-pub mod lirs;
-pub mod prefetch;
+mod frame_manager;
 pub mod hugepages;
+pub mod lirs;
 pub mod lockfree_latch;
 mod page_table;
-mod frame_manager;
+pub mod prefetch;
 
 // Re-export main types
 pub use eviction::{
-    create_eviction_policy, ClockEvictionPolicy, EvictionPolicy, EvictionPolicyType,
-    EvictionStats, LruEvictionPolicy, TwoQEvictionPolicy,
+    create_eviction_policy, ClockEvictionPolicy, EvictionPolicy, EvictionPolicyType, EvictionStats,
+    LruEvictionPolicy, TwoQEvictionPolicy,
 };
 
 pub use manager::{BufferPoolBuilder, BufferPoolConfig, BufferPoolManager, BufferPoolStats};
 
 pub use page_cache::{
-    BufferFrame, FrameBatch, FrameGuard, FrameId, PageBuffer, PerCoreFramePool, FrameStats,
+    BufferFrame, FrameBatch, FrameGuard, FrameId, FrameStats, PageBuffer, PerCoreFramePool,
     INVALID_FRAME_ID, INVALID_PAGE_ID, PAGE_SIZE,
 };
 
@@ -307,14 +307,12 @@ pub use prefetch::{
 
 // Re-export huge pages
 pub use hugepages::{
-    HugePageAllocator, HugePageAllocation, HugePageConfig, HugePageSize, HugePageStats,
-    HugePageSystemInfo, query_huge_page_info,
+    query_huge_page_info, HugePageAllocation, HugePageAllocator, HugePageConfig, HugePageSize,
+    HugePageStats, HugePageSystemInfo,
 };
 
 // Re-export lock-free latching
-pub use lockfree_latch::{
-    HybridLatch, LatchStats, OptimisticLatch,
-};
+pub use lockfree_latch::{HybridLatch, LatchStats, OptimisticLatch};
 
 // ============================================================================
 // Convenience Functions
@@ -470,7 +468,11 @@ mod tests {
     fn test_page_buffer_alignment() {
         let buffer = PageBuffer::new();
         let ptr = unsafe { buffer.as_ptr() };
-        assert_eq!(ptr as usize % 4096, 0, "PageBuffer must be 4096-byte aligned");
+        assert_eq!(
+            ptr as usize % 4096,
+            0,
+            "PageBuffer must be 4096-byte aligned"
+        );
     }
 
     #[test]

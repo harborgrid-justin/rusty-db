@@ -2,15 +2,12 @@
 //
 // Data structure definitions for the GraphQL API
 
-use async_graphql::{
-    Context, InputObject, Object,
-    Result as GqlResult, SimpleObject, Union, ID,
-};
+use super::types::*;
+use super::GraphQLEngine;
+use async_graphql::{Context, InputObject, Object, Result as GqlResult, SimpleObject, Union, ID};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use super::types::*;
-use super::GraphQLEngine;
 
 #[derive(SimpleObject, Clone, Debug)]
 pub struct DatabaseSchema {
@@ -107,7 +104,9 @@ impl TableType {
     // Get sample rows from the table
     async fn sample_rows(&self, ctx: &Context<'_>, limit: Option<i32>) -> GqlResult<Vec<RowType>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
-        engine.get_sample_rows(&self.name, limit.unwrap_or(10)).await
+        engine
+            .get_sample_rows(&self.name, limit.unwrap_or(10))
+            .await
     }
 }
 
@@ -176,7 +175,9 @@ impl ColumnType {
     // Get column statistics (distinct values, null count, etc.)
     async fn statistics(&self, ctx: &Context<'_>) -> GqlResult<ColumnStatistics> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
-        engine.get_column_statistics(&self.table_name, &self.name).await
+        engine
+            .get_column_statistics(&self.table_name, &self.name)
+            .await
     }
 }
 

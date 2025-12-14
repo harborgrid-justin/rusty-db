@@ -31,13 +31,13 @@
 // ```
 
 use crate::{DbError, Result};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 use parking_lot::RwLock;
-use sha2::{Sha256, Digest};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 // Audit action types
@@ -273,9 +273,12 @@ impl AuditPolicy {
         }
 
         // Check action
-        if !self.actions.contains(action) && !self.actions.iter().any(|a| {
-            matches!(a, AuditAction::Custom(s) if s == "*")
-        }) {
+        if !self.actions.contains(action)
+            && !self
+                .actions
+                .iter()
+                .any(|a| matches!(a, AuditAction::Custom(s) if s == "*"))
+        {
             return false;
         }
 
@@ -415,7 +418,9 @@ impl AuditVault {
 
     // Drop an audit policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
-        self.policies.write().remove(name)
+        self.policies
+            .write()
+            .remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
@@ -433,9 +438,9 @@ impl AuditVault {
     ) -> Result<()> {
         // Check if any policy applies
         let policies = self.policies.read();
-        let applicable = policies.values().any(|p| {
-            p.should_audit(&action, user_id, object_name.as_deref())
-        });
+        let applicable = policies
+            .values()
+            .any(|p| p.should_audit(&action, user_id, object_name.as_deref()));
 
         if !applicable {
             return Ok(());
@@ -528,8 +533,9 @@ impl AuditVault {
             .map_err(|e| DbError::IoError(format!("Failed to open audit log: {}", e)))?;
 
         for record in buffer.iter() {
-            let json = serde_json::to_string(record)
-                .map_err(|e| DbError::Serialization(format!("Failed to serialize record: {}", e)))?;
+            let json = serde_json::to_string(record).map_err(|e| {
+                DbError::Serialization(format!("Failed to serialize record: {}", e))
+            })?;
             writeln!(file, "{}", json)
                 .map_err(|e| DbError::IoError(format!("Failed to write audit log: {}", e)))?;
         }
@@ -671,17 +677,26 @@ impl AuditVault {
         match regulation_type {
             ComplianceRegulation::SOX => {
                 if privileged_operations > 0 {
-                    findings.push(format!("{} privileged operations detected - review for SOX compliance", privileged_operations));
+                    findings.push(format!(
+                        "{} privileged operations detected - review for SOX compliance",
+                        privileged_operations
+                    ));
                 }
             }
             ComplianceRegulation::HIPAA => {
                 if security_events > 10 {
-                    findings.push(format!("{} security events - may indicate HIPAA breach risk", security_events));
+                    findings.push(format!(
+                        "{} security events - may indicate HIPAA breach risk",
+                        security_events
+                    ));
                 }
             }
             ComplianceRegulation::GDPR => {
                 let deletes = by_action.get("Delete").unwrap_or(&0);
-                findings.push(format!("{} delete operations - verify right to be forgotten compliance", deletes));
+                findings.push(format!(
+                    "{} delete operations - verify right to be forgotten compliance",
+                    deletes
+                ));
             }
             _ => {}
         }
@@ -716,7 +731,11 @@ impl AuditVault {
     // Get audit statistics
     pub fn get_stats(&self) -> (u64, u64, HashMap<String, u64>) {
         let stats = self.stats.read();
-        (stats.total_records, stats.failed_operations, stats.by_action.clone())
+        (
+            stats.total_records,
+            stats.failed_operations,
+            stats.by_action.clone(),
+        )
     }
 
     // Purge old audit records based on retention policy
@@ -794,22 +813,21 @@ mod tests {
         let mut vault = AuditVault::new(temp_dir.path(), 365).unwrap();
 
         // Create policy
-        let policy = AuditPolicy::new(
-            "select_policy".to_string(),
-            vec![AuditAction::Select],
-        );
+        let policy = AuditPolicy::new("select_policy".to_string(), vec![AuditAction::Select]);
         vault.create_policy(policy).unwrap();
 
         // Log record
-        vault.log(
-            "user1",
-            "session1",
-            "127.0.0.1",
-            AuditAction::Select,
-            Some("table1".to_string()),
-            Some("SELECT * FROM table1".to_string()),
-            true,
-        ).unwrap();
+        vault
+            .log(
+                "user1",
+                "session1",
+                "127.0.0.1",
+                AuditAction::Select,
+                Some("table1".to_string()),
+                Some("SELECT * FROM table1".to_string()),
+                true,
+            )
+            .unwrap();
 
         vault.flush().unwrap();
 
@@ -831,15 +849,17 @@ mod tests {
 
         // Log multiple records
         for i in 0..5 {
-            vault.log(
-                "user1",
-                "session1",
-                "127.0.0.1",
-                AuditAction::Select,
-                Some(format!("table{}", i)),
-                None,
-                true,
-            ).unwrap();
+            vault
+                .log(
+                    "user1",
+                    "session1",
+                    "127.0.0.1",
+                    AuditAction::Select,
+                    Some(format!("table{}", i)),
+                    None,
+                    true,
+                )
+                .unwrap();
         }
 
         vault.flush().unwrap();

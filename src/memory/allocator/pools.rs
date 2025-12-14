@@ -33,7 +33,9 @@ impl MemoryPool {
             for _ in 0..capacity {
                 let ptr = System.alloc(layout);
                 if ptr.is_null() {
-                    return Err(DbError::OutOfMemory("Failed to allocate pool object".to_string()));
+                    return Err(DbError::OutOfMemory(
+                        "Failed to allocate pool object".to_string(),
+                    ));
                 }
                 free_list.push(NonNull::new_unchecked(ptr));
             }

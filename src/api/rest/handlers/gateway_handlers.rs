@@ -9,24 +9,24 @@
 
 use axum::{
     extract::{Path, Query, State},
-    response::Json as AxumJson,
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::{Instant, SystemTime};
-use uuid::Uuid;
-use parking_lot::RwLock;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 use super::super::types::*;
 use crate::api::gateway::{
-    ApiGateway, GatewayConfig, Route, BackendService, ServiceEndpoint,
-    RateLimitConfig, RateLimitType, HttpMethod, Protocol, LoadBalancingStrategy,
-    CircuitBreakerConfig, RetryPolicy,
+    ApiGateway, BackendService, CircuitBreakerConfig, GatewayConfig, HttpMethod,
+    LoadBalancingStrategy, Protocol, RateLimitConfig, RateLimitType, RetryPolicy, Route,
+    ServiceEndpoint,
 };
 
 // Lazy-initialized shared API Gateway instance
@@ -249,8 +249,12 @@ pub struct ListQuery {
     pub page_size: usize,
 }
 
-fn default_page() -> usize { 1 }
-fn default_page_size() -> usize { 50 }
+fn default_page() -> usize {
+    1
+}
+fn default_page_size() -> usize {
+    50
+}
 
 // ============================================================================
 // ROUTE MANAGEMENT ENDPOINTS
@@ -274,7 +278,9 @@ pub async fn create_route(
     let route_id = Uuid::new_v4().to_string();
 
     // Parse HTTP methods
-    let methods: Vec<HttpMethod> = request.methods.iter()
+    let methods: Vec<HttpMethod> = request
+        .methods
+        .iter()
         .filter_map(|m| match m.to_uppercase().as_str() {
             "GET" => Some(HttpMethod::Get),
             "POST" => Some(HttpMethod::Post),
@@ -337,7 +343,10 @@ pub async fn create_route(
         required_permissions: request.required_permissions,
         enable_cache: request.enable_cache,
         cache_ttl: request.cache_ttl,
-        created_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+        created_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
     };
 
     Ok((StatusCode::CREATED, AxumJson(response)))
@@ -363,12 +372,17 @@ pub async fn list_routes(
     let gateway = API_GATEWAY.read();
     let routes = gateway.get_routes();
 
-    let route_responses: Vec<RouteResponse> = routes.iter()
+    let route_responses: Vec<RouteResponse> = routes
+        .iter()
         .map(|r| RouteResponse {
             id: r.id.clone(),
             name: r.name.clone(),
             path_pattern: r.path_pattern.clone(),
-            methods: r.methods.iter().map(|m| format!("{:?}", m).to_uppercase()).collect(),
+            methods: r
+                .methods
+                .iter()
+                .map(|m| format!("{:?}", m).to_uppercase())
+                .collect(),
             backend_service: r.backend.name.clone(),
             auth_required: r.auth_required,
             required_permissions: r.required_permissions.clone(),
@@ -381,7 +395,8 @@ pub async fn list_routes(
     // Apply pagination
     let total = route_responses.len();
     let start = (params.page.saturating_sub(1)) * params.page_size;
-    let paginated_routes: Vec<RouteResponse> = route_responses.into_iter()
+    let paginated_routes: Vec<RouteResponse> = route_responses
+        .into_iter()
         .skip(start)
         .take(params.page_size)
         .collect();
@@ -414,7 +429,8 @@ pub async fn get_route(
     let gateway = API_GATEWAY.read();
     let routes = gateway.get_routes();
 
-    let route = routes.iter()
+    let route = routes
+        .iter()
         .find(|r| r.id == id)
         .ok_or_else(|| ApiError::new("NOT_FOUND", "Route not found"))?;
 
@@ -422,7 +438,11 @@ pub async fn get_route(
         id: route.id.clone(),
         name: route.name.clone(),
         path_pattern: route.path_pattern.clone(),
-        methods: route.methods.iter().map(|m| format!("{:?}", m).to_uppercase()).collect(),
+        methods: route
+            .methods
+            .iter()
+            .map(|m| format!("{:?}", m).to_uppercase())
+            .collect(),
         backend_service: route.backend.name.clone(),
         auth_required: route.auth_required,
         required_permissions: route.required_permissions.clone(),
@@ -462,7 +482,9 @@ pub async fn update_route(
     }
 
     // Parse HTTP methods
-    let methods: Vec<HttpMethod> = request.methods.iter()
+    let methods: Vec<HttpMethod> = request
+        .methods
+        .iter()
         .filter_map(|m| match m.to_uppercase().as_str() {
             "GET" => Some(HttpMethod::Get),
             "POST" => Some(HttpMethod::Post),
@@ -575,7 +597,8 @@ pub async fn get_rate_limits(
 ) -> ApiResult<AxumJson<Vec<RateLimitResponse>>> {
     let configs = RATE_LIMIT_CONFIGS.read();
 
-    let responses: Vec<RateLimitResponse> = configs.values()
+    let responses: Vec<RateLimitResponse> = configs
+        .values()
         .map(|c| {
             let limit_type = match c.config.limit_type {
                 RateLimitType::TokenBucket => "token_bucket",
@@ -620,7 +643,12 @@ pub async fn create_rate_limit(
         "token_bucket" => RateLimitType::TokenBucket,
         "sliding_window" => RateLimitType::SlidingWindow,
         "fixed_window" => RateLimitType::FixedWindow,
-        _ => return Err(ApiError::new("INVALID_LIMIT_TYPE", "Invalid rate limit type")),
+        _ => {
+            return Err(ApiError::new(
+                "INVALID_LIMIT_TYPE",
+                "Invalid rate limit type",
+            ))
+        }
     };
 
     let config = RateLimitConfig {
@@ -635,7 +663,10 @@ pub async fn create_rate_limit(
         name: request.name.clone(),
         config: config.clone(),
         description: request.description.clone(),
-        created_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+        created_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
     };
 
     let mut configs = RATE_LIMIT_CONFIGS.write();
@@ -677,14 +708,22 @@ pub async fn update_rate_limit(
     let mut configs = RATE_LIMIT_CONFIGS.write();
 
     if !configs.contains_key(&id) {
-        return Err(ApiError::new("NOT_FOUND", "Rate limit configuration not found"));
+        return Err(ApiError::new(
+            "NOT_FOUND",
+            "Rate limit configuration not found",
+        ));
     }
 
     let limit_type = match request.limit_type.to_lowercase().as_str() {
         "token_bucket" => RateLimitType::TokenBucket,
         "sliding_window" => RateLimitType::SlidingWindow,
         "fixed_window" => RateLimitType::FixedWindow,
-        _ => return Err(ApiError::new("INVALID_LIMIT_TYPE", "Invalid rate limit type")),
+        _ => {
+            return Err(ApiError::new(
+                "INVALID_LIMIT_TYPE",
+                "Invalid rate limit type",
+            ))
+        }
     };
 
     let config = RateLimitConfig {
@@ -699,7 +738,10 @@ pub async fn update_rate_limit(
         name: request.name.clone(),
         config,
         description: request.description.clone(),
-        created_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+        created_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
     };
 
     configs.insert(id.clone(), config_data.clone());
@@ -740,7 +782,10 @@ pub async fn delete_rate_limit(
     if configs.remove(&id).is_some() {
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err(ApiError::new("NOT_FOUND", "Rate limit configuration not found"))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            "Rate limit configuration not found",
+        ))
     }
 }
 
@@ -763,9 +808,13 @@ pub async fn list_services(
     let gateway = API_GATEWAY.read();
     let registry = gateway.service_registry.read();
 
-    let services: Vec<ServiceResponse> = registry.services.values()
+    let services: Vec<ServiceResponse> = registry
+        .services
+        .values()
         .map(|s| {
-            let endpoints: Vec<EndpointResponse> = s.endpoints.iter()
+            let endpoints: Vec<EndpointResponse> = s
+                .endpoints
+                .iter()
                 .map(|e| EndpointResponse {
                     id: e.id.clone(),
                     host: e.host.clone(),
@@ -812,10 +861,17 @@ pub async fn register_service(
         "random" => LoadBalancingStrategy::Random,
         "ip_hash" => LoadBalancingStrategy::IpHash,
         "least_response_time" => LoadBalancingStrategy::LeastResponseTime,
-        _ => return Err(ApiError::new("INVALID_STRATEGY", "Invalid load balancing strategy")),
+        _ => {
+            return Err(ApiError::new(
+                "INVALID_STRATEGY",
+                "Invalid load balancing strategy",
+            ))
+        }
     };
 
-    let endpoints: Vec<ServiceEndpoint> = request.endpoints.iter()
+    let endpoints: Vec<ServiceEndpoint> = request
+        .endpoints
+        .iter()
         .map(|e| {
             let protocol = match e.protocol.to_lowercase().as_str() {
                 "http" => Protocol::Http,
@@ -858,7 +914,8 @@ pub async fn register_service(
     let gateway = API_GATEWAY.read();
     gateway.register_service(service);
 
-    let endpoint_responses: Vec<EndpointResponse> = endpoints.iter()
+    let endpoint_responses: Vec<EndpointResponse> = endpoints
+        .iter()
         .map(|e| EndpointResponse {
             id: e.id.clone(),
             host: e.host.clone(),
@@ -875,7 +932,10 @@ pub async fn register_service(
         endpoints: endpoint_responses,
         load_balancing: request.load_balancing,
         health_check_enabled: request.health_check_enabled,
-        created_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+        created_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
     };
 
     Ok((StatusCode::CREATED, AxumJson(response)))
@@ -952,10 +1012,14 @@ pub async fn get_service_health(
     let gateway = API_GATEWAY.read();
     let registry = gateway.service_registry.read();
 
-    let service = registry.services.get(&id)
+    let service = registry
+        .services
+        .get(&id)
         .ok_or_else(|| ApiError::new("NOT_FOUND", "Service not found"))?;
 
-    let endpoint_health: Vec<EndpointHealthStatus> = service.endpoints.iter()
+    let endpoint_health: Vec<EndpointHealthStatus> = service
+        .endpoints
+        .iter()
         .map(|e| {
             let healthy = *e.healthy.read();
             let last_check = *e.last_health_check.read();
@@ -986,7 +1050,10 @@ pub async fn get_service_health(
         service_name: service.name.clone(),
         overall_health: overall_health.to_string(),
         endpoints: endpoint_health,
-        last_check: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+        last_check: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
     };
 
     Ok(AxumJson(response))
@@ -1017,7 +1084,8 @@ pub async fn get_gateway_metrics(
         0.0
     };
 
-    let requests_by_protocol: HashMap<String, u64> = metrics.requests_by_protocol
+    let requests_by_protocol: HashMap<String, u64> = metrics
+        .requests_by_protocol
         .iter()
         .map(|(k, v)| (format!("{:?}", k), *v))
         .collect();
@@ -1033,7 +1101,10 @@ pub async fn get_gateway_metrics(
         authz_failures: metrics.authz_failures,
         rate_limit_hits: metrics.rate_limit_hits,
         security_blocks: metrics.security_blocks,
-        uptime_seconds: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+        uptime_seconds: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
     };
 
     Ok(AxumJson(response))
@@ -1086,7 +1157,8 @@ pub async fn get_ip_filters(
 ) -> ApiResult<AxumJson<Vec<IpFilterResponse>>> {
     let filters = IP_FILTERS.read();
 
-    let responses: Vec<IpFilterResponse> = filters.values()
+    let responses: Vec<IpFilterResponse> = filters
+        .values()
         .map(|f| IpFilterResponse {
             id: f.id.clone(),
             ip_address: f.ip_address.to_string(),
@@ -1117,12 +1189,17 @@ pub async fn add_ip_filter(
     let id = Uuid::new_v4().to_string();
 
     // Parse IP address
-    let ip_addr: IpAddr = request.ip_address.parse()
+    let ip_addr: IpAddr = request
+        .ip_address
+        .parse()
         .map_err(|_| ApiError::new("INVALID_IP", "Invalid IP address"))?;
 
     // Validate filter type
     if request.filter_type != "whitelist" && request.filter_type != "blacklist" {
-        return Err(ApiError::new("INVALID_FILTER_TYPE", "Filter type must be 'whitelist' or 'blacklist'"));
+        return Err(ApiError::new(
+            "INVALID_FILTER_TYPE",
+            "Filter type must be 'whitelist' or 'blacklist'",
+        ));
     }
 
     let filter = IpFilterRule {
@@ -1130,7 +1207,10 @@ pub async fn add_ip_filter(
         ip_address: ip_addr,
         filter_type: request.filter_type.clone(),
         description: request.description.clone(),
-        created_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs(),
+        created_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
     };
 
     let mut filters = IP_FILTERS.write();

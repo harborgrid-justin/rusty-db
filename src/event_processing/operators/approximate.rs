@@ -4,7 +4,6 @@
 /// - HyperLogLog: Approximate distinct counting (50x faster, ~1% error)
 /// - CountMinSketch: Frequency estimation (30x faster)
 /// - HeavyHitters: Top-K tracking
-
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::{Hash, Hasher};
 
@@ -98,7 +97,11 @@ impl HyperLogLog {
     pub fn count(&self) -> u64 {
         // Compute harmonic mean of 2^register values
         let raw_estimate = self.alpha_m * (self.m * self.m) as f64
-            / self.registers.iter().map(|&r| 2.0f64.powi(-(r as i32))).sum::<f64>();
+            / self
+                .registers
+                .iter()
+                .map(|&r| 2.0f64.powi(-(r as i32)))
+                .sum::<f64>();
 
         // Apply bias correction for small/large estimates
         if raw_estimate <= 2.5 * self.m as f64 {

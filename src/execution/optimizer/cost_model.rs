@@ -255,11 +255,7 @@ impl Histogram {
     // Estimate join selectivity for multi-dimensional histogram
     //
     // For correlated columns, uses joint distribution
-    pub fn estimate_join_selectivity_multi_dim(
-        &self,
-        _left_col: &str,
-        _right_col: &str,
-    ) -> f64 {
+    pub fn estimate_join_selectivity_multi_dim(&self, _left_col: &str, _right_col: &str) -> f64 {
         if self.histogram_type != HistogramType::MultiDimensional {
             // Fallback to independence assumption
             return 0.01;

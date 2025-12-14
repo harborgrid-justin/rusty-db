@@ -3,13 +3,13 @@
 // This module provides support for creating and managing user-defined functions,
 // including scalar functions, table-valued functions, and custom aggregate functions.
 
-use crate::{Result, DbError};
-use crate::procedures::parser::{PlSqlBlock, PlSqlType, Expression};
+use crate::procedures::parser::{Expression, PlSqlBlock, PlSqlType};
 use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue};
+use crate::{DbError, Result};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 
 // Function parameter
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,9 +25,7 @@ pub enum FunctionReturnType {
     // Scalar return type (single value)
     Scalar(PlSqlType),
     // Table return type (set of rows)
-    Table {
-        columns: Vec<(String, PlSqlType)>,
-    },
+    Table { columns: Vec<(String, PlSqlType)> },
 }
 
 // Determinism level of a function
@@ -155,9 +153,10 @@ impl FunctionManager {
         let mut functions = self.functions.write();
 
         if functions.contains_key(&function.name) {
-            return Err(DbError::AlreadyExists(
-                format!("Function '{}' already exists", function.name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Function '{}' already exists",
+                function.name
+            )));
         }
 
         functions.insert(function.name.clone(), UserFunction::Scalar(function));
@@ -169,9 +168,10 @@ impl FunctionManager {
         let mut functions = self.functions.write();
 
         if functions.contains_key(&function.name) {
-            return Err(DbError::AlreadyExists(
-                format!("Function '{}' already exists", function.name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Function '{}' already exists",
+                function.name
+            )));
         }
 
         functions.insert(function.name.clone(), UserFunction::Table(function));
@@ -183,9 +183,10 @@ impl FunctionManager {
         let mut functions = self.functions.write();
 
         if functions.contains_key(&function.name) {
-            return Err(DbError::AlreadyExists(
-                format!("Function '{}' already exists", function.name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Function '{}' already exists",
+                function.name
+            )));
         }
 
         functions.insert(function.name.clone(), UserFunction::Aggregate(function));
@@ -197,9 +198,7 @@ impl FunctionManager {
         let mut functions = self.functions.write();
 
         if functions.remove(name).is_none() {
-            return Err(DbError::NotFound(
-                format!("Function '{}' not found", name)
-            ));
+            return Err(DbError::NotFound(format!("Function '{}' not found", name)));
         }
 
         Ok(())
@@ -209,11 +208,10 @@ impl FunctionManager {
     pub fn get_function(&self, name: &str) -> Result<UserFunction> {
         let functions = self.functions.read();
 
-        functions.get(name)
+        functions
+            .get(name)
             .cloned()
-            .ok_or_else(|| DbError::NotFound(
-                format!("Function '{}' not found", name)
-            ))
+            .ok_or_else(|| DbError::NotFound(format!("Function '{}' not found", name)))
     }
 
     // List all functions
@@ -223,34 +221,33 @@ impl FunctionManager {
     }
 
     // Execute a scalar function
-    pub fn execute_scalar(
-        &self,
-        name: &str,
-        arguments: Vec<RuntimeValue>,
-    ) -> Result<RuntimeValue> {
+    pub fn execute_scalar(&self, name: &str, arguments: Vec<RuntimeValue>) -> Result<RuntimeValue> {
         let function = self.get_function(name)?;
 
         match function {
             UserFunction::Scalar(func) => {
                 // Validate parameter count
                 if arguments.len() != func.parameters.len() {
-                    return Err(DbError::InvalidInput(
-                        format!("Function '{}' expects {} arguments, got {}",
-                            name, func.parameters.len(), arguments.len())
-                    ));
+                    return Err(DbError::InvalidInput(format!(
+                        "Function '{}' expects {} arguments, got {}",
+                        name,
+                        func.parameters.len(),
+                        arguments.len()
+                    )));
                 }
 
                 // Execute the function body
                 let result = self.runtime.execute(&func.body)?;
 
                 // Return the result
-                result.return_value.ok_or_else(||
+                result.return_value.ok_or_else(|| {
                     DbError::Runtime(format!("Function '{}' did not return a value", name))
-                )
+                })
             }
-            _ => Err(DbError::InvalidInput(
-                format!("'{}' is not a scalar function", name)
-            )),
+            _ => Err(DbError::InvalidInput(format!(
+                "'{}' is not a scalar function",
+                name
+            ))),
         }
     }
 
@@ -266,10 +263,12 @@ impl FunctionManager {
             UserFunction::Table(func) => {
                 // Validate parameter count
                 if arguments.len() != func.parameters.len() {
-                    return Err(DbError::InvalidInput(
-                        format!("Function '{}' expects {} arguments, got {}",
-                            name, func.parameters.len(), arguments.len())
-                    ));
+                    return Err(DbError::InvalidInput(format!(
+                        "Function '{}' expects {} arguments, got {}",
+                        name,
+                        func.parameters.len(),
+                        arguments.len()
+                    )));
                 }
 
                 // Execute the function body and collect rows
@@ -280,24 +279,22 @@ impl FunctionManager {
                 // The function body should populate a collection that we return
                 // Check the return value for an array of records
                 let rows = match result.return_value {
-                    Some(RuntimeValue::Array(arr)) => {
-                        arr.into_iter()
-                            .filter_map(|item| {
-                                match item {
-                                    RuntimeValue::Record(record) => Some(record),
-                                    _ => None,
-                                }
-                            })
-                            .collect()
-                    }
+                    Some(RuntimeValue::Array(arr)) => arr
+                        .into_iter()
+                        .filter_map(|item| match item {
+                            RuntimeValue::Record(record) => Some(record),
+                            _ => None,
+                        })
+                        .collect(),
                     _ => Vec::new(),
                 };
 
                 Ok(rows)
             }
-            _ => Err(DbError::InvalidInput(
-                format!("'{}' is not a table function", name)
-            )),
+            _ => Err(DbError::InvalidInput(format!(
+                "'{}' is not a table function",
+                name
+            ))),
         }
     }
 
@@ -310,9 +307,10 @@ impl FunctionManager {
                 let _result = self.runtime.execute(&func.initialize_body)?;
                 Ok(AggregateState::new())
             }
-            _ => Err(DbError::InvalidInput(
-                format!("'{}' is not an aggregate function", name)
-            )),
+            _ => Err(DbError::InvalidInput(format!(
+                "'{}' is not an aggregate function",
+                name
+            ))),
         }
     }
 
@@ -352,68 +350,77 @@ impl FunctionManager {
                 match value {
                     RuntimeValue::Integer(i) => {
                         // Update sum
-                        let current_sum = state.get("_sum")
+                        let current_sum = state
+                            .get("_sum")
                             .and_then(|v| v.as_integer().ok())
                             .unwrap_or(0);
                         state.set("_sum".to_string(), RuntimeValue::Integer(current_sum + i));
 
                         // Update count
-                        let current_count = state.get("_count")
+                        let current_count = state
+                            .get("_count")
                             .and_then(|v| v.as_integer().ok())
                             .unwrap_or(0);
-                        state.set("_count".to_string(), RuntimeValue::Integer(current_count + 1));
+                        state.set(
+                            "_count".to_string(),
+                            RuntimeValue::Integer(current_count + 1),
+                        );
 
                         // Update min
-                        let current_min = state.get("_min")
-                            .and_then(|v| v.as_integer().ok());
+                        let current_min = state.get("_min").and_then(|v| v.as_integer().ok());
                         if current_min.is_none() || i < current_min.unwrap() {
                             state.set("_min".to_string(), RuntimeValue::Integer(i));
                         }
 
                         // Update max
-                        let current_max = state.get("_max")
-                            .and_then(|v| v.as_integer().ok());
+                        let current_max = state.get("_max").and_then(|v| v.as_integer().ok());
                         if current_max.is_none() || i > current_max.unwrap() {
                             state.set("_max".to_string(), RuntimeValue::Integer(i));
                         }
                     }
                     RuntimeValue::Float(f) => {
-                        let current_sum = state.get("_sum")
+                        let current_sum = state
+                            .get("_sum")
                             .and_then(|v| v.as_float().ok())
                             .unwrap_or(0.0);
                         state.set("_sum".to_string(), RuntimeValue::Float(current_sum + f));
 
-                        let current_count = state.get("_count")
+                        let current_count = state
+                            .get("_count")
                             .and_then(|v| v.as_integer().ok())
                             .unwrap_or(0);
-                        state.set("_count".to_string(), RuntimeValue::Integer(current_count + 1));
+                        state.set(
+                            "_count".to_string(),
+                            RuntimeValue::Integer(current_count + 1),
+                        );
                     }
                     RuntimeValue::Null => {
                         // NULL values are typically ignored in aggregates
                     }
                     _ => {
                         // For other types, just increment count
-                        let current_count = state.get("_count")
+                        let current_count = state
+                            .get("_count")
                             .and_then(|v| v.as_integer().ok())
                             .unwrap_or(0);
-                        state.set("_count".to_string(), RuntimeValue::Integer(current_count + 1));
+                        state.set(
+                            "_count".to_string(),
+                            RuntimeValue::Integer(current_count + 1),
+                        );
                     }
                 }
 
                 Ok(())
             }
-            _ => Err(DbError::InvalidInput(
-                format!("'{}' is not an aggregate function", name)
-            )),
+            _ => Err(DbError::InvalidInput(format!(
+                "'{}' is not an aggregate function",
+                name
+            ))),
         }
     }
 
     // Finalize aggregate and return result
-    pub fn finalize_aggregate(
-        &self,
-        name: &str,
-        state: &AggregateState,
-    ) -> Result<RuntimeValue> {
+    pub fn finalize_aggregate(&self, name: &str, state: &AggregateState) -> Result<RuntimeValue> {
         let function = self.get_function(name)?;
 
         match function {
@@ -461,11 +468,15 @@ impl FunctionManager {
                     }
                 }
 
-                Err(DbError::Runtime(format!("Aggregate function '{}' did not return a value", name)))
+                Err(DbError::Runtime(format!(
+                    "Aggregate function '{}' did not return a value",
+                    name
+                )))
             }
-            _ => Err(DbError::InvalidInput(
-                format!("'{}' is not an aggregate function", name)
-            )),
+            _ => Err(DbError::InvalidInput(format!(
+                "'{}' is not an aggregate function",
+                name
+            ))),
         }
     }
 
@@ -475,22 +486,41 @@ impl FunctionManager {
 
         let signature = match &function {
             UserFunction::Scalar(func) => {
-                let params: Vec<String> = func.parameters.iter()
+                let params: Vec<String> = func
+                    .parameters
+                    .iter()
                     .map(|p| format!("{} {:?}", p.name, p.data_type))
                     .collect();
-                format!("{}({}) RETURN {:?}", func.name, params.join(", "), func.return_type)
+                format!(
+                    "{}({}) RETURN {:?}",
+                    func.name,
+                    params.join(", "),
+                    func.return_type
+                )
             }
             UserFunction::Table(func) => {
-                let params: Vec<String> = func.parameters.iter()
+                let params: Vec<String> = func
+                    .parameters
+                    .iter()
                     .map(|p| format!("{} {:?}", p.name, p.data_type))
                     .collect();
-                let returns: Vec<String> = func.return_columns.iter()
+                let returns: Vec<String> = func
+                    .return_columns
+                    .iter()
                     .map(|(n, t)| format!("{} {:?}", n, t))
                     .collect();
-                format!("{}({}) RETURN TABLE({})", func.name, params.join(", "), returns.join(", "))
+                format!(
+                    "{}({}) RETURN TABLE({})",
+                    func.name,
+                    params.join(", "),
+                    returns.join(", ")
+                )
             }
             UserFunction::Aggregate(func) => {
-                format!("{}({:?}) RETURN {:?}", func.name, func.input_type, func.return_type)
+                format!(
+                    "{}({:?}) RETURN {:?}",
+                    func.name, func.input_type, func.return_type
+                )
             }
         };
 
@@ -583,7 +613,9 @@ impl BuiltInFunctions {
 
     pub fn sqrt(n: f64) -> Result<f64> {
         if n < 0.0 {
-            Err(DbError::Runtime("Cannot take square root of negative number".to_string()))
+            Err(DbError::Runtime(
+                "Cannot take square root of negative number".to_string(),
+            ))
         } else {
             Ok(n.sqrt())
         }
@@ -646,7 +678,11 @@ impl BuiltInFunctions {
         }
     }
 
-    pub fn nvl2(value: &RuntimeValue, if_not_null: &RuntimeValue, if_null: &RuntimeValue) -> RuntimeValue {
+    pub fn nvl2(
+        value: &RuntimeValue,
+        if_not_null: &RuntimeValue,
+        if_null: &RuntimeValue,
+    ) -> RuntimeValue {
         if value.is_null() {
             if_null.clone()
         } else {
@@ -760,10 +796,7 @@ mod tests {
         let null2 = RuntimeValue::Null;
         let val = RuntimeValue::Integer(42);
 
-        assert_eq!(
-            BuiltInFunctions::coalesce(vec![&null1, &null2, &val]),
-            val
-        );
+        assert_eq!(BuiltInFunctions::coalesce(vec![&null1, &null2, &val]), val);
     }
 
     #[test]
@@ -773,13 +806,11 @@ mod tests {
         // Create a simple scalar function (body would be parsed in real usage)
         let func = ScalarFunction {
             name: "add_ten".to_string(),
-            parameters: vec![
-                FunctionParameter {
-                    name: "x".to_string(),
-                    data_type: PlSqlType::Integer,
-                    default_value: None,
-                }
-            ],
+            parameters: vec![FunctionParameter {
+                name: "x".to_string(),
+                data_type: PlSqlType::Integer,
+                default_value: None,
+            }],
             return_type: PlSqlType::Integer,
             body: PlSqlBlock {
                 declarations: Vec::new(),

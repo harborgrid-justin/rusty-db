@@ -1,13 +1,13 @@
 // Tenant consolidation and workload management
 // Implements intelligent tenant placement, rebalancing, and consolidation planning
 
-use std::fmt;
-use std::collections::HashSet;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fmt;
+use std::sync::Arc;
 use std::time::SystemTime;
+use tokio::sync::RwLock;
 
 // Consolidation error types
 #[derive(Debug, Clone)]
@@ -22,11 +22,17 @@ pub enum ConsolidationError {
 impl fmt::Display for ConsolidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConsolidationError::InsufficientCapacity(msg) => write!(f, "Insufficient capacity: {}", msg),
-            ConsolidationError::ConflictingAffinityRules(msg) => write!(f, "Conflicting affinity rules: {}", msg),
+            ConsolidationError::InsufficientCapacity(msg) => {
+                write!(f, "Insufficient capacity: {}", msg)
+            }
+            ConsolidationError::ConflictingAffinityRules(msg) => {
+                write!(f, "Conflicting affinity rules: {}", msg)
+            }
             ConsolidationError::InvalidPlacement(msg) => write!(f, "Invalid placement: {}", msg),
             ConsolidationError::RebalancingFailed(msg) => write!(f, "Rebalancing failed: {}", msg),
-            ConsolidationError::MetricsUnavailable(msg) => write!(f, "Metrics unavailable: {}", msg),
+            ConsolidationError::MetricsUnavailable(msg) => {
+                write!(f, "Metrics unavailable: {}", msg)
+            }
         }
     }
 }
@@ -55,27 +61,27 @@ pub struct WorkloadProfile {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum QueryComplexity {
-    Simple,      // Simple queries, low resource usage
-    Moderate,    // Moderate complexity
-    Complex,     // Complex queries, high resource usage
-    Analytical,  // Long-running analytical queries
+    Simple,     // Simple queries, low resource usage
+    Moderate,   // Moderate complexity
+    Complex,    // Complex queries, high resource usage
+    Analytical, // Long-running analytical queries
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum WorkloadType {
-    Oltp,        // Online transaction processing
-    Olap,        // Online analytical processing
-    Mixed,       // Mixed workload
-    Batch,       // Batch processing
-    Reporting,   // Reporting workload
+    Oltp,      // Online transaction processing
+    Olap,      // Online analytical processing
+    Mixed,     // Mixed workload
+    Batch,     // Batch processing
+    Reporting, // Reporting workload
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TimePattern {
-    Continuous,   // 24/7 workload
+    Continuous,    // 24/7 workload
     BusinessHours, // Peak during business hours
-    Periodic,     // Periodic spikes
-    Sporadic,     // Unpredictable pattern
+    Periodic,      // Periodic spikes
+    Sporadic,      // Unpredictable pattern
 }
 
 // Host/node where tenants can be placed
@@ -98,7 +104,13 @@ pub struct ConsolidationHost {
 }
 
 impl ConsolidationHost {
-    pub fn new(host_id: String, cpu_cores: u32, memory_mb: u64, storage_gb: u64, iops: u32) -> Self {
+    pub fn new(
+        host_id: String,
+        cpu_cores: u32,
+        memory_mb: u64,
+        storage_gb: u64,
+        iops: u32,
+    ) -> Self {
         Self {
             host_id,
             host_name: format!("host-{}", uuid::Uuid::new_v4()),
@@ -122,11 +134,13 @@ impl ConsolidationHost {
     }
 
     pub fn available_memory(&self) -> u64 {
-        self.total_memory_mb.saturating_sub(self.allocated_memory_mb)
+        self.total_memory_mb
+            .saturating_sub(self.allocated_memory_mb)
     }
 
     pub fn available_storage(&self) -> u64 {
-        self.total_storage_gb.saturating_sub(self.allocated_storage_gb)
+        self.total_storage_gb
+            .saturating_sub(self.allocated_storage_gb)
     }
 
     pub fn available_iops(&self) -> u32 {
@@ -200,9 +214,9 @@ pub struct PlacementAction {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionType {
-    Place,      // Initial placement
-    Move,       // Move to different host
-    Stay,       // Stay on current host
+    Place,       // Initial placement
+    Move,        // Move to different host
+    Stay,        // Stay on current host
     Consolidate, // Consolidate with others
 }
 
@@ -269,9 +283,10 @@ impl ConsolidationPlanner {
         let rules = self.affinity_rules.read().await;
         for existing in rules.iter() {
             if self.rules_conflict(&rule, existing) {
-                return Err(ConsolidationError::ConflictingAffinityRules(
-                    format!("Rule conflicts with {}", existing.rule_id)
-                ));
+                return Err(ConsolidationError::ConflictingAffinityRules(format!(
+                    "Rule conflicts with {}",
+                    existing.rule_id
+                )));
             }
         }
         drop(rules);
@@ -297,15 +312,16 @@ impl ConsolidationPlanner {
     }
 
     // Find optimal placement for a tenant
-    pub async fn find_placement(
-        &self,
-        tenant_id: String,
-    ) -> ConsolidationResult<String> {
+    pub async fn find_placement(&self, tenant_id: String) -> ConsolidationResult<String> {
         let profiles = self.workload_profiles.read().await;
-        let profile = profiles.get(&tenant_id)
-            .ok_or_else(|| ConsolidationError::MetricsUnavailable(
-                format!("No workload profile for tenant {}", tenant_id)
-            ))?
+        let profile = profiles
+            .get(&tenant_id)
+            .ok_or_else(|| {
+                ConsolidationError::MetricsUnavailable(format!(
+                    "No workload profile for tenant {}",
+                    tenant_id
+                ))
+            })?
             .clone();
         drop(profiles);
 
@@ -321,20 +337,12 @@ impl ConsolidationPlanner {
                 continue;
             }
 
-            let mut score = self.calculate_placement_score(
-                host,
-                &profile,
-                &affinity_rules,
-                &placements,
-            );
+            let mut score =
+                self.calculate_placement_score(host, &profile, &affinity_rules, &placements);
 
             // Apply affinity rules
-            score += self.calculate_affinity_score(
-                host_id,
-                &tenant_id,
-                &affinity_rules,
-                &placements,
-            );
+            score +=
+                self.calculate_affinity_score(host_id, &tenant_id, &affinity_rules, &placements);
 
             host_scores.push((host_id.clone(), score));
         }
@@ -346,11 +354,12 @@ impl ConsolidationPlanner {
         // Select host with highest score
         host_scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
 
-        host_scores.first()
+        host_scores
+            .first()
             .map(|(host_id, _)| host_id.clone())
-            .ok_or_else(|| ConsolidationError::InsufficientCapacity(
-                "No suitable host found".to_string()
-            ))
+            .ok_or_else(|| {
+                ConsolidationError::InsufficientCapacity("No suitable host found".to_string())
+            })
     }
 
     fn calculate_placement_score(
@@ -397,10 +406,13 @@ impl ConsolidationPlanner {
             }
 
             // Find how many related tenants are on this host
-            let related_on_host = rule.tenant_ids.iter()
+            let related_on_host = rule
+                .tenant_ids
+                .iter()
                 .filter(|tid| *tid != tenant_id)
                 .filter(|tid| {
-                    placements.get(*tid)
+                    placements
+                        .get(*tid)
                         .map(|p| p.host_id == host_id)
                         .unwrap_or(false)
                 })
@@ -433,24 +445,28 @@ impl ConsolidationPlanner {
         };
 
         let profiles = self.workload_profiles.read().await;
-        let profile = profiles.get(&tenant_id)
-            .ok_or_else(|| ConsolidationError::MetricsUnavailable(
-                format!("No workload profile for tenant {}", tenant_id)
-            ))?
+        let profile = profiles
+            .get(&tenant_id)
+            .ok_or_else(|| {
+                ConsolidationError::MetricsUnavailable(format!(
+                    "No workload profile for tenant {}",
+                    tenant_id
+                ))
+            })?
             .clone();
         drop(profiles);
 
         // Update host allocation
         let mut hosts = self.hosts.write().await;
-        let host = hosts.get_mut(&target_host)
-            .ok_or_else(|| ConsolidationError::InvalidPlacement(
-                format!("Host {} not found", target_host)
-            ))?;
+        let host = hosts.get_mut(&target_host).ok_or_else(|| {
+            ConsolidationError::InvalidPlacement(format!("Host {} not found", target_host))
+        })?;
 
         if !host.can_accommodate(&profile) {
-            return Err(ConsolidationError::InsufficientCapacity(
-                format!("Host {} cannot accommodate tenant", target_host)
-            ));
+            return Err(ConsolidationError::InsufficientCapacity(format!(
+                "Host {} cannot accommodate tenant",
+                target_host
+            )));
         }
 
         host.allocated_cpu_cores += profile.peak_cpu_percent / 100.0;
@@ -494,7 +510,8 @@ impl ConsolidationPlanner {
         // Create consolidation actions
         for host_id in &underutilized_hosts {
             // Find tenants on this host
-            let tenants_on_host: Vec<_> = placements.iter()
+            let tenants_on_host: Vec<_> = placements
+                .iter()
                 .filter(|(_, p)| p.host_id == *host_id)
                 .map(|(tid, _)| tid.clone())
                 .collect();
@@ -543,14 +560,13 @@ impl ConsolidationPlanner {
                 ActionType::Move => {
                     // Remove from source host
                     if let Some(source) = &action.source_host {
-                        self.remove_tenant_from_host(&action.tenant_id, source).await?;
+                        self.remove_tenant_from_host(&action.tenant_id, source)
+                            .await?;
                     }
 
                     // Place on target host
-                    self.place_tenant(
-                        action.tenant_id.clone(),
-                        Some(action.target_host.clone()),
-                    ).await?;
+                    self.place_tenant(action.tenant_id.clone(), Some(action.target_host.clone()))
+                        .await?;
 
                     moved_tenants.push(action.tenant_id.clone());
                 }
@@ -573,10 +589,9 @@ impl ConsolidationPlanner {
         host_id: &str,
     ) -> ConsolidationResult<()> {
         let placements = self.placements.read().await;
-        let placement = placements.get(tenant_id)
-            .ok_or_else(|| ConsolidationError::InvalidPlacement(
-                format!("Tenant {} not placed", tenant_id)
-            ))?;
+        let placement = placements.get(tenant_id).ok_or_else(|| {
+            ConsolidationError::InvalidPlacement(format!("Tenant {} not placed", tenant_id))
+        })?;
 
         let profile = placement.workload_profile.clone();
         drop(placements);
@@ -584,7 +599,9 @@ impl ConsolidationPlanner {
         let mut hosts = self.hosts.write().await;
         if let Some(host) = hosts.get_mut(host_id) {
             host.allocated_cpu_cores -= profile.peak_cpu_percent / 100.0;
-            host.allocated_memory_mb = host.allocated_memory_mb.saturating_sub(profile.peak_memory_mb);
+            host.allocated_memory_mb = host
+                .allocated_memory_mb
+                .saturating_sub(profile.peak_memory_mb);
             host.allocated_iops = host.allocated_iops.saturating_sub(profile.peak_iops);
             host.tenant_count = host.tenant_count.saturating_sub(1);
         }
@@ -680,13 +697,7 @@ mod tests {
     #[tokio::test]
     async fn test_host_registration() {
         let planner = ConsolidationPlanner::new();
-        let host = ConsolidationHost::new(
-            "host1".to_string(),
-            16,
-            65536,
-            1000,
-            10000,
-        );
+        let host = ConsolidationHost::new("host1".to_string(), 16, 65536, 1000, 10000);
 
         planner.register_host(host).await;
 
@@ -698,13 +709,7 @@ mod tests {
     async fn test_tenant_placement() {
         let planner = ConsolidationPlanner::new();
 
-        let host = ConsolidationHost::new(
-            "host1".to_string(),
-            16,
-            65536,
-            1000,
-            10000,
-        );
+        let host = ConsolidationHost::new("host1".to_string(), 16, 65536, 1000, 10000);
         planner.register_host(host).await;
 
         let profile = WorkloadProfile {
@@ -752,13 +757,7 @@ mod tests {
 
         // Add hosts
         for i in 0..3 {
-            let host = ConsolidationHost::new(
-                format!("host{}", i),
-                16,
-                65536,
-                1000,
-                10000,
-            );
+            let host = ConsolidationHost::new(format!("host{}", i), 16, 65536, 1000, 10000);
             planner.register_host(host).await;
         }
 

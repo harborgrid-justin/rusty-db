@@ -4,11 +4,11 @@
 // system, supporting both incremental and full backups with compression,
 // encryption, and efficient storage management.
 
-mod errors;
 mod config;
-mod types;
+mod errors;
 mod manager;
 mod manager_impl;
+mod types;
 
 // Re-export public types
 // pub use config::CompressionType;
@@ -74,9 +74,15 @@ mod tests {
         let replica_id = ReplicaId::new("test-replica").unwrap();
 
         let parent_id = manager.create_full_snapshot(&replica_id).await.unwrap();
-        let incremental_id = manager.create_incremental_snapshot(&replica_id, &parent_id).await.unwrap();
+        let incremental_id = manager
+            .create_incremental_snapshot(&replica_id, &parent_id)
+            .await
+            .unwrap();
 
-        let metadata = manager.get_snapshot_metadata(&incremental_id).await.unwrap();
+        let metadata = manager
+            .get_snapshot_metadata(&incremental_id)
+            .await
+            .unwrap();
         assert_eq!(metadata.snapshot_type, SnapshotType::Incremental);
         assert_eq!(metadata.parent_snapshot, Some(parent_id));
     }

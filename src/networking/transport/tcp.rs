@@ -132,11 +132,7 @@ impl TcpTransport {
         let mut backoff = self.config.reconnect_initial_backoff;
 
         loop {
-            match tokio::time::timeout(
-                self.config.connect_timeout,
-                TcpStream::connect(addr),
-            )
-            .await
+            match tokio::time::timeout(self.config.connect_timeout, TcpStream::connect(addr)).await
             {
                 Ok(Ok(stream)) => {
                     self.configure_socket(&stream)?;
@@ -255,13 +251,10 @@ impl TcpConnection {
     pub async fn recv(&self, buf: &mut BytesMut) -> Result<usize> {
         let mut stream = self.stream.write().await;
 
-        let n = tokio::time::timeout(
-            self.config.read_timeout,
-            stream.read_buf(buf),
-        )
-        .await
-        .map_err(|_| DbError::Timeout("Read timeout".to_string()))?
-        .map_err(|e| DbError::Network(format!("Failed to receive data: {}", e)))?;
+        let n = tokio::time::timeout(self.config.read_timeout, stream.read_buf(buf))
+            .await
+            .map_err(|_| DbError::Timeout("Read timeout".to_string()))?
+            .map_err(|e| DbError::Network(format!("Failed to receive data: {}", e)))?;
 
         Ok(n)
     }
@@ -270,13 +263,10 @@ impl TcpConnection {
     pub async fn recv_exact(&self, buf: &mut [u8]) -> Result<()> {
         let mut stream = self.stream.write().await;
 
-        tokio::time::timeout(
-            self.config.read_timeout,
-            stream.read_exact(buf),
-        )
-        .await
-        .map_err(|_| DbError::Timeout("Read timeout".to_string()))?
-        .map_err(|e| DbError::Network(format!("Failed to receive exact data: {}", e)))?;
+        tokio::time::timeout(self.config.read_timeout, stream.read_exact(buf))
+            .await
+            .map_err(|_| DbError::Timeout("Read timeout".to_string()))?
+            .map_err(|e| DbError::Network(format!("Failed to receive exact data: {}", e)))?;
 
         Ok(())
     }

@@ -3,10 +3,10 @@
 // Automated machine learning with algorithm selection, hyperparameter tuning,
 // cross-validation, and model comparison.
 
-use crate::error::Result;
-use super::{Algorithm, Dataset, Hyperparameters, HyperparamValue, MLTask, EvaluationMetrics};
-use super::model_store::{Model};
+use super::model_store::Model;
 use super::training::TrainingEngine;
+use super::{Algorithm, Dataset, EvaluationMetrics, HyperparamValue, Hyperparameters, MLTask};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -103,14 +103,19 @@ pub enum OptimizationMetric {
 impl OptimizationMetric {
     pub fn is_higher_better(&self) -> bool {
         match self {
-            OptimizationMetric::Accuracy | OptimizationMetric::Precision |
-            OptimizationMetric::Recall | OptimizationMetric::F1 |
-            OptimizationMetric::AUC | OptimizationMetric::R2 |
-            OptimizationMetric::Silhouette => true,
+            OptimizationMetric::Accuracy
+            | OptimizationMetric::Precision
+            | OptimizationMetric::Recall
+            | OptimizationMetric::F1
+            | OptimizationMetric::AUC
+            | OptimizationMetric::R2
+            | OptimizationMetric::Silhouette => true,
 
-            OptimizationMetric::MSE | OptimizationMetric::RMSE |
-            OptimizationMetric::MAE | OptimizationMetric::LogLoss |
-            OptimizationMetric::DaviesBouldin => false,
+            OptimizationMetric::MSE
+            | OptimizationMetric::RMSE
+            | OptimizationMetric::MAE
+            | OptimizationMetric::LogLoss
+            | OptimizationMetric::DaviesBouldin => false,
         }
     }
 
@@ -179,7 +184,11 @@ impl HyperparameterSpace {
                 ParameterRange::Integer { min, max } => {
                     HyperparamValue::Int(rng.random_range(*min..=*max))
                 }
-                ParameterRange::Float { min, max, log_scale } => {
+                ParameterRange::Float {
+                    min,
+                    max,
+                    log_scale,
+                } => {
                     let value = if *log_scale {
                         let log_min = min.ln();
                         let log_max = max.ln();
@@ -215,7 +224,10 @@ impl HyperparameterSpace {
                 );
                 space.add_range(
                     "max_iterations".to_string(),
-                    ParameterRange::Integer { min: 100, max: 1000 },
+                    ParameterRange::Integer {
+                        min: 100,
+                        max: 1000,
+                    },
                 );
             }
             Algorithm::DecisionTree => {
@@ -251,10 +263,7 @@ impl HyperparameterSpace {
                 );
             }
             Algorithm::KMeans => {
-                space.add_range(
-                    "k".to_string(),
-                    ParameterRange::Integer { min: 2, max: 20 },
-                );
+                space.add_range("k".to_string(), ParameterRange::Integer { min: 2, max: 20 });
                 space.add_range(
                     "max_iterations".to_string(),
                     ParameterRange::Integer { min: 100, max: 500 },
@@ -290,18 +299,9 @@ impl Default for HyperparameterSpace {
 // Parameter range definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ParameterRange {
-    Integer {
-        min: i64,
-        max: i64,
-    },
-    Float {
-        min: f64,
-        max: f64,
-        log_scale: bool,
-    },
-    Categorical {
-        values: Vec<HyperparamValue>,
-    },
+    Integer { min: i64, max: i64 },
+    Float { min: f64, max: f64, log_scale: bool },
+    Categorical { values: Vec<HyperparamValue> },
 }
 
 // ============================================================================
@@ -339,9 +339,11 @@ impl Trial {
         let n = cv_scores.len() as f64;
         self.mean_score = cv_scores.iter().sum::<f64>() / n;
 
-        let variance = cv_scores.iter()
+        let variance = cv_scores
+            .iter()
             .map(|&score| (score - self.mean_score).powi(2))
-            .sum::<f64>() / n;
+            .sum::<f64>()
+            / n;
         self.std_score = variance.sqrt();
 
         self.cv_scores = cv_scores;
@@ -429,7 +431,8 @@ impl AutoMLEngine {
     ) -> Result<Model> {
         let results = self.run_automl(&dataset, &config)?;
 
-        results.best_model
+        results
+            .best_model
             .ok_or_else(|| crate::DbError::Internal("No valid model found".into()))
     }
 
@@ -592,8 +595,10 @@ impl AutoMLEngine {
             }
         }
 
-        let train = Dataset::new(train_features, dataset.feature_names.clone())
-            .with_targets(train_targets, dataset.target_name.clone().unwrap_or_default());
+        let train = Dataset::new(train_features, dataset.feature_names.clone()).with_targets(
+            train_targets,
+            dataset.target_name.clone().unwrap_or_default(),
+        );
 
         let val = Dataset::new(val_features, dataset.feature_names.clone())
             .with_targets(val_targets, dataset.target_name.clone().unwrap_or_default());
@@ -619,7 +624,8 @@ impl AutoMLEngine {
 
     // Build leaderboard from trials
     fn build_leaderboard(&self, trials: &[Trial], config: &AutoMLConfig) -> Vec<LeaderboardEntry> {
-        let mut entries: Vec<_> = trials.iter()
+        let mut entries: Vec<_> = trials
+            .iter()
             .filter(|t| t.status == TrialStatus::Completed)
             .map(|t| LeaderboardEntry {
                 rank: 0,
@@ -670,7 +676,7 @@ impl Default for AutoMLEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Instant;
+    use std::time::Instant;
 
     #[test]
     fn test_hyperparameter_space() {

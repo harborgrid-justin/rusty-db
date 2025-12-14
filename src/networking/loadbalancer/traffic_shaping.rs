@@ -59,10 +59,7 @@ impl TrafficShaper {
     /// Set bandwidth limit for a node
     pub async fn set_bandwidth_limit(&self, node_id: &str, bytes_per_second: u64) {
         let mut limits = self.bandwidth_limits.write().await;
-        limits.insert(
-            node_id.to_string(),
-            BandwidthLimit::new(bytes_per_second),
-        );
+        limits.insert(node_id.to_string(), BandwidthLimit::new(bytes_per_second));
     }
 
     /// Check if request is allowed by rate limits

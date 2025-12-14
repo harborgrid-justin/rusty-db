@@ -3,7 +3,7 @@
 // Sequential scan detection and prefetching.
 
 use super::common::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub struct PagePrefetcher {
     // Sequential scan detection window
@@ -50,7 +50,9 @@ impl PagePrefetcher {
 
         // Detect sequential pattern
         if self.is_sequential_scan(&history) {
-            self.stats.sequential_scans_detected.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .sequential_scans_detected
+                .fetch_add(1, Ordering::Relaxed);
             return self.predict_sequential(page_id);
         }
 
@@ -67,8 +69,9 @@ impl PagePrefetcher {
         let mut sequential_count = 0;
 
         for i in 0..vec.len() - 1 {
-            if vec[i].tablespace_id == vec[i + 1].tablespace_id &&
-               vec[i + 1].page_number == vec[i].page_number + 1 {
+            if vec[i].tablespace_id == vec[i + 1].tablespace_id
+                && vec[i + 1].page_number == vec[i].page_number + 1
+            {
                 sequential_count += 1;
             }
         }
@@ -88,7 +91,9 @@ impl PagePrefetcher {
             });
         }
 
-        self.stats.prefetch_requests.fetch_add(predictions.len() as u64, Ordering::Relaxed);
+        self.stats
+            .prefetch_requests
+            .fetch_add(predictions.len() as u64, Ordering::Relaxed);
         predictions
     }
 

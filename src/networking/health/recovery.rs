@@ -3,13 +3,13 @@
 // Handles automatic recovery attempts, gradual traffic restoration,
 // quarantine periods, and manual override for failed nodes.
 
-use crate::error::{DbError, Result};
 use crate::common::NodeId;
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use std::sync::Arc;
 
 /// Recovery strategy enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -186,11 +186,9 @@ impl RecoveryManager {
     /// Mark a node as failed
     pub async fn mark_node_failed(&self, node_id: NodeId) -> Result<()> {
         let mut nodes = self.nodes.write().await;
-        let config = nodes.entry(node_id.clone())
-            .or_insert_with(|| NodeRecoveryConfig::new(
-                self.default_max_attempts,
-                self.default_quarantine_duration
-            ));
+        let config = nodes.entry(node_id.clone()).or_insert_with(|| {
+            NodeRecoveryConfig::new(self.default_max_attempts, self.default_quarantine_duration)
+        });
 
         config.state = RecoveryState::Failed;
         config.failed_at = Some(Instant::now());
@@ -201,7 +199,8 @@ impl RecoveryManager {
     /// Attempt recovery for a node
     pub async fn attempt_recovery(&self, node_id: NodeId) -> Result<bool> {
         let mut nodes = self.nodes.write().await;
-        let config = nodes.get_mut(&node_id)
+        let config = nodes
+            .get_mut(&node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         // Check if we've exceeded max attempts
@@ -246,10 +245,11 @@ impl RecoveryManager {
         &self,
         node_id: NodeId,
         success: bool,
-        error_message: Option<String>
+        error_message: Option<String>,
     ) -> Result<()> {
         let mut nodes = self.nodes.write().await;
-        let config = nodes.get_mut(&node_id)
+        let config = nodes
+            .get_mut(&node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         // Update last attempt
@@ -282,14 +282,16 @@ impl RecoveryManager {
     /// Check and update quarantine status
     pub async fn update_quarantine_status(&self, node_id: &NodeId) -> Result<bool> {
         let mut nodes = self.nodes.write().await;
-        let config = nodes.get_mut(node_id)
+        let config = nodes
+            .get_mut(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         if config.state != RecoveryState::Quarantined {
             return Ok(false);
         }
 
-        let quarantine_start = config.quarantine_started_at
+        let quarantine_start = config
+            .quarantine_started_at
             .ok_or_else(|| DbError::InvalidState("Quarantine start time not set".to_string()))?;
 
         // Check if quarantine period has ended
@@ -314,11 +316,13 @@ impl RecoveryManager {
             return Ok(());
         }
 
-        let last_increment = config.last_increment
+        let last_increment = config
+            .last_increment
             .ok_or_else(|| DbError::InvalidState("Last increment time not set".to_string()))?;
 
         if last_increment.elapsed() >= config.increment_interval {
-            config.traffic_percentage = (config.traffic_percentage + config.traffic_increment).min(100);
+            config.traffic_percentage =
+                (config.traffic_percentage + config.traffic_increment).min(100);
             config.last_increment = Some(Instant::now());
         }
 
@@ -328,7 +332,8 @@ impl RecoveryManager {
     /// Get traffic percentage for a node
     pub async fn get_traffic_percentage(&self, node_id: &NodeId) -> Result<u32> {
         let nodes = self.nodes.read().await;
-        let config = nodes.get(node_id)
+        let config = nodes
+            .get(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         Ok(config.traffic_percentage)
@@ -337,7 +342,8 @@ impl RecoveryManager {
     /// Get recovery state for a node
     pub async fn get_recovery_state(&self, node_id: &NodeId) -> Result<RecoveryState> {
         let nodes = self.nodes.read().await;
-        let config = nodes.get(node_id)
+        let config = nodes
+            .get(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         Ok(config.state.clone())
@@ -347,14 +353,12 @@ impl RecoveryManager {
     pub async fn set_recovery_strategy(
         &self,
         node_id: NodeId,
-        strategy: RecoveryStrategy
+        strategy: RecoveryStrategy,
     ) -> Result<()> {
         let mut nodes = self.nodes.write().await;
-        let config = nodes.entry(node_id)
-            .or_insert_with(|| NodeRecoveryConfig::new(
-                self.default_max_attempts,
-                self.default_quarantine_duration
-            ));
+        let config = nodes.entry(node_id).or_insert_with(|| {
+            NodeRecoveryConfig::new(self.default_max_attempts, self.default_quarantine_duration)
+        });
 
         config.strategy = strategy;
         Ok(())
@@ -363,7 +367,8 @@ impl RecoveryManager {
     /// Manual override to mark node as healthy
     pub async fn manual_override_healthy(&self, node_id: NodeId) -> Result<()> {
         let mut nodes = self.nodes.write().await;
-        let config = nodes.get_mut(&node_id)
+        let config = nodes
+            .get_mut(&node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         config.state = RecoveryState::Healthy;
@@ -377,7 +382,8 @@ impl RecoveryManager {
     /// Manual override to prevent recovery
     pub async fn manual_override_block(&self, node_id: NodeId) -> Result<()> {
         let mut nodes = self.nodes.write().await;
-        let config = nodes.get_mut(&node_id)
+        let config = nodes
+            .get_mut(&node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         config.manual_override = true;
@@ -389,7 +395,8 @@ impl RecoveryManager {
     /// Clear manual override
     pub async fn clear_manual_override(&self, node_id: &NodeId) -> Result<()> {
         let mut nodes = self.nodes.write().await;
-        let config = nodes.get_mut(node_id)
+        let config = nodes
+            .get_mut(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         config.manual_override = false;
@@ -399,17 +406,19 @@ impl RecoveryManager {
     /// Get recovery statistics for a node
     pub async fn get_recovery_stats(&self, node_id: &NodeId) -> Result<RecoveryStats> {
         let nodes = self.nodes.read().await;
-        let config = nodes.get(node_id)
+        let config = nodes
+            .get(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         let total_attempts = config.attempt_history.len() as u32;
-        let successful_attempts = config.attempt_history.iter()
-            .filter(|a| a.success)
-            .count() as u32;
+        let successful_attempts =
+            config.attempt_history.iter().filter(|a| a.success).count() as u32;
         let failed_attempts = total_attempts - successful_attempts;
 
         let avg_recovery_time = if !config.attempt_history.is_empty() {
-            let total_time: Duration = config.attempt_history.iter()
+            let total_time: Duration = config
+                .attempt_history
+                .iter()
                 .filter_map(|a| a.completed_at.map(|c| c.duration_since(a.started_at)))
                 .sum();
             Some(total_time / config.attempt_history.len() as u32)
@@ -431,7 +440,10 @@ impl RecoveryManager {
     }
 
     /// Add a recovery callback
-    pub async fn add_callback(&self, callback: Box<dyn RecoveryCallback + Send + Sync>) -> Result<()> {
+    pub async fn add_callback(
+        &self,
+        callback: Box<dyn RecoveryCallback + Send + Sync>,
+    ) -> Result<()> {
         let mut callbacks = self.recovery_callbacks.write().await;
         callbacks.push(callback);
         Ok(())
@@ -521,7 +533,10 @@ mod tests {
 
         manager.mark_node_failed(node_id.clone()).await.unwrap();
         manager.attempt_recovery(node_id.clone()).await.unwrap();
-        manager.complete_recovery(node_id.clone(), true, None).await.unwrap();
+        manager
+            .complete_recovery(node_id.clone(), true, None)
+            .await
+            .unwrap();
 
         let state = manager.get_recovery_state(&node_id).await.unwrap();
         assert_eq!(state, RecoveryState::Quarantined);
@@ -533,7 +548,10 @@ mod tests {
         let node_id = "node1".to_string();
 
         manager.mark_node_failed(node_id.clone()).await.unwrap();
-        manager.manual_override_healthy(node_id.clone()).await.unwrap();
+        manager
+            .manual_override_healthy(node_id.clone())
+            .await
+            .unwrap();
 
         let state = manager.get_recovery_state(&node_id).await.unwrap();
         assert_eq!(state, RecoveryState::Healthy);

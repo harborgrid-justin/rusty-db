@@ -2,10 +2,10 @@
 //
 // Part of the Enterprise Integration Layer for RustyDB
 
-use std::collections::{HashMap, BTreeMap, VecDeque};
-use std::sync::{Arc, RwLock, Mutex};
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap, VecDeque};
+use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Instant, SystemTime};
-use serde::{Serialize, Deserialize};
 
 use crate::error::DbError;
 
@@ -45,7 +45,7 @@ impl MemoryBudgetAllocator {
 
         if *reserved + amount > self.total_budget {
             return Err(DbError::ResourceExhausted(
-                "Memory budget exceeded".to_string()
+                "Memory budget exceeded".to_string(),
             ));
         }
 
@@ -97,7 +97,7 @@ impl ConnectionQuotaManager {
 
         if total_allocated + quota > self.total_quota {
             return Err(DbError::ResourceExhausted(
-                "Connection quota exceeded".to_string()
+                "Connection quota exceeded".to_string(),
             ));
         }
 
@@ -109,14 +109,16 @@ impl ConnectionQuotaManager {
         let quotas = self.quotas.read().unwrap();
         let mut active = self.active_connections.write().unwrap();
 
-        let quota = quotas.get(service)
+        let quota = quotas
+            .get(service)
             .ok_or_else(|| DbError::NotFound(format!("No quota for service: {}", service)))?;
 
         let current = active.entry(service.to_string()).or_insert(0);
         if *current >= *quota {
-            return Err(DbError::ResourceExhausted(
-                format!("Connection quota exceeded for service: {}", service)
-            ));
+            return Err(DbError::ResourceExhausted(format!(
+                "Connection quota exceeded for service: {}",
+                service
+            )));
         }
 
         *current += 1;
@@ -178,7 +180,6 @@ pub struct IoScheduler {
     bandwidth_limit: Arc<RwLock<usize>>,
     current_bandwidth: Arc<RwLock<usize>>,
 }
-
 
 #[derive(Debug, Clone)]
 pub struct IoOperation {
@@ -277,7 +278,8 @@ impl PriorityManager {
         priorities.insert(task_id.to_string(), priority);
 
         let mut queues = self.priority_queues.write().unwrap();
-        queues.entry(priority)
+        queues
+            .entry(priority)
             .or_insert_with(VecDeque::new)
             .push_back(task_id.to_string());
     }
@@ -356,7 +358,7 @@ impl ResourceContentionHandler {
                         resolutions.push(resolution);
                         false // Remove resolved contention
                     }
-                    Err(_) => true // Keep unresolved contention
+                    Err(_) => true, // Keep unresolved contention
                 }
             } else {
                 true // Keep if no resolver

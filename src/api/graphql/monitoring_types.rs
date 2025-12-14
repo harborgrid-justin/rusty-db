@@ -2,9 +2,9 @@
 //
 // Type definitions for monitoring, cluster, storage, and admin queries
 
+use super::types::{BigInt, DateTime};
 use async_graphql::{Enum, SimpleObject};
 use serde::{Deserialize, Serialize};
-use super::types::{BigInt, DateTime};
 
 // ============================================================================
 // MONITORING TYPES

@@ -129,10 +129,7 @@ impl SpiffeId {
     /// Parse SPIFFE ID from URI
     pub fn from_uri(uri: &str) -> Result<Self> {
         if !uri.starts_with("spiffe://") {
-            return Err(DbError::ParseError(format!(
-                "Invalid SPIFFE ID: {}",
-                uri
-            )));
+            return Err(DbError::ParseError(format!("Invalid SPIFFE ID: {}", uri)));
         }
 
         let rest = &uri[9..]; // Skip "spiffe://"
@@ -159,13 +156,13 @@ impl SpiffeId {
     /// Validate SPIFFE ID
     pub fn validate(&self) -> Result<()> {
         if self.trust_domain.is_empty() {
-            return Err(DbError::Validation("Trust domain cannot be empty".to_string()));
+            return Err(DbError::Validation(
+                "Trust domain cannot be empty".to_string(),
+            ));
         }
 
         if !self.path.starts_with('/') {
-            return Err(DbError::Validation(
-                "Path must start with /".to_string(),
-            ));
+            return Err(DbError::Validation("Path must start with /".to_string()));
         }
 
         Ok(())
@@ -249,7 +246,11 @@ impl JwtToken {
     /// Generate token string (placeholder - use jsonwebtoken crate in production)
     pub fn generate(&mut self, _secret: &[u8]) -> Result<()> {
         // In production, use jsonwebtoken crate to generate actual JWT
-        self.token = format!("jwt.{}.{}", self.subject, self.issued_at.elapsed().unwrap_or_default().as_secs());
+        self.token = format!(
+            "jwt.{}.{}",
+            self.subject,
+            self.issued_at.elapsed().unwrap_or_default().as_secs()
+        );
         Ok(())
     }
 
@@ -377,10 +378,7 @@ impl IdentityProvider {
             DbError::Configuration("SPIFFE trust domain not configured".to_string())
         })?;
 
-        let spiffe_id = SpiffeId::new(
-            trust_domain.clone(),
-            format!("/node/{}", node_id),
-        );
+        let spiffe_id = SpiffeId::new(trust_domain.clone(), format!("/node/{}", node_id));
 
         spiffe_id.validate()?;
 

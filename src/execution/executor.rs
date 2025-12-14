@@ -1,13 +1,13 @@
-use crate::error::DbError;
-use crate::execution::{QueryResult, planner::PlanNode};
-use crate::parser::{SqlStatement, JoinType};
 use crate::catalog::{Catalog, Schema};
-use crate::transaction::TransactionManager;
-use crate::index::{IndexManager, IndexType};
 use crate::constraints::ConstraintManager;
-use std::sync::Arc;
-use std::collections::{HashMap, HashSet};
+use crate::error::DbError;
+use crate::execution::{planner::PlanNode, QueryResult};
+use crate::index::{IndexManager, IndexType};
+use crate::parser::{JoinType, SqlStatement};
+use crate::transaction::TransactionManager;
 use std::cmp::Ordering;
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 // Query executor with enterprise-grade features
 pub struct Executor {
@@ -65,12 +65,25 @@ impl Executor {
                 // For now, just return success
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::BackupDatabase { database: _, path: _ } => {
+            SqlStatement::BackupDatabase {
+                database: _,
+                path: _,
+            } => {
                 // Backup operation would use the backup module
                 // For now, just return success
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Select { table, columns, join: _, group_by: _, order_by: _, limit, offset, distinct, .. } => {
+            SqlStatement::Select {
+                table,
+                columns,
+                join: _,
+                group_by: _,
+                order_by: _,
+                limit,
+                offset,
+                distinct,
+                ..
+            } => {
                 let schema = self.catalog.get_table(&table)?;
 
                 // Determine result columns
@@ -111,18 +124,28 @@ impl Executor {
 
                 Ok(result)
             }
-            SqlStatement::SelectInto { target_table, source_table, columns: _, filter: _ } => {
+            SqlStatement::SelectInto {
+                target_table,
+                source_table,
+                columns: _,
+                filter: _,
+            } => {
                 // SELECT INTO: Copy data from source to new target table
                 let source_schema = self.catalog.get_table(&source_table)?;
 
                 // Create target table with same schema
-                let target_schema = Schema::new(target_table.clone(), source_schema.columns.clone());
+                let target_schema =
+                    Schema::new(target_table.clone(), source_schema.columns.clone());
                 self.catalog.create_table(target_schema)?;
 
                 // In production, would copy data from source to target
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Insert { table, columns, values } => {
+            SqlStatement::Insert {
+                table,
+                columns,
+                values,
+            } => {
                 // Validate table exists
                 let _schema = self.catalog.get_table(&table)?;
 
@@ -136,7 +159,8 @@ impl Executor {
                     }
 
                     // Validate foreign keys
-                    self.constraint_manager.validate_foreign_key(&table, &row_map)?;
+                    self.constraint_manager
+                        .validate_foreign_key(&table, &row_map)?;
 
                     // Validate unique constraints
                     self.constraint_manager.validate_unique(&table, &row_map)?;
@@ -147,13 +171,21 @@ impl Executor {
 
                 Ok(QueryResult::with_affected(values.len()))
             }
-            SqlStatement::InsertIntoSelect { table: _, columns: _, source_query: _ } => {
+            SqlStatement::InsertIntoSelect {
+                table: _,
+                columns: _,
+                source_query: _,
+            } => {
                 // INSERT INTO ... SELECT: Insert results from a query
                 // Parse and execute the source query
                 // In production, would execute source_query and insert results
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::Update { table, assignments, filter: _ } => {
+            SqlStatement::Update {
+                table,
+                assignments,
+                filter: _,
+            } => {
                 // Validate table exists
                 let _schema = self.catalog.get_table(&table)?;
 
@@ -164,9 +196,12 @@ impl Executor {
                 }
 
                 // Enterprise validation: check constraints
-                self.constraint_manager.validate_foreign_key(&table, &update_map)?;
-                self.constraint_manager.validate_unique(&table, &update_map)?;
-                self.constraint_manager.validate_check(&table, &update_map)?;
+                self.constraint_manager
+                    .validate_foreign_key(&table, &update_map)?;
+                self.constraint_manager
+                    .validate_unique(&table, &update_map)?;
+                self.constraint_manager
+                    .validate_check(&table, &update_map)?;
 
                 // In production: apply filter, update rows, return actual count
                 Ok(QueryResult::with_affected(0))
@@ -178,20 +213,25 @@ impl Executor {
                 // Enterprise feature: handle cascading deletes
                 // Build row map for cascade validation (placeholder - would use actual row data)
                 let row_map = HashMap::new();
-                let cascade_actions = self.constraint_manager.cascade_operation(
-                    &table,
-                    "DELETE",
-                    &row_map
-                )?;
+                let cascade_actions = self
+                    .constraint_manager
+                    .cascade_operation(&table, "DELETE", &row_map)?;
 
                 // Execute cascade actions in transaction
                 for action in cascade_actions {
                     // In production: execute cascading deletes/updates
                     match action {
-                        crate::constraints::CascadeAction::Delete { table: _, condition: _ } => {
+                        crate::constraints::CascadeAction::Delete {
+                            table: _,
+                            condition: _,
+                        } => {
                             // Execute delete on referencing table
                         }
-                        crate::constraints::CascadeAction::Update { table: _, column: _, value: _ } => {
+                        crate::constraints::CascadeAction::Update {
+                            table: _,
+                            column: _,
+                            value: _,
+                        } => {
                             // Execute update on referencing table
                         }
                     }
@@ -199,7 +239,12 @@ impl Executor {
 
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::CreateIndex { name, table, columns, unique } => {
+            SqlStatement::CreateIndex {
+                name,
+                table,
+                columns,
+                unique,
+            } => {
                 // Validate table exists
                 let _schema = self.catalog.get_table(&table)?;
 
@@ -222,7 +267,11 @@ impl Executor {
                 self.index_manager.drop_index(&name)?;
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::CreateView { name, query, or_replace } => {
+            SqlStatement::CreateView {
+                name,
+                query,
+                or_replace,
+            } => {
                 // If OR REPLACE is specified, drop existing view first
                 if or_replace {
                     let _ = self.catalog.drop_view(&name);
@@ -254,12 +303,19 @@ impl Executor {
                 self.execute_alter_table(&name, action)?;
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::CreateProcedure { name: _, parameters: _, body: _ } => {
+            SqlStatement::CreateProcedure {
+                name: _,
+                parameters: _,
+                body: _,
+            } => {
                 // Store procedure definition
                 // In production, would compile and store the procedure
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::ExecProcedure { name: _, arguments: _ } => {
+            SqlStatement::ExecProcedure {
+                name: _,
+                arguments: _,
+            } => {
                 // Execute stored procedure
                 // In production, would look up and execute the procedure
                 Ok(QueryResult::with_affected(0))
@@ -280,11 +336,19 @@ impl Executor {
 
                 Ok(combined)
             }
-            SqlStatement::GrantPermission { permission: _, table: _, user: _ } => {
+            SqlStatement::GrantPermission {
+                permission: _,
+                table: _,
+                user: _,
+            } => {
                 // Permission grant would go here
                 Ok(QueryResult::with_affected(0))
             }
-            SqlStatement::RevokePermission { permission: _, table: _, user: _ } => {
+            SqlStatement::RevokePermission {
+                permission: _,
+                table: _,
+                user: _,
+            } => {
                 // Permission revocation would go here
                 Ok(QueryResult::with_affected(0))
             }
@@ -295,9 +359,7 @@ impl Executor {
     #[inline]
     pub fn execute_plan(&self, plan: PlanNode) -> Result<QueryResult, DbError> {
         match plan {
-            PlanNode::TableScan { table, columns } => {
-                self.execute_table_scan(&table, &columns)
-            }
+            PlanNode::TableScan { table, columns } => self.execute_table_scan(&table, &columns),
             PlanNode::Filter { input, predicate } => {
                 let input_result = self.execute_plan(*input)?;
                 self.execute_filter(input_result, &predicate)
@@ -306,12 +368,22 @@ impl Executor {
                 let input_result = self.execute_plan(*input)?;
                 self.execute_project(input_result, &columns)
             }
-            PlanNode::Join { join_type, left, right, condition } => {
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => {
                 let left_result = self.execute_plan(*left)?;
                 let right_result = self.execute_plan(*right)?;
                 self.execute_join(left_result, right_result, join_type, &condition)
             }
-            PlanNode::Aggregate { input, group_by, aggregates, having } => {
+            PlanNode::Aggregate {
+                input,
+                group_by,
+                aggregates,
+                having,
+            } => {
                 let input_result = self.execute_plan(*input)?;
                 self.execute_aggregate(input_result, &group_by, &aggregates, having.as_deref())
             }
@@ -319,13 +391,15 @@ impl Executor {
                 let input_result = self.execute_plan(*input)?;
                 self.execute_sort(input_result, &order_by)
             }
-            PlanNode::Limit { input, limit, offset } => {
+            PlanNode::Limit {
+                input,
+                limit,
+                offset,
+            } => {
                 let input_result = self.execute_plan(*input)?;
                 self.execute_limit(input_result, limit, offset)
             }
-            PlanNode::Subquery { plan, .. } => {
-                self.execute_plan(*plan)
-            }
+            PlanNode::Subquery { plan, .. } => self.execute_plan(*plan),
         }
     }
 
@@ -344,7 +418,8 @@ impl Executor {
 
     fn execute_filter(&self, input: QueryResult, predicate: &str) -> Result<QueryResult, DbError> {
         // Parse and evaluate the predicate for each row
-        let filtered_rows: Vec<Vec<String>> = input.rows
+        let filtered_rows: Vec<Vec<String>> = input
+            .rows
             .into_iter()
             .filter(|row| self.evaluate_predicate(predicate, &input.columns, row))
             .collect();
@@ -396,7 +471,7 @@ impl Executor {
 
         // Handle parentheses
         if predicate.starts_with('(') && predicate.ends_with(')') {
-            return self.evaluate_predicate(&predicate[1..predicate.len()-1], columns, row);
+            return self.evaluate_predicate(&predicate[1..predicate.len() - 1], columns, row);
         }
 
         // Parse comparison operators
@@ -428,27 +503,43 @@ impl Executor {
         let upper = expr.to_uppercase();
         if upper.contains(" IS NOT NULL") {
             let col_name = expr.split_whitespace().next().unwrap_or("");
-            if let Some(idx) = columns.iter().position(|c| c.eq_ignore_ascii_case(col_name)) {
-                return row.get(idx).map(|v| v != "NULL" && !v.is_empty()).unwrap_or(false);
+            if let Some(idx) = columns
+                .iter()
+                .position(|c| c.eq_ignore_ascii_case(col_name))
+            {
+                return row
+                    .get(idx)
+                    .map(|v| v != "NULL" && !v.is_empty())
+                    .unwrap_or(false);
             }
             return false;
         }
         if upper.contains(" IS NULL") {
             let col_name = expr.split_whitespace().next().unwrap_or("");
-            if let Some(idx) = columns.iter().position(|c| c.eq_ignore_ascii_case(col_name)) {
-                return row.get(idx).map(|v| v == "NULL" || v.is_empty()).unwrap_or(true);
+            if let Some(idx) = columns
+                .iter()
+                .position(|c| c.eq_ignore_ascii_case(col_name))
+            {
+                return row
+                    .get(idx)
+                    .map(|v| v == "NULL" || v.is_empty())
+                    .unwrap_or(true);
             }
             return true;
         }
 
         // Handle LIKE operator
         if upper.contains(" LIKE ") {
-            let parts: Vec<&str> = expr.splitn(2, |c: char| c.to_ascii_uppercase() == 'L')
+            let parts: Vec<&str> = expr
+                .splitn(2, |c: char| c.to_ascii_uppercase() == 'L')
                 .collect();
             if parts.len() == 2 && parts[1].to_uppercase().starts_with("IKE ") {
                 let col_name = parts[0].trim();
                 let pattern = parts[1][4..].trim().trim_matches('\'');
-                if let Some(idx) = columns.iter().position(|c| c.eq_ignore_ascii_case(col_name)) {
+                if let Some(idx) = columns
+                    .iter()
+                    .position(|c| c.eq_ignore_ascii_case(col_name))
+                {
                     if let Some(value) = row.get(idx) {
                         return self.match_like_pattern(value, pattern);
                     }
@@ -467,7 +558,10 @@ impl Executor {
                         .split(',')
                         .map(|v| v.trim().trim_matches('\''))
                         .collect();
-                    if let Some(idx) = columns.iter().position(|c| c.eq_ignore_ascii_case(col_name)) {
+                    if let Some(idx) = columns
+                        .iter()
+                        .position(|c| c.eq_ignore_ascii_case(col_name))
+                    {
                         if let Some(row_val) = row.get(idx) {
                             return values.iter().any(|v| v.eq_ignore_ascii_case(row_val));
                         }
@@ -485,7 +579,10 @@ impl Executor {
                 if let Some(and_pos) = rest.to_uppercase().find(" AND ") {
                     let low = rest[..and_pos].trim().trim_matches('\'');
                     let high = rest[and_pos + 5..].trim().trim_matches('\'');
-                    if let Some(idx) = columns.iter().position(|c| c.eq_ignore_ascii_case(col_name)) {
+                    if let Some(idx) = columns
+                        .iter()
+                        .position(|c| c.eq_ignore_ascii_case(col_name))
+                    {
                         if let Some(value) = row.get(idx) {
                             return value.as_str() >= low && value.as_str() <= high;
                         }
@@ -496,8 +593,15 @@ impl Executor {
         }
 
         // Handle standard comparison operators: >=, <=, <>, !=, =, >, <
-        let operators = [(">=", "ge"), ("<=", "le"), ("<>", "ne"), ("!=", "ne"),
-                         ("=", "eq"), (">", "gt"), ("<", "lt")];
+        let operators = [
+            (">=", "ge"),
+            ("<=", "le"),
+            ("<>", "ne"),
+            ("!=", "ne"),
+            ("=", "eq"),
+            (">", "gt"),
+            ("<", "lt"),
+        ];
 
         for (op, op_type) in operators {
             if let Some(pos) = expr.find(op) {
@@ -555,9 +659,10 @@ impl Executor {
         // Handle table.column format
         if let Some(dot_pos) = expr.find('.') {
             let col_name = &expr[dot_pos + 1..];
-            if let Some(idx) = columns.iter().position(|c| {
-                c.eq_ignore_ascii_case(col_name) || c.eq_ignore_ascii_case(expr)
-            }) {
+            if let Some(idx) = columns
+                .iter()
+                .position(|c| c.eq_ignore_ascii_case(col_name) || c.eq_ignore_ascii_case(expr))
+            {
                 return row.get(idx).cloned().unwrap_or_default();
             }
         }
@@ -568,20 +673,24 @@ impl Executor {
 
     /// Match a SQL LIKE pattern (supports % and _ wildcards)
     fn match_like_pattern(&self, value: &str, pattern: &str) -> bool {
-        let regex_pattern = pattern
-            .replace('%', ".*")
-            .replace('_', ".");
+        let regex_pattern = pattern.replace('%', ".*").replace('_', ".");
 
         if let Ok(re) = regex::Regex::new(&format!("^(?i){}$", regex_pattern)) {
             re.is_match(value)
         } else {
             // Fallback to simple contains check
             let simple_pattern = pattern.replace('%', "").replace('_', "");
-            value.to_lowercase().contains(&simple_pattern.to_lowercase())
+            value
+                .to_lowercase()
+                .contains(&simple_pattern.to_lowercase())
         }
     }
 
-    fn execute_project(&self, input: QueryResult, columns: &[String]) -> Result<QueryResult, DbError> {
+    fn execute_project(
+        &self,
+        input: QueryResult,
+        columns: &[String],
+    ) -> Result<QueryResult, DbError> {
         // Project only the specified columns
         if columns.contains(&"*".to_string()) {
             return Ok(input);
@@ -598,14 +707,16 @@ impl Executor {
                     col.as_str()
                 };
 
-                input.columns.iter().position(|c| {
-                    c.eq_ignore_ascii_case(col_name) || c.eq_ignore_ascii_case(col)
-                })
+                input
+                    .columns
+                    .iter()
+                    .position(|c| c.eq_ignore_ascii_case(col_name) || c.eq_ignore_ascii_case(col))
             })
             .collect();
 
         // Project each row
-        let projected_rows: Vec<Vec<String>> = input.rows
+        let projected_rows: Vec<Vec<String>> = input
+            .rows
             .into_iter()
             .map(|row| {
                 column_indices
@@ -784,114 +895,141 @@ impl Executor {
         };
 
         // Helper to calculate aggregate value
-        let calculate_aggregate = |func: &AggregateFunction, col: &str, rows: &[Vec<String>]| -> String {
-            match func {
-                AggregateFunction::Count => {
-                    if col == "*" {
-                        rows.len().to_string()
-                    } else {
-                        // Count non-null values
-                        let col_idx = input.columns.iter().position(|c| c.eq_ignore_ascii_case(col));
-                        let count = rows.iter()
-                            .filter(|row| {
-                                col_idx
-                                    .and_then(|idx| row.get(idx))
-                                    .map(|v| v != "NULL" && !v.is_empty())
-                                    .unwrap_or(false)
-                            })
-                            .count();
-                        count.to_string()
-                    }
-                }
-                AggregateFunction::Sum => {
-                    let values = get_column_values(col, rows);
-                    if values.is_empty() {
-                        "NULL".to_string()
-                    } else {
-                        let sum: f64 = values.iter().sum();
-                        if sum.fract() == 0.0 {
-                            (sum as i64).to_string()
+        let calculate_aggregate =
+            |func: &AggregateFunction, col: &str, rows: &[Vec<String>]| -> String {
+                match func {
+                    AggregateFunction::Count => {
+                        if col == "*" {
+                            rows.len().to_string()
                         } else {
-                            format!("{:.6}", sum).trim_end_matches('0').trim_end_matches('.').to_string()
+                            // Count non-null values
+                            let col_idx = input
+                                .columns
+                                .iter()
+                                .position(|c| c.eq_ignore_ascii_case(col));
+                            let count = rows
+                                .iter()
+                                .filter(|row| {
+                                    col_idx
+                                        .and_then(|idx| row.get(idx))
+                                        .map(|v| v != "NULL" && !v.is_empty())
+                                        .unwrap_or(false)
+                                })
+                                .count();
+                            count.to_string()
+                        }
+                    }
+                    AggregateFunction::Sum => {
+                        let values = get_column_values(col, rows);
+                        if values.is_empty() {
+                            "NULL".to_string()
+                        } else {
+                            let sum: f64 = values.iter().sum();
+                            if sum.fract() == 0.0 {
+                                (sum as i64).to_string()
+                            } else {
+                                format!("{:.6}", sum)
+                                    .trim_end_matches('0')
+                                    .trim_end_matches('.')
+                                    .to_string()
+                            }
+                        }
+                    }
+                    AggregateFunction::Avg => {
+                        let values = get_column_values(col, rows);
+                        if values.is_empty() {
+                            "NULL".to_string()
+                        } else {
+                            let avg = values.iter().sum::<f64>() / values.len() as f64;
+                            format!("{:.6}", avg)
+                                .trim_end_matches('0')
+                                .trim_end_matches('.')
+                                .to_string()
+                        }
+                    }
+                    AggregateFunction::Min => {
+                        let values = get_column_values(col, rows);
+                        if values.is_empty() {
+                            // Try string comparison
+                            let col_idx = input
+                                .columns
+                                .iter()
+                                .position(|c| c.eq_ignore_ascii_case(col));
+                            rows.iter()
+                                .filter_map(|row| col_idx.and_then(|idx| row.get(idx)))
+                                .filter(|v| *v != "NULL")
+                                .min()
+                                .cloned()
+                                .unwrap_or_else(|| "NULL".to_string())
+                        } else {
+                            let min = values.iter().cloned().fold(f64::INFINITY, f64::min);
+                            if min.fract() == 0.0 {
+                                (min as i64).to_string()
+                            } else {
+                                format!("{:.6}", min)
+                                    .trim_end_matches('0')
+                                    .trim_end_matches('.')
+                                    .to_string()
+                            }
+                        }
+                    }
+                    AggregateFunction::Max => {
+                        let values = get_column_values(col, rows);
+                        if values.is_empty() {
+                            // Try string comparison
+                            let col_idx = input
+                                .columns
+                                .iter()
+                                .position(|c| c.eq_ignore_ascii_case(col));
+                            rows.iter()
+                                .filter_map(|row| col_idx.and_then(|idx| row.get(idx)))
+                                .filter(|v| *v != "NULL")
+                                .max()
+                                .cloned()
+                                .unwrap_or_else(|| "NULL".to_string())
+                        } else {
+                            let max = values.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+                            if max.fract() == 0.0 {
+                                (max as i64).to_string()
+                            } else {
+                                format!("{:.6}", max)
+                                    .trim_end_matches('0')
+                                    .trim_end_matches('.')
+                                    .to_string()
+                            }
+                        }
+                    }
+                    AggregateFunction::StdDev => {
+                        let values = get_column_values(col, rows);
+                        if values.len() < 2 {
+                            "NULL".to_string()
+                        } else {
+                            let mean = values.iter().sum::<f64>() / values.len() as f64;
+                            let variance = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>()
+                                / (values.len() - 1) as f64; // Sample std dev
+                            let std_dev = variance.sqrt();
+                            format!("{:.6}", std_dev)
+                                .trim_end_matches('0')
+                                .trim_end_matches('.')
+                                .to_string()
+                        }
+                    }
+                    AggregateFunction::Variance => {
+                        let values = get_column_values(col, rows);
+                        if values.len() < 2 {
+                            "NULL".to_string()
+                        } else {
+                            let mean = values.iter().sum::<f64>() / values.len() as f64;
+                            let variance = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>()
+                                / (values.len() - 1) as f64; // Sample variance
+                            format!("{:.6}", variance)
+                                .trim_end_matches('0')
+                                .trim_end_matches('.')
+                                .to_string()
                         }
                     }
                 }
-                AggregateFunction::Avg => {
-                    let values = get_column_values(col, rows);
-                    if values.is_empty() {
-                        "NULL".to_string()
-                    } else {
-                        let avg = values.iter().sum::<f64>() / values.len() as f64;
-                        format!("{:.6}", avg).trim_end_matches('0').trim_end_matches('.').to_string()
-                    }
-                }
-                AggregateFunction::Min => {
-                    let values = get_column_values(col, rows);
-                    if values.is_empty() {
-                        // Try string comparison
-                        let col_idx = input.columns.iter().position(|c| c.eq_ignore_ascii_case(col));
-                        rows.iter()
-                            .filter_map(|row| col_idx.and_then(|idx| row.get(idx)))
-                            .filter(|v| *v != "NULL")
-                            .min()
-                            .cloned()
-                            .unwrap_or_else(|| "NULL".to_string())
-                    } else {
-                        let min = values.iter().cloned().fold(f64::INFINITY, f64::min);
-                        if min.fract() == 0.0 {
-                            (min as i64).to_string()
-                        } else {
-                            format!("{:.6}", min).trim_end_matches('0').trim_end_matches('.').to_string()
-                        }
-                    }
-                }
-                AggregateFunction::Max => {
-                    let values = get_column_values(col, rows);
-                    if values.is_empty() {
-                        // Try string comparison
-                        let col_idx = input.columns.iter().position(|c| c.eq_ignore_ascii_case(col));
-                        rows.iter()
-                            .filter_map(|row| col_idx.and_then(|idx| row.get(idx)))
-                            .filter(|v| *v != "NULL")
-                            .max()
-                            .cloned()
-                            .unwrap_or_else(|| "NULL".to_string())
-                    } else {
-                        let max = values.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
-                        if max.fract() == 0.0 {
-                            (max as i64).to_string()
-                        } else {
-                            format!("{:.6}", max).trim_end_matches('0').trim_end_matches('.').to_string()
-                        }
-                    }
-                }
-                AggregateFunction::StdDev => {
-                    let values = get_column_values(col, rows);
-                    if values.len() < 2 {
-                        "NULL".to_string()
-                    } else {
-                        let mean = values.iter().sum::<f64>() / values.len() as f64;
-                        let variance = values.iter()
-                            .map(|v| (v - mean).powi(2))
-                            .sum::<f64>() / (values.len() - 1) as f64; // Sample std dev
-                        let std_dev = variance.sqrt();
-                        format!("{:.6}", std_dev).trim_end_matches('0').trim_end_matches('.').to_string()
-                    }
-                }
-                AggregateFunction::Variance => {
-                    let values = get_column_values(col, rows);
-                    if values.len() < 2 {
-                        "NULL".to_string()
-                    } else {
-                        let mean = values.iter().sum::<f64>() / values.len() as f64;
-                        let variance = values.iter()
-                            .map(|v| (v - mean).powi(2))
-                            .sum::<f64>() / (values.len() - 1) as f64; // Sample variance
-                        format!("{:.6}", variance).trim_end_matches('0').trim_end_matches('.').to_string()
-                    }
-                }
-            }
-        };
+            };
 
         // Extract column name from aggregate expression
         let extract_agg_column = |col: &str| -> String {
@@ -924,7 +1062,10 @@ impl Executor {
             let group_indices: Vec<usize> = group_by
                 .iter()
                 .filter_map(|col| {
-                    input.columns.iter().position(|c| c.eq_ignore_ascii_case(col))
+                    input
+                        .columns
+                        .iter()
+                        .position(|c| c.eq_ignore_ascii_case(col))
                 })
                 .collect();
 
@@ -1012,10 +1153,18 @@ impl Executor {
                         continue;
                     }
                     if left_is_null {
-                        return if *ascending { Ordering::Greater } else { Ordering::Less };
+                        return if *ascending {
+                            Ordering::Greater
+                        } else {
+                            Ordering::Less
+                        };
                     }
                     if right_is_null {
-                        return if *ascending { Ordering::Less } else { Ordering::Greater };
+                        return if *ascending {
+                            Ordering::Less
+                        } else {
+                            Ordering::Greater
+                        };
                     }
 
                     // Try numeric comparison first
@@ -1045,16 +1194,17 @@ impl Executor {
     ) -> Result<QueryResult, DbError> {
         let start = offset.unwrap_or(0);
 
-        input.rows = input.rows.into_iter()
-            .skip(start)
-            .take(limit)
-            .collect();
+        input.rows = input.rows.into_iter().skip(start).take(limit).collect();
 
         Ok(input)
     }
 
     /// Execute ALTER TABLE operations
-    fn execute_alter_table(&self, table_name: &str, action: crate::parser::AlterAction) -> Result<(), DbError> {
+    fn execute_alter_table(
+        &self,
+        table_name: &str,
+        action: crate::parser::AlterAction,
+    ) -> Result<(), DbError> {
         use crate::parser::AlterAction;
 
         // Get current table schema
@@ -1067,7 +1217,10 @@ impl Executor {
 
                 // Check if column already exists
                 if new_columns.iter().any(|c| c.name == column.name) {
-                    return Err(DbError::Execution(format!("Column {} already exists", column.name)));
+                    return Err(DbError::Execution(format!(
+                        "Column {} already exists",
+                        column.name
+                    )));
                 }
 
                 new_columns.push(column);
@@ -1089,11 +1242,16 @@ impl Executor {
                 new_columns.retain(|c| c.name != column_name);
 
                 if new_columns.len() == initial_len {
-                    return Err(DbError::Execution(format!("Column {} not found", column_name)));
+                    return Err(DbError::Execution(format!(
+                        "Column {} not found",
+                        column_name
+                    )));
                 }
 
                 if new_columns.is_empty() {
-                    return Err(DbError::Execution("Cannot drop all columns from table".to_string()));
+                    return Err(DbError::Execution(
+                        "Cannot drop all columns from table".to_string(),
+                    ));
                 }
 
                 // Update schema
@@ -1104,7 +1262,10 @@ impl Executor {
                 Ok(())
             }
 
-            AlterAction::AlterColumn { column_name, new_type } => {
+            AlterAction::AlterColumn {
+                column_name,
+                new_type,
+            } => {
                 // Change the data type of a column
                 let mut new_columns = current_schema.columns.clone();
 
@@ -1119,7 +1280,10 @@ impl Executor {
                 }
 
                 if !found {
-                    return Err(DbError::Execution(format!("Column {} not found", column_name)));
+                    return Err(DbError::Execution(format!(
+                        "Column {} not found",
+                        column_name
+                    )));
                 }
 
                 // Update schema
@@ -1130,7 +1294,11 @@ impl Executor {
                 Ok(())
             }
 
-            AlterAction::ModifyColumn { column_name, new_type, nullable } => {
+            AlterAction::ModifyColumn {
+                column_name,
+                new_type,
+                nullable,
+            } => {
                 // Modify column type and nullable status
                 let mut new_columns = current_schema.columns.clone();
 
@@ -1148,7 +1316,10 @@ impl Executor {
                 }
 
                 if !found {
-                    return Err(DbError::Execution(format!("Column {} not found", column_name)));
+                    return Err(DbError::Execution(format!(
+                        "Column {} not found",
+                        column_name
+                    )));
                 }
 
                 // Update schema
@@ -1186,7 +1357,10 @@ impl Executor {
                 }
 
                 if !found {
-                    return Err(DbError::Execution(format!("Column {} not found", column_name)));
+                    return Err(DbError::Execution(format!(
+                        "Column {} not found",
+                        column_name
+                    )));
                 }
 
                 // Update schema

@@ -1,14 +1,13 @@
 // Performance Alerts
 // Threshold-based alerting, anomaly detection, alert routing and escalation
 
-use std::fmt;
-use std::time::SystemTime;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
+use std::fmt;
 use std::sync::Arc;
-use parking_lot::RwLock;
 use std::time::Duration;
-
+use std::time::SystemTime;
 
 // Alert severity levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -296,7 +295,8 @@ impl AnomalyRule {
 
     fn detect_stddev(&self, history: &[f64], current_value: f64) -> bool {
         let mean = history.iter().sum::<f64>() / history.len() as f64;
-        let variance = history.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / history.len() as f64;
+        let variance =
+            history.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / history.len() as f64;
         let stddev = variance.sqrt();
 
         let z_score = (current_value - mean).abs() / stddev;
@@ -397,7 +397,9 @@ impl AlertManager {
         let timestamp = SystemTime::now();
 
         let mut history = self.metric_history.write();
-        let entries = history.entry(metric_name.clone()).or_insert_with(VecDeque::new);
+        let entries = history
+            .entry(metric_name.clone())
+            .or_insert_with(VecDeque::new);
 
         if entries.len() >= self.max_metric_history {
             entries.pop_front();
@@ -435,11 +437,15 @@ impl AlertManager {
                     rule.name.clone(),
                     rule.category,
                     rule.severity,
-                    format!("Threshold exceeded: {} = {:.2} (threshold: {:.2})",
-                        metric_name, value, rule.threshold),
+                    format!(
+                        "Threshold exceeded: {} = {:.2} (threshold: {:.2})",
+                        metric_name, value, rule.threshold
+                    ),
                 );
 
-                self.last_trigger_time.write().insert(rule.name.clone(), SystemTime::now());
+                self.last_trigger_time
+                    .write()
+                    .insert(rule.name.clone(), SystemTime::now());
             }
         }
     }
@@ -564,7 +570,9 @@ impl AlertManager {
     }
 
     pub fn clear_resolved_alerts(&self) {
-        self.alerts.write().retain(|_, alert| alert.state != AlertState::Resolved);
+        self.alerts
+            .write()
+            .retain(|_, alert| alert.state != AlertState::Resolved);
     }
 
     pub fn get_alert_count(&self) -> usize {
@@ -572,7 +580,11 @@ impl AlertManager {
     }
 
     pub fn get_active_alert_count(&self) -> usize {
-        self.alerts.read().values().filter(|a| a.is_active()).count()
+        self.alerts
+            .read()
+            .values()
+            .filter(|a| a.is_active())
+            .count()
     }
 }
 

@@ -4,12 +4,12 @@
 // from the pool. Implements LRU, TTL-based, and health-based eviction.
 
 use crate::error::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
 
 /// Connection eviction policy
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -319,11 +319,12 @@ impl EvictionManager {
         }
 
         // Update statistics
-        self.stats.evictions_performed.fetch_add(evicted as u64, Ordering::Relaxed);
-        self.stats.last_eviction_time.store(
-            Instant::now().elapsed().as_secs(),
-            Ordering::Relaxed,
-        );
+        self.stats
+            .evictions_performed
+            .fetch_add(evicted as u64, Ordering::Relaxed);
+        self.stats
+            .last_eviction_time
+            .store(Instant::now().elapsed().as_secs(), Ordering::Relaxed);
 
         Ok(evicted)
     }

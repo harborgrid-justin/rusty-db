@@ -21,9 +21,9 @@
 // let original = compressor.decompress(&compressed);
 // ```
 
-use std::collections::HashSet;
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 // Compression algorithm for query results.
@@ -274,12 +274,8 @@ impl QueryResultCompressor {
         let start = std::time::Instant::now();
 
         let result = match compressed.algorithm {
-            CompressionAlgorithm::Dictionary => {
-                self.dictionary_decode(compressed)
-            }
-            CompressionAlgorithm::RunLength => {
-                self.run_length_decode(compressed)
-            }
+            CompressionAlgorithm::Dictionary => self.dictionary_decode(compressed),
+            CompressionAlgorithm::RunLength => self.run_length_decode(compressed),
             _ => self.simple_decode(compressed),
         };
 
@@ -663,7 +659,7 @@ impl QueryResultCompressor {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Instant;
+    use std::time::Instant;
 
     #[test]
     fn test_dictionary_encoding() {

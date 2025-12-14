@@ -2,13 +2,18 @@
 //
 // Query resolvers for the GraphQL API
 
-use async_graphql::{Context, Error, ErrorExtensions, InputObject, Object, Result as GqlResult, SimpleObject, ID};
+use async_graphql::{
+    Context, Error, ErrorExtensions, InputObject, Object, Result as GqlResult, SimpleObject, ID,
+};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
-use super::types::{BigInt, Json, JoinType};
-use super::models::{DatabaseSchema, TableType, QueryResult, QuerySuccess, QueryError, RowType, AggregateInput, AggregateResult, OrderBy, RowConnection, WhereClause};
+use super::models::{
+    AggregateInput, AggregateResult, DatabaseSchema, OrderBy, QueryError, QueryResult,
+    QuerySuccess, RowConnection, RowType, TableType, WhereClause,
+};
+use super::types::{BigInt, JoinType, Json};
 use super::GraphQLEngine;
 use crate::api::AuthorizationContext;
 
@@ -69,7 +74,10 @@ impl QueryRoot {
         let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
-        match engine.query_table(&table, where_clause, order_by, limit, offset).await {
+        match engine
+            .query_table(&table, where_clause, order_by, limit, offset)
+            .await
+        {
             Ok((rows, total_count, has_more)) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(QueryResult::Success(QuerySuccess {
@@ -100,7 +108,10 @@ impl QueryRoot {
         let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
-        match engine.query_tables(tables, joins, where_clause, order_by, limit).await {
+        match engine
+            .query_tables(tables, joins, where_clause, order_by, limit)
+            .await
+        {
             Ok((rows, total_count, has_more)) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(QueryResult::Success(QuerySuccess {
@@ -131,24 +142,13 @@ impl QueryRoot {
         before: Option<String>,
     ) -> GqlResult<RowConnection> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
-        engine.query_table_connection(
-            &table,
-            where_clause,
-            order_by,
-            first,
-            after,
-            last,
-            before,
-        ).await
+        engine
+            .query_table_connection(&table, where_clause, order_by, first, after, last, before)
+            .await
     }
 
     // Get a single row by ID
-    async fn row(
-        &self,
-        ctx: &Context<'_>,
-        table: String,
-        id: ID,
-    ) -> GqlResult<Option<RowType>> {
+    async fn row(&self, ctx: &Context<'_>, table: String, id: ID) -> GqlResult<Option<RowType>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
         engine.get_row(&table, &id).await
     }
@@ -163,7 +163,9 @@ impl QueryRoot {
         group_by: Option<Vec<String>>,
     ) -> GqlResult<Vec<AggregateResult>> {
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
-        engine.aggregate(&table, aggregates, where_clause, group_by).await
+        engine
+            .aggregate(&table, aggregates, where_clause, group_by)
+            .await
     }
 
     // Count rows in a table
@@ -253,7 +255,10 @@ impl QueryRoot {
         let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
-        match engine.execute_union(queries, union_all.unwrap_or(false)).await {
+        match engine
+            .execute_union(queries, union_all.unwrap_or(false))
+            .await
+        {
             Ok((rows, total_count)) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(QueryResult::Success(QuerySuccess {

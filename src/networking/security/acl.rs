@@ -44,7 +44,10 @@ impl IpNetwork {
     pub fn from_cidr(cidr: &str) -> Result<Self> {
         let parts: Vec<&str> = cidr.split('/').collect();
         if parts.len() != 2 {
-            return Err(DbError::ParseError(format!("Invalid CIDR notation: {}", cidr)));
+            return Err(DbError::ParseError(format!(
+                "Invalid CIDR notation: {}",
+                cidr
+            )));
         }
 
         let addr: IpAddr = parts[0]
@@ -397,9 +400,9 @@ impl NetworkAcl {
     /// Check if connection is allowed
     pub fn is_allowed(&mut self, source: IpAddr) -> Result<bool> {
         // For simple IP check, use 0.0.0.0 as destination and port 0
-        let destination = "0.0.0.0".parse::<IpAddr>().map_err(|e| {
-            DbError::Internal(format!("Failed to parse default IP: {}", e))
-        })?;
+        let destination = "0.0.0.0"
+            .parse::<IpAddr>()
+            .map_err(|e| DbError::Internal(format!("Failed to parse default IP: {}", e)))?;
 
         self.check(source, destination, 0)
     }
@@ -471,8 +474,8 @@ impl NetworkAcl {
         let mut acl = NetworkAcl::new(Action::Deny);
 
         for line in reader.lines() {
-            let line = line
-                .map_err(|e| DbError::Configuration(format!("Failed to read line: {}", e)))?;
+            let line =
+                line.map_err(|e| DbError::Configuration(format!("Failed to read line: {}", e)))?;
 
             let line = line.trim();
             if line.is_empty() || line.starts_with('#') {
@@ -504,7 +507,8 @@ impl NetworkAcl {
         writeln!(file, "default:{}", self.default_action.to_string())
             .map_err(|e| DbError::Configuration(format!("Failed to write default: {}", e)))?;
 
-        writeln!(file).map_err(|e| DbError::Configuration(format!("Failed to write newline: {}", e)))?;
+        writeln!(file)
+            .map_err(|e| DbError::Configuration(format!("Failed to write newline: {}", e)))?;
 
         for rule in &self.rules {
             writeln!(file, "{}", rule.to_line())
@@ -572,13 +576,7 @@ mod tests {
         let dest = IpNetwork::from_cidr("0.0.0.0/0").unwrap();
         let ports = PortRange::new(8000, 9000).unwrap();
 
-        let rule = AclRule::new(
-            "rule1".to_string(),
-            source,
-            dest,
-            ports,
-            Action::Allow,
-        );
+        let rule = AclRule::new("rule1".to_string(), source, dest, ports, Action::Allow);
 
         let src_ip: IpAddr = "192.168.1.100".parse().unwrap();
         let dst_ip: IpAddr = "10.0.0.1".parse().unwrap();
@@ -595,13 +593,7 @@ mod tests {
         let dest = IpNetwork::from_cidr("0.0.0.0/0").unwrap();
         let ports = PortRange::any();
 
-        let rule = AclRule::new(
-            "allow-192".to_string(),
-            source,
-            dest,
-            ports,
-            Action::Allow,
-        );
+        let rule = AclRule::new("allow-192".to_string(), source, dest, ports, Action::Allow);
 
         acl.add_rule(rule);
 

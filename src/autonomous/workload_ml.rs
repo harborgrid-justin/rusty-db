@@ -5,16 +5,16 @@
 //
 // Enhanced with SIMD acceleration for sub-millisecond inference!
 
-use std::fmt;
-use std::collections::VecDeque;
-use std::time::SystemTime;
-use std::collections::HashMap;
-use std::sync::Arc;
-use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
-use crate::Result;
 use crate::error::DbError;
 use crate::ml::simd_ops::simd_euclidean_distance;
+use crate::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
+use std::sync::Arc;
+use std::time::SystemTime;
 
 // Query feature vector for ML models
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,7 +46,7 @@ impl QueryFeatures {
             self.where_clauses_count as f64,
             self.order_by_count as f64,
             self.group_by_count as f64,
-            (self.estimated_rows as f64).ln_1p(),  // Log scale for row counts
+            (self.estimated_rows as f64).ln_1p(), // Log scale for row counts
             if self.has_limit { 1.0 } else { 0.0 },
             if self.has_distinct { 1.0 } else { 0.0 },
             (self.query_length as f64).ln_1p(),
@@ -61,12 +61,12 @@ impl QueryFeatures {
 // Workload classification types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum WorkloadClass {
-    OLTP,           // Online Transaction Processing
-    OLAP,           // Online Analytical Processing
-    Mixed,          // Mixed workload
-    Batch,          // Batch processing
-    Reporting,      // Reporting queries
-    ETL,            // Extract-Transform-Load
+    OLTP,      // Online Transaction Processing
+    OLAP,      // Online Analytical Processing
+    Mixed,     // Mixed workload
+    Batch,     // Batch processing
+    Reporting, // Reporting queries
+    ETL,       // Extract-Transform-Load
 }
 
 impl fmt::Display for WorkloadClass {
@@ -208,7 +208,12 @@ impl KMeansClassifier {
             .collect()
     }
 
-    fn update_centroids(&self, data: &[Vec<f64>], assignments: &[usize], dim: usize) -> Vec<Vec<f64>> {
+    fn update_centroids(
+        &self,
+        data: &[Vec<f64>],
+        assignments: &[usize],
+        dim: usize,
+    ) -> Vec<Vec<f64>> {
         let mut new_centroids = vec![vec![0.0; dim]; self.k];
         let mut counts = vec![0; self.k];
 
@@ -248,7 +253,8 @@ impl KMeansClassifier {
             return None;
         }
 
-        let cluster = self.centroids
+        let cluster = self
+            .centroids
             .iter()
             .enumerate()
             .map(|(i, centroid)| (i, self.euclidean_distance(point, centroid)))
@@ -279,7 +285,9 @@ impl PerformancePredictor {
 
     pub fn train(&mut self, features: &[QueryFeatures], execution_times: &[f64]) -> Result<()> {
         if features.len() != execution_times.len() {
-            return Err(DbError::Internal("Feature and label count mismatch".to_string()));
+            return Err(DbError::Internal(
+                "Feature and label count mismatch".to_string(),
+            ));
         }
 
         if features.is_empty() {
@@ -338,11 +346,7 @@ impl PerformancePredictor {
     }
 
     fn predict_internal(&self, features: &[f64]) -> f64 {
-        let sum: f64 = features
-            .iter()
-            .zip(&self.weights)
-            .map(|(x, w)| x * w)
-            .sum();
+        let sum: f64 = features.iter().zip(&self.weights).map(|(x, w)| x * w).sum();
         sum + self.bias
     }
 
@@ -437,9 +441,7 @@ impl AnomalyDetector {
         point
             .iter()
             .enumerate()
-            .map(|(i, &val)| {
-                (val - self.mean[i]).abs() / self.std_dev[i].max(1e-10)
-            })
+            .map(|(i, &val)| (val - self.mean[i]).abs() / self.std_dev[i].max(1e-10))
             .fold(0.0, f64::max)
     }
 }
@@ -470,7 +472,12 @@ impl PatternRecognizer {
         }
     }
 
-    pub fn observe_query(&self, features: QueryFeatures, execution_time_ms: f64, rows_returned: usize) {
+    pub fn observe_query(
+        &self,
+        features: QueryFeatures,
+        execution_time_ms: f64,
+        rows_returned: usize,
+    ) {
         let mut patterns = self.patterns.write();
 
         patterns
@@ -483,8 +490,9 @@ impl PatternRecognizer {
                 pattern.avg_execution_time_ms =
                     (pattern.avg_execution_time_ms * (n - 1.0) + execution_time_ms) / n;
 
-                pattern.avg_rows_returned =
-                    ((pattern.avg_rows_returned as f64 * (n - 1.0) + rows_returned as f64) / n) as usize;
+                pattern.avg_rows_returned = ((pattern.avg_rows_returned as f64 * (n - 1.0)
+                    + rows_returned as f64)
+                    / n) as usize;
 
                 pattern.last_seen = SystemTime::now();
             })
@@ -565,7 +573,8 @@ impl TimeSeriesAnalyzer {
         }
 
         // Calculate linear regression
-        let points: Vec<(f64, f64)> = self.time_series
+        let points: Vec<(f64, f64)> = self
+            .time_series
             .iter()
             .enumerate()
             .map(|(i, p)| (i as f64, p.value))
@@ -609,7 +618,11 @@ impl TimeSeriesAnalyzer {
             })
             .sum();
 
-        let r_squared = if ss_tot > 0.0 { 1.0 - ss_res / ss_tot } else { 0.0 };
+        let r_squared = if ss_tot > 0.0 {
+            1.0 - ss_res / ss_tot
+        } else {
+            0.0
+        };
 
         (slope, r_squared.max(0.0).min(1.0))
     }
@@ -657,7 +670,8 @@ impl WorkloadMLAnalyzer {
         history.push_back((features.clone(), execution_time_ms));
 
         // Update pattern recognizer
-        self.pattern_recognizer.observe_query(features, execution_time_ms, 0);
+        self.pattern_recognizer
+            .observe_query(features, execution_time_ms, 0);
 
         // Update time series
         let mut analyzers = self.time_series_analyzers.write();
@@ -687,12 +701,17 @@ impl WorkloadMLAnalyzer {
         self.classifier.write().fit(&feature_vectors)?;
 
         // Train performance predictor
-        self.performance_predictor.write().train(&features, &execution_times)?;
+        self.performance_predictor
+            .write()
+            .train(&features, &execution_times)?;
 
         // Train anomaly detector
         self.anomaly_detector.write().train(&feature_vectors)?;
 
-        tracing::info!("ML models trained successfully on {} samples", history.len());
+        tracing::info!(
+            "ML models trained successfully on {} samples",
+            history.len()
+        );
 
         Ok(())
     }

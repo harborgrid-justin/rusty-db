@@ -2,14 +2,14 @@
 //
 // Security policy engine and defense orchestration for access control and threat management.
 
-use std::collections::{HashSet, HashMap};
-use std::sync::Arc;
+use crate::Result;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::Result;
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
-use super::super::IntegratedSecurityManager;
 use super::super::rbac::RoleId;
+use super::super::IntegratedSecurityManager;
 use super::common::*;
 
 // ============================================================================
@@ -143,7 +143,10 @@ impl SecurityPolicyEngine {
     pub fn evaluate(&self, context: &EvaluationContext) -> Result<PolicyDecision> {
         let start = current_timestamp_micros();
 
-        let cache_key = format!("{}:{}:{}", context.user_id, context.resource, context.action);
+        let cache_key = format!(
+            "{}:{}:{}",
+            context.user_id, context.resource, context.action
+        );
         {
             let cache = self.decision_cache.read();
             if let Some(decision) = cache.get(&cache_key) {
@@ -180,10 +183,16 @@ impl SecurityPolicyEngine {
                         if self.evaluate_conditions(&rule.conditions, context)? {
                             if rule.effect == PolicyEffect::Allow {
                                 final_effect = PolicyEffect::Allow;
-                                reasons.push(format!("Allowed by policy '{}' rule '{}'", policy.name, rule.name));
+                                reasons.push(format!(
+                                    "Allowed by policy '{}' rule '{}'",
+                                    policy.name, rule.name
+                                ));
                             } else if rule.effect == PolicyEffect::Deny {
                                 final_effect = PolicyEffect::Deny;
-                                reasons.push(format!("Denied by policy '{}' rule '{}'", policy.name, rule.name));
+                                reasons.push(format!(
+                                    "Denied by policy '{}' rule '{}'",
+                                    policy.name, rule.name
+                                ));
                                 break;
                             }
                         }
@@ -215,7 +224,7 @@ impl SecurityPolicyEngine {
         }
         stats.avg_evaluation_time_us =
             (stats.avg_evaluation_time_us * (stats.total_evaluations - 1) as f64 + elapsed as f64)
-            / stats.total_evaluations as f64;
+                / stats.total_evaluations as f64;
 
         Ok(decision)
     }
@@ -225,8 +234,8 @@ impl SecurityPolicyEngine {
     }
 
     fn rule_matches(&self, rule: &PolicyRule, context: &EvaluationContext) -> Result<bool> {
-        let subject_match = glob_match(&rule.subject, &context.user_id) ||
-                           context.roles.iter().any(|r| glob_match(&rule.subject, r));
+        let subject_match = glob_match(&rule.subject, &context.user_id)
+            || context.roles.iter().any(|r| glob_match(&rule.subject, r));
 
         let action_match = glob_match(&rule.action, &context.action);
 
@@ -235,14 +244,21 @@ impl SecurityPolicyEngine {
         Ok(subject_match && action_match && resource_match)
     }
 
-    fn evaluate_conditions(&self, conditions: &[PolicyCondition], context: &EvaluationContext) -> Result<bool> {
+    fn evaluate_conditions(
+        &self,
+        conditions: &[PolicyCondition],
+        context: &EvaluationContext,
+    ) -> Result<bool> {
         for condition in conditions {
             let attr_value = match condition.attribute.as_str() {
                 "user_id" => Some(context.user_id.clone()),
                 "action" => Some(context.action.clone()),
                 "resource" => Some(context.resource.clone()),
                 "timestamp" => Some(context.timestamp.to_string()),
-                _ => context.session_attributes.get(&condition.attribute).cloned(),
+                _ => context
+                    .session_attributes
+                    .get(&condition.attribute)
+                    .cloned(),
             };
 
             if let Some(value) = attr_value {
@@ -333,12 +349,15 @@ impl DefenseOrchestrator {
             DefenseLayer::DataProtection,
             DefenseLayer::ThreatDetection,
         ] {
-            defense_status.insert(layer.clone(), LayerStatus {
-                active: true,
-                health: 1.0,
-                last_check: current_timestamp(),
-                issues: Vec::new(),
-            });
+            defense_status.insert(
+                layer.clone(),
+                LayerStatus {
+                    active: true,
+                    health: 1.0,
+                    last_check: current_timestamp(),
+                    issues: Vec::new(),
+                },
+            );
         }
 
         Self {
@@ -363,7 +382,10 @@ impl DefenseOrchestrator {
                 total_health += layer_status.health;
 
                 if layer_status.health < 0.7 {
-                    gaps.push(format!("Layer {:?} health is low: {:.2}", layer, layer_status.health));
+                    gaps.push(format!(
+                        "Layer {:?} health is low: {:.2}",
+                        layer, layer_status.health
+                    ));
                 }
             }
         }
@@ -395,10 +417,8 @@ impl DefenseOrchestrator {
             ThreatLevel::High => {
                 self.enable_all_defenses()?;
             }
-            ThreatLevel::Medium => {
-            }
-            ThreatLevel::Low => {
-            }
+            ThreatLevel::Medium => {}
+            ThreatLevel::Low => {}
         }
 
         Ok(())

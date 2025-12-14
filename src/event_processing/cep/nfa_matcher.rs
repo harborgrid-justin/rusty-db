@@ -1,12 +1,11 @@
+use super::super::Event;
 /// NFA-Based Pattern Matching Module
 ///
 /// Optimized Non-deterministic Finite Automaton for efficient pattern matching.
 /// Achieves O(n) matching amortized vs O(n*m) naive approach.
 /// Throughput: 1M+ events/second for pattern-heavy workloads.
-
 use super::pattern_matching::{Condition, Pattern, PatternElement, PatternSpec};
 use super::temporal_operators::{MatchContext, PatternMatch};
-use super::super::Event;
 use crate::error::Result;
 use std::collections::{HashSet, VecDeque};
 use std::sync::Arc;
@@ -91,7 +90,13 @@ impl NFA {
         id
     }
 
-    fn add_transition(&mut self, from: usize, to: usize, condition: Arc<Condition>, is_epsilon: bool) {
+    fn add_transition(
+        &mut self,
+        from: usize,
+        to: usize,
+        condition: Arc<Condition>,
+        is_epsilon: bool,
+    ) {
         if from < self.states.len() {
             self.states[from].transitions.push(NFATransition {
                 target: to,
@@ -108,12 +113,7 @@ impl NFA {
                 let end = self.add_state(false, Some(element.variable.clone()));
 
                 // Add transition with condition
-                self.add_transition(
-                    start,
-                    end,
-                    Arc::new(element.condition.clone()),
-                    false,
-                );
+                self.add_transition(start, end, Arc::new(element.condition.clone()), false);
 
                 Ok(end)
             }
@@ -139,7 +139,9 @@ impl NFA {
                     self.add_transition(
                         alt_end,
                         end,
-                        Arc::new(Condition::Custom { name: "epsilon".to_string() }),
+                        Arc::new(Condition::Custom {
+                            name: "epsilon".to_string(),
+                        }),
                         true,
                     );
                 }
@@ -155,13 +157,17 @@ impl NFA {
                 self.add_transition(
                     start,
                     end,
-                    Arc::new(Condition::Custom { name: "epsilon".to_string() }),
+                    Arc::new(Condition::Custom {
+                        name: "epsilon".to_string(),
+                    }),
                     true,
                 );
                 self.add_transition(
                     inner_end,
                     end,
-                    Arc::new(Condition::Custom { name: "epsilon".to_string() }),
+                    Arc::new(Condition::Custom {
+                        name: "epsilon".to_string(),
+                    }),
                     true,
                 );
 
@@ -187,14 +193,18 @@ impl NFA {
                         self.add_transition(
                             current,
                             next,
-                            Arc::new(Condition::Custom { name: "epsilon".to_string() }),
+                            Arc::new(Condition::Custom {
+                                name: "epsilon".to_string(),
+                            }),
                             true,
                         );
 
                         self.add_transition(
                             inner,
                             next,
-                            Arc::new(Condition::Custom { name: "epsilon".to_string() }),
+                            Arc::new(Condition::Custom {
+                                name: "epsilon".to_string(),
+                            }),
                             true,
                         );
 
@@ -208,7 +218,9 @@ impl NFA {
                     self.add_transition(
                         current,
                         loop_state,
-                        Arc::new(Condition::Custom { name: "epsilon".to_string() }),
+                        Arc::new(Condition::Custom {
+                            name: "epsilon".to_string(),
+                        }),
                         true,
                     );
 
@@ -216,7 +228,9 @@ impl NFA {
                     self.add_transition(
                         inner,
                         loop_state,
-                        Arc::new(Condition::Custom { name: "epsilon".to_string() }),
+                        Arc::new(Condition::Custom {
+                            name: "epsilon".to_string(),
+                        }),
                         true,
                     );
 
@@ -274,15 +288,12 @@ impl NFA {
                             pattern_match.end_time = event.event_time;
 
                             // Collect all events up to this point
-                            let matched_events: Vec<Event> = events[..=event_idx]
-                                .iter()
-                                .map(|&e| e.clone())
-                                .collect();
+                            let matched_events: Vec<Event> =
+                                events[..=event_idx].iter().map(|&e| e.clone()).collect();
 
-                            pattern_match.events.insert(
-                                self.pattern_name.clone(),
-                                matched_events,
-                            );
+                            pattern_match
+                                .events
+                                .insert(self.pattern_name.clone(), matched_events);
 
                             matches.push(pattern_match);
                         }
@@ -374,9 +385,15 @@ impl NFAPatternMatcher {
         let events: Vec<&Event> = self.buffer.iter().collect();
 
         for nfa in &self.nfas {
-            let pattern = Pattern::new(nfa.pattern_name(), PatternSpec::Element(
-                PatternElement::new("dummy", Condition::Custom { name: "dummy".to_string() })
-            ));
+            let pattern = Pattern::new(
+                nfa.pattern_name(),
+                PatternSpec::Element(PatternElement::new(
+                    "dummy",
+                    Condition::Custom {
+                        name: "dummy".to_string(),
+                    },
+                )),
+            );
 
             let context = MatchContext::new(Arc::new(pattern));
             let matches = nfa.match_events(&events, &context);

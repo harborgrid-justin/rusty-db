@@ -216,16 +216,14 @@ pub mod table;
 
 pub use delivery::{DeliveryGuarantee, DeliveryTracker, IdempotencyKey};
 pub use dispatcher::{
-    BroadcastResult, CoordinatedBroadcastResult, FanOutResult, MessageDispatcher,
-    MulticastResult, QuorumResult, ScatterGatherResult, ShardResult,
+    BroadcastResult, CoordinatedBroadcastResult, FanOutResult, MessageDispatcher, MulticastResult,
+    QuorumResult, ScatterGatherResult, ShardResult,
 };
-pub use queue::{DeadLetterMessage, QueueManager, QueuedMessage, QueueStats};
+pub use queue::{DeadLetterMessage, QueueManager, QueueStats, QueuedMessage};
 pub use router::{MessageHandler, MessageRouter, RouterStats};
 pub use rpc::{
     DataReadRequest, DataReadResponse, DataWriteRequest, DataWriteResponse, PingRequest,
     PingResponse, QueryRpcRequest, QueryRpcResponse, Request, RpcClient, RpcHandler, RpcServer,
 };
-pub use serialization::{
-    BinaryCodec, ClusterMessage, RequestId,
-};
+pub use serialization::{BinaryCodec, ClusterMessage, RequestId};
 pub use table::{DatacenterId, RouteVersion, RoutingTable, RoutingTableSnapshot, ShardId};

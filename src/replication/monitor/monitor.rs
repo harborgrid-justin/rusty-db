@@ -8,17 +8,20 @@ use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
-use crate::replication::ReplicaId;
 use super::config::HealthMonitorConfig;
 use super::errors::HealthMonitorError;
 use super::types::*;
+use crate::replication::ReplicaId;
 
 // Health monitor trait
 #[allow(dead_code)]
 #[async_trait]
 pub trait HealthMonitor: Send + Sync {
     // Check health of a specific replica
-    async fn check_replica_health(&self, replica_id: &ReplicaId) -> Result<HealthCheckResult, HealthMonitorError>;
+    async fn check_replica_health(
+        &self,
+        replica_id: &ReplicaId,
+    ) -> Result<HealthCheckResult, HealthMonitorError>;
 
     // Check health of all replicas
     async fn check_all_replicas(&self) -> Result<Vec<HealthCheckResult>, HealthMonitorError>;
@@ -31,7 +34,10 @@ pub trait HealthMonitor: Send + Sync {
     ) -> Result<Vec<HealthHistoryEntry>, HealthMonitorError>;
 
     // Get health statistics
-    async fn get_statistics(&self, replica_id: Option<&ReplicaId>) -> Result<HealthStatistics, HealthMonitorError>;
+    async fn get_statistics(
+        &self,
+        replica_id: Option<&ReplicaId>,
+    ) -> Result<HealthStatistics, HealthMonitorError>;
 
     // Get active alerts
     async fn get_active_alerts(&self) -> Result<Vec<HealthAlert>, HealthMonitorError>;
@@ -40,7 +46,10 @@ pub trait HealthMonitor: Send + Sync {
     async fn acknowledge_alert(&self, alert_id: &str) -> Result<(), HealthMonitorError>;
 
     // Get health trend
-    async fn get_health_trend(&self, replica_id: &ReplicaId) -> Result<HealthTrend, HealthMonitorError>;
+    async fn get_health_trend(
+        &self,
+        replica_id: &ReplicaId,
+    ) -> Result<HealthTrend, HealthMonitorError>;
 }
 
 // Replication health monitor implementation
@@ -99,7 +108,8 @@ impl ReplicationHealthMonitor {
                 let mut history = history.write();
                 for entries in history.values_mut() {
                     entries.retain(|entry| {
-                        now.duration_since(entry.timestamp).unwrap_or_default() < config.history_retention
+                        now.duration_since(entry.timestamp).unwrap_or_default()
+                            < config.history_retention
                     });
 
                     // Limit number of entries
@@ -113,7 +123,10 @@ impl ReplicationHealthMonitor {
         *self.monitor_handle.write() = Some(handle);
     }
 
-    pub(crate) fn collect_metrics(&self, _replica_id: &ReplicaId) -> Result<HealthMetrics, HealthMonitorError> {
+    pub(crate) fn collect_metrics(
+        &self,
+        _replica_id: &ReplicaId,
+    ) -> Result<HealthMetrics, HealthMonitorError> {
         // Simplified metric collection - in production this would query actual systems
         Ok(HealthMetrics {
             replication_lag_bytes: 50 * 1024 * 1024, // 50MB
@@ -140,7 +153,9 @@ impl ReplicationHealthMonitor {
             ReplicaHealthStatus::Healthy
         };
 
-        let lag_score = 100.0 - (metrics.replication_lag_bytes as f64 / thresholds.lag_bytes_critical as f64 * 100.0).min(100.0);
+        let lag_score = 100.0
+            - (metrics.replication_lag_bytes as f64 / thresholds.lag_bytes_critical as f64 * 100.0)
+                .min(100.0);
 
         // Connection component
         let connection_status = if metrics.connection_count > 0 {
@@ -158,7 +173,8 @@ impl ReplicationHealthMonitor {
             ReplicaHealthStatus::Healthy
         };
 
-        let throughput_score = (metrics.bytes_per_second / thresholds.throughput_min_warning * 100.0).min(100.0);
+        let throughput_score =
+            (metrics.bytes_per_second / thresholds.throughput_min_warning * 100.0).min(100.0);
 
         // Error rate component
         let error_status = if metrics.error_rate >= thresholds.error_rate_critical {
@@ -169,7 +185,8 @@ impl ReplicationHealthMonitor {
             ReplicaHealthStatus::Healthy
         };
 
-        let error_score = 100.0 - (metrics.error_rate / thresholds.error_rate_critical * 100.0).min(100.0);
+        let error_score =
+            100.0 - (metrics.error_rate / thresholds.error_rate_critical * 100.0).min(100.0);
 
         // Resource usage component
         let resource_status = if metrics.cpu_usage_percent >= thresholds.cpu_usage_critical {
@@ -180,7 +197,8 @@ impl ReplicationHealthMonitor {
             ReplicaHealthStatus::Healthy
         };
 
-        let resource_score = 100.0 - (metrics.cpu_usage_percent / thresholds.cpu_usage_critical * 100.0).min(100.0);
+        let resource_score =
+            100.0 - (metrics.cpu_usage_percent / thresholds.cpu_usage_critical * 100.0).min(100.0);
 
         HealthComponents {
             replication_lag: ComponentHealth {
@@ -247,7 +265,11 @@ impl ReplicationHealthMonitor {
         }
     }
 
-    pub(crate) fn identify_issues(&self, components: &HealthComponents, metrics: &HealthMetrics) -> Vec<HealthIssue> {
+    pub(crate) fn identify_issues(
+        &self,
+        components: &HealthComponents,
+        metrics: &HealthMetrics,
+    ) -> Vec<HealthIssue> {
         let mut issues = Vec::new();
         let now = SystemTime::now();
 
@@ -256,15 +278,23 @@ impl ReplicationHealthMonitor {
             issues.push(HealthIssue {
                 severity: IssueSeverity::Critical,
                 component: "replication_lag".to_string(),
-                description: format!("Critical replication lag: {} bytes", metrics.replication_lag_bytes),
-                recommendation: Some("Investigate network, check for slow queries, consider scaling".to_string()),
+                description: format!(
+                    "Critical replication lag: {} bytes",
+                    metrics.replication_lag_bytes
+                ),
+                recommendation: Some(
+                    "Investigate network, check for slow queries, consider scaling".to_string(),
+                ),
                 detected_at: now,
             });
         } else if components.replication_lag.status == ReplicaHealthStatus::Degraded {
             issues.push(HealthIssue {
                 severity: IssueSeverity::Warning,
                 component: "replication_lag".to_string(),
-                description: format!("High replication lag: {} bytes", metrics.replication_lag_bytes),
+                description: format!(
+                    "High replication lag: {} bytes",
+                    metrics.replication_lag_bytes
+                ),
                 recommendation: Some("Monitor closely, check system load".to_string()),
                 detected_at: now,
             });
@@ -290,7 +320,9 @@ impl ReplicationHealthMonitor {
 
     pub(crate) fn record_health_history(&self, result: &HealthCheckResult) {
         let mut history = self.history.write();
-        let entries = history.entry(result.replica_id.clone()).or_insert_with(VecDeque::new);
+        let entries = history
+            .entry(result.replica_id.clone())
+            .or_insert_with(VecDeque::new);
 
         let entry = HealthHistoryEntry {
             timestamp: result.timestamp,
@@ -310,7 +342,9 @@ impl ReplicationHealthMonitor {
 
     pub(crate) fn update_statistics(&self, replica_id: &ReplicaId, result: &HealthCheckResult) {
         let mut statistics = self.statistics.write();
-        let stats = statistics.entry(replica_id.clone()).or_insert_with(HealthStatistics::default);
+        let stats = statistics
+            .entry(replica_id.clone())
+            .or_insert_with(HealthStatistics::default);
 
         stats.total_checks += 1;
 
@@ -325,9 +359,12 @@ impl ReplicationHealthMonitor {
         // Update running averages
         let total = stats.total_checks as f64;
         stats.average_score = (stats.average_score * (total - 1.0) + result.overall_score) / total;
-        stats.average_lag_bytes = (stats.average_lag_bytes as f64 * (total - 1.0) + result.metrics.replication_lag_bytes as f64) as u64 / stats.total_checks;
+        stats.average_lag_bytes = (stats.average_lag_bytes as f64 * (total - 1.0)
+            + result.metrics.replication_lag_bytes as f64) as u64
+            / stats.total_checks;
 
-        stats.uptime_percentage = (stats.healthy_count + stats.degraded_count) as f64 / total * 100.0;
+        stats.uptime_percentage =
+            (stats.healthy_count + stats.degraded_count) as f64 / total * 100.0;
     }
 }
 

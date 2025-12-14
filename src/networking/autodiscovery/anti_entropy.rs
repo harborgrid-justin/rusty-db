@@ -13,8 +13,8 @@
 
 use super::{MembershipList, MembershipSnapshot};
 use crate::error::{DbError, Result};
-use serde::{Deserialize, Serialize};
 use bincode::{Decode, Encode};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -29,10 +29,7 @@ type Hash = [u8; 32];
 #[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
 enum MerkleNode {
     /// Leaf node containing actual data hash
-    Leaf {
-        key: String,
-        hash: Hash,
-    },
+    Leaf { key: String, hash: Hash },
 
     /// Internal node containing hash of children
     Internal {
@@ -131,7 +128,7 @@ impl MerkleTree {
 
     /// Hash data using SHA-256
     fn hash_data(data: &[u8]) -> Hash {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(data);
         let result = hasher.finalize();
@@ -142,7 +139,7 @@ impl MerkleTree {
 
     /// Hash two nodes together
     fn hash_nodes(left: &MerkleNode, right: &MerkleNode) -> Hash {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(&left.hash());
         hasher.update(&right.hash());
@@ -175,8 +172,18 @@ impl MerkleTree {
                 differences.push(key.clone());
             }
 
-            (MerkleNode::Internal { left: l1, right: r1, .. },
-             MerkleNode::Internal { left: l2, right: r2, .. }) => {
+            (
+                MerkleNode::Internal {
+                    left: l1,
+                    right: r1,
+                    ..
+                },
+                MerkleNode::Internal {
+                    left: l2,
+                    right: r2,
+                    ..
+                },
+            ) => {
                 Self::diff_recursive(l1, l2, differences);
                 Self::diff_recursive(r1, r2, differences);
             }
@@ -257,27 +264,19 @@ enum AntiEntropyMessage {
     HashRequest,
 
     /// Response with state hash
-    HashResponse {
-        root_hash: Hash,
-    },
+    HashResponse { root_hash: Hash },
 
     /// Request for full state
     StateRequest,
 
     /// Response with full state
-    StateResponse {
-        snapshot: MembershipSnapshot,
-    },
+    StateResponse { snapshot: MembershipSnapshot },
 
     /// Request for specific keys
-    KeysRequest {
-        keys: Vec<String>,
-    },
+    KeysRequest { keys: Vec<String> },
 
     /// Response with key values
-    KeysResponse {
-        data: HashMap<String, Vec<u8>>,
-    },
+    KeysResponse { data: HashMap<String, Vec<u8>> },
 }
 
 /// Anti-entropy engine
@@ -327,8 +326,7 @@ impl AntiEntropyEngine {
             .iter()
             .map(|member| {
                 let config = bincode::config::standard();
-                let data = bincode::encode_to_vec(member, config)
-                    .unwrap_or_default();
+                let data = bincode::encode_to_vec(member, config).unwrap_or_default();
                 (member.info.id.clone(), data)
             })
             .collect();
@@ -343,7 +341,9 @@ impl AntiEntropyEngine {
         let data = bincode::encode_to_vec(&msg, config)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
-        self.socket.send_to(&data, peer).await
+        self.socket
+            .send_to(&data, peer)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to send: {}", e)))?;
 
         // In a real implementation, wait for response with timeout
@@ -370,7 +370,9 @@ impl AntiEntropyEngine {
         let data = bincode::encode_to_vec(&msg, config)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
-        self.socket.send_to(&data, peer).await
+        self.socket
+            .send_to(&data, peer)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to send: {}", e)))?;
 
         // In a real implementation, wait for response and merge state
@@ -391,7 +393,9 @@ impl AntiEntropyEngine {
                 let data = bincode::encode_to_vec(&response, config)
                     .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
-                self.socket.send_to(&data, from).await
+                self.socket
+                    .send_to(&data, from)
+                    .await
                     .map_err(|e| DbError::Network(format!("Failed to send: {}", e)))?;
             }
 
@@ -411,7 +415,9 @@ impl AntiEntropyEngine {
                 let data = bincode::encode_to_vec(&response, config)
                     .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
-                self.socket.send_to(&data, from).await
+                self.socket
+                    .send_to(&data, from)
+                    .await
                     .map_err(|e| DbError::Network(format!("Failed to send: {}", e)))?;
             }
 

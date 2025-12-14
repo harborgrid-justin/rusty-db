@@ -4,14 +4,14 @@
 // This module implements continuous optimization loops with reinforcement learning
 // concepts to automatically adjust database parameters for optimal performance.
 
-use std::collections::VecDeque;
-use std::time::{SystemTime, UNIX_EPOCH, Instant, Duration};
-use std::collections::HashMap;
-use std::sync::Arc;
+use crate::Result;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tokio::time::sleep;
-use crate::Result;
 
 // Aggressiveness level for autonomous tuning
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -183,7 +183,7 @@ pub struct TuningResult {
 // Workload characteristics
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkloadCharacteristics {
-    pub read_write_ratio: f64,  // 0.0 = all writes, 1.0 = all reads
+    pub read_write_ratio: f64, // 0.0 = all writes, 1.0 = all reads
     pub avg_query_complexity: f64,
     pub concurrent_connections: usize,
     pub transaction_rate: f64,
@@ -207,7 +207,7 @@ struct QLearningAgent {
     q_table: HashMap<String, HashMap<String, f64>>,
     learning_rate: f64,
     discount_factor: f64,
-    epsilon: f64,  // Exploration rate
+    epsilon: f64, // Exploration rate
     epsilon_decay: f64,
 }
 
@@ -236,7 +236,11 @@ impl QLearningAgent {
     }
 
     fn action_key(parameter: &TunableParameter, direction: i32) -> String {
-        format!("{:?}_{}", parameter, if direction > 0 { "inc" } else { "dec" })
+        format!(
+            "{:?}_{}",
+            parameter,
+            if direction > 0 { "inc" } else { "dec" }
+        )
     }
 
     fn select_action(
@@ -255,13 +259,17 @@ impl QLearningAgent {
         let mut rng = rand::rng();
         if rng.random::<f64>() < self.epsilon {
             // Explore: random action
-            let param = available_parameters[rng.random_range(0..available_parameters.len())].clone();
+            let param =
+                available_parameters[rng.random_range(0..available_parameters.len())].clone();
             let direction = if rng.random::<bool>() { 1 } else { -1 };
             return Some((param, direction));
         }
 
         // Exploit: choose best known action
-        let q_values = self.q_table.entry(state_key.clone()).or_insert_with(HashMap::new);
+        let q_values = self
+            .q_table
+            .entry(state_key.clone())
+            .or_insert_with(HashMap::new);
 
         let mut best_action: Option<(TunableParameter, i32)> = None;
         let mut best_q = f64::NEG_INFINITY;
@@ -295,7 +303,8 @@ impl QLearningAgent {
         let state_key = self.state_key(state);
         let action_key = Self::action_key(&action.0, action.1);
 
-        let current_q = *self.q_table
+        let current_q = *self
+            .q_table
             .entry(state_key.clone())
             .or_insert_with(HashMap::new)
             .entry(action_key.clone())
@@ -303,15 +312,15 @@ impl QLearningAgent {
 
         // Find max Q-value for next state
         let next_state_key = self.state_key(next_state);
-        let max_next_q = self.q_table
+        let max_next_q = self
+            .q_table
             .get(&next_state_key)
-            .map(|actions| {
-                actions.values().copied().fold(f64::NEG_INFINITY, f64::max)
-            })
+            .map(|actions| actions.values().copied().fold(f64::NEG_INFINITY, f64::max))
             .unwrap_or(0.0);
 
         // Q-learning update rule
-        let new_q = current_q + self.learning_rate * (reward + self.discount_factor * max_next_q - current_q);
+        let new_q = current_q
+            + self.learning_rate * (reward + self.discount_factor * max_next_q - current_q);
 
         self.q_table
             .entry(state_key)
@@ -359,13 +368,15 @@ impl RegressionDetector {
             return None;
         }
 
-        let historical_scores: Vec<f64> = self.metric_history
+        let historical_scores: Vec<f64> = self
+            .metric_history
             .iter()
             .take(historical_count)
             .map(|m| m.calculate_score())
             .collect();
 
-        let recent_scores: Vec<f64> = self.metric_history
+        let recent_scores: Vec<f64> = self
+            .metric_history
             .iter()
             .skip(historical_count)
             .map(|m| m.calculate_score())
@@ -388,7 +399,7 @@ impl RegressionDetector {
 pub struct StatisticsGatherer {
     table_stats: HashMap<String, TableStatistics>,
     last_gather_time: HashMap<String, Instant>,
-    auto_gather_threshold: f64,  // Percentage of data change
+    auto_gather_threshold: f64, // Percentage of data change
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -399,7 +410,7 @@ pub struct TableStatistics {
     pub total_size_mb: usize,
     pub index_count: usize,
     pub last_analyzed: SystemTime,
-    pub modification_count: usize,  // Rows modified since last analysis
+    pub modification_count: usize, // Rows modified since last analysis
 }
 
 impl StatisticsGatherer {
@@ -416,12 +427,13 @@ impl StatisticsGatherer {
             let change_ratio = modifications as f64 / stats.row_count.max(1) as f64;
             change_ratio > self.auto_gather_threshold
         } else {
-            true  // No stats exist, should gather
+            true // No stats exist, should gather
         }
     }
 
     pub fn update_stats(&mut self, table_name: String, stats: TableStatistics) {
-        self.last_gather_time.insert(table_name.clone(), Instant::now());
+        self.last_gather_time
+            .insert(table_name.clone(), Instant::now());
         self.table_stats.insert(table_name, stats);
     }
 
@@ -446,9 +458,9 @@ pub struct AutoTuner {
 impl AutoTuner {
     pub fn new(aggressiveness: AggressivenessLevel) -> Self {
         let optimization_interval = match aggressiveness {
-            AggressivenessLevel::Conservative => Duration::from_secs(300),  // 5 minutes
-            AggressivenessLevel::Moderate => Duration::from_secs(180),      // 3 minutes
-            AggressivenessLevel::Aggressive => Duration::from_secs(60),     // 1 minute
+            AggressivenessLevel::Conservative => Duration::from_secs(300), // 5 minutes
+            AggressivenessLevel::Moderate => Duration::from_secs(180),     // 3 minutes
+            AggressivenessLevel::Aggressive => Duration::from_secs(60),    // 1 minute
         };
 
         Self {
@@ -573,18 +585,19 @@ impl AutoTuner {
         let recent_count = 10.min(history.len());
         let recent: Vec<_> = history.iter().rev().take(recent_count).collect();
 
-        let avg_qps: f64 = recent.iter().map(|m| m.queries_per_second).sum::<f64>() / recent_count as f64;
+        let avg_qps: f64 =
+            recent.iter().map(|m| m.queries_per_second).sum::<f64>() / recent_count as f64;
         let avg_cpu: f64 = recent.iter().map(|m| m.cpu_usage).sum::<f64>() / recent_count as f64;
         let avg_mem: usize = recent.iter().map(|m| m.memory_usage_mb).sum::<usize>() / recent_count;
         let avg_io: f64 = recent.iter().map(|m| m.disk_io_rate).sum::<f64>() / recent_count as f64;
 
         WorkloadCharacteristics {
-            read_write_ratio: 0.7,  // Placeholder - would be tracked from query types
+            read_write_ratio: 0.7, // Placeholder - would be tracked from query types
             avg_query_complexity: avg_qps / 1000.0,
-            concurrent_connections: 20,  // Placeholder
+            concurrent_connections: 20, // Placeholder
             transaction_rate: avg_qps,
-            table_scan_ratio: 0.3,  // Placeholder
-            index_scan_ratio: 0.7,  // Placeholder
+            table_scan_ratio: 0.3, // Placeholder
+            index_scan_ratio: 0.7, // Placeholder
             memory_intensive: avg_mem > 2048,
             io_intensive: avg_io > 1000.0,
             cpu_intensive: avg_cpu > 0.7,
@@ -684,7 +697,10 @@ impl AutoTuner {
             // Check for regression
             let regression = self.regression_detector.read().detect_regression();
             if let Some(degradation) = regression {
-                tracing::warn!("Performance regression detected: {:.2}%", degradation * 100.0);
+                tracing::warn!(
+                    "Performance regression detected: {:.2}%",
+                    degradation * 100.0
+                );
 
                 // Rollback recent changes if regression is severe
                 if degradation > 0.2 {
@@ -706,7 +722,10 @@ impl AutoTuner {
 
             let current_state = self.build_rl_state(&workload);
 
-            let action_selection = self.rl_agent.write().select_action(&current_state, &available_params);
+            let action_selection = self
+                .rl_agent
+                .write()
+                .select_action(&current_state, &available_params);
             if let Some((param, direction)) = action_selection {
                 // Apply action
                 if let Some(action) = self.create_action_from_rl(param, direction, &workload) {
@@ -734,13 +753,15 @@ impl AutoTuner {
     }
 
     fn build_rl_state(&self, workload: &WorkloadCharacteristics) -> RLState {
-        let params_map: HashMap<TunableParameter, ParameterValue> = self.parameters
+        let params_map: HashMap<TunableParameter, ParameterValue> = self
+            .parameters
             .read()
             .iter()
             .map(|(k, v)| (k.clone(), v.current_value.clone()))
             .collect();
 
-        let performance_score = self.performance_history
+        let performance_score = self
+            .performance_history
             .read()
             .back()
             .map(|m| m.calculate_score())
@@ -770,20 +791,31 @@ impl AutoTuner {
             current - step
         };
 
-        let new_value = new_value.max(config.min_value.as_i64()?).min(config.max_value.as_i64()?);
+        let new_value = new_value
+            .max(config.min_value.as_i64()?)
+            .min(config.max_value.as_i64()?);
 
         Some(TuningAction {
             parameter: parameter.clone(),
             old_value: config.current_value.clone(),
             new_value: ParameterValue::Integer(new_value),
-            reason: format!("RL-driven {} of {:?}", if direction > 0 { "increase" } else { "decrease" }, parameter),
+            reason: format!(
+                "RL-driven {} of {:?}",
+                if direction > 0 {
+                    "increase"
+                } else {
+                    "decrease"
+                },
+                parameter
+            ),
             timestamp: SystemTime::now(),
             expected_improvement: 0.05,
         })
     }
 
     async fn apply_and_evaluate(&self, action: TuningAction) -> Result<TuningResult> {
-        let before_metrics = self.performance_history
+        let before_metrics = self
+            .performance_history
             .read()
             .back()
             .cloned()
@@ -795,7 +827,8 @@ impl AutoTuner {
         // Wait for effect to stabilize
         sleep(Duration::from_secs(10)).await;
 
-        let after_metrics = self.performance_history
+        let after_metrics = self
+            .performance_history
             .read()
             .back()
             .cloned()
@@ -846,7 +879,10 @@ impl AutoTuner {
     pub fn get_tuning_report(&self) -> TuningReport {
         let history = self.tuning_history.read();
         let total_tunings = history.len();
-        let successful_tunings = history.iter().filter(|r| r.actual_improvement > 0.0).count();
+        let successful_tunings = history
+            .iter()
+            .filter(|r| r.actual_improvement > 0.0)
+            .count();
         let rollbacks = history.iter().filter(|r| r.rollback_performed).count();
 
         let avg_improvement = if !history.is_empty() {
@@ -860,7 +896,8 @@ impl AutoTuner {
             successful_tunings,
             rollbacks,
             avg_improvement,
-            current_performance_score: self.performance_history
+            current_performance_score: self
+                .performance_history
                 .read()
                 .back()
                 .map(|m| m.calculate_score())
@@ -881,7 +918,7 @@ pub struct TuningReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_performance_metrics_score() {

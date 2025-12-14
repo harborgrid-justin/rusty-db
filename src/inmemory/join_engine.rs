@@ -6,11 +6,11 @@
 // - Partitioned parallel joins
 // - Memory-efficient algorithms
 
-use std::collections::HashSet;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 
 use crate::inmemory::column_store::ColumnSegment;
 use crate::inmemory::vectorized_ops::VectorizedFilter;
@@ -146,7 +146,10 @@ impl JoinHashTable {
     }
 
     pub fn insert(&mut self, key: i64, row_id: usize) {
-        self.entries.entry(key).or_insert_with(Vec::new).push(row_id);
+        self.entries
+            .entry(key)
+            .or_insert_with(Vec::new)
+            .push(row_id);
         self.total_entries += 1;
     }
 
@@ -220,9 +223,7 @@ pub struct PartitionedJoin {
 
 impl PartitionedJoin {
     pub fn new(num_partitions: usize) -> Self {
-        let partitions = (0..num_partitions)
-            .map(|i| JoinPartition::new(i))
-            .collect();
+        let partitions = (0..num_partitions).map(|i| JoinPartition::new(i)).collect();
 
         Self {
             num_partitions,
@@ -246,7 +247,11 @@ impl PartitionedJoin {
         self.partitions[partition_id].add_probe(key, row_id);
     }
 
-    pub fn execute_partition(&self, partition_id: usize, join_type: JoinType) -> Vec<(usize, usize)> {
+    pub fn execute_partition(
+        &self,
+        partition_id: usize,
+        join_type: JoinType,
+    ) -> Vec<(usize, usize)> {
         if partition_id >= self.num_partitions {
             return Vec::new();
         }
@@ -493,7 +498,12 @@ pub trait VectorizedJoin {
         join_type: JoinType,
     ) -> Result<(Vec<usize>, Vec<usize>, JoinStats), String>;
 
-    fn estimate_output_size(&self, build_rows: usize, probe_rows: usize, join_type: JoinType) -> usize {
+    fn estimate_output_size(
+        &self,
+        build_rows: usize,
+        probe_rows: usize,
+        join_type: JoinType,
+    ) -> usize {
         match join_type {
             JoinType::Inner => (build_rows * probe_rows) / 10, // Assume 10% selectivity
             JoinType::LeftOuter => probe_rows,
@@ -528,8 +538,8 @@ impl VectorizedJoin for HashJoinEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-use crate::inmemory::column_store::{ColumnDataType};
-use std::time::Instant;
+    use crate::inmemory::column_store::ColumnDataType;
+    use std::time::Instant;
 
     #[test]
     fn test_bloom_filter() {

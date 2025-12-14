@@ -3,19 +3,21 @@
 // This module provides the main ML engine that orchestrates all machine learning operations,
 // including model training, versioning, deployment, and lifecycle management.
 
-use std::fmt;
-use std::time::UNIX_EPOCH;
-use crate::error::Result;
 use super::{
-    Dataset, Hyperparameters, Metrics, MLError,
-    algorithms::{Algorithm, ModelType, LinearRegression, LogisticRegression,
-                 DecisionTree, RandomForest, KMeansClustering, NaiveBayes},
+    algorithms::{
+        Algorithm, DecisionTree, KMeansClustering, LinearRegression, LogisticRegression, ModelType,
+        NaiveBayes, RandomForest,
+    },
+    Dataset, Hyperparameters, MLError, Metrics,
 };
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-use std::time::{SystemTime};
-use serde::{Serialize, Deserialize};
+use crate::error::Result;
 use parking_lot::Mutex;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
+use std::sync::{Arc, RwLock};
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 // ============================================================================
 // Model Metadata and Versioning
@@ -117,7 +119,11 @@ pub struct ModelVersion {
 impl ModelVersion {
     // Create a new version
     pub fn new(major: u32, minor: u32, patch: u32) -> Self {
-        Self { major, minor, patch }
+        Self {
+            major,
+            minor,
+            patch,
+        }
     }
 
     // Increment major version
@@ -244,9 +250,11 @@ impl ModelRegistry {
 
         // Check for version conflicts
         if versions.iter().any(|m| m.metadata.version == version) {
-            return Err(MLError::VersionConflict(
-                format!("Model {} version {} already exists", name, version)
-            ).into());
+            return Err(MLError::VersionConflict(format!(
+                "Model {} version {} already exists",
+                name, version
+            ))
+            .into());
         }
 
         versions.push(model);
@@ -265,23 +273,27 @@ impl ModelRegistry {
     pub fn get(&self, name: &str, version: Option<ModelVersion>) -> Result<StoredModel> {
         let models = self.models.read().unwrap();
 
-        let versions = models.get(name)
+        let versions = models
+            .get(name)
             .ok_or_else(|| MLError::ModelNotFound(name.to_string()))?;
 
         if let Some(version) = version {
-            versions.iter()
+            versions
+                .iter()
                 .find(|m| m.metadata.version == version)
                 .cloned()
-                .ok_or_else(|| MLError::ModelNotFound(
-                    format!("{} version {}", name, version)
-                ).into())
+                .ok_or_else(|| {
+                    MLError::ModelNotFound(format!("{} version {}", name, version)).into()
+                })
         } else {
             // Get active version
             let active = self.active_versions.read().unwrap();
-            let active_version = active.get(name)
+            let active_version = active
+                .get(name)
                 .ok_or_else(|| MLError::ModelNotFound(name.to_string()))?;
 
-            versions.iter()
+            versions
+                .iter()
                 .find(|m| m.metadata.version == *active_version)
                 .cloned()
                 .ok_or_else(|| MLError::ModelNotFound(name.to_string()).into())
@@ -292,7 +304,8 @@ impl ModelRegistry {
     pub fn list_versions(&self, name: &str) -> Result<Vec<ModelMetadata>> {
         let models = self.models.read().unwrap();
 
-        let versions = models.get(name)
+        let versions = models
+            .get(name)
             .ok_or_else(|| MLError::ModelNotFound(name.to_string()))?;
 
         Ok(versions.iter().map(|m| m.metadata.clone()).collect())
@@ -308,14 +321,13 @@ impl ModelRegistry {
     pub fn set_active_version(&self, name: &str, version: ModelVersion) -> Result<()> {
         let models = self.models.read().unwrap();
 
-        let versions = models.get(name)
+        let versions = models
+            .get(name)
             .ok_or_else(|| MLError::ModelNotFound(name.to_string()))?;
 
         // Verify version exists
         if !versions.iter().any(|m| m.metadata.version == version) {
-            return Err(MLError::ModelNotFound(
-                format!("{} version {}", name, version)
-            ).into());
+            return Err(MLError::ModelNotFound(format!("{} version {}", name, version)).into());
         }
 
         let mut active = self.active_versions.write().unwrap();
@@ -329,7 +341,8 @@ impl ModelRegistry {
         let mut models = self.models.write().unwrap();
 
         if let Some(version) = version {
-            let versions = models.get_mut(name)
+            let versions = models
+                .get_mut(name)
                 .ok_or_else(|| MLError::ModelNotFound(name.to_string()))?;
 
             if let Some(pos) = versions.iter().position(|m| m.metadata.version == version) {
@@ -345,9 +358,7 @@ impl ModelRegistry {
                     }
                 }
             } else {
-                return Err(MLError::ModelNotFound(
-                    format!("{} version {}", name, version)
-                ).into());
+                return Err(MLError::ModelNotFound(format!("{} version {}", name, version)).into());
             }
 
             // Remove model entry if no versions left
@@ -436,7 +447,11 @@ pub struct TrainingJob {
 
 impl TrainingJob {
     // Create a new training job
-    pub fn new(model_name: String, model_type: ModelType, hyperparameters: Hyperparameters) -> Self {
+    pub fn new(
+        model_name: String,
+        model_type: ModelType,
+        hyperparameters: Hyperparameters,
+    ) -> Self {
         use uuid::Uuid;
 
         Self {
@@ -446,7 +461,10 @@ impl TrainingJob {
             status: TrainingJobStatus::Queued,
             progress: 0.0,
             error: None,
-            created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             started_at: None,
             completed_at: None,
             hyperparameters,
@@ -456,7 +474,12 @@ impl TrainingJob {
     // Mark job as started
     pub fn start(&mut self) {
         self.status = TrainingJobStatus::Running;
-        self.started_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        self.started_at = Some(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        );
     }
 
     // Update progress
@@ -468,21 +491,34 @@ impl TrainingJob {
     pub fn complete(&mut self) {
         self.status = TrainingJobStatus::Completed;
         self.progress = 1.0;
-        self.completed_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        self.completed_at = Some(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        );
     }
 
     // Mark job as failed
     pub fn fail(&mut self, error: String) {
         self.status = TrainingJobStatus::Failed;
         self.error = Some(error);
-        self.completed_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        self.completed_at = Some(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        );
     }
 
     // Get elapsed time in seconds
     pub fn elapsed_seconds(&self) -> u64 {
         let start = self.started_at.unwrap_or(self.created_at);
         let end = self.completed_at.unwrap_or_else(|| {
-            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
         });
         end - start
     }
@@ -538,14 +574,17 @@ impl MLEngine {
         let mut jobs = self.jobs.lock();
 
         // Check concurrent job limit
-        let running_jobs = jobs.values()
+        let running_jobs = jobs
+            .values()
             .filter(|j| j.status == TrainingJobStatus::Running)
             .count();
 
         if running_jobs >= self.max_concurrent_jobs {
-            return Err(MLError::TrainingFailed(
-                format!("Maximum concurrent jobs ({}) reached", self.max_concurrent_jobs)
-            ).into());
+            return Err(MLError::TrainingFailed(format!(
+                "Maximum concurrent jobs ({}) reached",
+                self.max_concurrent_jobs
+            ))
+            .into());
         }
 
         let job_id = job.id.clone();
@@ -557,11 +596,9 @@ impl MLEngine {
     // Get training job status
     pub fn get_job(&self, job_id: &str) -> Result<TrainingJob> {
         let jobs = self.jobs.lock();
-        jobs.get(job_id)
-            .cloned()
-            .ok_or_else(|| MLError::InvalidConfiguration(
-                format!("Job {} not found", job_id)
-            ).into())
+        jobs.get(job_id).cloned().ok_or_else(|| {
+            MLError::InvalidConfiguration(format!("Job {} not found", job_id)).into()
+        })
     }
 
     // Train a model
@@ -577,7 +614,8 @@ impl MLEngine {
         let params = hyperparameters.unwrap_or_else(|| model_type.default_hyperparameters());
 
         // Create training job
-        let mut job = self.create_training_job(model_name.clone(), model_type, Some(params.clone()))?;
+        let mut job =
+            self.create_training_job(model_name.clone(), model_type, Some(params.clone()))?;
         job.start();
 
         {
@@ -616,7 +654,10 @@ impl MLEngine {
                 // Collect metrics
                 {
                     let mut collector = self.metrics_collector.lock();
-                    collector.entry(model_name).or_insert_with(Vec::new).push(metrics);
+                    collector
+                        .entry(model_name)
+                        .or_insert_with(Vec::new)
+                        .push(metrics);
                 }
 
                 Ok(metadata)
@@ -664,7 +705,9 @@ impl MLEngine {
                 Ok((model_data, metrics))
             }
             ModelType::DecisionTree => {
-                let is_classifier = dataset.target.as_ref()
+                let is_classifier = dataset
+                    .target
+                    .as_ref()
                     .map(|t| t.iter().all(|&v| v == v.floor()))
                     .unwrap_or(false);
 
@@ -678,7 +721,9 @@ impl MLEngine {
                 Ok((model_data, metrics))
             }
             ModelType::RandomForest => {
-                let is_classifier = dataset.target.as_ref()
+                let is_classifier = dataset
+                    .target
+                    .as_ref()
                     .map(|t| t.iter().all(|&v| v == v.floor()))
                     .unwrap_or(false);
 
@@ -713,7 +758,10 @@ impl MLEngine {
             }
             ModelType::KMeansClustering => {
                 // Placeholder for K-means clustering training
-                Err(MLError::InvalidOperation("K-means clustering not yet implemented".to_string()).into())
+                Err(
+                    MLError::InvalidOperation("K-means clustering not yet implemented".to_string())
+                        .into(),
+                )
             }
         }
     }
@@ -731,7 +779,12 @@ impl MLEngine {
     }
 
     // Start A/B testing with two model versions
-    pub fn start_ab_test(&self, name: &str, version_a: ModelVersion, version_b: ModelVersion) -> Result<()> {
+    pub fn start_ab_test(
+        &self,
+        name: &str,
+        version_a: ModelVersion,
+        version_b: ModelVersion,
+    ) -> Result<()> {
         // Verify both versions exist
         self.registry.get(name, Some(version_a))?;
         self.registry.get(name, Some(version_b))?;
@@ -779,36 +832,40 @@ impl MLEngine {
         if let Some(job) = jobs.get_mut(job_id) {
             if job.status == TrainingJobStatus::Running || job.status == TrainingJobStatus::Queued {
                 job.status = TrainingJobStatus::Cancelled;
-                job.completed_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+                job.completed_at = Some(
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                );
                 Ok(())
             } else {
-                Err(MLError::InvalidConfiguration(
-                    format!("Job {} is not running", job_id)
-                ).into())
+                Err(MLError::InvalidConfiguration(format!("Job {} is not running", job_id)).into())
             }
         } else {
-            Err(MLError::InvalidConfiguration(
-                format!("Job {} not found", job_id)
-            ).into())
+            Err(MLError::InvalidConfiguration(format!("Job {} not found", job_id)).into())
         }
     }
 
     // Clean up completed jobs
     pub fn cleanup_jobs(&self, older_than_seconds: u64) {
         let mut jobs = self.jobs.lock();
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
 
-        jobs.retain(|_, job| {
-            match job.status {
-                TrainingJobStatus::Completed | TrainingJobStatus::Failed | TrainingJobStatus::Cancelled => {
-                    if let Some(completed_at) = job.completed_at {
-                        now - completed_at < older_than_seconds
-                    } else {
-                        true
-                    }
+        jobs.retain(|_, job| match job.status {
+            TrainingJobStatus::Completed
+            | TrainingJobStatus::Failed
+            | TrainingJobStatus::Cancelled => {
+                if let Some(completed_at) = job.completed_at {
+                    now - completed_at < older_than_seconds
+                } else {
+                    true
                 }
-                _ => true,
             }
+            _ => true,
         });
     }
 }
@@ -856,11 +913,7 @@ mod tests {
     fn test_ml_engine() {
         let engine = MLEngine::new();
 
-        let features = vec![
-            vec![1.0],
-            vec![2.0],
-            vec![3.0],
-        ];
+        let features = vec![vec![1.0], vec![2.0], vec![3.0]];
         let target = Some(vec![2.0, 4.0, 6.0]);
         let dataset = Dataset::new(features, target, vec!["x".to_string()]);
 

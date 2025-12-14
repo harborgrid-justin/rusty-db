@@ -1,18 +1,18 @@
 // Backup Manager - Enterprise-grade backup orchestration
 // Handles full, incremental, and differential backups with block-level change tracking
 
-use std::collections::HashSet;
-use std::collections::BTreeMap;
-use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::fs::create_dir_all;
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::collections::{HashMap};
-use parking_lot::{Mutex, RwLock};
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::{Mutex, RwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fs::create_dir_all;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // Backup type enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -89,7 +89,8 @@ impl BackupMetadata {
     }
 
     pub fn duration(&self) -> Option<Duration> {
-        self.end_time.and_then(|end| end.duration_since(self.start_time).ok())
+        self.end_time
+            .and_then(|end| end.duration_since(self.start_time).ok())
     }
 
     pub fn is_complete(&self) -> bool {
@@ -148,16 +149,25 @@ impl BlockChangeMap {
         }
     }
 
-    pub fn mark_block_changed(&mut self, block_id: u64, file_id: u32, scn: u64, operation: BlockOperation) {
+    pub fn mark_block_changed(
+        &mut self,
+        block_id: u64,
+        file_id: u32,
+        scn: u64,
+        operation: BlockOperation,
+    ) {
         if !self.changed_blocks.contains_key(&block_id) {
             self.changed_count += 1;
         }
-        self.changed_blocks.insert(block_id, BlockChangeInfo {
+        self.changed_blocks.insert(
             block_id,
-            file_id,
-            change_scn: scn,
-            operation,
-        });
+            BlockChangeInfo {
+                block_id,
+                file_id,
+                change_scn: scn,
+                operation,
+            },
+        );
         self.end_scn = scn.max(self.end_scn);
     }
 
@@ -247,7 +257,11 @@ impl Default for RetentionPolicy {
 }
 
 impl RetentionPolicy {
-    pub fn should_keep(&self, backup: &BackupMetadata, existing_backups: &[BackupMetadata]) -> bool {
+    pub fn should_keep(
+        &self,
+        backup: &BackupMetadata,
+        existing_backups: &[BackupMetadata],
+    ) -> bool {
         // Check age
         if let Some(max_age_days) = self.max_age_days {
             if let Ok(age) = SystemTime::now().duration_since(backup.start_time) {
@@ -348,14 +362,15 @@ impl BackupManager {
         self.active_backups.write().insert(backup_id.clone());
 
         // Create backup directory
-        create_dir_all(&metadata.backup_path).map_err(|e| {
-            DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        create_dir_all(&metadata.backup_path)
+            .map_err(|e| DbError::BackupError(format!("Failed to create backup path: {}", e)))?;
 
         // Initialize block change tracking for future incrementals
         if self.config.enable_change_tracking {
             let change_map = BlockChangeMap::new(metadata.scn, 10000); // Assume 10000 blocks
-            self.change_maps.write().insert(backup_id.clone(), change_map);
+            self.change_maps
+                .write()
+                .insert(backup_id.clone(), change_map);
         }
 
         // Update status
@@ -378,9 +393,17 @@ impl BackupManager {
     }
 
     // Create an incremental backup
-    pub fn create_incremental_backup(&self, database_name: &str, parent_backup_id: &str) -> Result<String> {
+    pub fn create_incremental_backup(
+        &self,
+        database_name: &str,
+        parent_backup_id: &str,
+    ) -> Result<String> {
         // Verify parent backup exists
-        let parent = self.backups.read().get(parent_backup_id).cloned()
+        let parent = self
+            .backups
+            .read()
+            .get(parent_backup_id)
+            .cloned()
             .ok_or_else(|| DbError::BackupError("Parent backup not found".to_string()))?;
 
         let backup_id = self.generate_backup_id("INCR");
@@ -397,9 +420,8 @@ impl BackupManager {
         // Mark as active
         self.active_backups.write().insert(backup_id.clone());
 
-        create_dir_all(&metadata.backup_path).map_err(|e| {
-            DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        create_dir_all(&metadata.backup_path)
+            .map_err(|e| DbError::BackupError(format!("Failed to create backup path: {}", e)))?;
 
         metadata.status = BackupStatus::Running { progress_pct: 0.0 };
 
@@ -418,13 +440,23 @@ impl BackupManager {
     }
 
     // Create a differential backup
-    pub fn create_differential_backup(&self, database_name: &str, base_backup_id: &str) -> Result<String> {
+    pub fn create_differential_backup(
+        &self,
+        database_name: &str,
+        base_backup_id: &str,
+    ) -> Result<String> {
         // Verify base backup exists and is a full backup
-        let base = self.backups.read().get(base_backup_id).cloned()
+        let base = self
+            .backups
+            .read()
+            .get(base_backup_id)
+            .cloned()
             .ok_or_else(|| DbError::BackupError("Base backup not found".to_string()))?;
 
         if base.backup_type != BackupType::Full {
-            return Err(DbError::BackupError("Base backup must be a full backup".to_string()));
+            return Err(DbError::BackupError(
+                "Base backup must be a full backup".to_string(),
+            ));
         }
 
         let backup_id = self.generate_backup_id("DIFF");
@@ -440,9 +472,8 @@ impl BackupManager {
 
         self.active_backups.write().insert(backup_id.clone());
 
-        create_dir_all(&metadata.backup_path).map_err(|e| {
-            DbError::BackupError(format!("Failed to create backup path: {}", e))
-        })?;
+        create_dir_all(&metadata.backup_path)
+            .map_err(|e| DbError::BackupError(format!("Failed to create backup path: {}", e)))?;
 
         metadata.status = BackupStatus::Running { progress_pct: 0.0 };
 
@@ -493,7 +524,8 @@ impl BackupManager {
         } else {
             total_size
         };
-        metadata.compression_ratio = metadata.size_bytes as f64 / metadata.compressed_size_bytes as f64;
+        metadata.compression_ratio =
+            metadata.size_bytes as f64 / metadata.compressed_size_bytes as f64;
         metadata.num_files = num_files;
         metadata.encryption_enabled = self.config.encryption_enabled;
         metadata.compression_enabled = self.config.compression_enabled;
@@ -501,7 +533,11 @@ impl BackupManager {
         Ok(())
     }
 
-    fn perform_incremental_backup(&self, metadata: &mut BackupMetadata, parent: &BackupMetadata) -> Result<()> {
+    fn perform_incremental_backup(
+        &self,
+        metadata: &mut BackupMetadata,
+        parent: &BackupMetadata,
+    ) -> Result<()> {
         // Get changed blocks since parent
         let changed_blocks = if let Some(parent_map) = parent.block_change_map.as_ref() {
             parent_map.get_changed_blocks()
@@ -520,7 +556,8 @@ impl BackupManager {
         } else {
             total_size
         };
-        metadata.compression_ratio = metadata.size_bytes as f64 / metadata.compressed_size_bytes as f64;
+        metadata.compression_ratio =
+            metadata.size_bytes as f64 / metadata.compressed_size_bytes as f64;
         metadata.num_files = 1; // Single incremental file
         metadata.encryption_enabled = self.config.encryption_enabled;
         metadata.compression_enabled = self.config.compression_enabled;
@@ -528,23 +565,24 @@ impl BackupManager {
         // Create change map for this backup
         let mut change_map = BlockChangeMap::new(parent.scn, 10000);
         for i in 0..num_changed {
-            change_map.mark_block_changed(
-                i as u64,
-                0,
-                metadata.scn,
-                BlockOperation::Update,
-            );
+            change_map.mark_block_changed(i as u64, 0, metadata.scn, BlockOperation::Update);
         }
         metadata.block_change_map = Some(change_map);
 
         Ok(())
     }
 
-    fn perform_differential_backup(&self, metadata: &mut BackupMetadata, base: &BackupMetadata) -> Result<()> {
+    fn perform_differential_backup(
+        &self,
+        metadata: &mut BackupMetadata,
+        base: &BackupMetadata,
+    ) -> Result<()> {
         // Differential backup includes all changes since base full backup
         // This is more data than incremental but fewer backups needed for restore
 
-        let base_map = base.block_change_map.as_ref()
+        let base_map = base
+            .block_change_map
+            .as_ref()
             .ok_or_else(|| DbError::BackupError("Base backup has no change map".to_string()))?;
 
         // Accumulate all changes since base
@@ -572,7 +610,8 @@ impl BackupManager {
         } else {
             total_size
         };
-        metadata.compression_ratio = metadata.size_bytes as f64 / metadata.compressed_size_bytes as f64;
+        metadata.compression_ratio =
+            metadata.size_bytes as f64 / metadata.compressed_size_bytes as f64;
         metadata.num_files = 1;
         metadata.encryption_enabled = self.config.encryption_enabled;
         metadata.compression_enabled = self.config.compression_enabled;
@@ -621,7 +660,8 @@ impl BackupManager {
 
     // List backups by type
     pub fn list_backups_by_type(&self, backup_type: BackupType) -> Vec<BackupMetadata> {
-        self.backups.read()
+        self.backups
+            .read()
             .values()
             .filter(|b| b.backup_type == backup_type)
             .cloned()
@@ -695,7 +735,7 @@ pub struct BackupStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_backup_manager_full_backup() {

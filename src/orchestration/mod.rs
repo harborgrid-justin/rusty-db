@@ -277,18 +277,18 @@
 
 // Module declarations
 pub mod actor;
-pub mod registry;
-pub mod dependency_graph;
 pub mod circuit_breaker;
+pub mod degradation;
+pub mod dependency_graph;
+pub mod error_recovery;
 pub mod health;
 pub mod plugin;
-pub mod degradation;
-pub mod error_recovery;
+pub mod registry;
 
 // Re-export commonly used types
 pub use actor::{
-    Actor, ActorContext, ActorId, ActorRef, ActorSystem, ActorSystemStats,
-    Message, SupervisionStrategy, SupervisorConfig,
+    Actor, ActorContext, ActorId, ActorRef, ActorSystem, ActorSystemStats, Message,
+    SupervisionStrategy, SupervisorConfig,
 };
 
 pub use registry::{
@@ -301,23 +301,21 @@ pub use dependency_graph::{
 };
 
 pub use circuit_breaker::{
-    CircuitBreaker, CircuitBreakerConfig, CircuitBreakerRegistry, CircuitBreakerStats,
-    CircuitState,
+    CircuitBreaker, CircuitBreakerConfig, CircuitBreakerRegistry, CircuitBreakerStats, CircuitState,
 };
 
 pub use health::{
-    AggregatedHealth, CascadingFailureDetector, HealthAggregator, HealthCheck,
-    HealthCheckResult, HealthChecker, HealthStatus, SimpleHealthCheck,
+    AggregatedHealth, CascadingFailureDetector, HealthAggregator, HealthCheck, HealthCheckResult,
+    HealthChecker, HealthStatus, SimpleHealthCheck,
 };
 
 pub use plugin::{
-    Plugin, PluginConfig, PluginContext, PluginEvent, PluginEventBus, PluginInfo,
-    PluginMetadata, PluginRegistry, PluginState,
+    Plugin, PluginConfig, PluginContext, PluginEvent, PluginEventBus, PluginInfo, PluginMetadata,
+    PluginRegistry, PluginState,
 };
 
 pub use degradation::{
-    DegradationLevel, DegradationStrategy, DegradationTrigger, Feature, LoadShedder,
-    SystemMetrics,
+    DegradationLevel, DegradationStrategy, DegradationTrigger, Feature, LoadShedder, SystemMetrics,
 };
 
 pub use error_recovery::{
@@ -325,8 +323,8 @@ pub use error_recovery::{
     RecoveryManager, RetryConfig, RetryExecutor,
 };
 
-use std::sync::Arc;
 use parking_lot::RwLock;
+use std::sync::Arc;
 use tracing::{info, warn};
 
 use crate::error::Result;

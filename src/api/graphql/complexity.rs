@@ -2,6 +2,8 @@
 //
 // Query complexity analyzer for performance and security
 
+use crate::api::RowType;
+use crate::error::DbError;
 use async_graphql::extensions::{Extension, ExtensionContext, ExtensionFactory, NextExecute};
 use async_graphql::parser::types::ExecutableDocument;
 use futures_util::Future;
@@ -10,8 +12,6 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use crate::api::RowType;
-use crate::error::DbError;
 
 // ============================================================================
 // PART 5: PERFORMANCE & SECURITY (600+ lines)
@@ -120,7 +120,9 @@ impl RateLimiter {
         drop(limits);
 
         let mut requests = self.requests.write().await;
-        let request_times = requests.entry(key.to_string()).or_insert_with(VecDeque::new);
+        let request_times = requests
+            .entry(key.to_string())
+            .or_insert_with(VecDeque::new);
 
         let now = Instant::now();
         let window = Duration::from_secs(limit.window_secs);
@@ -233,11 +235,14 @@ impl QueryCache {
             self.evict_oldest(&mut cache);
         }
 
-        cache.insert(key, CacheEntry {
-            data,
-            created_at: Instant::now(),
-            expires_at: Instant::now() + self.ttl,
-        });
+        cache.insert(
+            key,
+            CacheEntry {
+                data,
+                created_at: Instant::now(),
+                expires_at: Instant::now() + self.ttl,
+            },
+        );
     }
 
     pub async fn invalidate(&self, pattern: &str) {
@@ -266,7 +271,8 @@ struct CacheEntry {
 
 // DataLoader for N+1 query prevention
 pub struct DataLoader<K, V> {
-    loader_fn: Arc<dyn Fn(Vec<K>) -> Pin<Box<dyn Future<Output = HashMap<K, V>> + Send>> + Send + Sync>,
+    loader_fn:
+        Arc<dyn Fn(Vec<K>) -> Pin<Box<dyn Future<Output = HashMap<K, V>> + Send>> + Send + Sync>,
     cache: Arc<RwLock<HashMap<K, V>>>,
     #[allow(dead_code)]
     batch_size: usize,

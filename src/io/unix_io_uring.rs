@@ -2,11 +2,11 @@
 //
 // High-performance asynchronous I/O using Linux io_uring.
 
-use crate::error::{Result, DbError};
-use crate::io::{IoRequest, IoCompletion, IoOpType, IoStatus};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicU32, Ordering};
+use crate::error::{DbError, Result};
+use crate::io::{IoCompletion, IoOpType, IoRequest, IoStatus};
 use parking_lot::Mutex;
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
 
 // ============================================================================
@@ -441,7 +441,8 @@ impl IoUringEngine {
             self.cq_tail.fetch_add(1, Ordering::Release);
         }
 
-        self.sq_head.store(self.sq_tail.load(Ordering::Acquire), Ordering::Release);
+        self.sq_head
+            .store(self.sq_tail.load(Ordering::Acquire), Ordering::Release);
 
         Ok(())
     }

@@ -9,23 +9,25 @@
 // - Adaptive: Automatically selects best algorithm
 // - Cascaded: Intelligently combines encodings for optimal compression
 
+pub mod adaptive_compression;
+pub mod column_encodings;
+pub mod dictionary_compression;
 pub mod lz4_compression;
 pub mod zstd_compression;
-pub mod dictionary_compression;
-pub mod column_encodings;
-pub mod adaptive_compression;
 
 // Re-export main types
-pub use lz4_compression::LZ4Compressor;
-pub use zstd_compression::{ZstdCompressor, HuffmanCompressor};
-pub use dictionary_compression::DictionaryCompressor;
-pub use column_encodings::{BitPacker, FOREncoder, DeltaEncoder, RLEEncoder, EnhancedDictionaryEncoder};
 pub use adaptive_compression::{AdaptiveCompressor, CascadedCompressor};
+pub use column_encodings::{
+    BitPacker, DeltaEncoder, EnhancedDictionaryEncoder, FOREncoder, RLEEncoder,
+};
+pub use dictionary_compression::DictionaryCompressor;
+pub use lz4_compression::LZ4Compressor;
+pub use zstd_compression::{HuffmanCompressor, ZstdCompressor};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::compression::{Compressor, CompressionLevel};
+    use crate::compression::{CompressionLevel, Compressor};
 
     #[test]
     fn test_bit_packer() {
@@ -53,7 +55,10 @@ mod tests {
 
         let original_size = values.len() * 4;
         let ratio = original_size as f64 / encoded.len() as f64;
-        assert!(ratio > 3.0, "FOR should achieve >3:1 compression on tight ranges");
+        assert!(
+            ratio > 3.0,
+            "FOR should achieve >3:1 compression on tight ranges"
+        );
     }
 
     #[test]
@@ -68,7 +73,10 @@ mod tests {
 
         let original_size = values.len() * 4;
         let ratio = original_size as f64 / encoded.len() as f64;
-        assert!(ratio > 5.0, "Delta should achieve >5:1 on monotonic sequences");
+        assert!(
+            ratio > 5.0,
+            "Delta should achieve >5:1 on monotonic sequences"
+        );
     }
 
     #[test]
@@ -88,7 +96,10 @@ mod tests {
         let repetitive = vec![42; 1000];
         let encoded = encoder.encode_u32(&repetitive).unwrap();
         let ratio = (repetitive.len() * 4) as f64 / encoded.len() as f64;
-        assert!(ratio > 100.0, "RLE should achieve >100:1 on highly repetitive data");
+        assert!(
+            ratio > 100.0,
+            "RLE should achieve >100:1 on highly repetitive data"
+        );
     }
 
     #[test]
@@ -110,7 +121,10 @@ mod tests {
 
         let original_size: usize = data.iter().map(|v| v.len()).sum();
         let ratio = original_size as f64 / encoded.len() as f64;
-        assert!(ratio > 1.5, "Dictionary should compress low-cardinality data");
+        assert!(
+            ratio > 1.5,
+            "Dictionary should compress low-cardinality data"
+        );
     }
 
     #[test]

@@ -1,9 +1,14 @@
 // Session authentication module
 use crate::error::Result;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub struct AuthenticationProvider;
-pub enum AuthMethod { Password, LDAP, Kerberos, SAML }
+pub enum AuthMethod {
+    Password,
+    LDAP,
+    Kerberos,
+    SAML,
+}
 pub struct AuthConfig;
 pub struct PrivilegeCache;
 pub struct RoleManager;
@@ -29,7 +34,9 @@ pub struct AuthenticationResult {
 }
 
 impl AuthenticationProvider {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
     pub async fn authenticate(&self, _username: &str, _password: &str) -> Result<bool> {
         Ok(true)
     }

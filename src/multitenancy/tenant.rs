@@ -1,15 +1,15 @@
 // Tenant management with isolation guarantees and resource governance
 // Provides tenant-level isolation, resource controls, and SLA enforcement
 
-use std::fmt;
-use std::collections::BTreeMap;
-use std::collections::VecDeque;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::path::PathBuf;
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
-use std::time::{SystemTime};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::SystemTime;
+use tokio::sync::RwLock;
 
 // Tenant-specific errors
 #[derive(Debug, Clone)]
@@ -31,7 +31,9 @@ impl fmt::Display for TenantError {
             TenantError::TenantNotFound(id) => write!(f, "Tenant not found: {}", id),
             TenantError::TenantAlreadyExists(id) => write!(f, "Tenant already exists: {}", id),
             TenantError::InvalidState(msg) => write!(f, "Invalid state: {}", msg),
-            TenantError::ResourceLimitExceeded(msg) => write!(f, "Resource limit exceeded: {}", msg),
+            TenantError::ResourceLimitExceeded(msg) => {
+                write!(f, "Resource limit exceeded: {}", msg)
+            }
             TenantError::QuotaExceeded(msg) => write!(f, "Quota exceeded: {}", msg),
             TenantError::IsolationViolation(msg) => write!(f, "Isolation violation: {}", msg),
             TenantError::SlaViolation(msg) => write!(f, "SLA violation: {}", msg),
@@ -58,11 +60,11 @@ pub enum TenantState {
 // Tenant priority levels for resource allocation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum TenantPriority {
-    Critical = 4,    // Highest priority, guaranteed resources
-    High = 3,        // High priority, preferential treatment
-    Medium = 2,      // Standard priority
-    Low = 1,         // Low priority, best effort
-    BestEffort = 0,  // Lowest priority, use spare resources only
+    Critical = 4,   // Highest priority, guaranteed resources
+    High = 3,       // High priority, preferential treatment
+    Medium = 2,     // Standard priority
+    Low = 1,        // Low priority, best effort
+    BestEffort = 0, // Lowest priority, use spare resources only
 }
 
 // Service tier defining resource allocation and SLA
@@ -451,7 +453,9 @@ impl Tenant {
         let mut state = self.state.write().await;
 
         if *state == TenantState::Terminated {
-            return Err(TenantError::InvalidState("Cannot suspend terminated tenant".to_string()));
+            return Err(TenantError::InvalidState(
+                "Cannot suspend terminated tenant".to_string(),
+            ));
         }
 
         *state = TenantState::Suspended;
@@ -467,7 +471,9 @@ impl Tenant {
         let mut state = self.state.write().await;
 
         if *state != TenantState::Suspended {
-            return Err(TenantError::InvalidState("Tenant is not suspended".to_string()));
+            return Err(TenantError::InvalidState(
+                "Tenant is not suspended".to_string(),
+            ));
         }
 
         *state = TenantState::Active;
@@ -490,9 +496,10 @@ impl Tenant {
         // Check quota
         let projected_usage = usage.storage_used_gb + (size_mb / 1024);
         if projected_usage > quota.storage_gb {
-            return Err(TenantError::QuotaExceeded(
-                format!("Storage quota exceeded: {} GB > {} GB", projected_usage, quota.storage_gb)
-            ));
+            return Err(TenantError::QuotaExceeded(format!(
+                "Storage quota exceeded: {} GB > {} GB",
+                projected_usage, quota.storage_gb
+            )));
         }
 
         drop(quota);
@@ -500,7 +507,10 @@ impl Tenant {
 
         let tablespace = TenantTablespace {
             tablespace_name: tablespace_name.clone(),
-            datafile_path: PathBuf::from(format!("/data/{}/{}.dbf", self.tenant_id, tablespace_name)),
+            datafile_path: PathBuf::from(format!(
+                "/data/{}/{}.dbf",
+                self.tenant_id, tablespace_name
+            )),
             size_mb,
             used_mb: 0,
             auto_extend: true,
@@ -516,17 +526,14 @@ impl Tenant {
     }
 
     // Create tenant-specific schema
-    pub async fn create_schema(
-        &self,
-        schema_name: String,
-        owner: String,
-    ) -> TenantResult<()> {
+    pub async fn create_schema(&self, schema_name: String, owner: String) -> TenantResult<()> {
         let schemas = self.schemas.read().await;
 
         if schemas.contains_key(&schema_name) {
-            return Err(TenantError::InvalidConfiguration(
-                format!("Schema {} already exists", schema_name)
-            ));
+            return Err(TenantError::InvalidConfiguration(format!(
+                "Schema {} already exists",
+                schema_name
+            )));
         }
 
         drop(schemas);
@@ -551,14 +558,19 @@ impl Tenant {
     }
 
     // Validate query doesn't access other tenants' data
-    pub async fn validate_query(&self, _query: &str, schemas_accessed: &[String]) -> TenantResult<()> {
+    pub async fn validate_query(
+        &self,
+        _query: &str,
+        schemas_accessed: &[String],
+    ) -> TenantResult<()> {
         let allowed = self.allowed_schemas.read().await;
 
         for schema in schemas_accessed {
             if !allowed.contains(schema) {
-                return Err(TenantError::IsolationViolation(
-                    format!("Access to schema {} not allowed for tenant {}", schema, self.tenant_id)
-                ));
+                return Err(TenantError::IsolationViolation(format!(
+                    "Access to schema {} not allowed for tenant {}",
+                    schema, self.tenant_id
+                )));
             }
         }
 
@@ -566,32 +578,27 @@ impl Tenant {
     }
 
     // Check if resource allocation is within quota
-    pub async fn check_resource_quota(&self, resource_type: ResourceType, amount: u64) -> TenantResult<bool> {
+    pub async fn check_resource_quota(
+        &self,
+        resource_type: ResourceType,
+        amount: u64,
+    ) -> TenantResult<bool> {
         let quota = self.quota.read().await;
         let usage = self.usage.read().await;
 
         let within_quota = match resource_type {
-            ResourceType::Cpu => {
-                usage.cpu_percent + (amount as f64) <= quota.cpu_percent as f64
-            }
-            ResourceType::Memory => {
-                usage.memory_mb + amount <= quota.memory_mb
-            }
-            ResourceType::Storage => {
-                usage.storage_used_gb + amount <= quota.storage_gb
-            }
-            ResourceType::Iops => {
-                usage.current_iops + (amount as u32) <= quota.iops
-            }
-            ResourceType::Sessions => {
-                usage.active_sessions + (amount as u32) <= quota.max_sessions
-            }
+            ResourceType::Cpu => usage.cpu_percent + (amount as f64) <= quota.cpu_percent as f64,
+            ResourceType::Memory => usage.memory_mb + amount <= quota.memory_mb,
+            ResourceType::Storage => usage.storage_used_gb + amount <= quota.storage_gb,
+            ResourceType::Iops => usage.current_iops + (amount as u32) <= quota.iops,
+            ResourceType::Sessions => usage.active_sessions + (amount as u32) <= quota.max_sessions,
         };
 
         if !within_quota {
-            return Err(TenantError::ResourceLimitExceeded(
-                format!("{:?} limit exceeded for tenant {}", resource_type, self.tenant_id)
-            ));
+            return Err(TenantError::ResourceLimitExceeded(format!(
+                "{:?} limit exceeded for tenant {}",
+                resource_type, self.tenant_id
+            )));
         }
 
         Ok(true)
@@ -645,7 +652,8 @@ impl Tenant {
         if status == QueryStatus::Completed {
             // Update average query time
             let total_time = stats.avg_query_time_ms * (stats.total_queries - 1) as f64;
-            stats.avg_query_time_ms = (total_time + duration_ms as f64) / stats.total_queries as f64;
+            stats.avg_query_time_ms =
+                (total_time + duration_ms as f64) / stats.total_queries as f64;
         } else if status == QueryStatus::Failed {
             stats.total_errors += 1;
         }
@@ -706,7 +714,7 @@ impl Tenant {
 
         if new_tier.monthly_cost <= current_tier.monthly_cost {
             return Err(TenantError::InvalidConfiguration(
-                "New tier must be higher than current tier".to_string()
+                "New tier must be higher than current tier".to_string(),
             ));
         }
 
@@ -827,7 +835,10 @@ impl TenantManager {
 
         // Update index
         let mut index = self.tenant_index.write().await;
-        index.entry(priority).or_insert_with(Vec::new).push(tenant_id);
+        index
+            .entry(priority)
+            .or_insert_with(Vec::new)
+            .push(tenant_id);
 
         Ok(())
     }
@@ -845,7 +856,8 @@ impl TenantManager {
     pub async fn remove_tenant(&self, tenant_id: &str) -> TenantResult<()> {
         let mut tenants = self.tenants.write().await;
 
-        let tenant = tenants.remove(tenant_id)
+        let tenant = tenants
+            .remove(tenant_id)
             .ok_or_else(|| TenantError::TenantNotFound(tenant_id.to_string()))?;
 
         let priority = *tenant.priority.read().await;
@@ -897,7 +909,7 @@ impl Default for TenantManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_create_tenant() {
@@ -945,10 +957,14 @@ use std::time::UNIX_EPOCH;
             ServiceTier::bronze(),
         );
 
-        let result = tenant.check_resource_quota(ResourceType::Memory, 1024).await;
+        let result = tenant
+            .check_resource_quota(ResourceType::Memory, 1024)
+            .await;
         assert!(result.is_ok());
 
-        let result = tenant.check_resource_quota(ResourceType::Memory, 10000).await;
+        let result = tenant
+            .check_resource_quota(ResourceType::Memory, 10000)
+            .await;
         assert!(result.is_err());
     }
 

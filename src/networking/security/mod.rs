@@ -25,21 +25,21 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub mod tls;
-pub mod mtls;
-pub mod certificates;
-pub mod identity;
-pub mod encryption;
 pub mod acl;
+pub mod certificates;
+pub mod encryption;
 pub mod firewall;
+pub mod identity;
+pub mod mtls;
+pub mod tls;
 
-pub use tls::{TlsConfig, TlsVersion, CipherSuite};
-pub use mtls::{MtlsAuthenticator, MtlsConfig};
-pub use certificates::{CertificateManager, CertificateConfig};
-pub use identity::{NodeIdentity, IdentityProvider};
-pub use encryption::{MessageEncryption, EncryptionConfig};
-pub use acl::{NetworkAcl, AclRule, Action};
+pub use acl::{AclRule, Action, NetworkAcl};
+pub use certificates::{CertificateConfig, CertificateManager};
+pub use encryption::{EncryptionConfig, MessageEncryption};
 pub use firewall::{ApplicationFirewall, FirewallConfig};
+pub use identity::{IdentityProvider, NodeIdentity};
+pub use mtls::{MtlsAuthenticator, MtlsConfig};
+pub use tls::{CipherSuite, TlsConfig, TlsVersion};
 
 /// Security configuration for the network layer
 #[derive(Debug, Clone)]
@@ -149,19 +149,19 @@ impl SecurityConfig {
         if self.mtls_enabled {
             if self.tls_config.is_none() {
                 return Err(DbError::Configuration(
-                    "mTLS enabled but TLS config not provided".to_string()
+                    "mTLS enabled but TLS config not provided".to_string(),
                 ));
             }
             if self.mtls_config.is_none() {
                 return Err(DbError::Configuration(
-                    "mTLS enabled but mTLS config not provided".to_string()
+                    "mTLS enabled but mTLS config not provided".to_string(),
                 ));
             }
         }
 
         if self.acl_enabled && self.acl_rules_path.is_none() {
             return Err(DbError::Configuration(
-                "ACL enabled but rules path not provided".to_string()
+                "ACL enabled but rules path not provided".to_string(),
             ));
         }
 
@@ -267,9 +267,9 @@ impl SecurityManager {
 
         let cert_manager = if config.mtls_enabled {
             if let Some(cert_config) = &config.cert_config {
-                Some(Arc::new(RwLock::new(
-                    CertificateManager::new(cert_config.clone())?
-                )))
+                Some(Arc::new(RwLock::new(CertificateManager::new(
+                    cert_config.clone(),
+                )?)))
             } else {
                 None
             }
@@ -311,9 +311,9 @@ impl SecurityManager {
 
         let firewall = if config.firewall_enabled {
             if let Some(fw_config) = &config.firewall_config {
-                Some(Arc::new(RwLock::new(
-                    ApplicationFirewall::new(fw_config.clone())?
-                )))
+                Some(Arc::new(RwLock::new(ApplicationFirewall::new(
+                    fw_config.clone(),
+                )?)))
             } else {
                 None
             }

@@ -2,12 +2,12 @@
 //
 // Tests for 100% SQL feature coverage including all DDL, DML, and query operations
 
-use rusty_db::parser::{SqlParser, SqlStatement, AlterAction, ConstraintType};
-use rusty_db::catalog::{Catalog, DataType, Column, Schema};
-use rusty_db::execution::Executor;
-use rusty_db::transaction::TransactionManager;
-use rusty_db::index::IndexManager;
+use rusty_db::catalog::{Catalog, Column, DataType, Schema};
 use rusty_db::constraints::ConstraintManager;
+use rusty_db::execution::Executor;
+use rusty_db::index::IndexManager;
+use rusty_db::parser::{AlterAction, ConstraintType, SqlParser, SqlStatement};
+use rusty_db::transaction::TransactionManager;
 use std::sync::Arc;
 
 #[test]
@@ -47,7 +47,9 @@ fn test_select_distinct() {
     let stmts = parser.parse(sql).unwrap();
 
     match &stmts[0] {
-        SqlStatement::Select { distinct, columns, .. } => {
+        SqlStatement::Select {
+            distinct, columns, ..
+        } => {
             assert!(distinct);
             assert_eq!(columns.len(), 1);
             assert_eq!(columns[0], "category");
@@ -63,7 +65,11 @@ fn test_insert_into() {
     let stmts = parser.parse(sql).unwrap();
 
     match &stmts[0] {
-        SqlStatement::Insert { table, columns, values } => {
+        SqlStatement::Insert {
+            table,
+            columns,
+            values,
+        } => {
             assert_eq!(table, "users");
             assert_eq!(columns.len(), 2);
             assert_eq!(values.len(), 2);
@@ -104,7 +110,12 @@ fn test_create_index() {
     let stmts = parser.parse(sql).unwrap();
 
     match &stmts[0] {
-        SqlStatement::CreateIndex { name, table, columns, unique } => {
+        SqlStatement::CreateIndex {
+            name,
+            table,
+            columns,
+            unique,
+        } => {
             assert_eq!(name, "idx_email");
             assert_eq!(table, "users");
             assert_eq!(columns.len(), 1);
@@ -149,7 +160,11 @@ fn test_create_view() {
     let stmts = parser.parse(sql).unwrap();
 
     match &stmts[0] {
-        SqlStatement::CreateView { name, query, or_replace } => {
+        SqlStatement::CreateView {
+            name,
+            query,
+            or_replace,
+        } => {
             assert_eq!(name, "active_users");
             assert!(query.contains("SELECT"));
             assert!(!or_replace);
@@ -227,14 +242,12 @@ fn test_executor_alter_table_add_column() {
     let executor = Executor::new(catalog.clone(), txn_manager);
 
     // First create a table
-    let columns = vec![
-        Column {
-            name: "id".to_string(),
-            data_type: DataType::Integer,
-            nullable: false,
-            default: None,
-        },
-    ];
+    let columns = vec![Column {
+        name: "id".to_string(),
+        data_type: DataType::Integer,
+        nullable: false,
+        default: None,
+    }];
 
     let create_stmt = SqlStatement::CreateTable {
         name: "users".to_string(),
@@ -272,14 +285,12 @@ fn test_executor_create_view() {
     let executor = Executor::new(catalog.clone(), txn_manager);
 
     // Create a table first
-    let columns = vec![
-        Column {
-            name: "id".to_string(),
-            data_type: DataType::Integer,
-            nullable: false,
-            default: None,
-        },
-    ];
+    let columns = vec![Column {
+        name: "id".to_string(),
+        data_type: DataType::Integer,
+        nullable: false,
+        default: None,
+    }];
 
     let create_table = SqlStatement::CreateTable {
         name: "users".to_string(),
@@ -354,7 +365,7 @@ fn test_executor_create_index() {
 
 #[test]
 fn test_expression_evaluator_case() {
-    use rusty_db::parser::expression::{Expression, LiteralValue, ExpressionEvaluator};
+    use rusty_db::parser::expression::{Expression, ExpressionEvaluator, LiteralValue};
     use std::collections::HashMap;
 
     let mut row_data = HashMap::new();
@@ -374,7 +385,9 @@ fn test_expression_evaluator_case() {
                 Expression::Literal(LiteralValue::String("Inactive".to_string())),
             ),
         ],
-        else_result: Some(Box::new(Expression::Literal(LiteralValue::String("Unknown".to_string())))),
+        else_result: Some(Box::new(Expression::Literal(LiteralValue::String(
+            "Unknown".to_string(),
+        )))),
     };
 
     let result = evaluator.evaluate(&case_expr).unwrap();
@@ -383,7 +396,7 @@ fn test_expression_evaluator_case() {
 
 #[test]
 fn test_expression_evaluator_between() {
-    use rusty_db::parser::expression::{Expression, LiteralValue, ExpressionEvaluator};
+    use rusty_db::parser::expression::{Expression, ExpressionEvaluator, LiteralValue};
     use std::collections::HashMap;
 
     let mut row_data = HashMap::new();
@@ -404,11 +417,14 @@ fn test_expression_evaluator_between() {
 
 #[test]
 fn test_expression_evaluator_in() {
-    use rusty_db::parser::expression::{Expression, LiteralValue, ExpressionEvaluator};
+    use rusty_db::parser::expression::{Expression, ExpressionEvaluator, LiteralValue};
     use std::collections::HashMap;
 
     let mut row_data = HashMap::new();
-    row_data.insert("category".to_string(), LiteralValue::String("A".to_string()));
+    row_data.insert(
+        "category".to_string(),
+        LiteralValue::String("A".to_string()),
+    );
 
     let evaluator = ExpressionEvaluator::new(row_data);
 
@@ -428,17 +444,22 @@ fn test_expression_evaluator_in() {
 
 #[test]
 fn test_expression_evaluator_like() {
-    use rusty_db::parser::expression::{Expression, LiteralValue, ExpressionEvaluator};
+    use rusty_db::parser::expression::{Expression, ExpressionEvaluator, LiteralValue};
     use std::collections::HashMap;
 
     let mut row_data = HashMap::new();
-    row_data.insert("name".to_string(), LiteralValue::String("John Doe".to_string()));
+    row_data.insert(
+        "name".to_string(),
+        LiteralValue::String("John Doe".to_string()),
+    );
 
     let evaluator = ExpressionEvaluator::new(row_data);
 
     let like_expr = Expression::Like {
         expr: Box::new(Expression::Column("name".to_string())),
-        pattern: Box::new(Expression::Literal(LiteralValue::String("John%".to_string()))),
+        pattern: Box::new(Expression::Literal(LiteralValue::String(
+            "John%".to_string(),
+        ))),
         escape: None,
         negated: false,
     };
@@ -449,7 +470,7 @@ fn test_expression_evaluator_like() {
 
 #[test]
 fn test_expression_evaluator_is_null() {
-    use rusty_db::parser::expression::{Expression, LiteralValue, ExpressionEvaluator};
+    use rusty_db::parser::expression::{Expression, ExpressionEvaluator, LiteralValue};
     use std::collections::HashMap;
 
     let mut row_data = HashMap::new();
@@ -468,7 +489,9 @@ fn test_expression_evaluator_is_null() {
 
 #[test]
 fn test_expression_evaluator_binary_ops() {
-    use rusty_db::parser::expression::{Expression, LiteralValue, ExpressionEvaluator, BinaryOperator};
+    use rusty_db::parser::expression::{
+        BinaryOperator, Expression, ExpressionEvaluator, LiteralValue,
+    };
     use std::collections::HashMap;
 
     let row_data = HashMap::new();
@@ -518,6 +541,11 @@ fn test_sql_feature_coverage() {
 
     for (sql, description) in test_cases {
         let result = parser.parse(sql);
-        assert!(result.is_ok(), "Failed to parse {}: {:?}", description, result.err());
+        assert!(
+            result.is_ok(),
+            "Failed to parse {}: {:?}",
+            description,
+            result.err()
+        );
     }
 }

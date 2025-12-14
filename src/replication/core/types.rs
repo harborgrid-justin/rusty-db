@@ -1,5 +1,5 @@
 // Replication types and data structures
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -125,15 +125,38 @@ pub struct ReplicationStats {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ReplicationEvent {
-    ReplicaAdded { replica_id: String, address: String },
-    ReplicaRemoved { replica_id: String },
-    ReplicaStatusChanged { replica_id: String, status: ReplicaStatus },
-    ConflictDetected { conflict_id: u64, table: String },
-    ConflictResolved { conflict_id: u64 },
-    SnapshotCreated { snapshot_id: String },
-    ReplicationLagWarning { replica_id: String, lag_bytes: u64 },
-    FailoverInitiated { old_primary: String, new_primary: String },
-    SyncCompleted { replica_id: String },
+    ReplicaAdded {
+        replica_id: String,
+        address: String,
+    },
+    ReplicaRemoved {
+        replica_id: String,
+    },
+    ReplicaStatusChanged {
+        replica_id: String,
+        status: ReplicaStatus,
+    },
+    ConflictDetected {
+        conflict_id: u64,
+        table: String,
+    },
+    ConflictResolved {
+        conflict_id: u64,
+    },
+    SnapshotCreated {
+        snapshot_id: String,
+    },
+    ReplicationLagWarning {
+        replica_id: String,
+        lag_bytes: u64,
+    },
+    FailoverInitiated {
+        old_primary: String,
+        new_primary: String,
+    },
+    SyncCompleted {
+        replica_id: String,
+    },
 }
 
 pub trait ReplicationEventListener: Send + Sync {

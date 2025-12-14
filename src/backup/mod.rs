@@ -3,59 +3,59 @@
 
 // Module declarations
 use crate::error::DbError;
+pub mod backup_encryption;
+pub mod catalog;
+pub mod cloud;
+pub mod disaster_recovery;
 pub mod manager;
 pub mod pitr;
 pub mod snapshots;
-pub mod cloud;
-pub mod backup_encryption;
-pub mod disaster_recovery;
 pub mod verification;
-pub mod catalog;
 
 // Re-export key types for convenience
 pub use manager::{
-    BackupManager, BackupMetadata, BackupType, BackupStatus, BackupConfig,
-    RetentionPolicy, BlockChangeMap, BackupStatistics,
+    BackupConfig, BackupManager, BackupMetadata, BackupStatistics, BackupStatus, BackupType,
+    BlockChangeMap, RetentionPolicy,
 };
 
 pub use pitr::{
-    PitrManager, RecoveryTarget, RecoveryMode, RecoverySession, RecoveryStatus,
-    LogMiner, FlashbackQuery, RestorePoint, TransactionLogEntry,
+    FlashbackQuery, LogMiner, PitrManager, RecoveryMode, RecoverySession, RecoveryStatus,
+    RecoveryTarget, RestorePoint, TransactionLogEntry,
 };
 
 pub use snapshots::{
-    SnapshotManager, Snapshot, SnapshotType, SnapshotStatus, SnapshotClone,
-    SnapshotSchedule, SnapshotFrequency, CowTracker, SnapshotStatistics,
+    CowTracker, Snapshot, SnapshotClone, SnapshotFrequency, SnapshotManager, SnapshotSchedule,
+    SnapshotStatistics, SnapshotStatus, SnapshotType,
 };
 
 pub use cloud::{
-    CloudBackupManager, CloudProvider, CloudStorageConfig, CloudBackup,
-    StorageClass, UploadSession, UploadStatus, BandwidthThrottler,
+    BandwidthThrottler, CloudBackup, CloudBackupManager, CloudProvider, CloudStorageConfig,
+    StorageClass, UploadSession, UploadStatus,
 };
 
 pub use backup_encryption::{
-    KeyManager, BackupEncryptionManager, EncryptionKey, EncryptionAlgorithm,
-    KeyManagementConfig, EncryptedBackup, KeyDerivationFunction,
+    BackupEncryptionManager, EncryptedBackup, EncryptionAlgorithm, EncryptionKey,
+    KeyDerivationFunction, KeyManagementConfig, KeyManager,
 };
 
 pub use disaster_recovery::{
-    DisasterRecoveryManager, StandbyConfig, StandbyStatus, ReplicationMode,
-    DatabaseRole, RtoConfig, RpoConfig, FailoverEvent, FailoverTrigger,
+    DatabaseRole, DisasterRecoveryManager, FailoverEvent, FailoverTrigger, ReplicationMode,
+    RpoConfig, RtoConfig, StandbyConfig, StandbyStatus,
 };
 
 pub use verification::{
-    VerificationManager, VerificationResult, VerificationType, VerificationStatus,
-    RestoreTestConfig, RestoreTestResult, BlockChecksum, ChecksumAlgorithm,
+    BlockChecksum, ChecksumAlgorithm, RestoreTestConfig, RestoreTestResult, VerificationManager,
+    VerificationResult, VerificationStatus, VerificationType,
 };
 
 pub use catalog::{
-    BackupCatalog, CatalogConfig, BackupSet, BackupPiece, BackupSetType,
-    DatabaseRegistration, BackupReport, ReportType, CatalogStatistics,
+    BackupCatalog, BackupPiece, BackupReport, BackupSet, BackupSetType, CatalogConfig,
+    CatalogStatistics, DatabaseRegistration, ReportType,
 };
 
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use crate::Result;
 
 // Unified backup system integrating all modules
 pub struct BackupSystem {
@@ -78,12 +78,10 @@ impl BackupSystem {
         // Initialize core managers
         let backup_manager = Arc::new(BackupManager::new(backup_config.clone(), retention_policy)?);
 
-        let pitr_manager = Arc::new(PitrManager::new(
-            backup_config.backup_dir.join("logs")
-        ));
+        let pitr_manager = Arc::new(PitrManager::new(backup_config.backup_dir.join("logs")));
 
         let snapshot_manager = Arc::new(SnapshotManager::new(
-            backup_config.backup_dir.join("snapshots")
+            backup_config.backup_dir.join("snapshots"),
         )?);
 
         // Initialize encryption
@@ -219,7 +217,7 @@ impl BackupSystem {
 
         if recovery_sets.is_empty() {
             return Err(DbError::BackupError(
-                "No suitable backup found for recovery".to_string()
+                "No suitable backup found for recovery".to_string(),
             ));
         }
 
@@ -251,10 +249,9 @@ impl BackupSystem {
 
     // Trigger disaster recovery failover
     pub fn trigger_failover(&self, target_standby: &str) -> Result<String> {
-        let event_id = self.dr_manager.trigger_failover(
-            FailoverTrigger::Manual,
-            target_standby,
-        )?;
+        let event_id = self
+            .dr_manager
+            .trigger_failover(FailoverTrigger::Manual, target_standby)?;
 
         Ok(event_id)
     }
@@ -287,7 +284,7 @@ pub struct BackupSystemStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::collections::HashMap;
+    use std::collections::HashMap;
 
     #[test]
     fn test_backup_system_initialization() {
@@ -295,11 +292,7 @@ use std::collections::HashMap;
         let retention_policy = RetentionPolicy::default();
         let catalog_config = CatalogConfig::default();
 
-        let system = BackupSystem::new(
-            backup_config,
-            retention_policy,
-            catalog_config,
-        ).unwrap();
+        let system = BackupSystem::new(backup_config, retention_policy, catalog_config).unwrap();
 
         // Verify all managers are accessible
         assert!(system.backup_manager().list_backups().is_empty());
@@ -312,19 +305,18 @@ use std::collections::HashMap;
         let retention_policy = RetentionPolicy::default();
         let catalog_config = CatalogConfig::default();
 
-        let system = BackupSystem::new(
-            backup_config,
-            retention_policy,
-            catalog_config,
-        ).unwrap();
+        let system = BackupSystem::new(backup_config, retention_policy, catalog_config).unwrap();
 
         // Register database
-        system.catalog().register_database(
-            "testdb".to_string(),
-            "TestDB".to_string(),
-            "1.0".to_string(),
-            "Linux".to_string(),
-        ).unwrap();
+        system
+            .catalog()
+            .register_database(
+                "testdb".to_string(),
+                "TestDB".to_string(),
+                "1.0".to_string(),
+                "Linux".to_string(),
+            )
+            .unwrap();
 
         // Perform backup
         let backup_id = system.perform_full_backup("testdb").unwrap();
@@ -341,11 +333,7 @@ use std::collections::HashMap;
         let retention_policy = RetentionPolicy::default();
         let catalog_config = CatalogConfig::default();
 
-        let system = BackupSystem::new(
-            backup_config,
-            retention_policy,
-            catalog_config,
-        ).unwrap();
+        let system = BackupSystem::new(backup_config, retention_policy, catalog_config).unwrap();
 
         let snapshot_id = system.create_test_snapshot("testdb").unwrap();
         assert!(!snapshot_id.is_empty());

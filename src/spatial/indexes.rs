@@ -7,10 +7,10 @@
 // - Hilbert curve ordering for locality preservation
 // - Bulk loading and dynamic maintenance
 
-use std::collections::HashSet;
 use crate::error::{DbError, Result};
 use crate::spatial::geometry::{BoundingBox, Coordinate};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
 
 // Spatial index trait
@@ -197,7 +197,12 @@ impl RTree {
     }
 
     #[allow(dead_code)]
-    fn split_node(&self, entries: Vec<RTreeEntry>, is_leaf: bool, level: usize) -> (RTreeNode, RTreeNode) {
+    fn split_node(
+        &self,
+        entries: Vec<RTreeEntry>,
+        is_leaf: bool,
+        level: usize,
+    ) -> (RTreeNode, RTreeNode) {
         // R*-tree split using R*-tree algorithm
         let (seeds, remaining) = self.pick_seeds(&entries);
 
@@ -243,9 +248,7 @@ impl RTree {
 
     /// Reserved for R-tree operations
 
-
     #[allow(dead_code)]
-
 
     fn pick_seeds(&self, entries: &[RTreeEntry]) -> ((RTreeEntry, RTreeEntry), Vec<RTreeEntry>) {
         let mut max_waste = f64::NEG_INFINITY;
@@ -415,9 +418,11 @@ impl RTree {
 
     fn remove_from_node(node: &mut RTreeNode, id: u64) -> bool {
         if node.is_leaf {
-            if let Some(pos) = node.entries.iter().position(|e| {
-                matches!(e, RTreeEntry::Leaf { id: eid, .. } if *eid == id)
-            }) {
+            if let Some(pos) = node
+                .entries
+                .iter()
+                .position(|e| matches!(e, RTreeEntry::Leaf { id: eid, .. } if *eid == id))
+            {
                 node.entries.remove(pos);
                 return true;
             }
@@ -514,7 +519,9 @@ impl Quadtree {
         max_depth: usize,
     ) -> Result<()> {
         if !node.bounds.contains_coord(&point) {
-            return Err(DbError::InvalidInput("Point outside node bounds".to_string()));
+            return Err(DbError::InvalidInput(
+                "Point outside node bounds".to_string(),
+            ));
         }
 
         if let Some(children) = &mut node.children {
@@ -523,9 +530,17 @@ impl Quadtree {
             let mid_y = (node.bounds.min_y + node.bounds.max_y) / 2.0;
 
             let child_idx = if point.x < mid_x {
-                if point.y < mid_y { 0 } else { 2 }
+                if point.y < mid_y {
+                    0
+                } else {
+                    2
+                }
             } else {
-                if point.y < mid_y { 1 } else { 3 }
+                if point.y < mid_y {
+                    1
+                } else {
+                    3
+                }
             };
 
             Self::insert_into_node(&mut children[child_idx], id, point, max_points, max_depth)?;
@@ -568,9 +583,17 @@ impl Quadtree {
                     let mid_y = (node.bounds.min_y + node.bounds.max_y) / 2.0;
 
                     let child_idx = if pcoord.x < mid_x {
-                        if pcoord.y < mid_y { 0 } else { 2 }
+                        if pcoord.y < mid_y {
+                            0
+                        } else {
+                            2
+                        }
                     } else {
-                        if pcoord.y < mid_y { 1 } else { 3 }
+                        if pcoord.y < mid_y {
+                            1
+                        } else {
+                            3
+                        }
                     };
 
                     children[child_idx].points.push((pid, pcoord));
@@ -904,9 +927,18 @@ pub struct SpatialIndexBuilder {
 }
 
 pub enum IndexType {
-    RTree { max_entries: usize, min_entries: usize },
-    Quadtree { bounds: BoundingBox, max_depth: usize },
-    Grid { bounds: BoundingBox, cell_size: f64 },
+    RTree {
+        max_entries: usize,
+        min_entries: usize,
+    },
+    Quadtree {
+        bounds: BoundingBox,
+        max_depth: usize,
+    },
+    Grid {
+        bounds: BoundingBox,
+        cell_size: f64,
+    },
 }
 
 impl SpatialIndexBuilder {
@@ -923,7 +955,10 @@ impl SpatialIndexBuilder {
 
     pub fn build(self) -> Result<Box<dyn SpatialIndex>> {
         match self.index_type {
-            IndexType::RTree { max_entries, min_entries } => {
+            IndexType::RTree {
+                max_entries,
+                min_entries,
+            } => {
                 let mut rtree = RTree::with_capacity(max_entries, min_entries);
                 rtree.bulk_load(self.entries)?;
                 Ok(Box::new(rtree))
@@ -975,8 +1010,12 @@ mod tests {
         let bounds = BoundingBox::new(0.0, 0.0, 100.0, 100.0);
         let mut qtree = Quadtree::new(bounds);
 
-        qtree.insert(1, BoundingBox::new(10.0, 10.0, 10.0, 10.0)).unwrap();
-        qtree.insert(2, BoundingBox::new(90.0, 90.0, 90.0, 90.0)).unwrap();
+        qtree
+            .insert(1, BoundingBox::new(10.0, 10.0, 10.0, 10.0))
+            .unwrap();
+        qtree
+            .insert(2, BoundingBox::new(90.0, 90.0, 90.0, 90.0))
+            .unwrap();
 
         let query = BoundingBox::new(0.0, 0.0, 50.0, 50.0);
         let results = qtree.search(&query);
@@ -1001,8 +1040,10 @@ mod tests {
         let bounds = BoundingBox::new(0.0, 0.0, 100.0, 100.0);
         let mut grid = GridIndex::new(bounds, 10.0);
 
-        grid.insert(1, BoundingBox::new(5.0, 5.0, 7.0, 7.0)).unwrap();
-        grid.insert(2, BoundingBox::new(25.0, 25.0, 27.0, 27.0)).unwrap();
+        grid.insert(1, BoundingBox::new(5.0, 5.0, 7.0, 7.0))
+            .unwrap();
+        grid.insert(2, BoundingBox::new(25.0, 25.0, 27.0, 27.0))
+            .unwrap();
 
         let query = BoundingBox::new(0.0, 0.0, 15.0, 15.0);
         let results = grid.search(&query);

@@ -3,27 +3,31 @@
 // Interactive SQL client for RustyDB.
 // Connects to a RustyDB server and allows executing SQL queries.
 
-use std::io;
-use tokio::net::TcpStream;
-use tokio::io::{AsyncReadExt, stdin, AsyncBufReadExt, BufReader, AsyncWriteExt};
-use rusty_db::network::protocol::{Request, Response};
-use rusty_db::Result;
 use rusty_db::error::DbError;
 use rusty_db::execution::QueryResult;
+use rusty_db::network::protocol::{Request, Response};
+use rusty_db::Result;
 use rusty_db::VERSION;
+use std::io;
+use tokio::io::{stdin, AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+use tokio::net::TcpStream;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     println!("╔═════════════════════════════════════════════════════════╗");
     println!("║          RustyDB CLI - Interactive SQL Client           ║");
-    println!("║                    Version {}                           ║", VERSION);
+    println!(
+        "║                    Version {}                           ║",
+        VERSION
+    );
     println!("╚═════════════════════════════════════════════════════════╝");
     println!();
 
     let addr = "127.0.0.1:5432";
     println!("Connecting to RustyDB server at {}...", addr);
 
-    let mut stream = TcpStream::connect(addr).await
+    let mut stream = TcpStream::connect(addr)
+        .await
         .map_err(|e| DbError::Network(format!("Failed to connect: {}", e)))?;
 
     println!("Connected successfully!");
@@ -38,7 +42,9 @@ async fn main() -> Result<()> {
         io::Write::flush(&mut io::stdout())?;
 
         input.clear();
-        reader.read_line(&mut input).await
+        reader
+            .read_line(&mut input)
+            .await
             .map_err(|e| DbError::Io(e))?;
 
         let cmd = input.trim();
@@ -53,16 +59,22 @@ async fn main() -> Result<()> {
         }
 
         // Send query
-        let request = Request::Query { sql: cmd.to_string() };
+        let request = Request::Query {
+            sql: cmd.to_string(),
+        };
         let request_bytes = bincode::encode_to_vec(&request, bincode::config::standard())
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
-        stream.write_all(&request_bytes).await
+        stream
+            .write_all(&request_bytes)
+            .await
             .map_err(|e| DbError::Network(e.to_string()))?;
 
         // Read response
         let mut buffer = vec![0u8; 8192];
-        let n = stream.read(&mut buffer).await
+        let n = stream
+            .read(&mut buffer)
+            .await
             .map_err(|e| DbError::Network(e.to_string()))?;
 
         if n == 0 {
@@ -70,9 +82,10 @@ async fn main() -> Result<()> {
             break;
         }
 
-        let response: Response = bincode::decode_from_slice(&buffer[..n], bincode::config::standard())
-            .map(|(r, _)| r)
-            .map_err(|e| DbError::Serialization(e.to_string()))?;
+        let response: Response =
+            bincode::decode_from_slice(&buffer[..n], bincode::config::standard())
+                .map(|(r, _)| r)
+                .map_err(|e| DbError::Serialization(e.to_string()))?;
 
         match response {
             Response::QueryResult(result) => {

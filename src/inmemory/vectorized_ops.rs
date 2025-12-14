@@ -6,11 +6,11 @@
 // - Cache-conscious algorithms
 // - Branch-free conditional operations
 
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
+use crate::inmemory::column_store::ColumnDataType;
 #[cfg(target_arch = "x86")]
 use std::arch::x86::*;
-use crate::inmemory::column_store::ColumnDataType;
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
 
 // Cache line size for alignment
 pub const CACHE_LINE_SIZE: usize = 64;
@@ -119,32 +119,17 @@ impl VectorBatch {
 
     pub fn as_i64_slice(&self) -> &[i64] {
         assert_eq!(self.data_type, ColumnDataType::Int64);
-        unsafe {
-            std::slice::from_raw_parts(
-                self.data.as_ptr() as *const i64,
-                self.count,
-            )
-        }
+        unsafe { std::slice::from_raw_parts(self.data.as_ptr() as *const i64, self.count) }
     }
 
     pub fn as_i32_slice(&self) -> &[i32] {
         assert_eq!(self.data_type, ColumnDataType::Int32);
-        unsafe {
-            std::slice::from_raw_parts(
-                self.data.as_ptr() as *const i32,
-                self.count,
-            )
-        }
+        unsafe { std::slice::from_raw_parts(self.data.as_ptr() as *const i32, self.count) }
     }
 
     pub fn as_f64_slice(&self) -> &[f64] {
         assert_eq!(self.data_type, ColumnDataType::Float64);
-        unsafe {
-            std::slice::from_raw_parts(
-                self.data.as_ptr() as *const f64,
-                self.count,
-            )
-        }
+        unsafe { std::slice::from_raw_parts(self.data.as_ptr() as *const f64, self.count) }
     }
 }
 
@@ -224,7 +209,12 @@ impl VectorizedFilter {
 
     #[cfg(target_arch = "x86_64")]
     #[target_feature(enable = "avx2")]
-    unsafe fn compare_int64_avx2(&self, values: &[i64], op: ComparisonOp, compare_value: i64) -> VectorMask {
+    unsafe fn compare_int64_avx2(
+        &self,
+        values: &[i64],
+        op: ComparisonOp,
+        compare_value: i64,
+    ) -> VectorMask {
         let mut mask = vec![false; values.len()];
         let compare_vec = _mm256_set1_epi64x(compare_value);
 
@@ -658,9 +648,7 @@ where
             let chunk: Vec<i64> = values[start..end].to_vec();
             let pred = Arc::clone(&predicate);
 
-            thread::spawn(move || {
-                chunk.iter().map(|&v| pred(v)).collect::<Vec<bool>>()
-            })
+            thread::spawn(move || chunk.iter().map(|&v| pred(v)).collect::<Vec<bool>>())
         })
         .collect();
 
@@ -677,9 +665,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::ComparisonOp;
-    use crate::inmemory::{VectorBatch, VectorMask, VectorizedAggregator, VectorizedFilter};
     use crate::inmemory::column_store::ColumnDataType;
     use crate::inmemory::vectorized_ops::{branchfree_select_i64, VectorGatherScatter};
+    use crate::inmemory::{VectorBatch, VectorMask, VectorizedAggregator, VectorizedFilter};
 
     #[test]
     fn test_vector_mask() {

@@ -2,11 +2,11 @@
 //
 // Event correlation and threat intelligence components for detecting attack patterns.
 
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::sync::Arc;
+use crate::Result;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::Result;
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::Arc;
 
 use super::common::*;
 
@@ -179,28 +179,36 @@ impl SecurityEventCorrelator {
         let windows = self.event_windows.read();
 
         if let Some(user_events) = windows.get(&trigger_event.user_id) {
-            let failed_logins = user_events.iter()
+            let failed_logins = user_events
+                .iter()
                 .filter(|e| e.event_type == "failed_login")
                 .count();
 
             if failed_logins >= 5 {
                 self.create_incident(
                     "Brute Force Attack Detected".to_string(),
-                    format!("User {} has {} failed login attempts", trigger_event.user_id, failed_logins),
+                    format!(
+                        "User {} has {} failed login attempts",
+                        trigger_event.user_id, failed_logins
+                    ),
                     EventSeverity::High,
                     Some("T1110".to_string()),
                     vec![trigger_event.user_id.clone()],
                 )?;
             }
 
-            let access_count = user_events.iter()
+            let access_count = user_events
+                .iter()
                 .filter(|e| e.event_type == "data_access")
                 .count();
 
             if access_count > 100 {
                 self.create_incident(
                     "Unusual Data Access Pattern".to_string(),
-                    format!("User {} accessed {} resources in short time", trigger_event.user_id, access_count),
+                    format!(
+                        "User {} accessed {} resources in short time",
+                        trigger_event.user_id, access_count
+                    ),
                     EventSeverity::Medium,
                     Some("T1078".to_string()),
                     vec![trigger_event.user_id.clone()],
@@ -244,8 +252,11 @@ impl SecurityEventCorrelator {
 
     pub fn get_active_incidents(&self) -> Vec<SecurityIncident> {
         let incidents = self.incidents.read();
-        incidents.iter()
-            .filter(|i| i.status != IncidentStatus::Resolved && i.status != IncidentStatus::FalsePositive)
+        incidents
+            .iter()
+            .filter(|i| {
+                i.status != IncidentStatus::Resolved && i.status != IncidentStatus::FalsePositive
+            })
             .cloned()
             .collect()
     }
@@ -378,15 +389,16 @@ impl ThreatIntelligence {
         drop(stats);
 
         let reputation = self.ip_reputation.read();
-        reputation.get(ip).cloned().unwrap_or_else(|| {
-            ReputationScore {
+        reputation
+            .get(ip)
+            .cloned()
+            .unwrap_or_else(|| ReputationScore {
                 ip_address: ip.to_string(),
                 score: 0.5,
                 category: ReputationCategory::Unknown,
                 last_updated: current_timestamp(),
                 sources: Vec::new(),
-            }
-        })
+            })
     }
 
     pub fn calculate_threat_score(&self, ip: Option<&str>, _user_id: &str) -> f64 {
@@ -398,12 +410,11 @@ impl ThreatIntelligence {
         }
 
         let iocs = self.iocs.read();
-        let matching_iocs = iocs.values()
-            .filter(|ioc| {
-                match &ioc.ioc_type {
-                    IocType::IpAddress => ip.map(|i| i == ioc.value).unwrap_or(false),
-                    _ => false,
-                }
+        let matching_iocs = iocs
+            .values()
+            .filter(|ioc| match &ioc.ioc_type {
+                IocType::IpAddress => ip.map(|i| i == ioc.value).unwrap_or(false),
+                _ => false,
             })
             .count();
 

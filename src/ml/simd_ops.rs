@@ -7,10 +7,10 @@
 
 use super::Vector;
 
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
 #[cfg(target_arch = "x86")]
 use std::arch::x86::*;
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
 
 // ============================================================================
 // SIMD Dot Product
@@ -40,7 +40,10 @@ pub fn simd_dot_product(a: &[f64], b: &[f64]) -> f64 {
         unsafe { simd_dot_product_sse2(a, b) }
     }
 
-    #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        any(target_feature = "avx2", target_feature = "sse2")
+    )))]
     {
         scalar_dot_product(a, b)
     }
@@ -87,7 +90,6 @@ unsafe fn simd_dot_product_avx2(a: &[f64], b: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_dot_product_sse2(a: &[f64], b: &[f64]) -> f64 {
-
     let len = a.len();
     let mut sum = _mm_setzero_pd();
     let mut i = 0;
@@ -141,7 +143,10 @@ pub fn simd_vector_add(a: &[f64], b: &[f64], result: &mut [f64]) {
         return;
     }
 
-    #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        any(target_feature = "avx2", target_feature = "sse2")
+    )))]
     {
         for i in 0..a.len() {
             result[i] = a[i] + b[i];
@@ -152,7 +157,6 @@ pub fn simd_vector_add(a: &[f64], b: &[f64], result: &mut [f64]) {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_vector_add_avx2(a: &[f64], b: &[f64], result: &mut [f64]) {
-
     let len = a.len();
     let mut i = 0;
 
@@ -173,7 +177,6 @@ unsafe fn simd_vector_add_avx2(a: &[f64], b: &[f64], result: &mut [f64]) {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_vector_add_sse2(a: &[f64], b: &[f64], result: &mut [f64]) {
-
     let len = a.len();
     let mut i = 0;
 
@@ -216,7 +219,10 @@ pub fn simd_scalar_multiply(scalar: f64, vector: &[f64], result: &mut [f64]) {
         return;
     }
 
-    #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        any(target_feature = "avx2", target_feature = "sse2")
+    )))]
     {
         for i in 0..vector.len() {
             result[i] = scalar * vector[i];
@@ -227,7 +233,6 @@ pub fn simd_scalar_multiply(scalar: f64, vector: &[f64], result: &mut [f64]) {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_scalar_multiply_avx2(scalar: f64, vector: &[f64], result: &mut [f64]) {
-
     let len = vector.len();
     let vscalar = _mm256_set1_pd(scalar);
     let mut i = 0;
@@ -248,7 +253,6 @@ unsafe fn simd_scalar_multiply_avx2(scalar: f64, vector: &[f64], result: &mut [f
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_scalar_multiply_sse2(scalar: f64, vector: &[f64], result: &mut [f64]) {
-
     let len = vector.len();
     let vscalar = _mm_set1_pd(scalar);
     let mut i = 0;
@@ -317,7 +321,10 @@ pub fn simd_euclidean_distance(a: &[f64], b: &[f64]) -> f64 {
         unsafe { simd_euclidean_distance_sse2(a, b) }
     }
 
-    #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        any(target_feature = "avx2", target_feature = "sse2")
+    )))]
     {
         a.iter()
             .zip(b.iter())
@@ -330,7 +337,6 @@ pub fn simd_euclidean_distance(a: &[f64], b: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_euclidean_distance_avx2(a: &[f64], b: &[f64]) -> f64 {
-
     let len = a.len();
     let mut sum_sq = _mm256_setzero_pd();
     let mut i = 0;
@@ -360,7 +366,6 @@ unsafe fn simd_euclidean_distance_avx2(a: &[f64], b: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_euclidean_distance_sse2(a: &[f64], b: &[f64]) -> f64 {
-
     let len = a.len();
     let mut sum_sq = _mm_setzero_pd();
     let mut i = 0;
@@ -408,7 +413,10 @@ pub fn simd_sum(vector: &[f64]) -> f64 {
         unsafe { simd_sum_sse2(vector) }
     }
 
-    #[cfg(not(all(target_arch = "x86_64", any(target_feature = "avx2", target_feature = "sse2"))))]
+    #[cfg(not(all(
+        target_arch = "x86_64",
+        any(target_feature = "avx2", target_feature = "sse2")
+    )))]
     {
         vector.iter().sum()
     }
@@ -417,7 +425,6 @@ pub fn simd_sum(vector: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "avx2"))]
 #[inline]
 unsafe fn simd_sum_avx2(vector: &[f64]) -> f64 {
-
     let len = vector.len();
     let mut sum = _mm256_setzero_pd();
     let mut i = 0;
@@ -443,7 +450,6 @@ unsafe fn simd_sum_avx2(vector: &[f64]) -> f64 {
 #[cfg(all(target_arch = "x86_64", target_feature = "sse2"))]
 #[inline]
 unsafe fn simd_sum_sse2(vector: &[f64]) -> f64 {
-
     let len = vector.len();
     let mut sum = _mm_setzero_pd();
     let mut i = 0;
@@ -468,8 +474,8 @@ unsafe fn simd_sum_sse2(vector: &[f64]) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use crate::ml::{simd_dot_product, simd_euclidean_distance, simd_matrix_vector_multiply};
     use crate::ml::simd_ops::{simd_scalar_multiply, simd_sum, simd_vector_add};
+    use crate::ml::{simd_dot_product, simd_euclidean_distance, simd_matrix_vector_multiply};
 
     #[test]
     fn test_simd_dot_product() {

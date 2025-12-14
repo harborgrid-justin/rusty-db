@@ -12,16 +12,16 @@
 // - Session management
 // - Account lockout and brute-force protection
 
+use crate::error::DbError;
+use crate::Result;
+use argon2::password_hash::{rand_core::OsRng, SaltString};
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use base64::{engine::general_purpose, Engine as _};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use base64::{Engine as _, engine::general_purpose};
-use crate::Result;
-use crate::error::DbError;
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
-use argon2::password_hash::{SaltString, rand_core::OsRng};
 
 // User identifier
 pub type UserId = String;
@@ -268,13 +268,22 @@ pub struct LoginCredentials {
 #[derive(Debug, Clone)]
 pub enum LoginResult {
     // Successful login with session
-    Success { session: AuthSession },
+    Success {
+        session: AuthSession,
+    },
     // MFA required
-    MfaRequired { user_id: UserId, mfa_types: Vec<MfaType> },
+    MfaRequired {
+        user_id: UserId,
+        mfa_types: Vec<MfaType>,
+    },
     // Password change required
-    PasswordChangeRequired { user_id: UserId },
+    PasswordChangeRequired {
+        user_id: UserId,
+    },
     // Account locked
-    AccountLocked { locked_until: i64 },
+    AccountLocked {
+        locked_until: i64,
+    },
     // Invalid credentials
     InvalidCredentials,
     // Account disabled
@@ -333,9 +342,9 @@ impl AuthenticationManager {
         let now = current_timestamp();
 
         let policy = self.password_policy.read();
-        let password_expires_at = policy.expiration_days.map(|days| {
-            now + (days as i64 * 86400)
-        });
+        let password_expires_at = policy
+            .expiration_days
+            .map(|days| now + (days as i64 * 86400));
 
         let user = UserAccount {
             user_id: user_id.clone(),
@@ -362,7 +371,10 @@ impl AuthenticationManager {
 
         let mut users = self.users.write();
         if users.values().any(|u| u.username == username) {
-            return Err(DbError::AlreadyExists(format!("Username {} already exists", username)));
+            return Err(DbError::AlreadyExists(format!(
+                "Username {} already exists",
+                username
+            )));
         }
 
         users.insert(user_id.clone(), user);
@@ -380,7 +392,8 @@ impl AuthenticationManager {
 
         // Find user
         let mut users = self.users.write();
-        let user = users.values_mut()
+        let user = users
+            .values_mut()
             .find(|u| u.username == credentials.username)
             .ok_or_else(|| {
                 self.record_failed_login(&credentials.username);
@@ -419,11 +432,10 @@ impl AuthenticationManager {
             let policy = self.password_policy.read();
             if user.failed_login_attempts >= policy.max_failed_attempts {
                 user.status = AccountStatus::Locked;
-                user.locked_until = Some(
-                    current_timestamp() + (policy.lockout_duration_minutes as i64 * 60)
-                );
+                user.locked_until =
+                    Some(current_timestamp() + (policy.lockout_duration_minutes as i64 * 60));
                 return Ok(LoginResult::AccountLocked {
-                    locked_until: user.locked_until.unwrap()
+                    locked_until: user.locked_until.unwrap(),
                 });
             }
 
@@ -437,7 +449,7 @@ impl AuthenticationManager {
         // Check if password change is required
         if user.status == AccountStatus::PasswordChangeRequired {
             return Ok(LoginResult::PasswordChangeRequired {
-                user_id: user.user_id.clone()
+                user_id: user.user_id.clone(),
             });
         }
 
@@ -446,7 +458,7 @@ impl AuthenticationManager {
             if current_timestamp() >= expires_at {
                 user.status = AccountStatus::PasswordChangeRequired;
                 return Ok(LoginResult::PasswordChangeRequired {
-                    user_id: user.user_id.clone()
+                    user_id: user.user_id.clone(),
                 });
             }
         }
@@ -484,7 +496,8 @@ impl AuthenticationManager {
     // Logout and invalidate session
     pub fn logout(&self, session_id: &SessionId) -> Result<()> {
         let mut sessions = self.sessions.write();
-        sessions.remove(session_id)
+        sessions
+            .remove(session_id)
             .ok_or_else(|| DbError::NotFound("Session not found".to_string()))?;
 
         Ok(())
@@ -493,7 +506,8 @@ impl AuthenticationManager {
     // Validate a session
     pub fn validate_session(&self, session_id: &str) -> Result<AuthSession> {
         let mut sessions = self.sessions.write();
-        let session = sessions.get_mut(session_id)
+        let session = sessions
+            .get_mut(session_id)
             .ok_or_else(|| DbError::Network("Invalid session".to_string()))?;
 
         let now = current_timestamp();
@@ -523,7 +537,8 @@ impl AuthenticationManager {
         self.validate_password(new_password)?;
 
         let mut users = self.users.write();
-        let user = users.get_mut(user_id)
+        let user = users
+            .get_mut(user_id)
             .ok_or_else(|| DbError::NotFound("User not found".to_string()))?;
 
         // Verify old password
@@ -537,7 +552,7 @@ impl AuthenticationManager {
             let min_age_seconds = min_age_days as i64 * 86400;
             if current_timestamp() - user.last_password_change < min_age_seconds {
                 return Err(DbError::InvalidOperation(
-                    "Password was changed too recently".to_string()
+                    "Password was changed too recently".to_string(),
                 ));
             }
         }
@@ -548,7 +563,7 @@ impl AuthenticationManager {
         // Check password history
         if user.password_history.contains(&new_hash) {
             return Err(DbError::InvalidOperation(
-                "Password was used recently".to_string()
+                "Password was used recently".to_string(),
             ));
         }
 
@@ -563,9 +578,9 @@ impl AuthenticationManager {
         }
 
         // Update expiration
-        user.password_expires_at = policy.expiration_days.map(|days| {
-            current_timestamp() + (days as i64 * 86400)
-        });
+        user.password_expires_at = policy
+            .expiration_days
+            .map(|days| current_timestamp() + (days as i64 * 86400));
 
         // Update status if password change was required
         if user.status == AccountStatus::PasswordChangeRequired {
@@ -578,7 +593,8 @@ impl AuthenticationManager {
     // Enable MFA for a user
     pub fn enable_mfa(&self, user_id: &UserId) -> Result<(String, Vec<String>)> {
         let mut users = self.users.write();
-        let user = users.get_mut(user_id)
+        let user = users
+            .get_mut(user_id)
             .ok_or_else(|| DbError::NotFound("User not found".to_string()))?;
 
         // Generate TOTP secret
@@ -597,7 +613,8 @@ impl AuthenticationManager {
     // Disable MFA for a user
     pub fn disable_mfa(&self, user_id: &UserId, password: &str) -> Result<()> {
         let mut users = self.users.write();
-        let user = users.get_mut(user_id)
+        let user = users
+            .get_mut(user_id)
             .ok_or_else(|| DbError::NotFound("User not found".to_string()))?;
 
         // Verify password for security
@@ -644,7 +661,8 @@ impl AuthenticationManager {
 
     // Get user account
     pub fn get_user(&self, user_id: &UserId) -> Result<UserAccount> {
-        self.users.read()
+        self.users
+            .read()
             .get(user_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound("User not found".to_string()))
@@ -652,7 +670,8 @@ impl AuthenticationManager {
 
     // Get all active sessions for a user
     pub fn get_user_sessions(&self, user_id: &UserId) -> Vec<AuthSession> {
-        self.sessions.read()
+        self.sessions
+            .read()
             .values()
             .filter(|s| &s.user_id == user_id)
             .cloned()
@@ -662,7 +681,8 @@ impl AuthenticationManager {
     // Invalidate all sessions for a user
     pub fn invalidate_user_sessions(&self, user_id: &UserId) -> Result<usize> {
         let mut sessions = self.sessions.write();
-        let session_ids: Vec<SessionId> = sessions.values()
+        let session_ids: Vec<SessionId> = sessions
+            .values()
             .filter(|s| &s.user_id == user_id)
             .map(|s| s.session_id.clone())
             .collect();
@@ -681,32 +701,34 @@ impl AuthenticationManager {
         let policy = self.password_policy.read();
 
         if password.len() < policy.min_length {
-            return Err(DbError::InvalidInput(
-                format!("Password must be at least {} characters", policy.min_length)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Password must be at least {} characters",
+                policy.min_length
+            )));
         }
 
         if password.len() > policy.max_length {
-            return Err(DbError::InvalidInput(
-                format!("Password must not exceed {} characters", policy.max_length)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Password must not exceed {} characters",
+                policy.max_length
+            )));
         }
 
         if policy.require_uppercase && !password.chars().any(|c| c.is_uppercase()) {
             return Err(DbError::InvalidInput(
-                "Password must contain at least one uppercase letter".to_string()
+                "Password must contain at least one uppercase letter".to_string(),
             ));
         }
 
         if policy.require_lowercase && !password.chars().any(|c| c.is_lowercase()) {
             return Err(DbError::InvalidInput(
-                "Password must contain at least one lowercase letter".to_string()
+                "Password must contain at least one lowercase letter".to_string(),
             ));
         }
 
         if policy.require_digits && !password.chars().any(|c| c.is_numeric()) {
             return Err(DbError::InvalidInput(
-                "Password must contain at least one digit".to_string()
+                "Password must contain at least one digit".to_string(),
             ));
         }
 
@@ -714,7 +736,7 @@ impl AuthenticationManager {
             let special_chars = "!@#$%^&*()_+-=[]{}|;:,.<>?";
             if !password.chars().any(|c| special_chars.contains(c)) {
                 return Err(DbError::InvalidInput(
-                    "Password must contain at least one special character".to_string()
+                    "Password must contain at least one special character".to_string(),
                 ));
             }
         }
@@ -726,7 +748,8 @@ impl AuthenticationManager {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
 
-        Ok(argon2.hash_password(password.as_bytes(), &salt)
+        Ok(argon2
+            .hash_password(password.as_bytes(), &salt)
             .map_err(|e| DbError::Internal(format!("Password hashing failed: {}", e)))?
             .to_string())
     }
@@ -800,7 +823,11 @@ impl AuthenticationManager {
         let mut rng = rand::rng();
         (0..count)
             .map(|_| {
-                format!("{:04}-{:04}", rng.random_range(0..10000), rng.random_range(0..10000))
+                format!(
+                    "{:04}-{:04}",
+                    rng.random_range(0..10000),
+                    rng.random_range(0..10000)
+                )
             })
             .collect()
     }
@@ -921,11 +948,9 @@ mod tests {
         let manager = AuthenticationManager::new();
 
         // Create user
-        let user_id = manager.create_user(
-            "logintest".to_string(),
-            "LoginTest123!".to_string(),
-            None,
-        ).unwrap();
+        let user_id = manager
+            .create_user("logintest".to_string(), "LoginTest123!".to_string(), None)
+            .unwrap();
 
         // Update user status to active (skip password change requirement for test)
         {

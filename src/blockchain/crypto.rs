@@ -10,13 +10,13 @@
 // - Key derivation functions
 // - Secure random generation
 
-use std::fmt;
-use sha2::{Sha256, Sha512, Digest};
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256, Sha512};
+use std::fmt;
 
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
 
 // ============================================================================
 // Type Aliases
@@ -116,7 +116,8 @@ pub fn compute_hash(algorithm: HashAlgorithm, data: &[u8], key: Option<&[u8]>) -
         HashAlgorithm::Sha256 => Ok(sha256(data).to_vec()),
         HashAlgorithm::Sha512 => Ok(sha512(data).to_vec()),
         HashAlgorithm::HmacSha256 => {
-            let key = key.ok_or_else(|| DbError::InvalidInput("HMAC requires a key".to_string()))?;
+            let key =
+                key.ok_or_else(|| DbError::InvalidInput("HMAC requires a key".to_string()))?;
             Ok(hmac_sha256(key, data)?.to_vec())
         }
     }
@@ -157,7 +158,12 @@ impl ChainLink {
     }
 
     // Compute the hash for this link
-    fn compute_link_hash(index: u64, prevhash: &Hash256, datahash: &Hash256, timestamp: u64) -> Hash256 {
+    fn compute_link_hash(
+        index: u64,
+        prevhash: &Hash256,
+        datahash: &Hash256,
+        timestamp: u64,
+    ) -> Hash256 {
         let mut hasher = Sha256::new();
         hasher.update(&index.to_le_bytes());
         hasher.update(prevhash);
@@ -172,7 +178,12 @@ impl ChainLink {
 
     // Verify this link's integrity
     pub fn verify(&self) -> bool {
-        let computed = Self::compute_link_hash(self.index, &self.previous_hash, &self.data_hash, self.timestamp);
+        let computed = Self::compute_link_hash(
+            self.index,
+            &self.previous_hash,
+            &self.data_hash,
+            self.timestamp,
+        );
         computed == self.link_hash
     }
 
@@ -363,7 +374,9 @@ impl MerkleTree {
     // Build a Merkle tree from data items
     pub fn build(data_items: &[&[u8]]) -> Result<Self> {
         if data_items.is_empty() {
-            return Err(DbError::InvalidInput("Cannot build Merkle tree from empty data".to_string()));
+            return Err(DbError::InvalidInput(
+                "Cannot build Merkle tree from empty data".to_string(),
+            ));
         }
 
         // Create leaf hashes
@@ -410,7 +423,10 @@ impl MerkleTree {
     // Generate a proof of inclusion for a leaf
     pub fn generate_proof(&self, leafindex: usize) -> Result<MerkleProof> {
         if leafindex >= self.leaves.len() {
-            return Err(DbError::InvalidInput(format!("Leaf index {} out of bounds", leafindex)));
+            return Err(DbError::InvalidInput(format!(
+                "Leaf index {} out of bounds",
+                leafindex
+            )));
         }
 
         let mut siblings = Vec::new();
@@ -418,11 +434,7 @@ impl MerkleTree {
 
         // Traverse from leaf to root
         for level in &self.levels[..self.levels.len() - 1] {
-            let sibling_index = if index % 2 == 0 {
-                index + 1
-            } else {
-                index - 1
-            };
+            let sibling_index = if index % 2 == 0 { index + 1 } else { index - 1 };
 
             let sibling_hash = if sibling_index < level.len() {
                 level[sibling_index]
@@ -569,10 +581,13 @@ impl Accumulator {
         }
 
         // Simple proof: all other elements
-        Some(self.elements.iter()
-            .filter(|&&h| h != element_hash)
-            .copied()
-            .collect())
+        Some(
+            self.elements
+                .iter()
+                .filter(|&&h| h != element_hash)
+                .copied()
+                .collect(),
+        )
     }
 
     // Verify membership proof
@@ -774,7 +789,9 @@ pub fn hash_to_hex(hash: &[u8]) -> String {
 // Parse hex string to hash
 pub fn hex_to_hash(hex: &str) -> Result<Vec<u8>> {
     if hex.len() % 2 != 0 {
-        return Err(DbError::InvalidInput("Hex string must have even length".to_string()));
+        return Err(DbError::InvalidInput(
+            "Hex string must have even length".to_string(),
+        ));
     }
 
     let mut bytes = Vec::with_capacity(hex.len() / 2);

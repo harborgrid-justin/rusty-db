@@ -17,10 +17,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use utoipa::ToSchema;
 
-use crate::api::rest::types::{ApiState, ApiError, ApiResult};
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
 use crate::document_store::{
-    DocumentStore, Document, DocumentId, CollectionSettings,
-    PipelineBuilder, ChangeStreamFilter, ChangeEventType,
+    ChangeEventType, ChangeStreamFilter, CollectionSettings, Document, DocumentId, DocumentStore,
+    PipelineBuilder,
 };
 
 // ============================================================================
@@ -173,17 +173,26 @@ pub async fn create_collection(
         settings.capped = capped;
     }
 
-    store.create_collection_with_settings(request.name.clone(), settings)
-        .map_err(|e| ApiError::new("COLLECTION_CREATE_FAILED", format!("Failed to create collection: {}", e)))?;
+    store
+        .create_collection_with_settings(request.name.clone(), settings)
+        .map_err(|e| {
+            ApiError::new(
+                "COLLECTION_CREATE_FAILED",
+                format!("Failed to create collection: {}", e),
+            )
+        })?;
 
     let count = store.count(&request.name).unwrap_or(0);
 
-    Ok((StatusCode::CREATED, Json(CollectionResponse {
-        name: request.name,
-        document_count: count,
-        size_bytes: 0,
-        created_at: chrono::Utc::now().timestamp(),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(CollectionResponse {
+            name: request.name,
+            document_count: count,
+            size_bytes: 0,
+            created_at: chrono::Utc::now().timestamp(),
+        }),
+    ))
 }
 
 /// List all collections
@@ -195,9 +204,7 @@ pub async fn create_collection(
     ),
     tag = "documents"
 )]
-pub async fn list_collections(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<Json<Vec<String>>> {
+pub async fn list_collections(State(_state): State<Arc<ApiState>>) -> ApiResult<Json<Vec<String>>> {
     let store = DOCUMENT_STORE.read();
     Ok(Json(store.list_collections()))
 }
@@ -221,10 +228,12 @@ pub async fn get_collection(
 ) -> ApiResult<Json<CollectionResponse>> {
     let store = DOCUMENT_STORE.read();
 
-    let count = store.count(&name)
+    let count = store
+        .count(&name)
         .map_err(|_| ApiError::new("NOT_FOUND", format!("Collection '{}' not found", name)))?;
 
-    let stats = store.get_stats(&name)
+    let stats = store
+        .get_stats(&name)
         .map_err(|_| ApiError::new("NOT_FOUND", format!("Collection '{}' not found", name)))?;
 
     Ok(Json(CollectionResponse {
@@ -254,7 +263,8 @@ pub async fn drop_collection(
 ) -> ApiResult<StatusCode> {
     let mut store = DOCUMENT_STORE.write();
 
-    store.drop_collection(&name)
+    store
+        .drop_collection(&name)
         .map_err(|e| ApiError::new("DROP_FAILED", format!("Failed to drop collection: {}", e)))?;
 
     Ok(StatusCode::NO_CONTENT)
@@ -281,7 +291,8 @@ pub async fn find_documents(
 ) -> ApiResult<Json<DocumentQueryResponse>> {
     let store = DOCUMENT_STORE.read();
 
-    let mut documents = store.find(&collection, query.filter)
+    let mut documents = store
+        .find(&collection, query.filter)
         .map_err(|e| ApiError::new("QUERY_FAILED", format!("Query failed: {}", e)))?;
 
     // Apply skip
@@ -298,7 +309,8 @@ pub async fn find_documents(
         false
     };
 
-    let docs_json: Vec<serde_json::Value> = documents.iter()
+    let docs_json: Vec<serde_json::Value> = documents
+        .iter()
         .map(|doc| doc.as_json().unwrap_or(serde_json::Value::Null))
         .collect();
 
@@ -339,13 +351,17 @@ pub async fn insert_document(
     let document = Document::from_json(doc_id.clone(), collection.clone(), request.document)
         .map_err(|e| ApiError::new("INVALID_DOCUMENT", format!("Invalid document: {}", e)))?;
 
-    let id = store.insert(&collection, document)
+    let id = store
+        .insert(&collection, document)
         .map_err(|e| ApiError::new("INSERT_FAILED", format!("Insert failed: {}", e)))?;
 
-    Ok((StatusCode::CREATED, Json(InsertDocumentResponse {
-        id: format!("{:?}", id),
-        inserted: true,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(InsertDocumentResponse {
+            id: format!("{:?}", id),
+            inserted: true,
+        }),
+    ))
 }
 
 /// Bulk insert documents
@@ -369,7 +385,8 @@ pub async fn bulk_insert_documents(
 ) -> ApiResult<(StatusCode, Json<BulkInsertResponse>)> {
     let mut store = DOCUMENT_STORE.write();
 
-    let documents: Result<Vec<Document>, _> = request.documents
+    let documents: Result<Vec<Document>, _> = request
+        .documents
         .into_iter()
         .map(|json| {
             let id = DocumentId::new_uuid();
@@ -380,15 +397,19 @@ pub async fn bulk_insert_documents(
     let documents = documents
         .map_err(|e| ApiError::new("INVALID_DOCUMENT", format!("Invalid document: {}", e)))?;
 
-    let ids = store.bulk_insert(&collection, documents)
+    let ids = store
+        .bulk_insert(&collection, documents)
         .map_err(|e| ApiError::new("BULK_INSERT_FAILED", format!("Bulk insert failed: {}", e)))?;
 
     let id_strings: Vec<String> = ids.iter().map(|id| format!("{:?}", id)).collect();
 
-    Ok((StatusCode::CREATED, Json(BulkInsertResponse {
-        inserted_count: id_strings.len(),
-        inserted_ids: id_strings,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(BulkInsertResponse {
+            inserted_count: id_strings.len(),
+            inserted_ids: id_strings,
+        }),
+    ))
 }
 
 /// Update documents
@@ -412,7 +433,8 @@ pub async fn update_documents(
 ) -> ApiResult<Json<UpdateDocumentResponse>> {
     let mut store = DOCUMENT_STORE.write();
 
-    let modified = store.bulk_update(&collection, request.filter, request.update)
+    let modified = store
+        .bulk_update(&collection, request.filter, request.update)
         .map_err(|e| ApiError::new("UPDATE_FAILED", format!("Update failed: {}", e)))?;
 
     Ok(Json(UpdateDocumentResponse {
@@ -443,7 +465,8 @@ pub async fn delete_documents(
 ) -> ApiResult<Json<DeleteDocumentResponse>> {
     let mut store = DOCUMENT_STORE.write();
 
-    let deleted = store.bulk_delete(&collection, request.filter)
+    let deleted = store
+        .bulk_delete(&collection, request.filter)
         .map_err(|e| ApiError::new("DELETE_FAILED", format!("Delete failed: {}", e)))?;
 
     Ok(Json(DeleteDocumentResponse {
@@ -485,7 +508,8 @@ pub async fn aggregate_documents(
 
     let pipeline = builder.build();
 
-    let results = store.aggregate(&collection, pipeline)
+    let results = store
+        .aggregate(&collection, pipeline)
         .map_err(|e| ApiError::new("AGGREGATION_FAILED", format!("Aggregation failed: {}", e)))?;
 
     Ok(Json(AggregationResponse {
@@ -513,7 +537,8 @@ pub async fn count_documents(
 ) -> ApiResult<Json<usize>> {
     let store = DOCUMENT_STORE.read();
 
-    let count = store.count(&collection)
+    let count = store
+        .count(&collection)
         .map_err(|e| ApiError::new("COUNT_FAILED", format!("Count failed: {}", e)))?;
 
     Ok(Json(count))
@@ -541,30 +566,36 @@ pub async fn watch_collection(
 
     let mut filter = ChangeStreamFilter::new();
     if let Some(op_types) = request.operation_types {
-        let types: Vec<ChangeEventType> = op_types.iter().filter_map(|s| {
-            match s.as_str() {
+        let types: Vec<ChangeEventType> = op_types
+            .iter()
+            .filter_map(|s| match s.as_str() {
                 "insert" => Some(ChangeEventType::Insert),
                 "update" => Some(ChangeEventType::Update),
                 "delete" => Some(ChangeEventType::Delete),
                 "replace" => Some(ChangeEventType::Replace),
                 _ => None,
-            }
-        }).collect();
+            })
+            .collect();
         filter = filter.operation_types(types);
     }
 
     let mut cursor = store.watch(filter);
     let changes = cursor.next_batch();
 
-    let change_events: Vec<ChangeEvent> = changes.iter().map(|c| {
-        ChangeEvent {
+    let change_events: Vec<ChangeEvent> = changes
+        .iter()
+        .map(|c| ChangeEvent {
             operation_type: format!("{:?}", c.operation_type),
             collection: c.collection.clone(),
-            document_id: c.document_key.as_ref().map(|k| format!("{:?}", k)).unwrap_or_default(),
+            document_id: c
+                .document_key
+                .as_ref()
+                .map(|k| format!("{:?}", k))
+                .unwrap_or_default(),
             timestamp: c.cluster_time as i64,
             document: c.full_document.clone(),
-        }
-    }).collect();
+        })
+        .collect();
 
     Ok(Json(ChangeStreamResponse {
         cursor_id: uuid::Uuid::new_v4().to_string(),

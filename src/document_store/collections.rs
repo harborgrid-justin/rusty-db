@@ -2,13 +2,13 @@
 //
 // Oracle SODA-like collection management with schema validation, statistics, and metadata.
 
-use std::collections::BTreeMap;
+use super::document::{Document, DocumentId, IdGenerationType};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::error::Result;
-use super::document::{Document, DocumentId, IdGenerationType};
 
 // JSON Schema for document validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,7 +56,7 @@ impl JsonSchema {
         if self.schema_type.as_deref() == Some("object") {
             if !doc.is_object() {
                 return Err(crate::error::DbError::InvalidInput(
-                    "Document must be an object".to_string()
+                    "Document must be an object".to_string(),
                 ));
             }
         }
@@ -68,26 +68,31 @@ impl JsonSchema {
         // Check required properties
         for required_prop in &self.required {
             if !obj.contains_key(required_prop) {
-                return Err(crate::error::DbError::InvalidInput(
-                    format!("Required property '{}' is missing", required_prop)
-                ));
+                return Err(crate::error::DbError::InvalidInput(format!(
+                    "Required property '{}' is missing",
+                    required_prop
+                )));
             }
         }
 
         // Check property count
         if let Some(min) = self.min_properties {
             if obj.len() < min {
-                return Err(crate::error::DbError::InvalidInput(
-                    format!("Document has {} properties, minimum is {}", obj.len(), min)
-                ));
+                return Err(crate::error::DbError::InvalidInput(format!(
+                    "Document has {} properties, minimum is {}",
+                    obj.len(),
+                    min
+                )));
             }
         }
 
         if let Some(max) = self.max_properties {
             if obj.len() > max {
-                return Err(crate::error::DbError::InvalidInput(
-                    format!("Document has {} properties, maximum is {}", obj.len(), max)
-                ));
+                return Err(crate::error::DbError::InvalidInput(format!(
+                    "Document has {} properties, maximum is {}",
+                    obj.len(),
+                    max
+                )));
             }
         }
 
@@ -96,9 +101,10 @@ impl JsonSchema {
             if let Some(prop_schema) = self.properties.get(key) {
                 prop_schema.validate(value)?;
             } else if !self.additional_properties {
-                return Err(crate::error::DbError::InvalidInput(
-                    format!("Additional property '{}' is not allowed", key)
-                ));
+                return Err(crate::error::DbError::InvalidInput(format!(
+                    "Additional property '{}' is not allowed",
+                    key
+                )));
             }
         }
 
@@ -246,90 +252,102 @@ impl PropertySchema {
         match self.property_type.as_str() {
             "string" => {
                 if !value.is_string() {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Expected string, got {:?}", value)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Expected string, got {:?}",
+                        value
+                    )));
                 }
                 let s = value.as_str().unwrap();
 
                 // Min/max length
                 if let Some(min) = self.min_length {
                     if s.len() < min {
-                        return Err(crate::error::DbError::InvalidInput(
-                            format!("String length {} is less than minimum {}", s.len(), min)
-                        ));
+                        return Err(crate::error::DbError::InvalidInput(format!(
+                            "String length {} is less than minimum {}",
+                            s.len(),
+                            min
+                        )));
                     }
                 }
                 if let Some(max) = self.max_length {
                     if s.len() > max {
-                        return Err(crate::error::DbError::InvalidInput(
-                            format!("String length {} exceeds maximum {}", s.len(), max)
-                        ));
+                        return Err(crate::error::DbError::InvalidInput(format!(
+                            "String length {} exceeds maximum {}",
+                            s.len(),
+                            max
+                        )));
                     }
                 }
 
                 // Pattern matching
                 if let Some(pattern) = &self.pattern {
-                    let re = regex::Regex::new(pattern)
-                        .map_err(|e| crate::error::DbError::InvalidInput(
-                            format!("Invalid regex pattern: {}", e)
-                        ))?;
+                    let re = regex::Regex::new(pattern).map_err(|e| {
+                        crate::error::DbError::InvalidInput(format!("Invalid regex pattern: {}", e))
+                    })?;
                     if !re.is_match(s) {
-                        return Err(crate::error::DbError::InvalidInput(
-                            format!("String '{}' does not match pattern '{}'", s, pattern)
-                        ));
+                        return Err(crate::error::DbError::InvalidInput(format!(
+                            "String '{}' does not match pattern '{}'",
+                            s, pattern
+                        )));
                     }
                 }
             }
             "number" | "integer" => {
                 if !value.is_number() {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Expected number, got {:?}", value)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Expected number, got {:?}",
+                        value
+                    )));
                 }
                 let num = value.as_f64().unwrap();
 
                 if self.property_type == "integer" && num.fract() != 0.0 {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Expected integer, got {}", num)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Expected integer, got {}",
+                        num
+                    )));
                 }
 
                 // Min/max value
                 if let Some(min) = self.minimum {
                     if num < min {
-                        return Err(crate::error::DbError::InvalidInput(
-                            format!("Value {} is less than minimum {}", num, min)
-                        ));
+                        return Err(crate::error::DbError::InvalidInput(format!(
+                            "Value {} is less than minimum {}",
+                            num, min
+                        )));
                     }
                 }
                 if let Some(max) = self.maximum {
                     if num > max {
-                        return Err(crate::error::DbError::InvalidInput(
-                            format!("Value {} exceeds maximum {}", num, max)
-                        ));
+                        return Err(crate::error::DbError::InvalidInput(format!(
+                            "Value {} exceeds maximum {}",
+                            num, max
+                        )));
                     }
                 }
             }
             "boolean" => {
                 if !value.is_boolean() {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Expected boolean, got {:?}", value)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Expected boolean, got {:?}",
+                        value
+                    )));
                 }
             }
             "array" => {
                 if !value.is_array() {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Expected array, got {:?}", value)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Expected array, got {:?}",
+                        value
+                    )));
                 }
             }
             "object" => {
                 if !value.is_object() {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Expected object, got {:?}", value)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Expected object, got {:?}",
+                        value
+                    )));
                 }
             }
             _ => {}
@@ -338,9 +356,10 @@ impl PropertySchema {
         // Enum validation
         if let Some(enum_values) = &self.enum_values {
             if !enum_values.contains(value) {
-                return Err(crate::error::DbError::InvalidInput(
-                    format!("Value {:?} is not in allowed enum values", value)
-                ));
+                return Err(crate::error::DbError::InvalidInput(format!(
+                    "Value {:?} is not in allowed enum values",
+                    value
+                )));
             }
         }
 
@@ -402,7 +421,7 @@ pub struct CollectionStats {
     // Document count by version
     pub version_distribution: HashMap<u64, u64>,
     // Collection creation timestamp
-    pub created_at: u64
+    pub created_at: u64,
 }
 
 impl CollectionStats {
@@ -512,7 +531,7 @@ pub struct CollectionSettings {
     // Maximum number of documents (for capped collections)
     pub max_documents: Option<usize>,
     // Whether this is a capped collection
-    pub capped: bool
+    pub capped: bool,
 }
 
 impl CollectionSettings {
@@ -664,11 +683,10 @@ impl Collection {
 
         // Check document size
         if document.metadata.size > self.metadata.settings.max_document_size {
-            return Err(crate::error::DbError::InvalidInput(
-                format!("Document size {} exceeds maximum {}",
-                    document.metadata.size,
-                    self.metadata.settings.max_document_size)
-            ));
+            return Err(crate::error::DbError::InvalidInput(format!(
+                "Document size {} exceeds maximum {}",
+                document.metadata.size, self.metadata.settings.max_document_size
+            )));
         }
 
         // Apply default TTL if not set
@@ -695,8 +713,7 @@ impl Collection {
     // Get a document by ID
     pub fn get(&self, id: &DocumentId) -> Option<Document> {
         let docs = self.documents.read().unwrap();
-        docs.get(id)
-            .cloned()
+        docs.get(id).cloned()
     }
 
     // Update a document
@@ -726,13 +743,16 @@ impl Collection {
             docs.insert(id.clone(), document);
 
             // Update statistics
-            self.metadata.stats.on_update(old_size, new_size, old_version, new_version);
+            self.metadata
+                .stats
+                .on_update(old_size, new_size, old_version, new_version);
 
             Ok(())
         } else {
-            Err(crate::error::DbError::NotFound(
-                format!("Document with ID {:?} not found", id)
-            ))
+            Err(crate::error::DbError::NotFound(format!(
+                "Document with ID {:?} not found",
+                id
+            )))
         }
     }
 
@@ -748,9 +768,10 @@ impl Collection {
 
             Ok(())
         } else {
-            Err(crate::error::DbError::NotFound(
-                format!("Document with ID {:?} not found", id)
-            ))
+            Err(crate::error::DbError::NotFound(format!(
+                "Document with ID {:?} not found",
+                id
+            )))
         }
     }
 
@@ -820,9 +841,10 @@ impl CollectionManager {
         let mut collections = self.collections.write().unwrap();
 
         if collections.contains_key(&name) {
-            return Err(crate::error::DbError::AlreadyExists(
-                format!("Collection '{}' already exists", name)
-            ));
+            return Err(crate::error::DbError::AlreadyExists(format!(
+                "Collection '{}' already exists",
+                name
+            )));
         }
 
         collections.insert(name.clone(), Collection::new(name));
@@ -838,9 +860,10 @@ impl CollectionManager {
         let mut collections = self.collections.write().unwrap();
 
         if collections.contains_key(&name) {
-            return Err(crate::error::DbError::AlreadyExists(
-                format!("Collection '{}' already exists", name)
-            ));
+            return Err(crate::error::DbError::AlreadyExists(format!(
+                "Collection '{}' already exists",
+                name
+            )));
         }
 
         collections.insert(name.clone(), Collection::with_settings(name, settings));
@@ -854,20 +877,19 @@ impl CollectionManager {
         if collections.remove(name).is_some() {
             Ok(())
         } else {
-            Err(crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", name)
-            ))
+            Err(crate::error::DbError::NotFound(format!(
+                "Collection '{}' not found",
+                name
+            )))
         }
     }
 
     // Get a collection
     pub fn get_collection(&self, name: &str) -> Result<Collection> {
         let collections = self.collections.read().unwrap();
-        collections.get(name)
-            .cloned()
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", name)
-            ))
+        collections.get(name).cloned().ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", name))
+        })
     }
 
     // Check if collection exists
@@ -890,9 +912,10 @@ impl CollectionManager {
         let mut collections = self.collections.write().unwrap();
 
         if collections.contains_key(&new_name) {
-            return Err(crate::error::DbError::AlreadyExists(
-                format!("Collection '{}' already exists", new_name)
-            ));
+            return Err(crate::error::DbError::AlreadyExists(format!(
+                "Collection '{}' already exists",
+                new_name
+            )));
         }
 
         if let Some(mut collection) = collections.remove(old_name) {
@@ -900,9 +923,10 @@ impl CollectionManager {
             collections.insert(new_name, collection);
             Ok(())
         } else {
-            Err(crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", old_name)
-            ))
+            Err(crate::error::DbError::NotFound(format!(
+                "Collection '{}' not found",
+                old_name
+            )))
         }
     }
 }
@@ -955,7 +979,8 @@ mod tests {
             DocumentId::new_uuid(),
             "users".to_string(),
             json!({"name": "Alice"}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let id = collection.insert(doc).unwrap();
         assert_eq!(collection.count(), 1);

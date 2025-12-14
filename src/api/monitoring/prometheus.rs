@@ -2,14 +2,14 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::{Arc, Mutex};
-use std::collections::{HashMap, BTreeMap};
-use std::time::{Duration, SystemTime};
-use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
+use super::metrics_core::*;
 use crate::api::MetricsRegistry;
 use crate::error::DbError;
-use super::metrics_core::*;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, SystemTime};
 
 // SECTION 2: PROMETHEUS INTEGRATION (600+ lines)
 // ============================================================================
@@ -40,7 +40,8 @@ impl PrometheusExporter {
 
     pub fn add_exemplar(&self, metric_name: String, exemplar: Exemplar) {
         let mut storage = self.exemplar_storage.write();
-        storage.entry(metric_name)
+        storage
+            .entry(metric_name)
             .or_insert_with(Vec::new)
             .push(exemplar);
     }
@@ -121,10 +122,20 @@ impl PrometheusExporter {
 
         // Sum
         let labels = self.format_labels(&id.labels);
-        output.push_str(&format!("{}_sum{} {}\n", id.name, labels, histogram.get_sum()));
+        output.push_str(&format!(
+            "{}_sum{} {}\n",
+            id.name,
+            labels,
+            histogram.get_sum()
+        ));
 
         // Count
-        output.push_str(&format!("{}_count{} {}\n", id.name, labels, histogram.get_count()));
+        output.push_str(&format!(
+            "{}_count{} {}\n",
+            id.name,
+            labels,
+            histogram.get_count()
+        ));
 
         output
     }
@@ -147,10 +158,20 @@ impl PrometheusExporter {
 
         // Sum
         let labels = self.format_labels(&id.labels);
-        output.push_str(&format!("{}_sum{} {}\n", id.name, labels, summary.get_sum()));
+        output.push_str(&format!(
+            "{}_sum{} {}\n",
+            id.name,
+            labels,
+            summary.get_sum()
+        ));
 
         // Count
-        output.push_str(&format!("{}_count{} {}\n", id.name, labels, summary.get_count()));
+        output.push_str(&format!(
+            "{}_count{} {}\n",
+            id.name,
+            labels,
+            summary.get_count()
+        ));
 
         output
     }
@@ -160,7 +181,8 @@ impl PrometheusExporter {
             return String::new();
         }
 
-        let label_pairs: Vec<String> = labels.iter()
+        let label_pairs: Vec<String> = labels
+            .iter()
             .map(|(k, v)| format!("{}=\"{}\"", k, v))
             .collect();
 
@@ -329,7 +351,11 @@ impl RemoteWriteClient {
         // 1. Encode as protobuf
         // 2. Compress with Snappy
         // 3. Send via HTTP POST
-        println!("Flushing {} timeseries to {}", request.timeseries.len(), self.endpoint);
+        println!(
+            "Flushing {} timeseries to {}",
+            request.timeseries.len(),
+            self.endpoint
+        );
 
         Ok(())
     }
@@ -385,14 +411,15 @@ impl MetricFamilyBuilder {
         labels: BTreeMap<String, String>,
         value: f64,
     ) {
-        let family = self.families.entry(name.clone()).or_insert_with(|| {
-            MetricFamily {
+        let family = self
+            .families
+            .entry(name.clone())
+            .or_insert_with(|| MetricFamily {
                 name,
                 help,
                 metric_type: "counter".to_string(),
                 metrics: Vec::new(),
-            }
-        });
+            });
 
         family.metrics.push(MetricFamilyMember {
             labels,

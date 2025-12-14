@@ -1,53 +1,52 @@
 // comment
 
-pub mod self_tuning;
-pub mod self_healing;
-pub mod workload_ml;
 pub mod auto_indexing;
 pub mod predictive;
+pub mod self_healing;
+pub mod self_tuning;
+pub mod workload_ml;
 
 // Re-export commonly used types from self_tuning
 pub use self_tuning::{
-    AutoTuner, AggressivenessLevel, TunableParameter, ParameterValue, ParameterConfig,
-    PerformanceMetrics, TuningAction, TuningResult, WorkloadCharacteristics,
-    StatisticsGatherer, TableStatistics, TuningReport,
+    AggressivenessLevel, AutoTuner, ParameterConfig, ParameterValue, PerformanceMetrics,
+    StatisticsGatherer, TableStatistics, TunableParameter, TuningAction, TuningReport,
+    TuningResult, WorkloadCharacteristics,
 };
 
 // Re-export commonly used types from self_healing
 pub use self_healing::{
-    SelfHealingEngine, IssueType, Severity, DetectedIssue, HealingAction, HealingResult,
-    CorruptionDetector, CorruptionInfo, IndexHealthMonitor, IndexHealth,
-    ConnectionPoolManager, ConnectionPoolStats, DeadlockResolver,
-    MemoryLeakDetector, MemorySnapshot, FailoverOrchestrator, NodeHealth,
-    HealingReport,
+    ConnectionPoolManager, ConnectionPoolStats, CorruptionDetector, CorruptionInfo,
+    DeadlockResolver, DetectedIssue, FailoverOrchestrator, HealingAction, HealingReport,
+    HealingResult, IndexHealth, IndexHealthMonitor, IssueType, MemoryLeakDetector, MemorySnapshot,
+    NodeHealth, SelfHealingEngine, Severity,
 };
 
 // Re-export commonly used types from workload_ml
 pub use workload_ml::{
-    WorkloadMLAnalyzer, QueryFeatures, WorkloadClass, KMeansClassifier,
-    PerformancePredictor, AnomalyDetector, PatternRecognizer, QueryPattern,
-    TimeSeriesAnalyzer, TimeSeriesPoint, Trend, TrendDirection,
+    AnomalyDetector, KMeansClassifier, PatternRecognizer, PerformancePredictor, QueryFeatures,
+    QueryPattern, TimeSeriesAnalyzer, TimeSeriesPoint, Trend, TrendDirection, WorkloadClass,
+    WorkloadMLAnalyzer,
 };
 
 // Re-export commonly used types from auto_indexing
 pub use auto_indexing::{
-    AutoIndexingEngine, IndexAdvisor, IndexCandidate, IndexType, ColumnAccessPattern,
-    IndexStatistics, ColumnAccessType, IndexMaintenanceScheduler, MaintenanceTask,
-    MaintenanceTaskType, IndexRecommendationReport,
+    AutoIndexingEngine, ColumnAccessPattern, ColumnAccessType, IndexAdvisor, IndexCandidate,
+    IndexMaintenanceScheduler, IndexRecommendationReport, IndexStatistics, IndexType,
+    MaintenanceTask, MaintenanceTaskType,
 };
 
 // Re-export commonly used types from predictive
 pub use predictive::{
-    CapacityPlanner, StorageGrowthPredictor, ResponseTimePredictor,
-    ResourceExhaustionForecaster, MaintenanceWindowOptimizer,
-    Forecast, TimeSeriesDataPoint, ResourceExhaustionAlert, ResourceType,
-    AlertSeverity, WorkloadIntensity, MaintenanceWindow, CapacityPlanningReport,
+    AlertSeverity, CapacityPlanner, CapacityPlanningReport, Forecast, MaintenanceWindow,
+    MaintenanceWindowOptimizer, ResourceExhaustionAlert, ResourceExhaustionForecaster,
+    ResourceType, ResponseTimePredictor, StorageGrowthPredictor, TimeSeriesDataPoint,
+    WorkloadIntensity,
 };
 
-use std::sync::Arc;
+use crate::Result;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::Result;
+use std::sync::Arc;
 
 // Autonomous database configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -91,7 +90,7 @@ impl Default for AutonomousConfig {
         Self {
             enable_auto_tuning: true,
             enable_self_healing: true,
-            enable_auto_indexing: false,  // Conservative default
+            enable_auto_indexing: false, // Conservative default
             tuning_aggressiveness: AggressivenessLevel::Moderate,
             min_index_benefit_score: 10.0,
             auto_create_indexes: false,
@@ -251,15 +250,15 @@ pub struct AutonomousReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Duration;
-use std::time::SystemTime;
+    use std::time::Duration;
+    use std::time::SystemTime;
 
     #[test]
     fn test_autonomous_config_default() {
         let config = AutonomousConfig::default();
         assert!(config.enable_auto_tuning);
         assert!(config.enable_self_healing);
-        assert!(!config.auto_create_indexes);  // Conservative default
+        assert!(!config.auto_create_indexes); // Conservative default
     }
 
     #[tokio::test]

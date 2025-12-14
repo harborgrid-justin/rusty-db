@@ -2,19 +2,19 @@
 // Provides timestamp-based versioning with hybrid logical clocks,
 // snapshot isolation, and write skew detection
 
-use std::collections::HashSet;
-use std::collections::BTreeMap;
-use std::sync::Mutex;
-use std::collections::VecDeque;
-use std::time::Duration;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::SystemTime;
-use parking_lot::{RwLock};
-use serde::{Deserialize, Serialize};
+use super::{LogSequenceNumber, TransactionId};
 use crate::error::DbError;
-use super::{TransactionId, LogSequenceNumber};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::SystemTime;
 
 /// Hybrid Logical Clock for distributed timestamp ordering
 /// Combines physical time with logical counters for causality tracking
@@ -31,7 +31,11 @@ pub struct HybridTimestamp {
 impl HybridTimestamp {
     /// Create a new hybrid timestamp
     pub fn new(physical: u64, logical: u64, node_id: u32) -> Self {
-        Self { physical, logical, node_id }
+        Self {
+            physical,
+            logical,
+            node_id,
+        }
     }
 
     /// Get current wall clock time as hybrid timestamp
@@ -62,8 +66,8 @@ impl HybridTimestamp {
 
     /// Check if this timestamp happens-before another
     pub fn happens_before(&self, other: &HybridTimestamp) -> bool {
-        self.physical < other.physical ||
-        (self.physical == other.physical && self.logical < other.logical)
+        self.physical < other.physical
+            || (self.physical == other.physical && self.logical < other.logical)
     }
 
     /// Check if timestamps are concurrent (no causal relationship)
@@ -112,9 +116,10 @@ impl HybridClock {
         if remote_ts.physical > local_physical {
             let skew = remote_ts.physical - local_physical;
             if skew > self.skew_tolerance.as_millis() as u64 {
-                return Err(DbError::Transaction(
-                    format!("Clock skew too large: {}ms", skew)
-                ));
+                return Err(DbError::Transaction(format!(
+                    "Clock skew too large: {}ms",
+                    skew
+                )));
             }
         }
 
@@ -264,8 +269,7 @@ impl<T: Clone> VersionChain<T> {
 
         // Keep only versions that are visible at or after gc_ts
         self.versions.retain(|v| {
-            v.created_at >= *gc_ts ||
-            v.deleted_at.map(|dt| dt >= *gc_ts).unwrap_or(true)
+            v.created_at >= *gc_ts || v.deleted_at.map(|dt| dt >= *gc_ts).unwrap_or(true)
         });
 
         // Update head index
@@ -439,12 +443,8 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
                 if !latest.is_deleted() {
                     // Create a new version that's marked as deleted
                     let lsn = self.next_lsn.fetch_add(1, Ordering::SeqCst);
-                    let mut new_version = VersionedRecord::new(
-                        latest.data.clone(),
-                        txn_id,
-                        timestamp,
-                        lsn,
-                    );
+                    let mut new_version =
+                        VersionedRecord::new(latest.data.clone(), txn_id, timestamp, lsn);
                     new_version.mark_deleted(txn_id, timestamp);
                     chain.add_version(new_version);
 
@@ -595,7 +595,9 @@ impl SnapshotIsolationManager {
             snapshot.write_set.insert(key.clone());
             drop(txns);
 
-            self.write_sets.write().entry(txn_id)
+            self.write_sets
+                .write()
+                .entry(txn_id)
                 .or_insert_with(HashSet::new)
                 .insert(key);
             Ok(())
@@ -610,9 +612,9 @@ impl SnapshotIsolationManager {
     /// Check for write-write conflicts
     pub fn check_write_conflicts(&self, txn_id: TransactionId) -> Result<(), DbError> {
         let txns = self.active_txns.read();
-        let snapshot = txns.get(&txn_id).ok_or_else(|| {
-            DbError::Transaction(format!("Transaction {} not found", txn_id))
-        })?;
+        let snapshot = txns
+            .get(&txn_id)
+            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
 
         if snapshot.read_only {
             return Ok(());
@@ -650,9 +652,9 @@ impl SnapshotIsolationManager {
         }
 
         let txns = self.active_txns.read();
-        let snapshot = txns.get(&txn_id).ok_or_else(|| {
-            DbError::Transaction(format!("Transaction {} not found", txn_id))
-        })?;
+        let snapshot = txns
+            .get(&txn_id)
+            .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
 
         if snapshot.read_only {
             return Ok(());
@@ -661,7 +663,12 @@ impl SnapshotIsolationManager {
         // Check if any committed transaction wrote to our read set
         let committed = self.committed_writes.read();
         for (commit_ts, committed_keys) in committed.range(snapshot.start_ts..) {
-            if snapshot.read_set.intersection(committed_keys).next().is_some() {
+            if snapshot
+                .read_set
+                .intersection(committed_keys)
+                .next()
+                .is_some()
+            {
                 return Err(DbError::Transaction(format!(
                     "Write-skew detected: transaction {} read data modified by commit at {:?}",
                     txn_id, commit_ts
@@ -732,7 +739,7 @@ impl SnapshotIsolationManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_hybrid_timestamp_ordering() {
@@ -762,16 +769,11 @@ use std::time::UNIX_EPOCH;
         let ts2 = HybridTimestamp::new(200, 0, 1);
         let ts3 = HybridTimestamp::new(300, 0, 1);
 
-        let version: VersionedRecord<String> = VersionedRecord::new(
-            "data".to_string(),
-            1,
-            ts2,
-            1,
-        );
+        let version: VersionedRecord<String> = VersionedRecord::new("data".to_string(), 1, ts2, 1);
 
         assert!(!version.is_visible_to(&ts1)); // Created after read time
-        assert!(version.is_visible_to(&ts2));  // Created at read time
-        assert!(version.is_visible_to(&ts3));  // Created before read time
+        assert!(version.is_visible_to(&ts2)); // Created at read time
+        assert!(version.is_visible_to(&ts3)); // Created before read time
     }
 
     #[test]
@@ -780,7 +782,8 @@ use std::time::UNIX_EPOCH;
         let mvcc: MVCCManager<String, String> = MVCCManager::new(config);
 
         let ts1 = mvcc.begin_snapshot(1);
-        mvcc.write("key1".to_string(), "value1".to_string(), 1, ts1).unwrap();
+        mvcc.write("key1".to_string(), "value1".to_string(), 1, ts1)
+            .unwrap();
 
         let ts2 = mvcc.begin_snapshot(2);
         let value = mvcc.read(&"key1".to_string(), &ts2).unwrap();
@@ -805,5 +808,3 @@ use std::time::UNIX_EPOCH;
         assert!(si.check_write_conflicts(1).is_err() || si.check_write_conflicts(2).is_err());
     }
 }
-
-

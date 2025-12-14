@@ -1,9 +1,9 @@
 // CTE dependency graph management
 
-use std::collections::{HashMap, HashSet};
+use super::core::CteDefinition;
 use crate::error::DbError;
 use crate::execution::planner::PlanNode;
-use super::core::CteDefinition;
+use std::collections::{HashMap, HashSet};
 
 // CTE dependency graph for optimization
 pub struct CteDependencyGraph {

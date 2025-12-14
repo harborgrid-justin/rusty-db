@@ -82,16 +82,10 @@ impl MemberState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum GossipMessage {
     /// Direct ping to check if node is alive
-    Ping {
-        from: NodeInfo,
-        sequence: u64,
-    },
+    Ping { from: NodeInfo, sequence: u64 },
 
     /// Acknowledgment of ping
-    Ack {
-        from: NodeInfo,
-        sequence: u64,
-    },
+    Ack { from: NodeInfo, sequence: u64 },
 
     /// Request for indirect ping (when direct fails)
     PingReq {
@@ -101,20 +95,13 @@ pub enum GossipMessage {
     },
 
     /// Membership update (piggybacked on other messages)
-    Update {
-        node: NodeInfo,
-        state: MemberState,
-    },
+    Update { node: NodeInfo, state: MemberState },
 
     /// Join request
-    Join {
-        node: NodeInfo,
-    },
+    Join { node: NodeInfo },
 
     /// Leave notification
-    Leave {
-        node: NodeInfo,
-    },
+    Leave { node: NodeInfo },
 }
 
 /// Gossip protocol state
@@ -168,11 +155,14 @@ impl GossipDiscovery {
     ) -> Result<Self> {
         let socket = std::net::UdpSocket::bind(config.bind_addr)
             .map_err(|e| DbError::Network(format!("Failed to bind socket: {}", e)))?;
-        socket.set_nonblocking(true)
+        socket
+            .set_nonblocking(true)
             .map_err(|e| DbError::Network(format!("Failed to set nonblocking: {}", e)))?;
 
-        let socket = Arc::new(UdpSocket::from_std(socket)
-            .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?);
+        let socket = Arc::new(
+            UdpSocket::from_std(socket)
+                .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?,
+        );
 
         Ok(Self {
             config,
@@ -191,7 +181,9 @@ impl GossipDiscovery {
             let state = self.state.read().await;
 
             // Select random alive member
-            let alive_members: Vec<_> = state.members.iter()
+            let alive_members: Vec<_> = state
+                .members
+                .iter()
                 .filter(|(_, (_, s))| s.is_alive())
                 .collect();
 
@@ -231,7 +223,9 @@ impl GossipDiscovery {
             let state = self.state.read().await;
 
             // Select random alive members for indirect probe
-            state.members.iter()
+            state
+                .members
+                .iter()
                 .filter(|(_, (n, s))| s.is_alive() && n.addr != target)
                 .take(3)
                 .map(|(_, (node, _))| node.addr)
@@ -264,7 +258,10 @@ impl GossipDiscovery {
     /// Handle incoming message
     async fn handle_message(&self, msg: GossipMessage, from: SocketAddr) -> Result<()> {
         match msg {
-            GossipMessage::Ping { from: sender, sequence } => {
+            GossipMessage::Ping {
+                from: sender,
+                sequence,
+            } => {
                 // Send ack
                 let ack = GossipMessage::Ack {
                     from: self.config.local_node.clone(),
@@ -273,20 +270,29 @@ impl GossipDiscovery {
                 self.send_message(&ack, from).await?;
 
                 // Update membership
-                self.update_member(sender, MemberState::Alive { incarnation: 0 }).await?;
+                self.update_member(sender, MemberState::Alive { incarnation: 0 })
+                    .await?;
             }
 
-            GossipMessage::Ack { from: sender, sequence } => {
+            GossipMessage::Ack {
+                from: sender,
+                sequence,
+            } => {
                 // Remove pending ack
                 let mut state = self.state.write().await;
                 state.pending_acks.remove(&sequence);
                 drop(state);
 
                 // Update member as alive
-                self.update_member(sender, MemberState::Alive { incarnation: 0 }).await?;
+                self.update_member(sender, MemberState::Alive { incarnation: 0 })
+                    .await?;
             }
 
-            GossipMessage::PingReq { from: _sender, target, sequence } => {
+            GossipMessage::PingReq {
+                from: _sender,
+                target,
+                sequence,
+            } => {
                 // Perform indirect ping on behalf of requester
                 let ping = GossipMessage::Ping {
                     from: self.config.local_node.clone(),
@@ -300,7 +306,8 @@ impl GossipDiscovery {
             }
 
             GossipMessage::Join { node } => {
-                self.update_member(node.clone(), MemberState::Alive { incarnation: 0 }).await?;
+                self.update_member(node.clone(), MemberState::Alive { incarnation: 0 })
+                    .await?;
 
                 let _ = self.event_tx.send(DiscoveryEvent::NodeJoined(node)).await;
             }
@@ -329,7 +336,9 @@ impl GossipDiscovery {
         };
 
         if should_update {
-            state.members.insert(node.id.clone(), (node.clone(), new_state));
+            state
+                .members
+                .insert(node.id.clone(), (node.clone(), new_state));
             drop(state);
 
             // Update membership list
@@ -347,7 +356,9 @@ impl GossipDiscovery {
         let bytes = bincode::serde::encode_to_vec(msg, bincode::config::standard())
             .map_err(|e| DbError::Serialization(format!("Failed to serialize message: {}", e)))?;
 
-        self.socket.send_to(&bytes, addr).await
+        self.socket
+            .send_to(&bytes, addr)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to send message: {}", e)))?;
 
         Ok(())
@@ -361,7 +372,9 @@ impl GossipDiscovery {
         let mut state = self.state.write().await;
 
         // Check pending acks
-        let timed_out: Vec<_> = state.pending_acks.iter()
+        let timed_out: Vec<_> = state
+            .pending_acks
+            .iter()
             .filter(|(_, sent_at)| now.duration_since(**sent_at) > timeout)
             .map(|(seq, _)| *seq)
             .collect();
@@ -371,9 +384,15 @@ impl GossipDiscovery {
         }
 
         // Check suspect members
-        let suspected: Vec<_> = state.members.iter()
+        let suspected: Vec<_> = state
+            .members
+            .iter()
             .filter_map(|(id, (node, s))| {
-                if let MemberState::Suspect { suspected_at: Some(at), .. } = s {
+                if let MemberState::Suspect {
+                    suspected_at: Some(at),
+                    ..
+                } = s
+                {
                     if now.duration_since(*at) > timeout * 3 {
                         Some((id.clone(), node.clone()))
                     } else {
@@ -386,10 +405,9 @@ impl GossipDiscovery {
             .collect();
 
         for (id, node) in suspected {
-            state.members.insert(
-                id,
-                (node.clone(), MemberState::Dead { incarnation: 0 }),
-            );
+            state
+                .members
+                .insert(id, (node.clone(), MemberState::Dead { incarnation: 0 }));
 
             let _ = self.event_tx.send(DiscoveryEvent::NodeFailed(node)).await;
         }
@@ -466,7 +484,9 @@ impl DiscoveryProtocol for GossipDiscovery {
 
     async fn members(&self) -> Result<Vec<NodeInfo>> {
         let state = self.state.read().await;
-        Ok(state.members.values()
+        Ok(state
+            .members
+            .values()
             .filter(|(_, s)| s.is_alive())
             .map(|(n, _)| n.clone())
             .collect())

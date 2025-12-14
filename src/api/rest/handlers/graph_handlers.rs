@@ -16,14 +16,12 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use utoipa::ToSchema;
 
-use crate::api::rest::types::{ApiState, ApiError, ApiResult};
-use crate::graph::{
-    PropertyGraph, Properties, EdgeDirection,
-    PageRank, PageRankConfig,
-    LouvainAlgorithm, CommunityDetectionResult,
-    QueryExecutor, GraphQuery,
-};
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
 use crate::common::Value;
+use crate::graph::{
+    CommunityDetectionResult, EdgeDirection, GraphQuery, LouvainAlgorithm, PageRank,
+    PageRankConfig, Properties, PropertyGraph, QueryExecutor,
+};
 
 // ============================================================================
 // Request/Response Types
@@ -192,18 +190,25 @@ pub async fn execute_graph_query(
     let query = GraphQuery::parse(&request.query)
         .map_err(|e| ApiError::new("INVALID_QUERY", format!("Failed to parse query: {}", e)))?;
 
-    let results = executor.execute(&query)
+    let results = executor
+        .execute(&query)
         .map_err(|e| ApiError::new("QUERY_FAILED", format!("Query execution failed: {}", e)))?;
 
     let execution_time_ms = start.elapsed().as_millis() as u64;
 
     Ok(Json(GraphQueryResponse {
         query_id: uuid::Uuid::new_v4().to_string(),
-        results: results.iter().map(|r| {
-            let mut map = HashMap::new();
-            map.insert("result".to_string(), serde_json::to_value(r).unwrap_or_default());
-            map
-        }).collect(),
+        results: results
+            .iter()
+            .map(|r| {
+                let mut map = HashMap::new();
+                map.insert(
+                    "result".to_string(),
+                    serde_json::to_value(r).unwrap_or_default(),
+                );
+                map
+            })
+            .collect(),
         result_count: results.len(),
         execution_time_ms,
     }))
@@ -242,7 +247,8 @@ pub async fn run_pagerank(
     let result = PageRank::compute(&*graph, &config)
         .map_err(|e| ApiError::new("ALGORITHM_FAILED", format!("PageRank failed: {}", e)))?;
 
-    let mut scores: Vec<VertexScore> = result.scores
+    let mut scores: Vec<VertexScore> = result
+        .scores
         .iter()
         .map(|(vid, score)| VertexScore {
             vertex_id: *vid,
@@ -290,8 +296,9 @@ pub async fn shortest_path(
     // Simple BFS-based shortest path (unweighted)
     // In a real implementation, would use a proper pathfinding algorithm
     let path_vertices: Vec<u64> = Vec::new();
-    let (found, distance) = if graph.get_vertex(request.source).is_some() &&
-                                graph.get_vertex(request.target).is_some() {
+    let (found, distance) = if graph.get_vertex(request.source).is_some()
+        && graph.get_vertex(request.target).is_some()
+    {
         // Path finding would happen here
         (false, f64::INFINITY)
     } else {
@@ -327,10 +334,8 @@ pub async fn detect_communities(
     let graph = GRAPH.read();
 
     let result: CommunityDetectionResult = match request.algorithm.as_str() {
-        "louvain" => {
-            LouvainAlgorithm::detect(&*graph, 0)
-                .map_err(|e| ApiError::new("ALGORITHM_FAILED", format!("Louvain failed: {}", e)))?
-        },
+        "louvain" => LouvainAlgorithm::detect(&*graph, 0)
+            .map_err(|e| ApiError::new("ALGORITHM_FAILED", format!("Louvain failed: {}", e)))?,
         _ => {
             return Err(ApiError::new(
                 "INVALID_ALGORITHM",
@@ -341,9 +346,13 @@ pub async fn detect_communities(
 
     let mut communities_vec = Vec::new();
     // Group vertices by community ID
-    let mut community_map: std::collections::HashMap<usize, Vec<u64>> = std::collections::HashMap::new();
+    let mut community_map: std::collections::HashMap<usize, Vec<u64>> =
+        std::collections::HashMap::new();
     for (vertex, community_id) in result.communities.iter() {
-        community_map.entry(*community_id).or_insert_with(Vec::new).push(*vertex);
+        community_map
+            .entry(*community_id)
+            .or_insert_with(Vec::new)
+            .push(*vertex);
     }
 
     for (community_id, vertices) in community_map.iter() {
@@ -395,8 +404,12 @@ pub async fn add_vertex(
     }
 
     let labels = request.labels.clone();
-    let vertex_id = graph.add_vertex(labels.clone(), props)
-        .map_err(|e| ApiError::new("VERTEX_CREATION_FAILED", format!("Failed to add vertex: {}", e)))?;
+    let vertex_id = graph.add_vertex(labels.clone(), props).map_err(|e| {
+        ApiError::new(
+            "VERTEX_CREATION_FAILED",
+            format!("Failed to add vertex: {}", e),
+        )
+    })?;
 
     let degree = if let Some(vertex) = graph.get_vertex(vertex_id) {
         vertex.incoming_edges.len() + vertex.outgoing_edges.len()
@@ -404,12 +417,15 @@ pub async fn add_vertex(
         0
     };
 
-    Ok((StatusCode::CREATED, Json(VertexResponse {
-        vertex_id,
-        labels,
-        properties: request.properties,
-        degree,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(VertexResponse {
+            vertex_id,
+            labels,
+            properties: request.properties,
+            degree,
+        }),
+    ))
 }
 
 /// Get vertex by ID
@@ -431,12 +447,15 @@ pub async fn get_vertex(
 ) -> ApiResult<Json<VertexResponse>> {
     let graph = GRAPH.read();
 
-    let vertex = graph.get_vertex(id)
+    let vertex = graph
+        .get_vertex(id)
         .ok_or_else(|| ApiError::new("NOT_FOUND", format!("Vertex {} not found", id)))?;
 
     let degree = vertex.incoming_edges.len() + vertex.outgoing_edges.len();
 
-    let properties = vertex.properties.iter()
+    let properties = vertex
+        .properties
+        .iter()
         .map(|(k, v)| (k.clone(), value_to_json(v)))
         .collect();
 
@@ -476,21 +495,26 @@ pub async fn add_edge(
         _ => EdgeDirection::Directed,
     };
 
-    let edge_id = graph.add_edge(
-        request.source,
-        request.target,
-        request.label.clone(),
-        props,
-        direction,
-    ).map_err(|e| ApiError::new("EDGE_CREATION_FAILED", format!("Failed to add edge: {}", e)))?;
+    let edge_id = graph
+        .add_edge(
+            request.source,
+            request.target,
+            request.label.clone(),
+            props,
+            direction,
+        )
+        .map_err(|e| ApiError::new("EDGE_CREATION_FAILED", format!("Failed to add edge: {}", e)))?;
 
-    Ok((StatusCode::CREATED, Json(EdgeResponse {
-        edge_id,
-        source: request.source,
-        target: request.target,
-        label: request.label,
-        properties: request.properties,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(EdgeResponse {
+            edge_id,
+            source: request.source,
+            target: request.target,
+            label: request.label,
+            properties: request.properties,
+        }),
+    ))
 }
 
 /// Get graph statistics
@@ -533,7 +557,7 @@ fn json_to_value(json: &serde_json::Value) -> Value {
             } else {
                 Value::Null
             }
-        },
+        }
         serde_json::Value::String(s) => Value::String(s.clone()),
         _ => Value::String(json.to_string()),
     }
@@ -550,9 +574,9 @@ fn value_to_json(value: &Value) -> serde_json::Value {
         Value::String(s) => serde_json::Value::String(s.clone()),
         Value::Bytes(b) => serde_json::Value::String(format!("{:?}", b)),
         Value::Timestamp(_) => serde_json::Value::String(value.to_string()),
-    Value::Date(d) => serde_json::Value::String(d.to_string()),
-    Value::Json(j) => j.clone(),
-    Value::Array(arr) => serde_json::Value::Array(arr.iter().map(value_to_json).collect()),
-    Value::Text => serde_json::Value::Null,
+        Value::Date(d) => serde_json::Value::String(d.to_string()),
+        Value::Json(j) => j.clone(),
+        Value::Array(arr) => serde_json::Value::Array(arr.iter().map(value_to_json).collect()),
+        Value::Text => serde_json::Value::Null,
     }
 }

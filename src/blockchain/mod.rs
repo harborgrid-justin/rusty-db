@@ -104,52 +104,38 @@
 // - Change attribution
 // - Export to compliance formats
 
+pub mod audit_trail;
 pub mod crypto;
 pub mod ledger;
-pub mod verification;
 pub mod retention;
-pub mod audit_trail;
+pub mod verification;
 
 // Re-export commonly used types
 pub use crypto::{
-    Hash256, HashAlgorithm,
-    sha256, sha512, hmac_sha256,
-    HashChain, ChainLink,
-    MerkleTree, MerkleProof, MerkleNode,
-    KeyPair, Signature, PublicKey, PrivateKey,
-    Accumulator, Commitment, RangeProof,
-    hash_to_hex, hex_to_hash,
+    hash_to_hex, hex_to_hash, hmac_sha256, sha256, sha512, Accumulator, ChainLink, Commitment,
+    Hash256, HashAlgorithm, HashChain, KeyPair, MerkleNode, MerkleProof, MerkleTree, PrivateKey,
+    PublicKey, RangeProof, Signature,
 };
 
 pub use ledger::{
-    BlockchainTable, BlockchainConfig, BlockchainStats,
-    Block, BlockId, BlockStatus,
-    LedgerRow, RowVersion,
-    RowFilter, RowHistory,
-    export_block, import_block, export_blockchain,
+    export_block, export_blockchain, import_block, Block, BlockId, BlockStatus, BlockchainConfig,
+    BlockchainStats, BlockchainTable, LedgerRow, RowFilter, RowHistory, RowVersion,
 };
 
 pub use verification::{
-    VerificationResult, VerificationDetails, VerificationType,
-    VerificationIssue, IssueSeverity, IssueType,
-    BlockVerifier, ChainVerifier, ParallelVerifier,
-    VerificationScheduler,
-    TamperDetector, TamperReport, TamperStatus,
-    RecoveryManager, RecoveryAction, RecoveryActionType, RecoveryPriority,
+    BlockVerifier, ChainVerifier, IssueSeverity, IssueType, ParallelVerifier, RecoveryAction,
+    RecoveryActionType, RecoveryManager, RecoveryPriority, TamperDetector, TamperReport,
+    TamperStatus, VerificationDetails, VerificationIssue, VerificationResult,
+    VerificationScheduler, VerificationType,
 };
 
 pub use retention::{
-    RetentionPeriod, RetentionPolicy,
-    LegalHold, LegalHoldStatus,
-    RetentionManager, RetentionEnforcer,
-    ExpirationReport,
-    ComplianceReport, ComplianceReporter,
-    PolicyCompliance, LegalHoldCompliance, RetentionStatistics,
+    ComplianceReport, ComplianceReporter, ExpirationReport, LegalHold, LegalHoldCompliance,
+    LegalHoldStatus, PolicyCompliance, RetentionEnforcer, RetentionManager, RetentionPeriod,
+    RetentionPolicy, RetentionStatistics,
 };
 
 pub use audit_trail::{
-    AuditEvent, AuditEventType, AuditSeverity,
-    AuditLogger, AuditConfig,
-    AuditFilter, AuditReport,
+    AuditConfig, AuditEvent, AuditEventType, AuditFilter, AuditLogger, AuditReport, AuditSeverity,
     QueryAuditEntry, QueryAuditLogger,
 };

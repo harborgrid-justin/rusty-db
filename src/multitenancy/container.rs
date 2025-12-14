@@ -1,13 +1,13 @@
 // Container Database (CDB) implementation with Pluggable Database (PDB) management
 // Oracle-like architecture for multi-tenant databases
 
-use std::fmt;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::path::PathBuf;
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
+use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::{Duration, SystemTime};
+use tokio::sync::RwLock;
 
 // Error types for container operations
 #[derive(Debug, Clone)]
@@ -35,10 +35,14 @@ impl fmt::Display for ContainerError {
             ContainerError::CloneError(msg) => write!(f, "Clone error: {}", msg),
             ContainerError::UnplugError(msg) => write!(f, "Unplug error: {}", msg),
             ContainerError::PlugError(msg) => write!(f, "Plug error: {}", msg),
-            ContainerError::InvalidConfiguration(msg) => write!(f, "Invalid configuration: {}", msg),
+            ContainerError::InvalidConfiguration(msg) => {
+                write!(f, "Invalid configuration: {}", msg)
+            }
             ContainerError::IoError(msg) => write!(f, "I/O error: {}", msg),
             ContainerError::LockTimeout(msg) => write!(f, "Lock timeout: {}", msg),
-            ContainerError::InsufficientPrivileges(msg) => write!(f, "Insufficient privileges: {}", msg),
+            ContainerError::InsufficientPrivileges(msg) => {
+                write!(f, "Insufficient privileges: {}", msg)
+            }
         }
     }
 }
@@ -50,14 +54,14 @@ pub type ContainerResult<T> = Result<T, ContainerError>;
 // PDB state enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 pub enum PdbState {
-    Mounted,      // PDB is mounted but not open
-    Open,         // PDB is open for read/write
-    ReadOnly,     // PDB is open in read-only mode
-    Closed,       // PDB is closed
-    Unplugged,    // PDB has been unplugged
-    Cloning,      // PDB is being cloned
-    Relocating,   // PDB is being relocated
-    Restricted,   // PDB is in restricted mode
+    Mounted,    // PDB is mounted but not open
+    Open,       // PDB is open for read/write
+    ReadOnly,   // PDB is open in read-only mode
+    Closed,     // PDB is closed
+    Unplugged,  // PDB has been unplugged
+    Cloning,    // PDB is being cloned
+    Relocating, // PDB is being relocated
+    Restricted, // PDB is in restricted mode
 }
 
 // PDB open mode
@@ -72,10 +76,10 @@ pub enum OpenMode {
 // Clone type for PDB cloning
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CloneType {
-    Full,           // Full clone with data copy
-    Snapshot,       // Snapshot-based clone (copy-on-write)
-    HotClone,       // Hot clone with minimal downtime
-    ThinClone,      // Thin clone with shared storage
+    Full,      // Full clone with data copy
+    Snapshot,  // Snapshot-based clone (copy-on-write)
+    HotClone,  // Hot clone with minimal downtime
+    ThinClone, // Thin clone with shared storage
 }
 
 // Container parameter configuration
@@ -333,7 +337,10 @@ impl ContainerDatabase {
             RedoLogGroup {
                 group_id: 1,
                 thread: 1,
-                members: vec![PathBuf::from("/data/redo01a.log"), PathBuf::from("/data/redo01b.log")],
+                members: vec![
+                    PathBuf::from("/data/redo01a.log"),
+                    PathBuf::from("/data/redo01b.log"),
+                ],
                 size_mb: 512,
                 sequence: 1,
                 status: RedoLogStatus::Current,
@@ -341,7 +348,10 @@ impl ContainerDatabase {
             RedoLogGroup {
                 group_id: 2,
                 thread: 1,
-                members: vec![PathBuf::from("/data/redo02a.log"), PathBuf::from("/data/redo02b.log")],
+                members: vec![
+                    PathBuf::from("/data/redo02a.log"),
+                    PathBuf::from("/data/redo02b.log"),
+                ],
                 size_mb: 512,
                 sequence: 0,
                 status: RedoLogStatus::Inactive,
@@ -349,7 +359,10 @@ impl ContainerDatabase {
             RedoLogGroup {
                 group_id: 3,
                 thread: 1,
-                members: vec![PathBuf::from("/data/redo03a.log"), PathBuf::from("/data/redo03b.log")],
+                members: vec![
+                    PathBuf::from("/data/redo03a.log"),
+                    PathBuf::from("/data/redo03b.log"),
+                ],
                 size_mb: 512,
                 sequence: 0,
                 status: RedoLogStatus::Inactive,
@@ -373,9 +386,10 @@ impl ContainerDatabase {
 
         // Check max PDB limit
         if pdbs.len() >= self.max_pdbs as usize {
-            return Err(ContainerError::ResourceExhausted(
-                format!("Maximum number of PDBs ({}) reached", self.max_pdbs)
-            ));
+            return Err(ContainerError::ResourceExhausted(format!(
+                "Maximum number of PDBs ({}) reached",
+                self.max_pdbs
+            )));
         }
 
         drop(pdbs);
@@ -386,7 +400,9 @@ impl ContainerDatabase {
         let root_params = self.root_parameters.read().await;
         for (key, param) in root_params.iter() {
             if param.is_inherited {
-                pdb_config.parameters.insert(key.clone(), param.value.clone());
+                pdb_config
+                    .parameters
+                    .insert(key.clone(), param.value.clone());
             }
         }
         drop(root_params);
@@ -415,7 +431,8 @@ impl ContainerDatabase {
         let pdbs = self.pdbs.read().await;
 
         // Validate source PDB exists
-        let source_pdb = pdbs.get(&source_pdb_name)
+        let source_pdb = pdbs
+            .get(&source_pdb_name)
             .ok_or_else(|| ContainerError::PdbNotFound(source_pdb_name.clone()))?;
 
         // Check target doesn't exist
@@ -425,9 +442,10 @@ impl ContainerDatabase {
 
         // Check max PDB limit
         if pdbs.len() >= self.max_pdbs as usize {
-            return Err(ContainerError::ResourceExhausted(
-                format!("Maximum number of PDBs ({}) reached", self.max_pdbs)
-            ));
+            return Err(ContainerError::ResourceExhausted(format!(
+                "Maximum number of PDBs ({}) reached",
+                self.max_pdbs
+            )));
         }
 
         let source_config = source_pdb.read().await;
@@ -467,7 +485,8 @@ impl ContainerDatabase {
     // Execute clone operation asynchronously
     async fn execute_clone(&self, operation_id: u64) -> ContainerResult<()> {
         let mut active_clones = self.active_clones.write().await;
-        let clone_op = active_clones.get_mut(&operation_id)
+        let clone_op = active_clones
+            .get_mut(&operation_id)
             .ok_or_else(|| ContainerError::CloneError("Clone operation not found".to_string()))?;
 
         clone_op.status = CloneStatus::Copying;
@@ -478,16 +497,20 @@ impl ContainerDatabase {
 
         match clone_type {
             CloneType::Snapshot => {
-                self.execute_snapshot_clone(&source_name, &target_name, operation_id).await?;
+                self.execute_snapshot_clone(&source_name, &target_name, operation_id)
+                    .await?;
             }
             CloneType::HotClone => {
-                self.execute_hot_clone(&source_name, &target_name, operation_id).await?;
+                self.execute_hot_clone(&source_name, &target_name, operation_id)
+                    .await?;
             }
             CloneType::Full => {
-                self.execute_full_clone(&source_name, &target_name, operation_id).await?;
+                self.execute_full_clone(&source_name, &target_name, operation_id)
+                    .await?;
             }
             CloneType::ThinClone => {
-                self.execute_thin_clone(&source_name, &target_name, operation_id).await?;
+                self.execute_thin_clone(&source_name, &target_name, operation_id)
+                    .await?;
             }
         }
 
@@ -510,7 +533,8 @@ impl ContainerDatabase {
         _operation_id: u64,
     ) -> ContainerResult<()> {
         let pdbs = self.pdbs.read().await;
-        let source_pdb = pdbs.get(source_name)
+        let source_pdb = pdbs
+            .get(source_name)
             .ok_or_else(|| ContainerError::PdbNotFound(source_name.to_string()))?;
 
         let source_config = source_pdb.read().await;
@@ -563,7 +587,8 @@ impl ContainerDatabase {
         self.update_clone_progress(operation_id, 10.0).await;
 
         let pdbs = self.pdbs.read().await;
-        let source_pdb = pdbs.get(source_name)
+        let source_pdb = pdbs
+            .get(source_name)
             .ok_or_else(|| ContainerError::PdbNotFound(source_name.to_string()))?;
 
         let source_config = source_pdb.read().await.clone();
@@ -572,7 +597,8 @@ impl ContainerDatabase {
         // Simulate incremental copy
         for progress in (20..=80).step_by(10) {
             tokio::time::sleep(Duration::from_millis(100)).await;
-            self.update_clone_progress(operation_id, progress as f64).await;
+            self.update_clone_progress(operation_id, progress as f64)
+                .await;
         }
 
         // Phase 2: Pause source briefly for final sync
@@ -601,7 +627,8 @@ impl ContainerDatabase {
         operation_id: u64,
     ) -> ContainerResult<()> {
         let pdbs = self.pdbs.read().await;
-        let source_pdb = pdbs.get(source_name)
+        let source_pdb = pdbs
+            .get(source_name)
             .ok_or_else(|| ContainerError::PdbNotFound(source_name.to_string()))?;
 
         let source_config = source_pdb.read().await.clone();
@@ -610,7 +637,8 @@ impl ContainerDatabase {
         // Simulate full copy with progress updates
         for progress in (0..=100).step_by(5) {
             tokio::time::sleep(Duration::from_millis(50)).await;
-            self.update_clone_progress(operation_id, progress as f64).await;
+            self.update_clone_progress(operation_id, progress as f64)
+                .await;
         }
 
         let mut target_config = source_config;
@@ -635,7 +663,8 @@ impl ContainerDatabase {
         target_name: &str,
         operation_id: u64,
     ) -> ContainerResult<()> {
-        self.execute_snapshot_clone(source_name, target_name, operation_id).await
+        self.execute_snapshot_clone(source_name, target_name, operation_id)
+            .await
     }
 
     async fn update_clone_progress(&self, operation_id: u64, progress: f64) {
@@ -651,7 +680,8 @@ impl ContainerDatabase {
     // Unplug a PDB (export metadata and data files)
     pub async fn unplug_pdb(&self, pdb_name: String) -> ContainerResult<PathBuf> {
         let pdbs = self.pdbs.read().await;
-        let pdb = pdbs.get(&pdb_name)
+        let pdb = pdbs
+            .get(&pdb_name)
             .ok_or_else(|| ContainerError::PdbNotFound(pdb_name.clone()))?;
 
         let mut pdb_config = pdb.write().await;
@@ -659,7 +689,7 @@ impl ContainerDatabase {
         // Verify PDB is closed
         if pdb_config.state != PdbState::Closed {
             return Err(ContainerError::InvalidState(
-                "PDB must be closed before unplugging".to_string()
+                "PDB must be closed before unplugging".to_string(),
             ));
         }
 
@@ -696,9 +726,10 @@ impl ContainerDatabase {
         }
 
         if pdbs.len() >= self.max_pdbs as usize {
-            return Err(ContainerError::ResourceExhausted(
-                format!("Maximum number of PDBs ({}) reached", self.max_pdbs)
-            ));
+            return Err(ContainerError::ResourceExhausted(format!(
+                "Maximum number of PDBs ({}) reached",
+                self.max_pdbs
+            )));
         }
 
         drop(pdbs);
@@ -718,10 +749,15 @@ impl ContainerDatabase {
     }
 
     // Drop a PDB permanently
-    pub async fn drop_pdb(&self, pdb_name: String, including_datafiles: bool) -> ContainerResult<()> {
+    pub async fn drop_pdb(
+        &self,
+        pdb_name: String,
+        including_datafiles: bool,
+    ) -> ContainerResult<()> {
         let mut pdbs = self.pdbs.write().await;
 
-        let pdb = pdbs.remove(&pdb_name)
+        let pdb = pdbs
+            .remove(&pdb_name)
             .ok_or_else(|| ContainerError::PdbNotFound(pdb_name.clone()))?;
 
         let pdb_config = pdb.read().await;
@@ -737,7 +773,8 @@ impl ContainerDatabase {
     // Open a PDB
     pub async fn open_pdb(&self, pdb_name: String, mode: OpenMode) -> ContainerResult<()> {
         let pdbs = self.pdbs.read().await;
-        let pdb = pdbs.get(&pdb_name)
+        let pdb = pdbs
+            .get(&pdb_name)
             .ok_or_else(|| ContainerError::PdbNotFound(pdb_name.clone()))?;
 
         let mut pdb_config = pdb.write().await;
@@ -765,7 +802,8 @@ impl ContainerDatabase {
     // Close a PDB
     pub async fn close_pdb(&self, pdb_name: String) -> ContainerResult<()> {
         let pdbs = self.pdbs.read().await;
-        let pdb = pdbs.get(&pdb_name)
+        let pdb = pdbs
+            .get(&pdb_name)
             .ok_or_else(|| ContainerError::PdbNotFound(pdb_name.clone()))?;
 
         let mut pdb_config = pdb.write().await;
@@ -777,11 +815,7 @@ impl ContainerDatabase {
     }
 
     // Relocate PDB to another CDB
-    pub async fn relocate_pdb(
-        &self,
-        pdb_name: String,
-        target_cdb: String,
-    ) -> ContainerResult<u64> {
+    pub async fn relocate_pdb(&self, pdb_name: String, target_cdb: String) -> ContainerResult<u64> {
         let operation_id = Self::generate_operation_id();
 
         let relocation = RelocationOperation {
@@ -866,12 +900,16 @@ impl ContainerDatabase {
 <PDB version="1.0">
   <pdbname>EXAMPLE_PDB</pdbname>
   <version>19.0.0.0</version>
-</PDB>"#.to_string()
+</PDB>"#
+            .to_string()
     }
 
     fn parse_pdb_xml_metadata(&self, _xml_path: &PathBuf) -> ContainerResult<PdbConfig> {
         // Parse XML and reconstruct PDB config
-        Ok(PdbConfig::new("imported_pdb".to_string(), "admin".to_string()))
+        Ok(PdbConfig::new(
+            "imported_pdb".to_string(),
+            "admin".to_string(),
+        ))
     }
 
     async fn validate_pdb_compatibility(&self, _pdb_config: &PdbConfig) -> ContainerResult<()> {
@@ -919,18 +957,20 @@ pub struct CdbStatistics {
 
 #[cfg(test)]
 mod tests {
-    use std::thread::sleep;
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::thread::sleep;
+    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_create_pdb() {
         let cdb = ContainerDatabase::new("CDB1".to_string(), 10);
-        let result = cdb.create_pdb(
-            "PDB1".to_string(),
-            "admin".to_string(),
-            "password".to_string(),
-        ).await;
+        let result = cdb
+            .create_pdb(
+                "PDB1".to_string(),
+                "admin".to_string(),
+                "password".to_string(),
+            )
+            .await;
 
         assert!(result.is_ok());
         let pdbs = cdb.list_pdbs().await;
@@ -941,17 +981,22 @@ use std::time::UNIX_EPOCH;
     #[tokio::test]
     async fn test_clone_pdb_snapshot() {
         let cdb = ContainerDatabase::new("CDB1".to_string(), 10);
-        let _ = cdb.create_pdb(
-            "SOURCE_PDB".to_string(),
-            "admin".to_string(),
-            "password".to_string(),
-        ).await.unwrap();
+        let _ = cdb
+            .create_pdb(
+                "SOURCE_PDB".to_string(),
+                "admin".to_string(),
+                "password".to_string(),
+            )
+            .await
+            .unwrap();
 
-        let clone_id = cdb.clone_pdb(
-            "SOURCE_PDB".to_string(),
-            "CLONE_PDB".to_string(),
-            CloneType::Snapshot,
-        ).await;
+        let clone_id = cdb
+            .clone_pdb(
+                "SOURCE_PDB".to_string(),
+                "CLONE_PDB".to_string(),
+                CloneType::Snapshot,
+            )
+            .await;
 
         assert!(clone_id.is_ok());
 
@@ -965,11 +1010,14 @@ use std::time::UNIX_EPOCH;
     #[tokio::test]
     async fn test_open_close_pdb() {
         let cdb = ContainerDatabase::new("CDB1".to_string(), 10);
-        let _ = cdb.create_pdb(
-            "PDB1".to_string(),
-            "admin".to_string(),
-            "password".to_string(),
-        ).await.unwrap();
+        let _ = cdb
+            .create_pdb(
+                "PDB1".to_string(),
+                "admin".to_string(),
+                "password".to_string(),
+            )
+            .await
+            .unwrap();
 
         let result = cdb.open_pdb("PDB1".to_string(), OpenMode::ReadWrite).await;
         assert!(result.is_ok());

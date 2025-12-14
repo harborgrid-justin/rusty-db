@@ -3,16 +3,16 @@
 // REST API endpoints for RBAC (Role-Based Access Control) and threat detection.
 // Provides role management, permission assignment, and insider threat monitoring.
 
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::security::insider_threat::{InsiderThreatManager, ThreatStatistics};
+use crate::security::rbac::{RbacManager, Role};
 use axum::{
-    extract::{State, Path},
+    extract::{Path, State},
     response::Json,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::api::rest::types::{ApiState, ApiResult, ApiError};
-use crate::security::rbac::{RbacManager, Role};
-use crate::security::insider_threat::{InsiderThreatManager, ThreatStatistics};
 use utoipa::ToSchema;
 
 // ============================================================================
@@ -168,9 +168,7 @@ lazy_static::lazy_static! {
         (status = 500, description = "Internal server error", body = ApiError),
     )
 )]
-pub async fn list_roles(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<Json<Vec<RoleResponse>>> {
+pub async fn list_roles(State(_state): State<Arc<ApiState>>) -> ApiResult<Json<Vec<RoleResponse>>> {
     let rbac = RBAC_MANAGER.read();
     let roles = rbac.get_all_roles();
     let response: Vec<RoleResponse> = roles.into_iter().map(|r| r.into()).collect();
@@ -238,7 +236,8 @@ pub async fn get_role(
     Path(role_id): Path<String>,
 ) -> ApiResult<Json<RoleResponse>> {
     let rbac = RBAC_MANAGER.read();
-    let role = rbac.get_role(&role_id)
+    let role = rbac
+        .get_role(&role_id)
         .map_err(|e| ApiError::new("RBAC_ERROR", e.to_string()))?;
 
     Ok(Json(role.into()))
@@ -268,7 +267,8 @@ pub async fn update_role(
     Json(request): Json<UpdateRoleRequest>,
 ) -> ApiResult<Json<RoleResponse>> {
     let rbac = RBAC_MANAGER.read();
-    let mut role = rbac.get_role(&role_id)
+    let mut role = rbac
+        .get_role(&role_id)
         .map_err(|e| ApiError::new("RBAC_ERROR", e.to_string()))?;
 
     if let Some(name) = request.name {
@@ -422,7 +422,8 @@ pub async fn assign_permissions(
     Json(request): Json<AssignPermissionsRequest>,
 ) -> ApiResult<Json<RoleResponse>> {
     let rbac = RBAC_MANAGER.read();
-    let mut role = rbac.get_role(&role_id)
+    let mut role = rbac
+        .get_role(&role_id)
         .map_err(|e| ApiError::new("RBAC_ERROR", e.to_string()))?;
 
     // Add new permissions to the role

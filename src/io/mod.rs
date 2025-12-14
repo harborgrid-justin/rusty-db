@@ -55,7 +55,7 @@
 // # }
 // ```
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use std::sync::Arc;
 
 // ============================================================================
@@ -63,10 +63,10 @@ use std::sync::Arc;
 // ============================================================================
 
 mod async_io;
-mod file_manager;
-mod ring_buffer;
 mod buffer_pool;
+mod file_manager;
 mod metrics;
+mod ring_buffer;
 
 // Platform-specific implementations
 #[cfg(windows)]
@@ -77,28 +77,27 @@ mod unix_io_uring;
 
 // Re-exports
 pub use async_io::{
-    IoRequest, IoCompletion, IoCompletionPort, IoOpType, IoResult, IoStatus,
-    AsyncIoEngine, IoHandle, CompletionCallback,
+    AsyncIoEngine, CompletionCallback, IoCompletion, IoCompletionPort, IoHandle, IoOpType,
+    IoRequest, IoResult, IoStatus,
 };
 
 pub use file_manager::{
-    FileManager, FileHandle, IoOptions, DirectIoFile, FileMetadata,
-    ReadOptions, FlushMode, BatchedIoRequest,
+    BatchedIoRequest, DirectIoFile, FileHandle, FileManager, FileMetadata, FlushMode, IoOptions,
+    ReadOptions,
 };
 
 pub use ring_buffer::{
-    IoRingBuffer, RingBufferStats, SubmissionEntry, CompletionEntry,
-    RingBufferConfig, RingBufferError,
+    CompletionEntry, IoRingBuffer, RingBufferConfig, RingBufferError, RingBufferStats,
+    SubmissionEntry,
 };
 
 pub use buffer_pool::{
-    BufferPool, AlignedBuffer, BufferPoolConfig, BufferPoolStats,
-    PooledBuffer, BufferAllocationStrategy,
+    AlignedBuffer, BufferAllocationStrategy, BufferPool, BufferPoolConfig, BufferPoolStats,
+    PooledBuffer,
 };
 
 pub use metrics::{
-    IoMetrics, IoStats, LatencyHistogram, ThroughputMetrics,
-    IoCounters, PerformanceStats,
+    IoCounters, IoMetrics, IoStats, LatencyHistogram, PerformanceStats, ThroughputMetrics,
 };
 
 // ============================================================================
@@ -107,14 +106,12 @@ pub use metrics::{
 
 #[cfg(windows)]
 pub use windows_iocp::{
-    WindowsIocp, IocpHandle, IocpConfig, OverlappedIo,
-    CompletionPacket, IocpStats,
+    CompletionPacket, IocpConfig, IocpHandle, IocpStats, OverlappedIo, WindowsIocp,
 };
 
 #[cfg(unix)]
 pub use unix_io_uring::{
-    IoUringEngine, IoUringConfig, SqeEntry, CqeEntry,
-    IoUringStats, UringProbe,
+    CqeEntry, IoUringConfig, IoUringEngine, IoUringStats, SqeEntry, UringProbe,
 };
 
 // ============================================================================

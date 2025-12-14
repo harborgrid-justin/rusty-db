@@ -36,18 +36,18 @@
 
 use crate::{DbError, Result};
 use aes_gcm::{
-    aead::{Aead, KeyInit, generic_array::GenericArray},
+    aead::{generic_array::GenericArray, Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
+use argon2::password_hash::{rand_core::OsRng as ArgonRng, SaltString};
 use argon2::{Argon2, PasswordHasher};
-use argon2::password_hash::{SaltString, rand_core::OsRng as ArgonRng};
+use parking_lot::RwLock;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use parking_lot::RwLock;
 use std::fs;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use rand::RngCore;
 
 // Key version number
 pub type KeyVersion = u32;
@@ -187,18 +187,16 @@ impl KeyStore {
 
         // Derive key from password using Argon2
         let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password(password.as_bytes(), &salt_str)
+        let password_hash = argon2
+            .hash_password(password.as_bytes(), &salt_str)
             .map_err(|e| DbError::Encryption(format!("Failed to hash password: {}", e)))?;
 
         // Extract key material from hash
-        let hash_str = password_hash.hash.ok_or_else(|| {
-            DbError::Encryption("Failed to generate hash".to_string())
-        })?;
+        let hash_str = password_hash
+            .hash
+            .ok_or_else(|| DbError::Encryption("Failed to generate hash".to_string()))?;
 
-        let key_material: Vec<u8> = hash_str.as_bytes().iter()
-            .take(32)
-            .copied()
-            .collect();
+        let key_material: Vec<u8> = hash_str.as_bytes().iter().take(32).copied().collect();
 
         // Pad to 32 bytes if needed
         let mut key_material = key_material;
@@ -255,12 +253,16 @@ impl KeyStore {
 
         // Move current MEK to historical
         if let Some(current) = self.current_mek.read().as_ref() {
-            self.historical_meks.write().insert(current.version, Arc::clone(current));
+            self.historical_meks
+                .write()
+                .insert(current.version, Arc::clone(current));
         }
 
         // Set new MEK as current
         *self.current_mek.write() = Some(Arc::new(mek.clone()));
-        self.historical_meks.write().insert(new_version, Arc::new(mek));
+        self.historical_meks
+            .write()
+            .insert(new_version, Arc::new(mek));
 
         // Update metadata
         let mut metadata = self.metadata.write();
@@ -273,7 +275,9 @@ impl KeyStore {
     // Generate a Data Encryption Key
     #[inline]
     pub fn generate_dek(&mut self, id: &str, algorithm: &str) -> Result<Vec<u8>> {
-        let mek = self.current_mek.read()
+        let mek = self
+            .current_mek
+            .read()
             .as_ref()
             .ok_or_else(|| DbError::InvalidOperation("MEK not initialized".to_string()))?
             .clone();
@@ -311,12 +315,14 @@ impl KeyStore {
     #[inline]
     pub fn get_dek(&self, id: &str) -> Result<Vec<u8>> {
         let deks = self.deks.read();
-        let dek = deks.get(id)
+        let dek = deks
+            .get(id)
             .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
 
         if dek.status != KeyStatus::Active {
             return Err(DbError::InvalidOperation(format!(
-                "DEK is not active: {:?}", dek.status
+                "DEK is not active: {:?}",
+                dek.status
             )));
         }
 
@@ -325,7 +331,9 @@ impl KeyStore {
 
     // Rotate a Data Encryption Key
     pub fn rotate_dek(&mut self, id: &str) -> Result<Vec<u8>> {
-        let mek = self.current_mek.read()
+        let mek = self
+            .current_mek
+            .read()
             .as_ref()
             .ok_or_else(|| DbError::InvalidOperation("MEK not initialized".to_string()))?
             .clone();
@@ -339,7 +347,8 @@ impl KeyStore {
 
         // Update DEK
         let mut deks = self.deks.write();
-        let dek = deks.get_mut(id)
+        let dek = deks
+            .get_mut(id)
             .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
 
         dek.key_material = key_material.clone();
@@ -354,7 +363,9 @@ impl KeyStore {
     // Rotate all expired DEKs
     pub fn rotate_expired_deks(&mut self) -> Result<usize> {
         let now = chrono::Utc::now().timestamp();
-        let expired_ids: Vec<String> = self.deks.read()
+        let expired_ids: Vec<String> = self
+            .deks
+            .read()
             .iter()
             .filter(|(_, dek)| {
                 if let Some(expires_at) = dek.expires_at {
@@ -377,7 +388,8 @@ impl KeyStore {
     // Set DEK expiration
     pub fn set_dek_expiration(&mut self, id: &str, days: u32) -> Result<()> {
         let mut deks = self.deks.write();
-        let dek = deks.get_mut(id)
+        let dek = deks
+            .get_mut(id)
             .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
 
         let expires_at = chrono::Utc::now().timestamp() + (days as i64 * 86400);
@@ -388,11 +400,7 @@ impl KeyStore {
 
     // Encrypt data with MEK (envelope encryption)
     #[inline]
-    fn encrypt_with_mek(
-        &self,
-        mek: &MasterKey,
-        plaintext: &[u8],
-    ) -> Result<(Vec<u8>, Vec<u8>)> {
+    fn encrypt_with_mek(&self, mek: &MasterKey, plaintext: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
         let cipher = Aes256Gcm::new(GenericArray::from_slice(&mek.key_material));
 
         // Generate nonce
@@ -401,7 +409,8 @@ impl KeyStore {
 
         let nonce = Nonce::from_slice(&nonce_bytes);
 
-        let ciphertext = cipher.encrypt(nonce, plaintext)
+        let ciphertext = cipher
+            .encrypt(nonce, plaintext)
             .map_err(|e| DbError::Encryption(format!("MEK encryption failed: {}", e)))?;
 
         Ok((nonce_bytes, ciphertext))
@@ -416,11 +425,11 @@ impl KeyStore {
         nonce: &[u8],
         ciphertext: &[u8],
     ) -> Result<Vec<u8>> {
-
         let cipher = Aes256Gcm::new(GenericArray::from_slice(&mek.key_material));
         let nonce = Nonce::from_slice(nonce);
 
-        let plaintext = cipher.decrypt(nonce, ciphertext)
+        let plaintext = cipher
+            .decrypt(nonce, ciphertext)
             .map_err(|e| DbError::Encryption(format!("MEK decryption failed: {}", e)))?;
 
         Ok(plaintext)
@@ -428,7 +437,9 @@ impl KeyStore {
 
     // Re-encrypt all DEKs with new MEK (after MEK rotation)
     pub fn reencrypt_all_deks(&mut self) -> Result<usize> {
-        let mek = self.current_mek.read()
+        let mek = self
+            .current_mek
+            .read()
             .as_ref()
             .ok_or_else(|| DbError::InvalidOperation("MEK not initialized".to_string()))?
             .clone();
@@ -453,7 +464,8 @@ impl KeyStore {
     // Deactivate a DEK
     pub fn deactivate_dek(&mut self, id: &str) -> Result<()> {
         let mut deks = self.deks.write();
-        let dek = deks.get_mut(id)
+        let dek = deks
+            .get_mut(id)
             .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
 
         dek.status = KeyStatus::Deactivated;
@@ -463,7 +475,8 @@ impl KeyStore {
     // Mark DEK as compromised
     pub fn mark_dek_compromised(&mut self, id: &str) -> Result<()> {
         let mut deks = self.deks.write();
-        let dek = deks.get_mut(id)
+        let dek = deks
+            .get_mut(id)
             .ok_or_else(|| DbError::NotFound(format!("DEK not found: {}", id)))?;
 
         dek.status = KeyStatus::Compromised;
@@ -497,14 +510,20 @@ impl KeyStore {
         KeyStoreStats {
             mek_version: metadata.mek_version,
             total_deks: deks.len(),
-            active_deks: deks.values().filter(|d| d.status == KeyStatus::Active).count(),
-            expired_deks: deks.values().filter(|d| {
-                if let Some(exp) = d.expires_at {
-                    exp < chrono::Utc::now().timestamp()
-                } else {
-                    false
-                }
-            }).count(),
+            active_deks: deks
+                .values()
+                .filter(|d| d.status == KeyStatus::Active)
+                .count(),
+            expired_deks: deks
+                .values()
+                .filter(|d| {
+                    if let Some(exp) = d.expires_at {
+                        exp < chrono::Utc::now().timestamp()
+                    } else {
+                        false
+                    }
+                })
+                .count(),
             last_rotation: metadata.last_rotation,
         }
     }
@@ -551,9 +570,10 @@ impl KeyStore {
         if deks_path.exists() {
             let data = fs::read(&deks_path)
                 .map_err(|e| DbError::IoError(format!("Failed to read DEKs: {}", e)))?;
-            let loaded_deks: HashMap<String, DataEncryptionKey> = bincode::decode_from_slice(&data, bincode::config::standard())
-                .map(|(deks, _)| deks)
-                .map_err(|e| DbError::Serialization(format!("Failed to parse DEKs: {}", e)))?;
+            let loaded_deks: HashMap<String, DataEncryptionKey> =
+                bincode::decode_from_slice(&data, bincode::config::standard())
+                    .map(|(deks, _)| deks)
+                    .map_err(|e| DbError::Serialization(format!("Failed to parse DEKs: {}", e)))?;
             *self.deks.write() = loaded_deks;
         }
 
@@ -661,9 +681,7 @@ impl DekMetadataSoA {
         self.expires_ats
             .iter()
             .enumerate()
-            .filter_map(|(idx, &expires_at)| {
-                expires_at.filter(|&exp| exp < now).map(|_| idx)
-            })
+            .filter_map(|(idx, &expires_at)| expires_at.filter(|&exp| exp < now).map(|_| idx))
             .collect()
     }
 }
@@ -699,7 +717,9 @@ mod tests {
         let mut keystore = KeyStore::new(temp_dir.path()).unwrap();
         keystore.initialize_mek("test_password", None).unwrap();
 
-        let dek = keystore.generate_dek("test_tablespace", "AES256GCM").unwrap();
+        let dek = keystore
+            .generate_dek("test_tablespace", "AES256GCM")
+            .unwrap();
         assert_eq!(dek.len(), 32);
 
         let stats = keystore.get_stats();

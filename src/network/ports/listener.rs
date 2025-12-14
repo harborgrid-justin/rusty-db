@@ -7,12 +7,12 @@
 // - Port reuse configuration
 
 use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::{TcpListener, UdpSocket};
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 
 /// Listener configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -71,14 +71,14 @@ impl Listener {
         let socket = Self::create_tcp_socket(&addr, config)?;
 
         // Bind using socket2's SockAddr
-        socket.bind(&socket2::SockAddr::from(addr)).map_err(|e| {
-            DbError::Network(format!("Failed to bind TCP to {}: {}", addr, e))
-        })?;
+        socket
+            .bind(&socket2::SockAddr::from(addr))
+            .map_err(|e| DbError::Network(format!("Failed to bind TCP to {}: {}", addr, e)))?;
 
         // Listen on the socket
-        socket.listen(1024).map_err(|e| {
-            DbError::Network(format!("Failed to listen on {}: {}", addr, e))
-        })?;
+        socket
+            .listen(1024)
+            .map_err(|e| DbError::Network(format!("Failed to listen on {}: {}", addr, e)))?;
 
         // Convert socket2 -> std -> tokio TcpListener
         let std_listener: std::net::TcpListener = socket.into();
@@ -114,27 +114,32 @@ impl Listener {
             socket2::Domain::IPV6
         };
 
-        let socket = socket2::Socket::new(domain, socket2::Type::STREAM, Some(socket2::Protocol::TCP))
-            .map_err(|e| DbError::Network(format!("Failed to create TCP socket: {}", e)))?;
+        let socket =
+            socket2::Socket::new(domain, socket2::Type::STREAM, Some(socket2::Protocol::TCP))
+                .map_err(|e| DbError::Network(format!("Failed to create TCP socket: {}", e)))?;
 
         if config.reuse_addr {
-            socket.set_reuse_address(true)
+            socket
+                .set_reuse_address(true)
                 .map_err(|e| DbError::Network(format!("Failed to set SO_REUSEADDR: {}", e)))?;
         }
 
         #[cfg(unix)]
         if config.reuse_port {
-            socket.set_reuse_port(true)
+            socket
+                .set_reuse_port(true)
                 .map_err(|e| DbError::Network(format!("Failed to set SO_REUSEPORT: {}", e)))?;
         }
 
         // Enable dual-stack for IPv6
         if addr.is_ipv6() && config.enable_ipv6 {
-            socket.set_only_v6(false)
+            socket
+                .set_only_v6(false)
                 .map_err(|e| DbError::Network(format!("Failed to set dual-stack: {}", e)))?;
         }
 
-        socket.set_nonblocking(true)
+        socket
+            .set_nonblocking(true)
             .map_err(|e| DbError::Network(format!("Failed to set non-blocking: {}", e)))?;
 
         Ok(socket)
@@ -148,30 +153,36 @@ impl Listener {
             socket2::Domain::IPV6
         };
 
-        let socket = socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
-            .map_err(|e| DbError::Network(format!("Failed to create UDP socket: {}", e)))?;
+        let socket =
+            socket2::Socket::new(domain, socket2::Type::DGRAM, Some(socket2::Protocol::UDP))
+                .map_err(|e| DbError::Network(format!("Failed to create UDP socket: {}", e)))?;
 
         if config.reuse_addr {
-            socket.set_reuse_address(true)
+            socket
+                .set_reuse_address(true)
                 .map_err(|e| DbError::Network(format!("Failed to set SO_REUSEADDR: {}", e)))?;
         }
 
         #[cfg(unix)]
         if config.reuse_port {
-            socket.set_reuse_port(true)
+            socket
+                .set_reuse_port(true)
                 .map_err(|e| DbError::Network(format!("Failed to set SO_REUSEPORT: {}", e)))?;
         }
 
         if addr.is_ipv6() && config.enable_ipv6 {
-            socket.set_only_v6(false)
+            socket
+                .set_only_v6(false)
                 .map_err(|e| DbError::Network(format!("Failed to set dual-stack: {}", e)))?;
         }
 
-        socket.set_nonblocking(true)
+        socket
+            .set_nonblocking(true)
             .map_err(|e| DbError::Network(format!("Failed to set non-blocking: {}", e)))?;
 
         // Bind the socket before converting
-        socket.bind(&socket2::SockAddr::from(*addr))
+        socket
+            .bind(&socket2::SockAddr::from(*addr))
             .map_err(|e| DbError::Network(format!("Failed to bind UDP to {}: {}", addr, e)))?;
 
         let std_socket: std::net::UdpSocket = socket.into();
@@ -304,10 +315,7 @@ impl ListenerManager {
     /// Get listeners for a specific port
     pub async fn get_port_listeners(&self, port: u16) -> Vec<SocketAddr> {
         let port_listeners_guard = self.port_listeners.read().await;
-        port_listeners_guard
-            .get(&port)
-            .cloned()
-            .unwrap_or_default()
+        port_listeners_guard.get(&port).cloned().unwrap_or_default()
     }
 
     /// Check if listening on a specific address

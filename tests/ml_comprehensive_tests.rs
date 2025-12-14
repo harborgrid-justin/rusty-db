@@ -5,8 +5,8 @@
 
 #[cfg(test)]
 mod ml_comprehensive_tests {
-    use rusty_db::ml::*;
     use rusty_db::ml::algorithms::*;
+    use rusty_db::ml::*;
     use rusty_db::ml_engine::*;
 
     // ========================================================================
@@ -37,13 +37,7 @@ mod ml_comprehensive_tests {
     #[test]
     fn ml_002_linear_regression_basic() {
         // y = 2x + 1
-        let features = vec![
-            vec![1.0],
-            vec![2.0],
-            vec![3.0],
-            vec![4.0],
-            vec![5.0],
-        ];
+        let features = vec![vec![1.0], vec![2.0], vec![3.0], vec![4.0], vec![5.0]];
         let target = Some(vec![3.0, 5.0, 7.0, 9.0, 11.0]);
         let dataset = Dataset::new(features, target, vec!["x".to_string()]);
 
@@ -79,11 +73,7 @@ mod ml_comprehensive_tests {
             vec![10.0, 11.0],
         ];
         let target = Some(vec![0.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
-        let dataset = Dataset::new(
-            features,
-            target,
-            vec!["x1".to_string(), "x2".to_string()],
-        );
+        let dataset = Dataset::new(features, target, vec!["x1".to_string(), "x2".to_string()]);
 
         let mut model = LogisticRegression::new();
         let params = ModelType::LogisticRegression.default_hyperparameters();
@@ -112,11 +102,7 @@ mod ml_comprehensive_tests {
             vec![9.0, 10.0],
         ];
         let target = Some(vec![0.0, 0.0, 0.0, 1.0, 1.0]);
-        let dataset = Dataset::new(
-            features,
-            target,
-            vec!["x1".to_string(), "x2".to_string()],
-        );
+        let dataset = Dataset::new(features, target, vec!["x1".to_string(), "x2".to_string()]);
 
         let mut model = DecisionTree::new(true);
         let mut params = ModelType::DecisionTree.default_hyperparameters();
@@ -144,11 +130,7 @@ mod ml_comprehensive_tests {
             vec![10.0, 11.0],
         ];
         let target = Some(vec![0.0, 0.0, 0.0, 1.0, 1.0, 1.0]);
-        let dataset = Dataset::new(
-            features,
-            target,
-            vec!["x1".to_string(), "x2".to_string()],
-        );
+        let dataset = Dataset::new(features, target, vec!["x1".to_string(), "x2".to_string()]);
 
         let mut model = RandomForest::new(true);
         let mut params = ModelType::RandomForest.default_hyperparameters();
@@ -179,11 +161,7 @@ mod ml_comprehensive_tests {
             vec![8.5, 9.0],
             vec![9.0, 8.5],
         ];
-        let dataset = Dataset::new(
-            features,
-            None,
-            vec!["x".to_string(), "y".to_string()],
-        );
+        let dataset = Dataset::new(features, None, vec!["x".to_string(), "y".to_string()]);
 
         let mut model = KMeansClustering::new();
         let mut params = ModelType::KMeans.default_hyperparameters();
@@ -213,11 +191,7 @@ mod ml_comprehensive_tests {
             vec![9.0, 10.0],
         ];
         let target = Some(vec![0.0, 0.0, 0.0, 1.0, 1.0]);
-        let dataset = Dataset::new(
-            features,
-            target,
-            vec!["x1".to_string(), "x2".to_string()],
-        );
+        let dataset = Dataset::new(features, target, vec!["x1".to_string(), "x2".to_string()]);
 
         let mut model = NaiveBayes::new();
         let params = ModelType::NaiveBayes.default_hyperparameters();
@@ -254,11 +228,7 @@ mod ml_comprehensive_tests {
 
     #[test]
     fn ml_009_model_serialization() {
-        let features = vec![
-            vec![1.0],
-            vec![2.0],
-            vec![3.0],
-        ];
+        let features = vec![vec![1.0], vec![2.0], vec![3.0]];
         let target = Some(vec![2.0, 4.0, 6.0]);
         let dataset = Dataset::new(features, target, vec!["x".to_string()]);
 
@@ -287,11 +257,7 @@ mod ml_comprehensive_tests {
 
     #[test]
     fn ml_010_feature_importance() {
-        let features = vec![
-            vec![1.0, 100.0],
-            vec![2.0, 200.0],
-            vec![3.0, 300.0],
-        ];
+        let features = vec![vec![1.0, 100.0], vec![2.0, 200.0], vec![3.0, 300.0]];
         let target = Some(vec![2.0, 4.0, 6.0]);
         let dataset = Dataset::new(
             features,
@@ -328,11 +294,7 @@ mod ml_comprehensive_tests {
     fn ml_012_ml_engine_training() {
         let engine = MLEngine::new();
 
-        let features = vec![
-            vec![1.0],
-            vec![2.0],
-            vec![3.0],
-        ];
+        let features = vec![vec![1.0], vec![2.0], vec![3.0]];
         let target = Some(vec![2.0, 4.0, 6.0]);
         let feature_names = vec!["x".to_string()];
         let dataset = rusty_db::ml_engine::Dataset::new(features, feature_names)
@@ -380,10 +342,7 @@ mod ml_comprehensive_tests {
 
     #[test]
     fn ml_015_target_mismatch() {
-        let features = vec![
-            vec![1.0, 2.0],
-            vec![3.0, 4.0],
-        ];
+        let features = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
         let target = Some(vec![1.0, 2.0, 3.0]); // Wrong length
         let dataset = Dataset::new(features, target, vec!["x".to_string(), "y".to_string()]);
 
@@ -397,10 +356,7 @@ mod ml_comprehensive_tests {
 
     #[test]
     fn ml_016_training_without_target() {
-        let features = vec![
-            vec![1.0],
-            vec![2.0],
-        ];
+        let features = vec![vec![1.0], vec![2.0]];
         let dataset = Dataset::new(features, None, vec!["x".to_string()]);
 
         let mut model = LinearRegression::new();
@@ -460,11 +416,7 @@ mod ml_comprehensive_tests {
             vec![2.0, 2.0],
         ];
         let target = Some(vec![6.0, 8.0, 9.0, 11.0]);
-        let dataset = Dataset::new(
-            features,
-            target,
-            vec!["x1".to_string(), "x2".to_string()],
-        );
+        let dataset = Dataset::new(features, target, vec!["x1".to_string(), "x2".to_string()]);
 
         let mut model = LinearRegression::new();
         let params = ModelType::LinearRegression.default_hyperparameters();

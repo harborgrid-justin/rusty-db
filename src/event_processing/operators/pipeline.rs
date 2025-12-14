@@ -1,7 +1,6 @@
 /// Operator Pipeline Module
 ///
 /// Core streaming operator infrastructure and pipeline management.
-
 use super::super::{Event, EventBatch};
 use crate::error::Result;
 use std::time::{Duration, SystemTime};

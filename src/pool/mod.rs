@@ -55,84 +55,65 @@
 // }
 // ```
 
-pub mod session;           // New refactored session module
-pub mod sessions;          // Session management submodules
-pub mod connection;        // Connection pool submodules
-pub mod session_manager;   // Legacy - being migrated
+pub mod connection; // Connection pool submodules
 pub mod connection_pool;
+pub mod session; // New refactored session module
+pub mod session_manager; // Legacy - being migrated
+pub mod sessions; // Session management submodules
 
 // Re-export new session types (preferred)
-pub use session::{
-    SessionState as SessionStateV2,
-    Username,
-    SchemaName,
-    Authenticator,
-    DatabaseAuthenticator,
-    TokenAuthenticator,
-    PrivilegeSet,
-};
 pub use crate::common::SessionId;
+pub use session::{
+    Authenticator, DatabaseAuthenticator, PrivilegeSet, SchemaName, SessionState as SessionStateV2,
+    TokenAuthenticator, Username,
+};
 
 // Re-export legacy session management types
 pub use session_manager::{
-    SessionManager,
-    SessionConfig,
-    SessionState,
-    SessionStatus,
-    SessionSettings,
-    ResourceLimits,
-    ResourceController,
-    SessionPool,
-    PoolConfig as SessionPoolConfig,
-    PoolStatistics as SessionPoolStatistics,
-    AuthenticationProvider,
-    Credentials,
-    AuthenticationResult,
-    SessionEventManager,
-    SessionEvent,
-    SessionTrigger,
-    SessionCallback,
-    PurityLevel,
+    AuthenticationProvider, AuthenticationResult, Credentials, PoolConfig as SessionPoolConfig,
+    PoolStatistics as SessionPoolStatistics, PurityLevel, ResourceController, ResourceLimits,
+    SessionCallback, SessionConfig, SessionEvent, SessionEventManager, SessionManager, SessionPool,
+    SessionSettings, SessionState, SessionStatus, SessionTrigger,
 };
 
 // Re-export connection pool types
 pub use connection_pool::{
+    AgingPolicy,
+    ConnectionFactory,
+
     // Core types
     ConnectionPool,
+    ConnectionValidator,
+
+    DashboardData,
+    DashboardProvider,
+    DeadlockDetector,
+    ExportFormat,
+    LeakDetector,
+    LeakInfo,
+    LifetimeEnforcer,
+    LoadBalancingAlgorithm,
+
+    MonitoringExporter,
+    PartitionLimits,
+    // Partitioning
+    PartitionManager,
+    PartitionRequest,
+    PartitionType,
     PoolConfig,
     PoolConfigBuilder,
     PoolError,
-    PooledConnectionGuard,
-    ConnectionFactory,
-
-    // Lifecycle management
-    RecyclingStrategy,
-    AgingPolicy,
-    RecyclingManager,
-    LifetimeEnforcer,
-    ConnectionValidator,
-
-    // Wait queue
-    WaitQueue,
-    QueuePriority,
-    DeadlockDetector,
-    StarvationPrevention,
-
-    // Partitioning
-    PartitionManager,
-    PartitionType,
-    PartitionLimits,
-    RoutingStrategy,
-    PartitionRequest,
-    LoadBalancingAlgorithm,
-
     // Statistics and monitoring
     PoolStatistics,
     PoolStats,
-    DashboardProvider,
-    DashboardData,
-    LeakDetector,
-    LeakInfo,
-    MonitoringExporter,
-    ExportFormat,
+    PooledConnectionGuard,
+    QueuePriority,
+    RecyclingManager,
+    // Lifecycle management
+    RecyclingStrategy,
+    RoutingStrategy,
+    StarvationPrevention,
+
+    // Wait queue
+    WaitQueue,
 };

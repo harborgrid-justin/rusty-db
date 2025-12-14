@@ -8,10 +8,10 @@
 // - Atomic operations: Uses Relaxed ordering for maximum throughput
 // - HyperLogLog: O(1) insert, ~0.81% standard error with 2^14 registers
 
+use parking_lot::RwLock;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use parking_lot::RwLock;
 
 /// Lock-free system metrics collector
 pub struct SystemMetricsCollector {
@@ -97,7 +97,8 @@ impl SystemMetricsCollector {
 
         // Record response time
         let micros = response_time.as_micros() as u64;
-        self.total_response_time_micros.fetch_add(micros, Ordering::Relaxed);
+        self.total_response_time_micros
+            .fetch_add(micros, Ordering::Relaxed);
         self.response_time_count.fetch_add(1, Ordering::Relaxed);
     }
 
@@ -153,7 +154,8 @@ impl SystemMetricsCollector {
 
     #[inline]
     pub fn record_transaction_rollback(&self) {
-        self.transactions_rolled_back.fetch_add(1, Ordering::Relaxed);
+        self.transactions_rolled_back
+            .fetch_add(1, Ordering::Relaxed);
     }
 
     // Lock tracking

@@ -3,7 +3,7 @@
 // Two-queue cache with A1/Am/Aout lists.
 
 use super::common::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub struct TwoQCache {
     // Maximum cache size

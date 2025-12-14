@@ -59,7 +59,8 @@ impl AutoPartitionCreator {
     }
 
     fn generate_partition_name(&self, table: &str, time: SystemTime) -> String {
-        let duration_since_epoch = time.duration_since(SystemTime::UNIX_EPOCH)
+        let duration_since_epoch = time
+            .duration_since(SystemTime::UNIX_EPOCH)
             .unwrap_or(Duration::ZERO);
         let days = duration_since_epoch.as_secs() / 86400;
 
@@ -82,11 +83,7 @@ impl AutoPartitionCreator {
         time + advance_duration
     }
 
-    pub fn archive_old_partitions(
-        &mut self,
-        table: &str,
-        current_time: SystemTime,
-    ) -> Vec<String> {
+    pub fn archive_old_partitions(&mut self, table: &str, current_time: SystemTime) -> Vec<String> {
         let mut to_archive = Vec::new();
 
         if let Some(retention) = self.config.retention_period {
@@ -169,7 +166,10 @@ impl PartitionMaintenanceScheduler {
                 MaintenanceSchedule::Interval(d) => *d,
             };
 
-            current_time.duration_since(last_run).unwrap_or(Duration::ZERO) >= interval
+            current_time
+                .duration_since(last_run)
+                .unwrap_or(Duration::ZERO)
+                >= interval
         } else {
             true
         }
@@ -211,7 +211,7 @@ impl PartitionWiseJoinExecutor {
     ) -> Result<JoinResult> {
         if left_partitions.len() != right_partitions.len() {
             return Err(DbError::InvalidOperation(
-                "Partition counts must match for partition-wise join".to_string()
+                "Partition counts must match for partition-wise join".to_string(),
             ));
         }
 
@@ -306,10 +306,7 @@ impl DynamicPartitionSplitter {
 pub struct DynamicPartitionMerger;
 
 impl DynamicPartitionMerger {
-    pub fn merge_partitions(
-        table: &str,
-        partitions: &[String],
-    ) -> Result<String> {
+    pub fn merge_partitions(table: &str, partitions: &[String]) -> Result<String> {
         let merged_name = format!("{}_merged_{}", table, partitions.len());
         Ok(merged_name)
     }

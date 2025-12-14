@@ -13,13 +13,13 @@
 // - Privilege dependency tracking
 // - Cascading privilege revocation
 
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use parking_lot::RwLock;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
-use crate::error::DbError;
 
 // Principal identifier (user or role)
 pub type PrincipalId = String;
@@ -241,12 +241,12 @@ impl PrivilegeManager {
             let check = self.check_system_privilege(&grantor, &privilege);
             if !check.has_privilege {
                 return Err(DbError::InvalidOperation(
-                    "Grantor does not have the privilege".to_string()
+                    "Grantor does not have the privilege".to_string(),
                 ));
             }
             if !check.can_grant {
                 return Err(DbError::InvalidOperation(
-                    "Grantor cannot grant this privilege".to_string()
+                    "Grantor cannot grant this privilege".to_string(),
                 ));
             }
         }
@@ -292,12 +292,12 @@ impl PrivilegeManager {
             );
             if !check.has_privilege {
                 return Err(DbError::InvalidOperation(
-                    "Grantor does not have the privilege".to_string()
+                    "Grantor does not have the privilege".to_string(),
                 ));
             }
             if !check.can_grant {
                 return Err(DbError::InvalidOperation(
-                    "Grantor cannot grant this privilege".to_string()
+                    "Grantor cannot grant this privilege".to_string(),
                 ));
             }
         }
@@ -322,7 +322,8 @@ impl PrivilegeManager {
         };
 
         // Add to object index
-        self.object_index.write()
+        self.object_index
+            .write()
             .entry(object_id)
             .or_insert_with(Vec::new)
             .push(grant_id.clone());
@@ -333,14 +334,11 @@ impl PrivilegeManager {
     }
 
     // Revoke a privilege grant
-    pub fn revoke_grant(
-        &self,
-        grant_id: &str,
-        cascade: bool,
-    ) -> Result<Vec<String>> {
+    pub fn revoke_grant(&self, grant_id: &str, cascade: bool) -> Result<Vec<String>> {
         let _grant = {
             let grants = self.grants.read();
-            grants.get(grant_id)
+            grants
+                .get(grant_id)
                 .ok_or_else(|| DbError::NotFound("Grant not found".to_string()))?
                 .clone()
         };
@@ -351,9 +349,10 @@ impl PrivilegeManager {
         let dependent_grants = self.find_dependent_grants(grant_id);
 
         if !dependent_grants.is_empty() && !cascade {
-            return Err(DbError::InvalidOperation(
-                format!("Cannot revoke: {} dependent grants exist. Use CASCADE.", dependent_grants.len())
-            ));
+            return Err(DbError::InvalidOperation(format!(
+                "Cannot revoke: {} dependent grants exist. Use CASCADE.",
+                dependent_grants.len()
+            )));
         }
 
         // Revoke dependent grants if cascade
@@ -399,7 +398,7 @@ impl PrivilegeManager {
                             return PrivilegeCheckResult {
                                 has_privilege: true,
                                 source: Some(PrivilegeSource::DirectGrant {
-                                    grant_id: grant_id.clone()
+                                    grant_id: grant_id.clone(),
                                 }),
                                 can_grant: grant.with_grant_option,
                             };
@@ -435,11 +434,13 @@ impl PrivilegeManager {
         let object_index = self.object_index.read();
         let grant_ids = match object_index.get(object_id) {
             Some(ids) => ids,
-            None => return PrivilegeCheckResult {
-                has_privilege: false,
-                source: None,
-                can_grant: false,
-            },
+            None => {
+                return PrivilegeCheckResult {
+                    has_privilege: false,
+                    source: None,
+                    can_grant: false,
+                }
+            }
         };
 
         let grants = self.grants.read();
@@ -471,7 +472,8 @@ impl PrivilegeManager {
                         object_type: ref ot,
                         object_id: _,
                         columns: ref grant_columns,
-                    } = grant.privilege_type {
+                    } = grant.privilege_type
+                    {
                         if ot != object_type {
                             continue;
                         }
@@ -497,7 +499,7 @@ impl PrivilegeManager {
                         return PrivilegeCheckResult {
                             has_privilege: true,
                             source: Some(PrivilegeSource::DirectGrant {
-                                grant_id: grant_id.clone()
+                                grant_id: grant_id.clone(),
                             }),
                             can_grant: grant.with_grant_option,
                         };
@@ -519,7 +521,8 @@ impl PrivilegeManager {
         let grants = self.grants.read();
 
         if let Some(grant_ids) = grantee_index.get(principal) {
-            grant_ids.iter()
+            grant_ids
+                .iter()
                 .filter_map(|id| grants.get(id))
                 .filter(|g| g.is_active)
                 .cloned()
@@ -535,7 +538,8 @@ impl PrivilegeManager {
         let grants = self.grants.read();
 
         if let Some(grant_ids) = object_index.get(objectid) {
-            grant_ids.iter()
+            grant_ids
+                .iter()
                 .filter_map(|id| grants.get(id))
                 .filter(|g| g.is_active)
                 .cloned()
@@ -553,7 +557,8 @@ impl PrivilegeManager {
     // Get effective privileges for a principal (including role inheritance)
     pub fn get_effective_privileges(&self, principal: &PrincipalId) -> EffectivePrivileges {
         let mut system_privileges = HashSet::new();
-        let mut object_privileges: HashMap<ObjectId, Vec<(ObjectPrivilege, PrivilegeObjectType)>> = HashMap::new();
+        let mut object_privileges: HashMap<ObjectId, Vec<(ObjectPrivilege, PrivilegeObjectType)>> =
+            HashMap::new();
 
         // Get direct grants
         let grants = self.get_principal_grants(principal);
@@ -563,8 +568,14 @@ impl PrivilegeManager {
                 PrivilegeType::System(priv_type) => {
                     system_privileges.insert(priv_type);
                 }
-                PrivilegeType::Object { privilege, object_type, ref object_id, .. } => {
-                    object_privileges.entry(object_id.clone())
+                PrivilegeType::Object {
+                    privilege,
+                    object_type,
+                    ref object_id,
+                    ..
+                } => {
+                    object_privileges
+                        .entry(object_id.clone())
                         .or_insert_with(Vec::new)
                         .push((privilege, object_type));
                 }
@@ -575,7 +586,8 @@ impl PrivilegeManager {
         let role_privs = self.get_privileges_through_roles(principal);
         system_privileges.extend(role_privs.system_privileges);
         for (obj_id, privs) in role_privs.object_privileges {
-            object_privileges.entry(obj_id)
+            object_privileges
+                .entry(obj_id)
                 .or_insert_with(Vec::new)
                 .extend(privs);
         }
@@ -592,15 +604,18 @@ impl PrivilegeManager {
 
         let total_grants = grants.len();
         let active_grants = grants.values().filter(|g| g.is_active).count();
-        let grants_with_grant_option = grants.values()
+        let grants_with_grant_option = grants
+            .values()
             .filter(|g| g.is_active && g.with_grant_option)
             .count();
 
-        let system_privilege_grants = grants.values()
+        let system_privilege_grants = grants
+            .values()
             .filter(|g| matches!(g.privilege_type, PrivilegeType::System(_)))
             .count();
 
-        let object_privilege_grants = grants.values()
+        let object_privilege_grants = grants
+            .values()
             .filter(|g| matches!(g.privilege_type, PrivilegeType::Object { .. }))
             .count();
 
@@ -622,12 +637,14 @@ impl PrivilegeManager {
 
         self.grants.write().insert(grant_id.clone(), grant);
 
-        self.grantee_index.write()
+        self.grantee_index
+            .write()
             .entry(grantee)
             .or_insert_with(Vec::new)
             .push(grant_id.clone());
 
-        self.grantor_index.write()
+        self.grantor_index
+            .write()
             .entry(grantor)
             .or_insert_with(Vec::new)
             .push(grant_id);
@@ -638,7 +655,8 @@ impl PrivilegeManager {
     fn remove_grant(&self, grant_id: &str) -> Result<()> {
         let grant = {
             let mut grants = self.grants.write();
-            grants.remove(grant_id)
+            grants
+                .remove(grant_id)
                 .ok_or_else(|| DbError::NotFound("Grant not found".to_string()))?
         };
 
@@ -662,7 +680,8 @@ impl PrivilegeManager {
 
     fn find_dependent_grants(&self, grant_id: &str) -> Vec<String> {
         let dependencies = self.dependencies.read();
-        dependencies.iter()
+        dependencies
+            .iter()
             .filter(|d| d.depends_on_grant_id == grant_id)
             .map(|d| d.dependent_grant_id.clone())
             .collect()
@@ -727,7 +746,8 @@ impl PrivilegeManager {
 
     fn get_privileges_through_roles(&self, principal: &PrincipalId) -> EffectivePrivileges {
         let mut system_privileges = HashSet::new();
-        let mut object_privileges: HashMap<ObjectId, Vec<(ObjectPrivilege, PrivilegeObjectType)>> = HashMap::new();
+        let mut object_privileges: HashMap<ObjectId, Vec<(ObjectPrivilege, PrivilegeObjectType)>> =
+            HashMap::new();
 
         let role_hierarchy = self.role_hierarchy.read();
         let mut to_check = vec![principal.clone()];
@@ -745,8 +765,14 @@ impl PrivilegeManager {
                     PrivilegeType::System(priv_type) => {
                         system_privileges.insert(priv_type);
                     }
-                    PrivilegeType::Object { privilege, object_type, ref object_id, .. } => {
-                        object_privileges.entry(object_id.clone())
+                    PrivilegeType::Object {
+                        privilege,
+                        object_type,
+                        ref object_id,
+                        ..
+                    } => {
+                        object_privileges
+                            .entry(object_id.clone())
                             .or_insert_with(Vec::new)
                             .push((privilege, object_type));
                     }
@@ -809,12 +835,14 @@ mod tests {
     fn test_grant_system_privilege() {
         let manager = PrivilegeManager::new();
 
-        let grant_id = manager.grant_system_privilege(
-            "SYSTEM".to_string(),
-            "user1".to_string(),
-            SystemPrivilege::CreateTable,
-            false,
-        ).unwrap();
+        let grant_id = manager
+            .grant_system_privilege(
+                "SYSTEM".to_string(),
+                "user1".to_string(),
+                SystemPrivilege::CreateTable,
+                false,
+            )
+            .unwrap();
 
         assert!(grant_id.starts_with("GRANT_"));
     }
@@ -823,17 +851,17 @@ mod tests {
     fn test_check_privilege() {
         let manager = PrivilegeManager::new();
 
-        manager.grant_system_privilege(
-            "SYSTEM".to_string(),
-            "user1".to_string(),
-            SystemPrivilege::CreateTable,
-            false,
-        ).unwrap();
+        manager
+            .grant_system_privilege(
+                "SYSTEM".to_string(),
+                "user1".to_string(),
+                SystemPrivilege::CreateTable,
+                false,
+            )
+            .unwrap();
 
-        let result = manager.check_system_privilege(
-            &"user1".to_string(),
-            &SystemPrivilege::CreateTable,
-        );
+        let result =
+            manager.check_system_privilege(&"user1".to_string(), &SystemPrivilege::CreateTable);
 
         assert!(result.has_privilege);
         assert!(!result.can_grant);
@@ -843,19 +871,19 @@ mod tests {
     fn test_revoke_privilege() {
         let manager = PrivilegeManager::new();
 
-        let grant_id = manager.grant_system_privilege(
-            "SYSTEM".to_string(),
-            "user1".to_string(),
-            SystemPrivilege::CreateTable,
-            false,
-        ).unwrap();
+        let grant_id = manager
+            .grant_system_privilege(
+                "SYSTEM".to_string(),
+                "user1".to_string(),
+                SystemPrivilege::CreateTable,
+                false,
+            )
+            .unwrap();
 
         assert!(manager.revoke_grant(&grant_id, false).is_ok());
 
-        let result = manager.check_system_privilege(
-            &"user1".to_string(),
-            &SystemPrivilege::CreateTable,
-        );
+        let result =
+            manager.check_system_privilege(&"user1".to_string(), &SystemPrivilege::CreateTable);
 
         assert!(!result.has_privilege);
     }

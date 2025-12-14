@@ -2,9 +2,10 @@
 //
 // Real-time subscription resolvers for the GraphQL API
 
-use async_graphql::{
-    Context, Enum, Object, SimpleObject, Subscription, ID,
-};
+use super::models::*;
+use super::types::*;
+use super::GraphQLEngine;
+use async_graphql::{Context, Enum, Object, SimpleObject, Subscription, ID};
 use futures_util::stream::Stream;
 use futures_util::StreamExt;
 use std::collections::HashMap;
@@ -12,9 +13,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{broadcast, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
-use super::types::*;
-use super::models::*;
-use super::GraphQLEngine;
 
 // ============================================================================
 // PART 4: SUBSCRIPTION SYSTEM (600+ lines)
@@ -36,11 +34,11 @@ impl SubscriptionRoot {
         let (tx, rx) = broadcast::channel(1000);
 
         // Register subscription
-        let _subscription_id = engine.register_table_subscription(&table, where_clause, tx).await;
+        let _subscription_id = engine
+            .register_table_subscription(&table, where_clause, tx)
+            .await;
 
-        BroadcastStream::new(rx).filter_map(|result| async move {
-            result.ok()
-        })
+        BroadcastStream::new(rx).filter_map(|result| async move { result.ok() })
     }
 
     // Subscribe to row insertions
@@ -54,11 +52,11 @@ impl SubscriptionRoot {
         let (tx, rx) = broadcast::channel(1000);
 
         // Register subscription
-        engine.register_insert_subscription(&table, where_clause, tx).await;
+        engine
+            .register_insert_subscription(&table, where_clause, tx)
+            .await;
 
-        BroadcastStream::new(rx).filter_map(|result| async move {
-            result.ok()
-        })
+        BroadcastStream::new(rx).filter_map(|result| async move { result.ok() })
     }
 
     // Subscribe to row updates
@@ -72,11 +70,11 @@ impl SubscriptionRoot {
         let (tx, rx) = broadcast::channel(1000);
 
         // Register subscription
-        engine.register_update_subscription(&table, where_clause, tx).await;
+        engine
+            .register_update_subscription(&table, where_clause, tx)
+            .await;
 
-        BroadcastStream::new(rx).filter_map(|result| async move {
-            result.ok()
-        })
+        BroadcastStream::new(rx).filter_map(|result| async move { result.ok() })
     }
 
     // Subscribe to row deletions
@@ -90,11 +88,11 @@ impl SubscriptionRoot {
         let (tx, rx) = broadcast::channel(1000);
 
         // Register subscription
-        engine.register_delete_subscription(&table, where_clause, tx).await;
+        engine
+            .register_delete_subscription(&table, where_clause, tx)
+            .await;
 
-        BroadcastStream::new(rx).filter_map(|result| async move {
-            result.ok()
-        })
+        BroadcastStream::new(rx).filter_map(|result| async move { result.ok() })
     }
 
     // Subscribe to specific row changes by ID
@@ -110,9 +108,7 @@ impl SubscriptionRoot {
         // Register subscription
         engine.register_row_subscription(&table, &id, tx).await;
 
-        BroadcastStream::new(rx).filter_map(|result| async move {
-            result.ok()
-        })
+        BroadcastStream::new(rx).filter_map(|result| async move { result.ok() })
     }
 
     // Subscribe to aggregation changes
@@ -226,11 +222,11 @@ impl SubscriptionRoot {
         let (tx, rx) = broadcast::channel(1000);
 
         // Register query execution subscription
-        engine.register_query_execution_subscription(query_id, tx).await;
+        engine
+            .register_query_execution_subscription(query_id, tx)
+            .await;
 
-        BroadcastStream::new(rx).filter_map(|result| async move {
-            result.ok()
-        })
+        BroadcastStream::new(rx).filter_map(|result| async move { result.ok() })
     }
 
     // Subscribe to table modifications (comprehensive row changes)
@@ -244,11 +240,11 @@ impl SubscriptionRoot {
         let (tx, rx) = broadcast::channel(1000);
 
         // Register table modification subscription
-        engine.register_table_modification_subscription(tables, change_types, tx).await;
+        engine
+            .register_table_modification_subscription(tables, change_types, tx)
+            .await;
 
-        BroadcastStream::new(rx).filter_map(|result| async move {
-            result.ok()
-        })
+        BroadcastStream::new(rx).filter_map(|result| async move { result.ok() })
     }
 
     // Subscribe to system metrics stream
@@ -260,12 +256,14 @@ impl SubscriptionRoot {
     ) -> impl Stream<Item = SystemMetrics> + 'ctx {
         let engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
         let interval = Duration::from_secs(interval_seconds.unwrap_or(5) as u64);
-        let metrics = metric_types.unwrap_or_else(|| vec![
-            MetricType::Cpu,
-            MetricType::Memory,
-            MetricType::Disk,
-            MetricType::Network,
-        ]);
+        let metrics = metric_types.unwrap_or_else(|| {
+            vec![
+                MetricType::Cpu,
+                MetricType::Memory,
+                MetricType::Disk,
+                MetricType::Network,
+            ]
+        });
 
         async_stream::stream! {
             let mut interval_timer = tokio::time::interval(interval);
@@ -771,11 +769,7 @@ impl SubscriptionManager {
         }
     }
 
-    pub async fn register_subscription(
-        &self,
-        table: &str,
-        filter: Option<WhereClause>,
-    ) -> String {
+    pub async fn register_subscription(&self, table: &str, filter: Option<WhereClause>) -> String {
         let subscription_id = uuid::Uuid::new_v4().to_string();
         let info = SubscriptionInfo {
             id: subscription_id.clone(),
@@ -1319,4 +1313,3 @@ pub enum InMemoryEventType {
     SegmentEvicted,
     CompressionCompleted,
 }
-

@@ -3,15 +3,15 @@
 // Implements continuous query processing with incremental view maintenance,
 // checkpointing, state management, and query optimization for streaming data.
 
-use std::fmt;
-use std::collections::VecDeque;
-use std::time::SystemTime;
 use super::{Event, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::collections::{BTreeMap, HashMap};
+use std::fmt;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
+use std::time::SystemTime;
 
 /// Continuous Query identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -67,11 +67,7 @@ pub struct ContinuousQuery {
 }
 
 impl ContinuousQuery {
-    pub fn new(
-        id: impl Into<String>,
-        name: impl Into<String>,
-        query: impl Into<String>,
-    ) -> Self {
+    pub fn new(id: impl Into<String>, name: impl Into<String>, query: impl Into<String>) -> Self {
         Self {
             id: CQId::new(id.into()),
             name: name.into(),
@@ -253,7 +249,12 @@ impl CQExecutor {
         drop(state);
 
         // Restore from checkpoint if available
-        if let Some(checkpoint) = self.checkpoint_manager.read().unwrap().latest_checkpoint()? {
+        if let Some(checkpoint) = self
+            .checkpoint_manager
+            .read()
+            .unwrap()
+            .latest_checkpoint()?
+        {
             self.restore_from_checkpoint(checkpoint)?;
         }
 
@@ -369,7 +370,10 @@ impl CQExecutor {
             view_snapshot: view.snapshot(),
         };
 
-        self.checkpoint_manager.write().unwrap().save_checkpoint(checkpoint)?;
+        self.checkpoint_manager
+            .write()
+            .unwrap()
+            .save_checkpoint(checkpoint)?;
 
         // Update checkpoint timestamp
         let mut exec_state = self.execution_state.write().unwrap();

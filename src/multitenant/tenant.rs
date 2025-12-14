@@ -12,15 +12,15 @@
 // - **Self-Service Portal**: API for tenant self-management
 // - **Billing Integration**: Usage tracking and billing hooks
 
+use super::isolation::ResourceLimits;
+use super::pdb::{PdbConfig, PdbCreateMode, PdbId};
+use super::{ResourceConsumption, TenantId};
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
-use super::{TenantId, ResourceConsumption};
-use super::pdb::{PdbId, PdbConfig, PdbCreateMode};
-use super::isolation::ResourceLimits;
 
 // Tenant configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -113,31 +113,31 @@ impl TenantTier {
     pub fn default_limits(&self) -> ResourceLimits {
         match self {
             TenantTier::Free => ResourceLimits {
-                memory_bytes: 256 * 1024 * 1024,           // 256 MB
-                cpu_shares: 50,                             // 0.5%
+                memory_bytes: 256 * 1024 * 1024,              // 256 MB
+                cpu_shares: 50,                               // 0.5%
                 io_bandwidth_bytes_per_sec: 10 * 1024 * 1024, // 10 MB/s
                 max_connections: 10,
-                temp_space_bytes: 512 * 1024 * 1024,       // 512 MB
-                storage_quota_bytes: 1024 * 1024 * 1024,   // 1 GB
+                temp_space_bytes: 512 * 1024 * 1024,     // 512 MB
+                storage_quota_bytes: 1024 * 1024 * 1024, // 1 GB
                 qos_priority: 1,
                 cpu_throttling_enabled: true,
                 io_throttling_enabled: true,
             },
             TenantTier::Basic => ResourceLimits::default(),
             TenantTier::Premium => ResourceLimits {
-                memory_bytes: 2 * 1024 * 1024 * 1024,      // 2 GB
-                cpu_shares: 500,                            // 5%
+                memory_bytes: 2 * 1024 * 1024 * 1024,          // 2 GB
+                cpu_shares: 500,                               // 5%
                 io_bandwidth_bytes_per_sec: 500 * 1024 * 1024, // 500 MB/s
                 max_connections: 500,
-                temp_space_bytes: 5 * 1024 * 1024 * 1024,  // 5 GB
+                temp_space_bytes: 5 * 1024 * 1024 * 1024, // 5 GB
                 storage_quota_bytes: 100 * 1024 * 1024 * 1024, // 100 GB
                 qos_priority: 7,
                 cpu_throttling_enabled: false,
                 io_throttling_enabled: false,
             },
             TenantTier::Enterprise => ResourceLimits {
-                memory_bytes: 16 * 1024 * 1024 * 1024,     // 16 GB
-                cpu_shares: 2000,                           // 20%
+                memory_bytes: 16 * 1024 * 1024 * 1024,          // 16 GB
+                cpu_shares: 2000,                               // 20%
                 io_bandwidth_bytes_per_sec: 1024 * 1024 * 1024, // 1 GB/s
                 max_connections: 2000,
                 temp_space_bytes: 50 * 1024 * 1024 * 1024, // 50 GB
@@ -278,8 +278,8 @@ impl Tenant {
 
     // Generate a random API key
     fn generate_api_key() -> String {
-        use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         SystemTime::now().hash(&mut hasher);
@@ -397,7 +397,10 @@ impl TenantProvisioningService {
 
         // Start onboarding workflow
         let workflow = TenantOnboardingWorkflow::new(tenant_id, config.clone());
-        self.workflows.write().await.insert(tenant_id, workflow.clone());
+        self.workflows
+            .write()
+            .await
+            .insert(tenant_id, workflow.clone());
 
         // Execute workflow
         let pdb_id = workflow.execute().await?;
@@ -436,7 +439,10 @@ impl TenantProvisioningService {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Tenant not found: {:?}", tenant_id)))
+            Err(DbError::NotFound(format!(
+                "Tenant not found: {:?}",
+                tenant_id
+            )))
         }
     }
 
@@ -534,11 +540,15 @@ impl TenantOnboardingWorkflow {
 
     fn validate_config(&self) -> Result<()> {
         if self.config.name.is_empty() {
-            return Err(DbError::InvalidInput("Tenant name cannot be empty".to_string()));
+            return Err(DbError::InvalidInput(
+                "Tenant name cannot be empty".to_string(),
+            ));
         }
 
         if self.config.contact_email.is_empty() {
-            return Err(DbError::InvalidInput("Contact email cannot be empty".to_string()));
+            return Err(DbError::InvalidInput(
+                "Contact email cannot be empty".to_string(),
+            ));
         }
 
         Ok(())
@@ -714,7 +724,7 @@ impl CrossTenantQueryEngine {
     ) -> Result<Vec<Vec<String>>> {
         if !self.is_allowed(from_tenant, to_tenant).await {
             return Err(DbError::PermissionDenied(
-                "Cross-tenant query not allowed".to_string()
+                "Cross-tenant query not allowed".to_string(),
             ));
         }
 
@@ -726,7 +736,7 @@ impl CrossTenantQueryEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_tenant_creation() {

@@ -8,12 +8,12 @@
 // - Error tracking by type
 // - Subscription management
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::time::{Duration, Instant, SystemTime};
-use std::collections::HashMap;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant, SystemTime};
 
 // ============================================================================
 // WebSocket Metrics Core Structures
@@ -200,26 +200,34 @@ impl WebSocketMetrics {
     // ========================================================================
 
     /// Record a new connection
-    pub fn connection_opened(&self, id: ConnectionId, remote_addr: String, user_agent: Option<String>) {
+    pub fn connection_opened(
+        &self,
+        id: ConnectionId,
+        remote_addr: String,
+        user_agent: Option<String>,
+    ) {
         self.active_connections.fetch_add(1, Ordering::Relaxed);
         self.total_connections.fetch_add(1, Ordering::Relaxed);
 
         if self.config.track_per_connection {
             let mut connections = self.connections.write();
             if connections.len() < self.config.max_tracked_connections {
-                connections.insert(id, ConnectionMetrics {
+                connections.insert(
                     id,
-                    connected_at: SystemTime::now(),
-                    messages_sent: 0,
-                    messages_received: 0,
-                    bytes_sent: 0,
-                    bytes_received: 0,
-                    errors: 0,
-                    subscriptions: Vec::new(),
-                    last_activity: SystemTime::now(),
-                    remote_addr,
-                    user_agent,
-                });
+                    ConnectionMetrics {
+                        id,
+                        connected_at: SystemTime::now(),
+                        messages_sent: 0,
+                        messages_received: 0,
+                        bytes_sent: 0,
+                        bytes_received: 0,
+                        errors: 0,
+                        subscriptions: Vec::new(),
+                        last_activity: SystemTime::now(),
+                        remote_addr,
+                        user_agent,
+                    },
+                );
             }
         }
     }
@@ -264,7 +272,8 @@ impl WebSocketMetrics {
     /// Record a message sent to a client
     pub fn message_sent(&self, id: ConnectionId, size_bytes: usize) {
         self.messages_sent.fetch_add(1, Ordering::Relaxed);
-        self.bytes_sent.fetch_add(size_bytes as u64, Ordering::Relaxed);
+        self.bytes_sent
+            .fetch_add(size_bytes as u64, Ordering::Relaxed);
 
         if self.config.track_per_connection {
             if let Some(conn) = self.connections.write().get_mut(&id) {
@@ -278,7 +287,8 @@ impl WebSocketMetrics {
     /// Record a message received from a client
     pub fn message_received(&self, id: ConnectionId, size_bytes: usize) {
         self.messages_received.fetch_add(1, Ordering::Relaxed);
-        self.bytes_received.fetch_add(size_bytes as u64, Ordering::Relaxed);
+        self.bytes_received
+            .fetch_add(size_bytes as u64, Ordering::Relaxed);
 
         if self.config.track_per_connection {
             if let Some(conn) = self.connections.write().get_mut(&id) {
@@ -399,7 +409,9 @@ impl WebSocketMetrics {
     }
 
     /// Get message latency percentiles
-    pub fn message_latency_percentiles(&self) -> (Option<Duration>, Option<Duration>, Option<Duration>) {
+    pub fn message_latency_percentiles(
+        &self,
+    ) -> (Option<Duration>, Option<Duration>, Option<Duration>) {
         let mut latencies = self.message_latencies.read().clone();
         if latencies.is_empty() {
             return (None, None, None);
@@ -436,7 +448,9 @@ impl WebSocketMetrics {
             messages_received: self.messages_received.load(Ordering::Relaxed),
             bytes_sent: self.bytes_sent.load(Ordering::Relaxed),
             bytes_received: self.bytes_received.load(Ordering::Relaxed),
-            errors_by_type: self.errors_by_type.read()
+            errors_by_type: self
+                .errors_by_type
+                .read()
                 .iter()
                 .map(|(k, v)| (k.as_str().to_string(), *v))
                 .collect(),

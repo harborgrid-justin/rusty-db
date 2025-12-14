@@ -9,16 +9,16 @@
 // - Tamper-evident design
 // - Historical row versioning
 
-use std::collections::BTreeMap;
+use super::crypto::{hash_to_hex, sha256, Hash256, HashChain, MerkleTree};
+use crate::common::{RowId, TableId, Value};
+use crate::error::DbError;
+use crate::Result;
 use serde::{Deserialize, Serialize};
+use sha2::Digest;
+use std::collections::BTreeMap;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
-use sha2::Digest;
-use crate::common::{Value, RowId, TableId};
-use crate::Result;
-use crate::error::DbError;
-use super::crypto::{Hash256, sha256, MerkleTree, HashChain, hash_to_hex};
 
 // ============================================================================
 // Type Aliases
@@ -181,7 +181,9 @@ impl LedgerRow {
 // ============================================================================
 
 // Block status
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode,
+)]
 pub enum BlockStatus {
     // Block is being built (rows can be added)
     Open,
@@ -220,7 +222,12 @@ pub struct Block {
 
 impl Block {
     // Create a new empty block
-    pub fn new(block_id: BlockId, table_id: TableId, previousblock_hash: Hash256, creator: String) -> Self {
+    pub fn new(
+        block_id: BlockId,
+        table_id: TableId,
+        previousblock_hash: Hash256,
+        creator: String,
+    ) -> Self {
         let created_at = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -244,7 +251,9 @@ impl Block {
     // Add a row to this block (only if open)
     pub fn add_row(&mut self, row: LedgerRow) -> Result<()> {
         if self.status != BlockStatus::Open {
-            return Err(DbError::InvalidOperation("Cannot add row to finalized block".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Cannot add row to finalized block".to_string(),
+            ));
         }
 
         if row.block_id != self.block_id {
@@ -258,17 +267,19 @@ impl Block {
     // Finalize this block (compute hashes, prevent further modifications)
     pub fn finalize(&mut self) -> Result<()> {
         if self.status != BlockStatus::Open {
-            return Err(DbError::InvalidOperation("Block already finalized".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Block already finalized".to_string(),
+            ));
         }
 
         if self.rows.is_empty() {
-            return Err(DbError::InvalidOperation("Cannot finalize empty block".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Cannot finalize empty block".to_string(),
+            ));
         }
 
         // Compute Merkle root
-        let row_data: Vec<&[u8]> = self.rows.iter()
-            .map(|r| r.row_hash.as_ref())
-            .collect();
+        let row_data: Vec<&[u8]> = self.rows.iter().map(|r| r.row_hash.as_ref()).collect();
         let merkle_tree = MerkleTree::build(&row_data)?;
         self.merkle_root = merkle_tree.root();
 
@@ -277,10 +288,12 @@ impl Block {
 
         // Update status
         self.status = BlockStatus::Finalized;
-        self.finalized_at = Some(SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs());
+        self.finalized_at = Some(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        );
 
         Ok(())
     }
@@ -322,9 +335,7 @@ impl Block {
         }
 
         // Verify Merkle root
-        let row_data: Vec<&[u8]> = self.rows.iter()
-            .map(|r| r.row_hash.as_ref())
-            .collect();
+        let row_data: Vec<&[u8]> = self.rows.iter().map(|r| r.row_hash.as_ref()).collect();
         let merkle_tree = MerkleTree::build(&row_data)?;
         if merkle_tree.root() != self.merkle_root {
             return Ok(false);
@@ -433,7 +444,9 @@ impl BlockchainTable {
             row_index: Arc::new(RwLock::new(HashMap::new())),
             next_block_id: Arc::new(RwLock::new(0)),
             next_row_id: Arc::new(RwLock::new(0)),
-            hash_chain: Arc::new(RwLock::new(HashChain::new(super::crypto::HashAlgorithm::Sha256))),
+            hash_chain: Arc::new(RwLock::new(HashChain::new(
+                super::crypto::HashAlgorithm::Sha256,
+            ))),
             stats: Arc::new(RwLock::new(BlockchainStats::default())),
         }
     }
@@ -446,10 +459,10 @@ impl BlockchainTable {
         let mut hash_chain = self.hash_chain.write().unwrap();
 
         // Get or create current block
-        if current_block.is_none() ||
-           (self.config.max_rows_per_block > 0 &&
-            current_block.as_ref().unwrap().rows.len() >= self.config.max_rows_per_block) {
-
+        if current_block.is_none()
+            || (self.config.max_rows_per_block > 0
+                && current_block.as_ref().unwrap().rows.len() >= self.config.max_rows_per_block)
+        {
             // Finalize current block if needed
             if let Some(ref mut block) = *current_block {
                 if self.config.auto_finalize {
@@ -470,7 +483,8 @@ impl BlockchainTable {
         *next_row_id += 1;
 
         // Get previous hash from chain
-        let previous_hash = hash_chain.latest_link()
+        let previous_hash = hash_chain
+            .latest_link()
             .map(|link| link.link_hash)
             .unwrap_or_else(|| HashChain::genesis_hash());
 
@@ -511,7 +525,8 @@ impl BlockchainTable {
         let previous_block_hash = if *next_block_id == 0 {
             [0u8; 32] // Genesis hash
         } else {
-            blocks.get(&(*next_block_id - 1))
+            blocks
+                .get(&(*next_block_id - 1))
                 .map(|b| b.block_hash)
                 .ok_or_else(|| DbError::Internal("Previous block not found".to_string()))?
         };
@@ -825,7 +840,15 @@ mod tests {
         block.add_row(row1).unwrap();
 
         let data2 = vec![Value::Integer(2)];
-        let row2 = LedgerRow::new(1, 1, 0, 0, data2, block.rows[0].row_hash, "user1".to_string());
+        let row2 = LedgerRow::new(
+            1,
+            1,
+            0,
+            0,
+            data2,
+            block.rows[0].row_hash,
+            "user1".to_string(),
+        );
         block.add_row(row2).unwrap();
 
         block.finalize().unwrap();

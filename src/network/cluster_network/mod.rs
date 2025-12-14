@@ -92,9 +92,19 @@ pub struct SwimConfig {
 
 #[derive(Debug, Clone)]
 pub enum SwimMessage {
-    Ping { from: NodeId, sequence: u64 },
-    Ack { from: NodeId, sequence: u64 },
-    PingReq { from: NodeId, target: NodeId, sequence: u64 },
+    Ping {
+        from: NodeId,
+        sequence: u64,
+    },
+    Ack {
+        from: NodeId,
+        sequence: u64,
+    },
+    PingReq {
+        from: NodeId,
+        target: NodeId,
+        sequence: u64,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -111,7 +121,9 @@ pub struct ClusterTopologyManager {
 
 impl ClusterTopologyManager {
     pub fn new() -> Self {
-        Self { nodes: HashMap::new() }
+        Self {
+            nodes: HashMap::new(),
+        }
     }
 }
 
@@ -211,7 +223,10 @@ pub struct ReliableMessaging {
 
 impl ReliableMessaging {
     pub fn new(retry_count: usize, timeout: Duration) -> Self {
-        Self { retry_count, timeout }
+        Self {
+            retry_count,
+            timeout,
+        }
     }
 }
 
@@ -257,7 +272,9 @@ pub struct LocalityMap {
 
 impl LocalityMap {
     pub fn new() -> Self {
-        Self { zones: HashMap::new() }
+        Self {
+            zones: HashMap::new(),
+        }
     }
 }
 
@@ -384,7 +401,9 @@ pub struct LatencyTracker {
 
 impl LatencyTracker {
     pub fn new() -> Self {
-        Self { samples: Vec::new() }
+        Self {
+            samples: Vec::new(),
+        }
     }
 }
 

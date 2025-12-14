@@ -2,11 +2,11 @@
 //
 // Part of the Enterprise Integration Layer for RustyDB
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
 use tokio::time::sleep;
-use serde::{Serialize, Deserialize};
 
 use crate::error::DbError;
 
@@ -99,16 +99,21 @@ impl StartupOrchestrator {
                     let handler = phase_handler.handler.clone();
                     move || handler()
                 }),
-            ).await;
+            )
+            .await;
 
             match result {
                 Ok(Ok(Ok(()))) => continue,
                 Ok(Ok(Err(e))) => return Err(e),
-                Ok(Err(e)) => return Err(DbError::Internal(format!("Phase handler panicked: {}", e))),
-                Err(_) => return Err(DbError::Timeout(format!(
-                    "Startup phase {:?} timed out",
-                    phase_handler.phase
-                ))),
+                Ok(Err(e)) => {
+                    return Err(DbError::Internal(format!("Phase handler panicked: {}", e)))
+                }
+                Err(_) => {
+                    return Err(DbError::Timeout(format!(
+                        "Startup phase {:?} timed out",
+                        phase_handler.phase
+                    )))
+                }
             }
         }
 
@@ -184,7 +189,8 @@ impl ShutdownCoordinator {
                     let handler = phase_handler.handler.clone();
                     move || handler()
                 }),
-            ).await;
+            )
+            .await;
 
             match result {
                 Ok(Ok(Ok(()))) => continue,
@@ -248,7 +254,8 @@ impl HotReloadManager {
 
     pub fn reload_component(&self, component: &str) -> Result<(), DbError> {
         let handlers = self.reload_handlers.read().unwrap();
-        let handler = handlers.get(component)
+        let handler = handlers
+            .get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         // Validate before reload
@@ -329,7 +336,9 @@ impl RollingUpgradeCoordinator {
     pub async fn execute_upgrade(&self) -> Result<(), DbError> {
         let plan = {
             let plan_lock = self.upgrade_plan.read().unwrap();
-            plan_lock.clone().ok_or_else(|| DbError::InvalidInput("No upgrade plan set".to_string()))?
+            plan_lock
+                .clone()
+                .ok_or_else(|| DbError::InvalidInput("No upgrade plan set".to_string()))?
         };
 
         {
@@ -405,7 +414,8 @@ impl StatePersistenceManager {
 
     pub fn persist_state(&self, component: &str) -> Result<(), DbError> {
         let handlers = self.persistence_handlers.read().unwrap();
-        let handler = handlers.get(component)
+        let handler = handlers
+            .get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         let data = handler.persist()?;
@@ -418,11 +428,13 @@ impl StatePersistenceManager {
 
     pub fn restore_state(&self, component: &str) -> Result<(), DbError> {
         let storage = self.state_storage.read().unwrap();
-        let data = storage.get(component)
+        let data = storage
+            .get(component)
             .ok_or_else(|| DbError::NotFound(format!("No persisted state for: {}", component)))?;
 
         let handlers = self.persistence_handlers.read().unwrap();
-        let handler = handlers.get(component)
+        let handler = handlers
+            .get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         handler.restore(data)?;
@@ -476,7 +488,8 @@ impl RecoveryOrchestrator {
         let start = Instant::now();
 
         let strategies = self.recovery_strategies.read().unwrap();
-        let strategy = strategies.get(component)
+        let strategy = strategies
+            .get(component)
             .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", component)))?;
 
         let result = strategy.recover();

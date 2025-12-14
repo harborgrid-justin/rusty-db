@@ -2,16 +2,22 @@
 //
 // Core GraphQL engine that interfaces with the database
 
+use super::complexity::{QueryCache, RateLimiter};
+use super::models::{
+    AggregateInput, AggregateResult, ColumnStatistics, DatabaseSchema, OrderBy, PageInfo,
+    RowConnection, RowType, TableStatistics, TableType, WhereClause,
+};
+use super::queries::{QueryPlan, SearchResult};
+use super::types::{BigInt, DateTime, IsolationLevel, Json};
+use crate::api::{
+    JoinInput, PersistedQueries, RowChange, RowDeleted, RowInserted, RowUpdated,
+    SubscriptionManager, TableChange, TransactionOperation, TransactionResult,
+};
+use crate::error::DbError;
 use async_graphql::{Result as GqlResult, ID};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::broadcast;
-use crate::api::{JoinInput, PersistedQueries, RowChange, RowDeleted, RowInserted, RowUpdated, SubscriptionManager, TableChange, TransactionResult, TransactionOperation};
-use crate::error::DbError;
-use super::types::{DateTime, BigInt, Json, IsolationLevel};
-use super::models::{DatabaseSchema, TableType, RowType, TableStatistics, ColumnStatistics, AggregateInput, AggregateResult, OrderBy, RowConnection, WhereClause, PageInfo};
-use super::complexity::{QueryCache, RateLimiter};
-use super::queries::{QueryPlan, SearchResult};
 
 // ============================================================================
 // GRAPHQL ENGINE - Core Implementation
@@ -67,7 +73,11 @@ impl GraphQLEngine {
         Ok(vec![])
     }
 
-    pub async fn get_table(&self, _name: &str, _schema: Option<String>) -> GqlResult<Option<TableType>> {
+    pub async fn get_table(
+        &self,
+        _name: &str,
+        _schema: Option<String>,
+    ) -> GqlResult<Option<TableType>> {
         // Mock implementation
         Ok(None)
     }
@@ -87,7 +97,11 @@ impl GraphQLEngine {
         Ok(vec![])
     }
 
-    pub async fn get_column_statistics(&self, _table: &str, _column: &str) -> GqlResult<ColumnStatistics> {
+    pub async fn get_column_statistics(
+        &self,
+        _table: &str,
+        _column: &str,
+    ) -> GqlResult<ColumnStatistics> {
         Ok(ColumnStatistics {
             distinct_count: BigInt(0),
             null_count: BigInt(0),
@@ -162,7 +176,11 @@ impl GraphQLEngine {
         Ok(0)
     }
 
-    pub async fn execute_sql(&self, _sql: &str, _params: Option<Vec<Json>>) -> Result<(Vec<RowType>, i64), DbError> {
+    pub async fn execute_sql(
+        &self,
+        _sql: &str,
+        _params: Option<Vec<Json>>,
+    ) -> Result<(Vec<RowType>, i64), DbError> {
         Ok((vec![], 0))
     }
 
@@ -195,15 +213,28 @@ impl GraphQLEngine {
     }
 
     // Mutation operations
-    pub async fn insert_one(&self, _table: &str, _data: HashMap<String, Json>) -> Result<RowType, DbError> {
+    pub async fn insert_one(
+        &self,
+        _table: &str,
+        _data: HashMap<String, Json>,
+    ) -> Result<RowType, DbError> {
         Err(DbError::NotImplemented("insert_one".to_string()))
     }
 
-    pub async fn insert_many(&self, _table: &str, _data: Vec<HashMap<String, Json>>) -> Result<Vec<RowType>, DbError> {
+    pub async fn insert_many(
+        &self,
+        _table: &str,
+        _data: Vec<HashMap<String, Json>>,
+    ) -> Result<Vec<RowType>, DbError> {
         Err(DbError::NotImplemented("insert_many".to_string()))
     }
 
-    pub async fn update_one(&self, _table: &str, _id: &ID, _data: HashMap<String, Json>) -> Result<Option<RowType>, DbError> {
+    pub async fn update_one(
+        &self,
+        _table: &str,
+        _id: &ID,
+        _data: HashMap<String, Json>,
+    ) -> Result<Option<RowType>, DbError> {
         Ok(None)
     }
 
@@ -220,7 +251,11 @@ impl GraphQLEngine {
         Ok(false)
     }
 
-    pub async fn delete_many(&self, _table: &str, _where_clause: WhereClause) -> Result<i32, DbError> {
+    pub async fn delete_many(
+        &self,
+        _table: &str,
+        _where_clause: WhereClause,
+    ) -> Result<i32, DbError> {
         Ok(0)
     }
 
@@ -233,12 +268,20 @@ impl GraphQLEngine {
         Err(DbError::NotImplemented("upsert".to_string()))
     }
 
-    pub async fn bulk_insert(&self, _table: &str, _data: Vec<HashMap<String, Json>>, _batch_size: i32) -> Result<i32, DbError> {
+    pub async fn bulk_insert(
+        &self,
+        _table: &str,
+        _data: Vec<HashMap<String, Json>>,
+        _batch_size: i32,
+    ) -> Result<i32, DbError> {
         Ok(0)
     }
 
     // Transaction operations
-    pub async fn begin_transaction(&self, _isolation_level: Option<IsolationLevel>) -> GqlResult<TransactionResult> {
+    pub async fn begin_transaction(
+        &self,
+        _isolation_level: Option<IsolationLevel>,
+    ) -> GqlResult<TransactionResult> {
         Ok(TransactionResult {
             transaction_id: uuid::Uuid::new_v4().to_string(),
             status: "ACTIVE".to_string(),
@@ -277,7 +320,9 @@ impl GraphQLEngine {
         filter: Option<WhereClause>,
         _tx: broadcast::Sender<TableChange>,
     ) -> String {
-        self.subscription_manager.register_subscription(table, filter).await
+        self.subscription_manager
+            .register_subscription(table, filter)
+            .await
     }
 
     pub async fn register_insert_subscription(
@@ -286,7 +331,9 @@ impl GraphQLEngine {
         filter: Option<WhereClause>,
         _tx: broadcast::Sender<RowInserted>,
     ) -> String {
-        self.subscription_manager.register_subscription(table, filter).await
+        self.subscription_manager
+            .register_subscription(table, filter)
+            .await
     }
 
     pub async fn register_update_subscription(
@@ -295,7 +342,9 @@ impl GraphQLEngine {
         filter: Option<WhereClause>,
         _tx: broadcast::Sender<RowUpdated>,
     ) -> String {
-        self.subscription_manager.register_subscription(table, filter).await
+        self.subscription_manager
+            .register_subscription(table, filter)
+            .await
     }
 
     pub async fn register_delete_subscription(
@@ -304,7 +353,9 @@ impl GraphQLEngine {
         filter: Option<WhereClause>,
         _tx: broadcast::Sender<RowDeleted>,
     ) -> String {
-        self.subscription_manager.register_subscription(table, filter).await
+        self.subscription_manager
+            .register_subscription(table, filter)
+            .await
     }
 
     pub async fn register_row_subscription(
@@ -313,7 +364,9 @@ impl GraphQLEngine {
         _id: &ID,
         _tx: broadcast::Sender<RowChange>,
     ) -> String {
-        self.subscription_manager.register_subscription(table, None).await
+        self.subscription_manager
+            .register_subscription(table, None)
+            .await
     }
 
     // ========================================================================
@@ -330,7 +383,12 @@ impl GraphQLEngine {
         Ok(())
     }
 
-    pub async fn backup_database(&self, _name: &str, _location: &str, _full_backup: bool) -> Result<(), DbError> {
+    pub async fn backup_database(
+        &self,
+        _name: &str,
+        _location: &str,
+        _full_backup: bool,
+    ) -> Result<(), DbError> {
         // Would perform backup operation
         Ok(())
     }
@@ -395,7 +453,12 @@ impl GraphQLEngine {
     // DDL OPERATIONS - View Management
     // ========================================================================
 
-    pub async fn create_view(&self, _name: &str, _query: &str, _or_replace: bool) -> Result<(), DbError> {
+    pub async fn create_view(
+        &self,
+        _name: &str,
+        _query: &str,
+        _or_replace: bool,
+    ) -> Result<(), DbError> {
         // Would create view in catalog
         Ok(())
     }
@@ -469,11 +532,7 @@ impl GraphQLEngine {
         Ok(0)
     }
 
-    pub async fn select_into(
-        &self,
-        _new_table: &str,
-        _source_query: &str,
-    ) -> Result<i64, DbError> {
+    pub async fn select_into(&self, _new_table: &str, _source_query: &str) -> Result<i64, DbError> {
         // Would execute SELECT INTO (create new table)
         Ok(0)
     }
@@ -505,43 +564,46 @@ impl GraphQLEngine {
 
         // Convert GraphQL enum to AST
         let func = match function_type {
-            super::mutations::StringFunctionTypeEnum::Ascii => {
-                StringFunction::Ascii(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
+            super::mutations::StringFunctionTypeEnum::Ascii => StringFunction::Ascii(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
             super::mutations::StringFunctionTypeEnum::Char => {
                 let code = parameters.get(0).and_then(|s| s.parse().ok()).unwrap_or(0);
                 StringFunction::Char(Box::new(StringExpr::Integer(code)))
             }
-            super::mutations::StringFunctionTypeEnum::Upper => {
-                StringFunction::Upper(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
-            super::mutations::StringFunctionTypeEnum::Lower => {
-                StringFunction::Lower(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
-            super::mutations::StringFunctionTypeEnum::Len => {
-                StringFunction::Len(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
-            super::mutations::StringFunctionTypeEnum::LTrim => {
-                StringFunction::LTrim(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
-            super::mutations::StringFunctionTypeEnum::RTrim => {
-                StringFunction::RTrim(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
-            super::mutations::StringFunctionTypeEnum::Trim => {
-                StringFunction::Trim {
-                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
-                    characters: None,
-                }
-            }
-            super::mutations::StringFunctionTypeEnum::Reverse => {
-                StringFunction::Reverse(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
-            super::mutations::StringFunctionTypeEnum::Soundex => {
-                StringFunction::Soundex(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
-            super::mutations::StringFunctionTypeEnum::Concat => {
-                StringFunction::Concat(parameters.iter().map(|s| StringExpr::Literal(s.clone())).collect())
-            }
+            super::mutations::StringFunctionTypeEnum::Upper => StringFunction::Upper(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
+            super::mutations::StringFunctionTypeEnum::Lower => StringFunction::Lower(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
+            super::mutations::StringFunctionTypeEnum::Len => StringFunction::Len(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
+            super::mutations::StringFunctionTypeEnum::LTrim => StringFunction::LTrim(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
+            super::mutations::StringFunctionTypeEnum::RTrim => StringFunction::RTrim(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
+            super::mutations::StringFunctionTypeEnum::Trim => StringFunction::Trim {
+                string: Box::new(StringExpr::Literal(
+                    parameters.get(0).cloned().unwrap_or_default(),
+                )),
+                characters: None,
+            },
+            super::mutations::StringFunctionTypeEnum::Reverse => StringFunction::Reverse(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
+            super::mutations::StringFunctionTypeEnum::Soundex => StringFunction::Soundex(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
+            super::mutations::StringFunctionTypeEnum::Concat => StringFunction::Concat(
+                parameters
+                    .iter()
+                    .map(|s| StringExpr::Literal(s.clone()))
+                    .collect(),
+            ),
             super::mutations::StringFunctionTypeEnum::Substring => {
                 let string = parameters.get(0).cloned().unwrap_or_default();
                 let start: i64 = parameters.get(1).and_then(|s| s.parse().ok()).unwrap_or(1);
@@ -568,13 +630,17 @@ impl GraphQLEngine {
                     length: Box::new(StringExpr::Integer(length)),
                 }
             }
-            super::mutations::StringFunctionTypeEnum::Replace => {
-                StringFunction::Replace {
-                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
-                    old_substring: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
-                    new_substring: Box::new(StringExpr::Literal(parameters.get(2).cloned().unwrap_or_default())),
-                }
-            }
+            super::mutations::StringFunctionTypeEnum::Replace => StringFunction::Replace {
+                string: Box::new(StringExpr::Literal(
+                    parameters.get(0).cloned().unwrap_or_default(),
+                )),
+                old_substring: Box::new(StringExpr::Literal(
+                    parameters.get(1).cloned().unwrap_or_default(),
+                )),
+                new_substring: Box::new(StringExpr::Literal(
+                    parameters.get(2).cloned().unwrap_or_default(),
+                )),
+            },
             super::mutations::StringFunctionTypeEnum::Replicate => {
                 let string = parameters.get(0).cloned().unwrap_or_default();
                 let count: i64 = parameters.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
@@ -590,65 +656,92 @@ impl GraphQLEngine {
             super::mutations::StringFunctionTypeEnum::CharIndex => {
                 let start: Option<i64> = parameters.get(2).and_then(|s| s.parse().ok());
                 StringFunction::CharIndex {
-                    substring: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
-                    string: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
+                    substring: Box::new(StringExpr::Literal(
+                        parameters.get(0).cloned().unwrap_or_default(),
+                    )),
+                    string: Box::new(StringExpr::Literal(
+                        parameters.get(1).cloned().unwrap_or_default(),
+                    )),
                     start_position: start.map(|s| Box::new(StringExpr::Integer(s))),
                 }
             }
-            super::mutations::StringFunctionTypeEnum::PatIndex => {
-                StringFunction::PatIndex {
-                    pattern: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
-                    string: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
-                }
-            }
-            super::mutations::StringFunctionTypeEnum::QuoteName => {
-                StringFunction::QuoteName {
-                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
-                    quote_char: parameters.get(1).map(|s| Box::new(StringExpr::Literal(s.clone()))),
-                }
-            }
+            super::mutations::StringFunctionTypeEnum::PatIndex => StringFunction::PatIndex {
+                pattern: Box::new(StringExpr::Literal(
+                    parameters.get(0).cloned().unwrap_or_default(),
+                )),
+                string: Box::new(StringExpr::Literal(
+                    parameters.get(1).cloned().unwrap_or_default(),
+                )),
+            },
+            super::mutations::StringFunctionTypeEnum::QuoteName => StringFunction::QuoteName {
+                string: Box::new(StringExpr::Literal(
+                    parameters.get(0).cloned().unwrap_or_default(),
+                )),
+                quote_char: parameters
+                    .get(1)
+                    .map(|s| Box::new(StringExpr::Literal(s.clone()))),
+            },
             super::mutations::StringFunctionTypeEnum::Stuff => {
                 let start: i64 = parameters.get(1).and_then(|s| s.parse().ok()).unwrap_or(1);
                 let length: i64 = parameters.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
                 StringFunction::Stuff {
-                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
+                    string: Box::new(StringExpr::Literal(
+                        parameters.get(0).cloned().unwrap_or_default(),
+                    )),
                     start: Box::new(StringExpr::Integer(start)),
                     length: Box::new(StringExpr::Integer(length)),
-                    new_string: Box::new(StringExpr::Literal(parameters.get(3).cloned().unwrap_or_default())),
+                    new_string: Box::new(StringExpr::Literal(
+                        parameters.get(3).cloned().unwrap_or_default(),
+                    )),
                 }
             }
-            super::mutations::StringFunctionTypeEnum::Translate => {
-                StringFunction::Translate {
-                    string: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
-                    characters: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
-                    translations: Box::new(StringExpr::Literal(parameters.get(2).cloned().unwrap_or_default())),
-                }
-            }
+            super::mutations::StringFunctionTypeEnum::Translate => StringFunction::Translate {
+                string: Box::new(StringExpr::Literal(
+                    parameters.get(0).cloned().unwrap_or_default(),
+                )),
+                characters: Box::new(StringExpr::Literal(
+                    parameters.get(1).cloned().unwrap_or_default(),
+                )),
+                translations: Box::new(StringExpr::Literal(
+                    parameters.get(2).cloned().unwrap_or_default(),
+                )),
+            },
             super::mutations::StringFunctionTypeEnum::DataLength => {
-                StringFunction::DataLength(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
+                StringFunction::DataLength(Box::new(StringExpr::Literal(
+                    parameters.get(0).cloned().unwrap_or_default(),
+                )))
             }
-            super::mutations::StringFunctionTypeEnum::Difference => {
-                StringFunction::Difference {
-                    string1: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
-                    string2: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
-                }
-            }
-            super::mutations::StringFunctionTypeEnum::Format => {
-                StringFunction::Format {
-                    value: Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())),
-                    format: Box::new(StringExpr::Literal(parameters.get(1).cloned().unwrap_or_default())),
-                    culture: parameters.get(2).map(|s| Box::new(StringExpr::Literal(s.clone()))),
-                }
-            }
+            super::mutations::StringFunctionTypeEnum::Difference => StringFunction::Difference {
+                string1: Box::new(StringExpr::Literal(
+                    parameters.get(0).cloned().unwrap_or_default(),
+                )),
+                string2: Box::new(StringExpr::Literal(
+                    parameters.get(1).cloned().unwrap_or_default(),
+                )),
+            },
+            super::mutations::StringFunctionTypeEnum::Format => StringFunction::Format {
+                value: Box::new(StringExpr::Literal(
+                    parameters.get(0).cloned().unwrap_or_default(),
+                )),
+                format: Box::new(StringExpr::Literal(
+                    parameters.get(1).cloned().unwrap_or_default(),
+                )),
+                culture: parameters
+                    .get(2)
+                    .map(|s| Box::new(StringExpr::Literal(s.clone()))),
+            },
             super::mutations::StringFunctionTypeEnum::NChar => {
                 let code = parameters.get(0).and_then(|s| s.parse().ok()).unwrap_or(0);
                 StringFunction::NChar(Box::new(StringExpr::Integer(code)))
             }
-            super::mutations::StringFunctionTypeEnum::Unicode => {
-                StringFunction::Unicode(Box::new(StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default())))
-            }
+            super::mutations::StringFunctionTypeEnum::Unicode => StringFunction::Unicode(Box::new(
+                StringExpr::Literal(parameters.get(0).cloned().unwrap_or_default()),
+            )),
             super::mutations::StringFunctionTypeEnum::Str => {
-                let number: f64 = parameters.get(0).and_then(|s| s.parse().ok()).unwrap_or(0.0);
+                let number: f64 = parameters
+                    .get(0)
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(0.0);
                 let length: Option<i64> = parameters.get(1).and_then(|s| s.parse().ok());
                 let decimals: Option<i64> = parameters.get(2).and_then(|s| s.parse().ok());
                 StringFunction::Str {
@@ -659,7 +752,11 @@ impl GraphQLEngine {
             }
             super::mutations::StringFunctionTypeEnum::ConcatWs => {
                 let separator = parameters.get(0).cloned().unwrap_or_default();
-                let strings: Vec<StringExpr> = parameters.iter().skip(1).map(|s| StringExpr::Literal(s.clone())).collect();
+                let strings: Vec<StringExpr> = parameters
+                    .iter()
+                    .skip(1)
+                    .map(|s| StringExpr::Literal(s.clone()))
+                    .collect();
                 StringFunction::ConcatWs {
                     separator: Box::new(StringExpr::Literal(separator)),
                     strings,

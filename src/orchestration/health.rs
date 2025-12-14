@@ -21,12 +21,12 @@
 // UNKNOWN → Health status cannot be determined
 // ```
 
+use std::collections::HashMap;
 use std::fmt;
 use std::time::Instant;
-use std::collections::HashMap;
 
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
@@ -498,8 +498,8 @@ impl CascadingFailureDetector {
             return false;
         }
 
-        let failure_rate = (health.unhealthy_count + health.degraded_count) as f64
-            / health.total_count as f64;
+        let failure_rate =
+            (health.unhealthy_count + health.degraded_count) as f64 / health.total_count as f64;
 
         if failure_rate >= self.threshold {
             // Record failure event

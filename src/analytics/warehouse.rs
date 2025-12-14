@@ -9,11 +9,11 @@
 // - Data quality and validation
 // - Aggregate awareness and query rewriting
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 use std::time::SystemTime;
 
 // Star schema definition
@@ -295,7 +295,10 @@ impl BitVector {
 
     // Count set bits
     fn count_bits(&self) -> usize {
-        self.bits.iter().map(|word| word.count_ones() as usize).sum()
+        self.bits
+            .iter()
+            .map(|word| word.count_ones() as usize)
+            .sum()
     }
 }
 
@@ -393,10 +396,13 @@ impl DataWarehouseManager {
         column: &str,
     ) -> Result<()> {
         let mut schemas = self.schemas.write();
-        let schema = schemas.get_mut(schema_name)
+        let schema = schemas
+            .get_mut(schema_name)
             .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
 
-        let dimension = schema.dimension_tables.iter_mut()
+        let dimension = schema
+            .dimension_tables
+            .iter_mut()
             .find(|d| d.name == dimension_name)
             .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
 
@@ -427,19 +433,26 @@ impl DataWarehouseManager {
         row_id: usize,
     ) -> Result<()> {
         let mut schemas = self.schemas.write();
-        let schema = schemas.get_mut(schema_name)
+        let schema = schemas
+            .get_mut(schema_name)
             .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
 
-        let dimension = schema.dimension_tables.iter_mut()
+        let dimension = schema
+            .dimension_tables
+            .iter_mut()
             .find(|d| d.name == dimension_name)
             .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
 
-        let index = dimension.bitmap_indexes.iter_mut()
+        let index = dimension
+            .bitmap_indexes
+            .iter_mut()
             .find(|idx| idx.name == index_name)
             .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?;
 
         // Get or create bitmap for value
-        let bitmap = index.bitmaps.entry(value)
+        let bitmap = index
+            .bitmaps
+            .entry(value)
             .or_insert_with(|| BitVector::new(1000000)); // 1M rows initial capacity
 
         bitmap.set(row_id);
@@ -456,18 +469,25 @@ impl DataWarehouseManager {
         value: &str,
     ) -> Result<BitVector> {
         let schemas = self.schemas.read();
-        let schema = schemas.get(schema_name)
+        let schema = schemas
+            .get(schema_name)
             .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
 
-        let dimension = schema.dimension_tables.iter()
+        let dimension = schema
+            .dimension_tables
+            .iter()
             .find(|d| d.name == dimension_name)
             .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
 
-        let index = dimension.bitmap_indexes.iter()
+        let index = dimension
+            .bitmap_indexes
+            .iter()
             .find(|idx| idx.name == index_name)
             .ok_or_else(|| DbError::NotFound(format!("Index: {}", index_name)))?;
 
-        let bitmap = index.bitmaps.get(value)
+        let bitmap = index
+            .bitmaps
+            .get(value)
             .ok_or_else(|| DbError::NotFound(format!("Value: {}", value)))?;
 
         Ok(bitmap.clone())
@@ -482,10 +502,13 @@ impl DataWarehouseManager {
         _new_attributes: HashMap<String, String>,
     ) -> Result<()> {
         let schemas = self.schemas.read();
-        let schema = schemas.get(schema_name)
+        let schema = schemas
+            .get(schema_name)
             .ok_or_else(|| DbError::NotFound(format!("Schema: {}", schema_name)))?;
 
-        let dimension = schema.dimension_tables.iter()
+        let dimension = schema
+            .dimension_tables
+            .iter()
             .find(|d| d.name == dimension_name)
             .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension_name)))?;
 
@@ -516,16 +539,17 @@ impl DataWarehouseManager {
     }
 
     // Get partition for value
-    pub fn get_partition(
-        &self,
-        strategy: &PartitioningStrategy,
-        value: &str,
-    ) -> Result<String> {
+    pub fn get_partition(&self, strategy: &PartitioningStrategy, value: &str) -> Result<String> {
         match strategy {
-            PartitioningStrategy::Range { column: _, partitions } => {
+            PartitioningStrategy::Range {
+                column: _,
+                partitions,
+            } => {
                 for partition in partitions {
                     let in_range = match (&partition.lower_bound, &partition.upper_bound) {
-                        (Some(lower), Some(upper)) => value >= lower.as_str() && value < upper.as_str(),
+                        (Some(lower), Some(upper)) => {
+                            value >= lower.as_str() && value < upper.as_str()
+                        }
                         (Some(lower), None) => value >= lower.as_str(),
                         (None, Some(upper)) => value < upper.as_str(),
                         (None, None) => true,
@@ -537,12 +561,18 @@ impl DataWarehouseManager {
                 }
                 Err(DbError::NotFound("No matching partition".to_string()))
             }
-            PartitioningStrategy::Hash { column: _, num_partitions } => {
+            PartitioningStrategy::Hash {
+                column: _,
+                num_partitions,
+            } => {
                 let hash = self.hash_value(value);
                 let partition_num = hash % num_partitions;
                 Ok(format!("partition_{}", partition_num))
             }
-            PartitioningStrategy::List { column: _, partitions } => {
+            PartitioningStrategy::List {
+                column: _,
+                partitions,
+            } => {
                 for partition in partitions {
                     if partition.values.contains(&value.to_string()) {
                         return Ok(partition.name.clone());
@@ -550,7 +580,10 @@ impl DataWarehouseManager {
                 }
                 Err(DbError::NotFound("No matching partition".to_string()))
             }
-            PartitioningStrategy::Composite { primary, secondary: _ } => {
+            PartitioningStrategy::Composite {
+                primary,
+                secondary: _,
+            } => {
                 // Use primary partitioning
                 self.get_partition(primary, value)
             }
@@ -580,10 +613,21 @@ pub struct EtlPipeline {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum DataSource {
-    Database { connection_string: String, query: String },
-    File { path: String, format: FileFormat },
-    Api { endpoint: String, auth: Option<String> },
-    Stream { topic: String },
+    Database {
+        connection_string: String,
+        query: String,
+    },
+    File {
+        path: String,
+        format: FileFormat,
+    },
+    Api {
+        endpoint: String,
+        auth: Option<String>,
+    },
+    Stream {
+        topic: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -596,12 +640,26 @@ pub enum FileFormat {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Transformation {
-    Filter { condition: String },
-    Map { expression: String },
-    Aggregate { group_by: Vec<String>, aggregations: Vec<String> },
-    Join { other_source: String, condition: String },
-    Deduplicate { keys: Vec<String> },
-    Validate { rules: Vec<ValidationRule> },
+    Filter {
+        condition: String,
+    },
+    Map {
+        expression: String,
+    },
+    Aggregate {
+        group_by: Vec<String>,
+        aggregations: Vec<String>,
+    },
+    Join {
+        other_source: String,
+        condition: String,
+    },
+    Deduplicate {
+        keys: Vec<String>,
+    },
+    Validate {
+        rules: Vec<ValidationRule>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -613,11 +671,25 @@ pub struct ValidationRule {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ValidationType {
-    NotNull { column: String },
-    Range { column: String, min: f64, max: f64 },
-    Pattern { column: String, regex: String },
-    Uniqueness { columns: Vec<String> },
-    ReferentialIntegrity { foreign_key: String, reference_table: String },
+    NotNull {
+        column: String,
+    },
+    Range {
+        column: String,
+        min: f64,
+        max: f64,
+    },
+    Pattern {
+        column: String,
+        regex: String,
+    },
+    Uniqueness {
+        columns: Vec<String>,
+    },
+    ReferentialIntegrity {
+        foreign_key: String,
+        reference_table: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -653,7 +725,7 @@ pub enum ErrorHandlingStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Duration;
+    use std::time::Duration;
 
     #[test]
     fn test_bit_vector() {

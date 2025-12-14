@@ -3,14 +3,14 @@
 // JSON document representation with BSON support, versioning, and metadata management.
 // This module provides the core document abstraction for the document store engine.
 
-use std::fmt;
+use crate::error::Result;
+use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
+use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
-use sha2::{Sha256, Digest};
-use crate::error::Result;
-use base64::{Engine as _, engine::general_purpose};
 
 // Helper function to convert BSON to JSON
 fn bson_to_json(bson_val: &bson::Bson) -> serde_json::Value {
@@ -36,9 +36,13 @@ fn bson_to_json(bson_val: &bson::Bson) -> serde_json::Value {
         bson::Bson::Binary(bin) => serde_json::json!(general_purpose::STANDARD.encode(&bin.bytes)),
         bson::Bson::ObjectId(oid) => serde_json::json!(oid.to_hex()),
         bson::Bson::DateTime(dt) => serde_json::json!(dt.to_string()),
-        bson::Bson::RegularExpression(regex) => serde_json::json!(format!("/{}/{}", regex.pattern, regex.options)),
+        bson::Bson::RegularExpression(regex) => {
+            serde_json::json!(format!("/{}/{}", regex.pattern, regex.options))
+        }
         bson::Bson::JavaScriptCode(code) => serde_json::json!(code),
-        bson::Bson::JavaScriptCodeWithScope(code_ws) => serde_json::json!({"code": code_ws.code, "scope": bson_to_json(&bson::Bson::Document(code_ws.scope.clone()))}),
+        bson::Bson::JavaScriptCodeWithScope(code_ws) => {
+            serde_json::json!({"code": code_ws.code, "scope": bson_to_json(&bson::Bson::Document(code_ws.scope.clone()))})
+        }
         bson::Bson::Symbol(sym) => serde_json::json!(sym),
         bson::Bson::Decimal128(dec) => serde_json::json!(dec.to_string()),
         bson::Bson::Undefined => serde_json::Value::Null,
@@ -88,13 +92,15 @@ impl DocumentId {
     pub fn from_string(s: &str, id_type: IdGenerationType) -> Result<Self> {
         match id_type {
             IdGenerationType::Uuid => {
-                let uuid = Uuid::parse_str(s)
-                    .map_err(|e| crate::error::DbError::InvalidInput(format!("Invalid UUID: {}", e)))?;
+                let uuid = Uuid::parse_str(s).map_err(|e| {
+                    crate::error::DbError::InvalidInput(format!("Invalid UUID: {}", e))
+                })?;
                 Ok(DocumentId::Uuid(uuid))
             }
             IdGenerationType::AutoIncrement => {
-                let id = s.parse::<u64>()
-                    .map_err(|_| crate::error::DbError::InvalidInput("Invalid auto-increment ID".to_string()))?;
+                let id = s.parse::<u64>().map_err(|_| {
+                    crate::error::DbError::InvalidInput("Invalid auto-increment ID".to_string())
+                })?;
                 Ok(DocumentId::AutoIncrement(id))
             }
             IdGenerationType::Custom => Ok(DocumentId::Custom(s.to_string())),
@@ -188,12 +194,7 @@ pub struct DocumentMetadata {
 
 impl DocumentMetadata {
     // Create new metadata for a document
-    pub fn new(
-        id: DocumentId,
-        collection: String,
-        size: usize,
-        content_hash: String,
-    ) -> Self {
+    pub fn new(id: DocumentId, collection: String, size: usize, content_hash: String) -> Self {
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -331,14 +332,20 @@ impl DocumentContent {
 
                 match json_to_bson(v) {
                     Bson::Document(doc) => Ok(doc),
-                    _ => Err(crate::error::DbError::InvalidInput("Root JSON value must be an object".to_string()))
+                    _ => Err(crate::error::DbError::InvalidInput(
+                        "Root JSON value must be an object".to_string(),
+                    )),
                 }
             }
             DocumentContent::Bson(doc) => Ok(doc.clone()),
             DocumentContent::Bytes(bytes) => {
                 // Advanced deserialization with proper error handling
-                bson::Document::from_reader(&mut std::io::Cursor::new(bytes))
-                    .map_err(|e| crate::error::DbError::Serialization(format!("BSON deserialization failed: {}", e)))
+                bson::Document::from_reader(&mut std::io::Cursor::new(bytes)).map_err(|e| {
+                    crate::error::DbError::Serialization(format!(
+                        "BSON deserialization failed: {}",
+                        e
+                    ))
+                })
             }
         }
     }
@@ -386,11 +393,7 @@ pub struct Document {
 
 impl Document {
     // Create a new document from JSON
-    pub fn from_json(
-        id: DocumentId,
-        collection: String,
-        json: serde_json::Value,
-    ) -> Result<Self> {
+    pub fn from_json(id: DocumentId, collection: String, json: serde_json::Value) -> Result<Self> {
         let content = DocumentContent::Json(json);
         let content_hash = content.hash();
         let size = content.size();
@@ -403,11 +406,7 @@ impl Document {
     }
 
     // Create a new document from BSON
-    pub fn from_bson(
-        id: DocumentId,
-        collection: String,
-        bson: bson::Document,
-    ) -> Result<Self> {
+    pub fn from_bson(id: DocumentId, collection: String, bson: bson::Document) -> Result<Self> {
         let content = DocumentContent::Bson(bson);
         let content_hash = content.hash();
         let size = content.size();
@@ -430,7 +429,11 @@ impl Document {
     }
 
     // Update document content
-    pub fn update_content(&mut self, content: DocumentContent, updated_by: Option<String>) -> Result<()> {
+    pub fn update_content(
+        &mut self,
+        content: DocumentContent,
+        updated_by: Option<String>,
+    ) -> Result<()> {
         let content_hash = content.hash();
         let size = content.size();
 
@@ -531,8 +534,9 @@ impl LargeDocumentHandler {
             DocumentContent::Json(v) => serde_json::to_vec(v)?,
             DocumentContent::Bson(doc) => {
                 let mut buf = Vec::new();
-                doc.to_writer(&mut buf)
-                    .map_err(|e| crate::error::DbError::Serialization(format!("BSON write failed: {}", e)))?;
+                doc.to_writer(&mut buf).map_err(|e| {
+                    crate::error::DbError::Serialization(format!("BSON write failed: {}", e))
+                })?;
                 buf
             }
             DocumentContent::Bytes(bytes) => bytes.clone(),
@@ -562,7 +566,9 @@ impl LargeDocumentHandler {
     // Reassemble chunks into a document
     pub fn reassemble_chunks(&self, chunks: Vec<DocumentChunk>) -> Result<Vec<u8>> {
         if chunks.is_empty() {
-            return Err(crate::error::DbError::InvalidInput("No chunks provided".to_string()));
+            return Err(crate::error::DbError::InvalidInput(
+                "No chunks provided".to_string(),
+            ));
         }
 
         // Sort chunks by chunk number
@@ -572,23 +578,27 @@ impl LargeDocumentHandler {
         // Verify all chunks are present
         let total_chunks = sorted_chunks[0].total_chunks;
         if sorted_chunks.len() != total_chunks as usize {
-            return Err(crate::error::DbError::InvalidInput(
-                format!("Missing chunks: expected {}, got {}", total_chunks, sorted_chunks.len())
-            ));
+            return Err(crate::error::DbError::InvalidInput(format!(
+                "Missing chunks: expected {}, got {}",
+                total_chunks,
+                sorted_chunks.len()
+            )));
         }
 
         // Verify chunk integrity and reassemble
         let mut data = Vec::new();
         for (i, chunk) in sorted_chunks.iter().enumerate() {
             if chunk.chunk_number != i as u32 {
-                return Err(crate::error::DbError::InvalidInput(
-                    format!("Chunk sequence error: expected {}, got {}", i, chunk.chunk_number)
-                ));
+                return Err(crate::error::DbError::InvalidInput(format!(
+                    "Chunk sequence error: expected {}, got {}",
+                    i, chunk.chunk_number
+                )));
             }
             if !chunk.verify() {
-                return Err(crate::error::DbError::InvalidInput(
-                    format!("Chunk {} checksum verification failed", i)
-                ));
+                return Err(crate::error::DbError::InvalidInput(format!(
+                    "Chunk {} checksum verification failed",
+                    i
+                )));
             }
             data.extend_from_slice(&chunk.data);
         }
@@ -689,7 +699,7 @@ impl DocumentBuilder {
 mod tests {
     use super::*;
     use serde_json::json;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_document_id_generation() {
@@ -715,7 +725,8 @@ use std::time::UNIX_EPOCH;
             DocumentId::new_uuid(),
             "users".to_string(),
             json_doc.clone(),
-        ).unwrap();
+        )
+        .unwrap();
 
         assert_eq!(doc.metadata.collection, "users");
         assert_eq!(doc.metadata.version.version, 1);
@@ -727,16 +738,14 @@ use std::time::UNIX_EPOCH;
     #[test]
     fn test_document_versioning() {
         let json_doc = json!({"value": 1});
-        let mut doc = Document::from_json(
-            DocumentId::new_uuid(),
-            "test".to_string(),
-            json_doc,
-        ).unwrap();
+        let mut doc =
+            Document::from_json(DocumentId::new_uuid(), "test".to_string(), json_doc).unwrap();
 
         assert_eq!(doc.metadata.version.version, 1);
 
         let new_content = DocumentContent::Json(json!({"value": 2}));
-        doc.update_content(new_content, Some("user1".to_string())).unwrap();
+        doc.update_content(new_content, Some("user1".to_string()))
+            .unwrap();
 
         assert_eq!(doc.metadata.version.version, 2);
         assert_eq!(doc.metadata.version.created_by, Some("user1".to_string()));
@@ -748,11 +757,8 @@ use std::time::UNIX_EPOCH;
             "data": "x".repeat(10000)
         });
 
-        let doc = Document::from_json(
-            DocumentId::new_uuid(),
-            "large_docs".to_string(),
-            large_json,
-        ).unwrap();
+        let doc = Document::from_json(DocumentId::new_uuid(), "large_docs".to_string(), large_json)
+            .unwrap();
 
         let handler = LargeDocumentHandler::new(4096);
         let chunks = handler.chunk_document(&doc).unwrap();

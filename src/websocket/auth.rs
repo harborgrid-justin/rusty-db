@@ -317,7 +317,9 @@ impl WebSocketAuthenticator for TokenAuthenticator {
 
     fn refresh(&self, auth_result: &AuthResult) -> Result<AuthResult> {
         if auth_result.auth_method != AuthMethod::Token {
-            return Err(DbError::Authentication("Not a token authentication".to_string()));
+            return Err(DbError::Authentication(
+                "Not a token authentication".to_string(),
+            ));
         }
 
         // Check if in refresh window
@@ -843,11 +845,7 @@ impl PermissionChecker {
     }
 
     /// Check if auth result has permission for action
-    pub fn check_permission(
-        &self,
-        auth_result: &AuthResult,
-        permission: &str,
-    ) -> Result<bool> {
+    pub fn check_permission(&self, auth_result: &AuthResult, permission: &str) -> Result<bool> {
         Ok(auth_result.has_permission(permission))
     }
 

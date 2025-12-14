@@ -13,24 +13,24 @@
 // - MembershipCoordinator: Orchestrates join/leave operations
 // - Bootstrap: Handles cluster initialization
 
-use crate::error::Result;
 use crate::common::NodeId;
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::net::SocketAddr;
 use std::time::{Duration, SystemTime};
 
+pub mod bootstrap;
+pub mod coordinator;
 pub mod raft;
 pub mod swim;
 pub mod view;
-pub mod coordinator;
-pub mod bootstrap;
 
 // Re-exports for convenience
+pub use coordinator::MembershipCoordinator;
 pub use raft::RaftMembership;
 pub use swim::SwimMembership;
 pub use view::MembershipView;
-pub use coordinator::MembershipCoordinator;
 
 /// Node information in the cluster
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, bincode::Encode, bincode::Decode)]
@@ -102,7 +102,18 @@ impl NodeInfo {
 }
 
 /// Node status in the cluster
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Hash,
+    bincode::Encode,
+    bincode::Decode,
+)]
 pub enum NodeStatus {
     /// Node is joining the cluster
     Joining,
@@ -159,7 +170,18 @@ impl Default for NodeMetadata {
 }
 
 /// Node role in the cluster
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Hash,
+    bincode::Encode,
+    bincode::Decode,
+)]
 pub enum NodeRole {
     /// Primary/master node
     Primary,
@@ -303,37 +325,22 @@ pub enum MembershipEvent {
     },
 
     /// A node left the cluster
-    NodeLeft {
-        node_id: NodeId,
-        graceful: bool,
-    },
+    NodeLeft { node_id: NodeId, graceful: bool },
 
     /// A node failed
-    NodeFailed {
-        node_id: NodeId,
-    },
+    NodeFailed { node_id: NodeId },
 
     /// A node became suspected
-    NodeSuspected {
-        node_id: NodeId,
-    },
+    NodeSuspected { node_id: NodeId },
 
     /// A node recovered from suspicion
-    NodeRecovered {
-        node_id: NodeId,
-    },
+    NodeRecovered { node_id: NodeId },
 
     /// A new leader was elected
-    LeaderElected {
-        leader_id: NodeId,
-        term: u64,
-    },
+    LeaderElected { leader_id: NodeId, term: u64 },
 
     /// Membership view changed
-    ViewChanged {
-        version: u64,
-        member_count: usize,
-    },
+    ViewChanged { version: u64, member_count: usize },
 }
 
 /// Trait for cluster membership management

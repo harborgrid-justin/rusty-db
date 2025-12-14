@@ -50,6 +50,11 @@ use utoipa::{
         (name = "health", description = "Health checks and monitoring - liveness, readiness, startup probes"),
         (name = "websocket", description = "WebSocket connections for real-time data streaming"),
         (name = "websocket-management", description = "WebSocket connection and subscription management"),
+        (name = "ml", description = "Machine Learning - model creation, training, prediction, evaluation"),
+        (name = "ml-websocket", description = "ML WebSocket streams - training progress, predictions, AutoML, lifecycle events"),
+        (name = "analytics", description = "Analytics - OLAP, data quality, materialized views, workload analysis"),
+        (name = "analytics-websocket", description = "Analytics WebSocket streams - OLAP queries, time series, profiling, workload"),
+        (name = "inmemory", description = "In-Memory Column Store - enable/disable, population, eviction, statistics"),
     ),
     paths(
         // Authentication endpoints
@@ -131,6 +136,57 @@ use utoipa::{
         crate::api::rest::handlers::websocket_handlers::list_subscriptions,
         crate::api::rest::handlers::websocket_handlers::create_subscription,
         crate::api::rest::handlers::websocket_handlers::delete_subscription,
+
+        // Machine Learning endpoints
+        crate::api::rest::handlers::ml_handlers::create_model,
+        crate::api::rest::handlers::ml_handlers::list_models,
+        crate::api::rest::handlers::ml_handlers::get_model,
+        crate::api::rest::handlers::ml_handlers::delete_model,
+        crate::api::rest::handlers::ml_handlers::train_model,
+        crate::api::rest::handlers::ml_handlers::predict,
+        crate::api::rest::handlers::ml_handlers::get_model_metrics,
+        crate::api::rest::handlers::ml_handlers::evaluate_model,
+        crate::api::rest::handlers::ml_handlers::export_model,
+
+        // ML WebSocket endpoints
+        crate::api::rest::handlers::ml_websocket_handlers::ws_ml_training_progress,
+        crate::api::rest::handlers::ml_websocket_handlers::ws_ml_predictions,
+        crate::api::rest::handlers::ml_websocket_handlers::ws_ml_automl_progress,
+        crate::api::rest::handlers::ml_websocket_handlers::ws_ml_lifecycle_events,
+
+        // Analytics endpoints
+        crate::api::rest::handlers::analytics_handlers::create_olap_cube,
+        crate::api::rest::handlers::analytics_handlers::list_olap_cubes,
+        crate::api::rest::handlers::analytics_handlers::query_olap_cube,
+        crate::api::rest::handlers::analytics_handlers::delete_olap_cube,
+        crate::api::rest::handlers::analytics_handlers::get_query_statistics,
+        crate::api::rest::handlers::analytics_handlers::analyze_workload,
+        crate::api::rest::handlers::analytics_handlers::get_recommendations,
+        crate::api::rest::handlers::analytics_handlers::profile_table,
+        crate::api::rest::handlers::analytics_handlers::get_quality_metrics,
+        crate::api::rest::handlers::analytics_handlers::get_quality_issues,
+        crate::api::rest::handlers::analytics_handlers::create_materialized_view,
+        crate::api::rest::handlers::analytics_handlers::list_materialized_views,
+        crate::api::rest::handlers::analytics_handlers::refresh_materialized_view,
+
+        // Analytics WebSocket endpoints
+        crate::api::rest::handlers::analytics_websocket_handlers::ws_analytics_olap,
+        crate::api::rest::handlers::analytics_websocket_handlers::ws_analytics_timeseries,
+        crate::api::rest::handlers::analytics_websocket_handlers::ws_analytics_profiling,
+        crate::api::rest::handlers::analytics_websocket_handlers::ws_analytics_workload,
+        crate::api::rest::handlers::analytics_websocket_handlers::ws_analytics_cache_events,
+
+        // InMemory Column Store endpoints
+        crate::api::rest::handlers::inmemory_handlers::enable_inmemory,
+        crate::api::rest::handlers::inmemory_handlers::disable_inmemory,
+        crate::api::rest::handlers::inmemory_handlers::inmemory_status,
+        crate::api::rest::handlers::inmemory_handlers::inmemory_stats,
+        crate::api::rest::handlers::inmemory_handlers::populate_table,
+        crate::api::rest::handlers::inmemory_handlers::get_table_status,
+        crate::api::rest::handlers::inmemory_handlers::evict_tables,
+        crate::api::rest::handlers::inmemory_handlers::compact_memory,
+        crate::api::rest::handlers::inmemory_handlers::get_inmemory_config,
+        crate::api::rest::handlers::inmemory_handlers::update_inmemory_config,
     ),
     components(
         schemas(
@@ -227,6 +283,77 @@ use utoipa::{
 
             // Pagination types
             crate::api::rest::types::PaginationParams,
+
+            // Machine Learning types
+            crate::api::rest::handlers::ml_handlers::CreateModelRequest,
+            crate::api::rest::handlers::ml_handlers::ModelResponse,
+            crate::api::rest::handlers::ml_handlers::TrainModelRequest,
+            crate::api::rest::handlers::ml_handlers::TrainModelResponse,
+            crate::api::rest::handlers::ml_handlers::PredictRequest,
+            crate::api::rest::handlers::ml_handlers::PredictResponse,
+            crate::api::rest::handlers::ml_handlers::ModelListResponse,
+            crate::api::rest::handlers::ml_handlers::ModelSummary,
+            crate::api::rest::handlers::ml_handlers::ModelMetricsResponse,
+            crate::api::rest::handlers::ml_handlers::FeatureImportance,
+            crate::api::rest::handlers::ml_handlers::ModelEvaluationRequest,
+            crate::api::rest::handlers::ml_handlers::ModelEvaluationResponse,
+
+            // ML WebSocket types
+            crate::api::rest::handlers::ml_websocket_handlers::MLWebSocketMessage,
+            crate::api::rest::handlers::ml_websocket_handlers::TrainingProgressUpdate,
+            crate::api::rest::handlers::ml_websocket_handlers::PredictionResult,
+            crate::api::rest::handlers::ml_websocket_handlers::AutoMLProgressUpdate,
+            crate::api::rest::handlers::ml_websocket_handlers::ModelLifecycleEvent,
+
+            // Analytics types
+            crate::api::rest::handlers::analytics_handlers::CreateCubeRequest,
+            crate::api::rest::handlers::analytics_handlers::MeasureSpec,
+            crate::api::rest::handlers::analytics_handlers::CubeResponse,
+            crate::api::rest::handlers::analytics_handlers::CubeListResponse,
+            crate::api::rest::handlers::analytics_handlers::CubeQueryRequest,
+            crate::api::rest::handlers::analytics_handlers::CubeQueryResponse,
+            crate::api::rest::handlers::analytics_handlers::QueryStatsFilter,
+            crate::api::rest::handlers::analytics_handlers::QueryStatisticsResponse,
+            crate::api::rest::handlers::analytics_handlers::QueryStatEntry,
+            crate::api::rest::handlers::analytics_handlers::WorkloadAnalysisResponse,
+            crate::api::rest::handlers::analytics_handlers::RecommendationEntry,
+            crate::api::rest::handlers::analytics_handlers::ProfileTableRequest,
+            crate::api::rest::handlers::analytics_handlers::ProfileTableResponse,
+            crate::api::rest::handlers::analytics_handlers::ColumnProfileEntry,
+            crate::api::rest::handlers::analytics_handlers::IndexSuggestionEntry,
+            crate::api::rest::handlers::analytics_handlers::QualityMetricsResponse,
+            crate::api::rest::handlers::analytics_handlers::QualityIssuesResponse,
+            crate::api::rest::handlers::analytics_handlers::QualityIssueEntry,
+            crate::api::rest::handlers::analytics_handlers::CreateMaterializedViewRequest,
+            crate::api::rest::handlers::analytics_handlers::RefreshScheduleSpec,
+            crate::api::rest::handlers::analytics_handlers::MaterializedViewResponse,
+            crate::api::rest::handlers::analytics_handlers::MaterializedViewListResponse,
+            crate::api::rest::handlers::analytics_handlers::RefreshMaterializedViewResponse,
+
+            // Analytics WebSocket types
+            crate::api::rest::handlers::analytics_websocket_handlers::AnalyticsWebSocketMessage,
+            crate::api::rest::handlers::analytics_websocket_handlers::OLAPQueryRequest,
+            crate::api::rest::handlers::analytics_websocket_handlers::OLAPQueryResult,
+            crate::api::rest::handlers::analytics_websocket_handlers::TimeSeriesAnalysisRequest,
+            crate::api::rest::handlers::analytics_websocket_handlers::TimeSeriesAnalysisUpdate,
+            crate::api::rest::handlers::analytics_websocket_handlers::DataProfilingRequest,
+            crate::api::rest::handlers::analytics_websocket_handlers::DataProfilingUpdate,
+            crate::api::rest::handlers::analytics_websocket_handlers::ColumnProfile,
+            crate::api::rest::handlers::analytics_websocket_handlers::WorkloadAnalysisRequest,
+            crate::api::rest::handlers::analytics_websocket_handlers::WorkloadAnalysisUpdate,
+            crate::api::rest::handlers::analytics_websocket_handlers::WorkloadRecommendation,
+            crate::api::rest::handlers::analytics_websocket_handlers::QueryCacheEvent,
+
+            // InMemory Column Store types
+            crate::api::rest::handlers::inmemory_handlers::EnableInMemoryRequest,
+            crate::api::rest::handlers::inmemory_handlers::EnableInMemoryResponse,
+            crate::api::rest::handlers::inmemory_handlers::InMemoryStatusResponse,
+            crate::api::rest::handlers::inmemory_handlers::InMemoryTableInfo,
+            crate::api::rest::handlers::inmemory_handlers::PopulateRequest,
+            crate::api::rest::handlers::inmemory_handlers::PopulateResponse,
+            crate::api::rest::handlers::inmemory_handlers::EvictRequest,
+            crate::api::rest::handlers::inmemory_handlers::EvictResponse,
+            crate::api::rest::handlers::inmemory_handlers::InMemoryStatsResponse,
         )
     ),
     modifiers(&SecurityAddon)
@@ -256,9 +383,7 @@ impl Modify for SecurityAddon {
             // Add API key authentication
             components.add_security_scheme(
                 "api_key",
-                SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new(
-                    "X-API-Key",
-                ))),
+                SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("X-API-Key"))),
             );
         }
     }
@@ -275,9 +400,9 @@ impl Modify for SecurityAddon {
 /// println!("{}", spec);
 /// ```
 pub fn get_openapi_json() -> String {
-    ApiDoc::openapi().to_pretty_json().unwrap_or_else(|e| {
-        format!(r#"{{"error": "Failed to generate OpenAPI spec: {}"}}"#, e)
-    })
+    ApiDoc::openapi()
+        .to_pretty_json()
+        .unwrap_or_else(|e| format!(r#"{{"error": "Failed to generate OpenAPI spec: {}"}}"#, e))
 }
 
 /// Helper function to get OpenAPI specification as pretty-printed JSON
@@ -291,9 +416,8 @@ pub fn get_openapi_json() -> String {
 /// println!("{}", spec);
 /// ```
 pub fn get_openapi_pretty() -> String {
-    serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap_or_else(|e| {
-        format!("{{ \"error\": \"Failed to generate OpenAPI: {}\" }}", e)
-    })
+    serde_json::to_string_pretty(&ApiDoc::openapi())
+        .unwrap_or_else(|e| format!("{{ \"error\": \"Failed to generate OpenAPI: {}\" }}", e))
 }
 
 #[cfg(test)]

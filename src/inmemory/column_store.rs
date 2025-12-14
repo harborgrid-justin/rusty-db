@@ -3,12 +3,12 @@
 // Implements dual-format architecture where data is stored in both row and columnar formats,
 // with automatic synchronization, SIMD-accelerated operations, and advanced compression.
 
-use std::sync::Arc;
-use std::collections::HashMap;
+use crate::inmemory::compression::{CompressionStats, CompressionType, HybridCompressor};
+use crate::inmemory::vectorized_ops::{VectorBatch, VectorizedAggregator, VectorizedFilter};
 use parking_lot::RwLock;
+use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::inmemory::compression::{CompressionType, HybridCompressor, CompressionStats};
-use crate::inmemory::vectorized_ops::{VectorizedFilter, VectorizedAggregator, VectorBatch};
 
 // Column store configuration
 #[derive(Debug, Clone)]
@@ -52,17 +52,17 @@ pub enum ColumnDataType {
 }
 
 impl ColumnDataType {
-pub fn size_bytes(&self) -> usize {
-                match self {
-                    Self::Int8 | Self::UInt8 | Self::Boolean => 1,
-                    Self::Int16 | Self::UInt16 => 2,
-                    Self::Int32 | Self::UInt32 | Self::Float32 => 4,
-                    Self::Int64 | Self::UInt64 | Self::Float64 | Self::Timestamp => 8,
-                    Self::Decimal => 16,
-                    Self::String | Self::Binary => 8, // Pointer size
-                    ColumnDataType::Integer => 0,
-                }
-            }
+    pub fn size_bytes(&self) -> usize {
+        match self {
+            Self::Int8 | Self::UInt8 | Self::Boolean => 1,
+            Self::Int16 | Self::UInt16 => 2,
+            Self::Int32 | Self::UInt32 | Self::Float32 => 4,
+            Self::Int64 | Self::UInt64 | Self::Float64 | Self::Timestamp => 8,
+            Self::Decimal => 16,
+            Self::String | Self::Binary => 8, // Pointer size
+            ColumnDataType::Integer => 0,
+        }
+    }
 
     pub fn is_fixed_width(&self) -> bool {
         !matches!(self, Self::String | Self::Binary)
@@ -198,7 +198,12 @@ impl AlignedBuffer {
 }
 
 impl ColumnSegment {
-    pub fn new(segment_id: u64, column_id: u32, data_type: ColumnDataType, row_count: usize) -> Self {
+    pub fn new(
+        segment_id: u64,
+        column_id: u32,
+        data_type: ColumnDataType,
+        row_count: usize,
+    ) -> Self {
         let data_size = if data_type.is_fixed_width() {
             row_count * data_type.size_bytes()
         } else {
@@ -224,7 +229,8 @@ impl ColumnSegment {
     }
 
     pub fn mark_access(&self) {
-        self.access_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.access_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         *self.last_access.write() = current_timestamp();
     }
 
@@ -247,11 +253,8 @@ impl ColumnSegment {
             return Ok(());
         }
 
-        let compressed_data = compressor.compress(
-            self.data.as_slice(),
-            self.data_type,
-            &*self.stats.read(),
-        )?;
+        let compressed_data =
+            compressor.compress(self.data.as_slice(), self.data_type, &*self.stats.read())?;
 
         let original_size = self.data.len();
         let compressed_size = compressed_data.compressed_data.len();
@@ -273,11 +276,8 @@ impl ColumnSegment {
         }
 
         let compression_type = self.compression_type.ok_or("No compression type set")?;
-        let decompressed = compressor.decompress(
-            self.data.as_slice(),
-            compression_type,
-            self.data_type,
-        )?;
+        let decompressed =
+            compressor.decompress(self.data.as_slice(), compression_type, self.data_type)?;
 
         self.data = AlignedBuffer::from_vec(decompressed);
         self.compressed = false;
@@ -404,7 +404,8 @@ impl DualFormat {
 
     pub fn insert_row(&self, row: Vec<ColumnValue>) -> Result<(), String> {
         self.row_store.write().push(row);
-        self.sync_version.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        self.sync_version
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         Ok(())
     }
 
@@ -450,8 +451,10 @@ impl InMemoryArea {
             .or_insert_with(Vec::new)
             .push(segment);
 
-        self.total_memory.fetch_add(memory, std::sync::atomic::Ordering::Relaxed);
-        self.segment_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.total_memory
+            .fetch_add(memory, std::sync::atomic::Ordering::Relaxed);
+        self.segment_count
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn get_segments(&self, column_id: u32) -> Vec<Arc<ColumnSegment>> {
@@ -467,7 +470,8 @@ impl InMemoryArea {
     }
 
     pub fn segment_count(&self) -> usize {
-        self.segment_count.load(std::sync::atomic::Ordering::Relaxed)
+        self.segment_count
+            .load(std::sync::atomic::Ordering::Relaxed)
     }
 
     pub fn evict_cold_segments(&self) -> usize {
@@ -479,16 +483,15 @@ impl InMemoryArea {
                 let keep = seg.is_hot();
                 if !keep {
                     evicted += 1;
-                    self.total_memory.fetch_sub(
-                        seg.memory_usage(),
-                        std::sync::atomic::Ordering::Relaxed,
-                    );
+                    self.total_memory
+                        .fetch_sub(seg.memory_usage(), std::sync::atomic::Ordering::Relaxed);
                 }
                 keep
             });
         }
 
-        self.segment_count.fetch_sub(evicted, std::sync::atomic::Ordering::Relaxed);
+        self.segment_count
+            .fetch_sub(evicted, std::sync::atomic::Ordering::Relaxed);
         evicted
     }
 }
@@ -585,9 +588,9 @@ impl ColumnStore {
                     segment.data_type,
                 );
 
-                let results = self.filter.filter_int64(&batch, |val| {
-                    predicate(&ColumnValue::Int64(val))
-                });
+                let results = self
+                    .filter
+                    .filter_int64(&batch, |val| predicate(&ColumnValue::Int64(val)));
 
                 for (i, &matched) in results.iter().enumerate() {
                     if matched {
@@ -702,10 +705,9 @@ impl ColumnStore {
             self.inmemory_area
                 .total_memory
                 .fetch_sub(memory, std::sync::atomic::Ordering::Relaxed);
-            self.inmemory_area.segment_count.fetch_sub(
-                column_segments.len(),
-                std::sync::atomic::Ordering::Relaxed,
-            );
+            self.inmemory_area
+                .segment_count
+                .fetch_sub(column_segments.len(), std::sync::atomic::Ordering::Relaxed);
         }
         Ok(())
     }
@@ -731,7 +733,7 @@ fn current_timestamp() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_aligned_buffer() {

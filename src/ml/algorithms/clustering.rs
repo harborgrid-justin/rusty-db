@@ -2,10 +2,10 @@
 //
 // K-Means clustering implementation for unsupervised learning.
 
-use crate::error::Result;
-use super::super::{Dataset, Vector, Matrix, Hyperparameters, MLError};
-use serde::{Serialize, Deserialize};
+use super::super::{Dataset, Hyperparameters, MLError, Matrix, Vector};
 use super::{Algorithm, ModelType};
+use crate::error::Result;
+use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // K-Means Clustering
@@ -43,9 +43,11 @@ impl KMeansClustering {
 
     // Assign samples to nearest centroid
     fn assign_clusters(&self, features: &Matrix) -> Vec<usize> {
-        features.iter()
+        features
+            .iter()
             .map(|sample| {
-                self.centroids.iter()
+                self.centroids
+                    .iter()
                     .enumerate()
                     .map(|(i, centroid)| (i, self.euclidean_distance(sample, centroid)))
                     .min_by(|(_, d1), (_, d2)| d1.partial_cmp(d2).unwrap())
@@ -56,7 +58,12 @@ impl KMeansClustering {
     }
 
     // Update centroids based on cluster assignments
-    fn update_centroids(&self, features: &Matrix, assignments: &[usize], n_features: usize) -> Matrix {
+    fn update_centroids(
+        &self,
+        features: &Matrix,
+        assignments: &[usize],
+        n_features: usize,
+    ) -> Matrix {
         let mut new_centroids = vec![vec![0.0; n_features]; self.n_clusters];
         let mut counts = vec![0; self.n_clusters];
 
@@ -112,7 +119,9 @@ impl Algorithm for KMeansClustering {
             let new_centroids = self.update_centroids(&dataset.features, &assignments, n_features);
 
             // Check convergence
-            let max_change = self.centroids.iter()
+            let max_change = self
+                .centroids
+                .iter()
                 .zip(new_centroids.iter())
                 .map(|(old, new)| self.euclidean_distance(old, new))
                 .fold(0.0f64, |a, b| a.max(b));
@@ -134,7 +143,8 @@ impl Algorithm for KMeansClustering {
             return Err(MLError::PredictionFailed("Model not trained".to_string()).into());
         }
 
-        Ok(self.assign_clusters(features)
+        Ok(self
+            .assign_clusters(features)
             .iter()
             .map(|&cluster| cluster as f64)
             .collect())
@@ -145,14 +155,17 @@ impl Algorithm for KMeansClustering {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::encode_to_vec(self, bincode::config::standard())
-            .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
+        bincode::encode_to_vec(self, bincode::config::standard()).map_err(|e| {
+            MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into()
+        })
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
         bincode::decode_from_slice(bytes, bincode::config::standard())
             .map(|(model, _)| model)
-            .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
+            .map_err(|e| {
+                MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into()
+            })
     }
 }
 

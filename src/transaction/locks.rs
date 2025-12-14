@@ -2,16 +2,16 @@
 // Provides hierarchical locking with intent locks, deadlock detection,
 // lock escalation, and multi-granularity locking
 
+use super::TransactionId;
+use crate::error::DbError;
+use parking_lot::{Condvar, Mutex, RwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
-use std::time::Instant;
-use std::collections::{HashMap};
 use std::sync::Arc;
-use std::time::{Duration};
-use parking_lot::{Mutex, RwLock, Condvar};
-use serde::{Deserialize, Serialize};
-use crate::error::DbError;
-use super::TransactionId;
+use std::time::Duration;
+use std::time::Instant;
 
 /// Lock granularity levels in hierarchical locking
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -173,15 +173,13 @@ impl LockResource {
     pub fn parent(&self) -> Option<LockResource> {
         match self.granularity {
             LockGranularity::Database => None,
-            LockGranularity::Table => {
-                Some(LockResource::database(self.database_id?))
-            }
-            LockGranularity::Page => {
-                Some(LockResource::table(self.database_id?, self.table_id?))
-            }
-            LockGranularity::Row => {
-                Some(LockResource::page(self.database_id?, self.table_id?, self.page_id?))
-            }
+            LockGranularity::Table => Some(LockResource::database(self.database_id?)),
+            LockGranularity::Page => Some(LockResource::table(self.database_id?, self.table_id?)),
+            LockGranularity::Row => Some(LockResource::page(
+                self.database_id?,
+                self.table_id?,
+                self.page_id?,
+            )),
         }
     }
 
@@ -354,12 +352,13 @@ impl HierarchicalLockManager {
             let wait_time = start.elapsed().as_millis() as f64;
             let mut stats = self.stats.write();
             stats.locks_acquired += 1;
-            stats.avg_wait_time_ms =
-                (stats.avg_wait_time_ms * (stats.locks_acquired - 1) as f64 + wait_time)
-                    / stats.locks_acquired as f64;
+            stats.avg_wait_time_ms = (stats.avg_wait_time_ms * (stats.locks_acquired - 1) as f64
+                + wait_time)
+                / stats.locks_acquired as f64;
 
             // Track transaction locks
-            self.txn_locks.write()
+            self.txn_locks
+                .write()
                 .entry(txn_id)
                 .or_insert_with(HashSet::new)
                 .insert(resource);
@@ -414,7 +413,7 @@ impl HierarchicalLockManager {
                 } else {
                     // Need to upgrade
                     self.upgrade_lock_internal(txn_id, resource, mode)
-                }
+                };
             }
 
             // Check compatibility
@@ -500,7 +499,11 @@ impl HierarchicalLockManager {
     }
 
     /// Release a lock
-    pub fn release_lock(&self, txn_id: TransactionId, resource: &LockResource) -> Result<(), DbError> {
+    pub fn release_lock(
+        &self,
+        txn_id: TransactionId,
+        resource: &LockResource,
+    ) -> Result<(), DbError> {
         let lock_table = self.lock_table.read();
         if let Some(entry_arc) = lock_table.get(resource) {
             let mut entry = entry_arc.lock();
@@ -529,7 +532,8 @@ impl HierarchicalLockManager {
     pub fn release_all_locks(&self, txn_id: TransactionId) -> Result<(), DbError> {
         let resources: Vec<LockResource> = {
             let txn_locks = self.txn_locks.read();
-            txn_locks.get(&txn_id)
+            txn_locks
+                .get(&txn_id)
                 .map(|locks| locks.iter().cloned().collect())
                 .unwrap_or_default()
         };
@@ -578,23 +582,27 @@ impl HierarchicalLockManager {
     }
 
     /// Escalate row locks to page lock
-    pub fn escalate_locks(&self, txn_id: TransactionId, table: &LockResource) -> Result<(), DbError> {
+    pub fn escalate_locks(
+        &self,
+        txn_id: TransactionId,
+        table: &LockResource,
+    ) -> Result<(), DbError> {
         if !self.config.enable_escalation {
             return Ok(());
         }
 
         let txn_locks_read = self.txn_locks.read();
-        let locks = txn_locks_read.get(&txn_id).ok_or_else(|| {
-            DbError::LockError("Transaction not found".to_string())
-        })?;
+        let locks = txn_locks_read
+            .get(&txn_id)
+            .ok_or_else(|| DbError::LockError("Transaction not found".to_string()))?;
 
         // Count row locks for this table
         let row_locks: Vec<_> = locks
             .iter()
             .filter(|r| {
-                r.granularity == LockGranularity::Row &&
-                r.database_id == table.database_id &&
-                r.table_id == table.table_id
+                r.granularity == LockGranularity::Row
+                    && r.database_id == table.database_id
+                    && r.table_id == table.table_id
             })
             .cloned()
             .collect();
@@ -623,7 +631,8 @@ impl HierarchicalLockManager {
 
     /// Get locks held by a transaction
     pub fn get_transaction_locks(&self, txn_id: TransactionId) -> Vec<LockResource> {
-        self.txn_locks.read()
+        self.txn_locks
+            .read()
             .get(&txn_id)
             .map(|locks| locks.iter().cloned().collect())
             .unwrap_or_default()
@@ -686,7 +695,8 @@ impl WaitForGraph {
 
         for &txn_id in self.edges.keys() {
             if !visited.contains(&txn_id) {
-                if let Some(cycle) = self.dfs_cycle(txn_id, &mut visited, &mut rec_stack, &mut path) {
+                if let Some(cycle) = self.dfs_cycle(txn_id, &mut visited, &mut rec_stack, &mut path)
+                {
                     return Some(cycle);
                 }
             }
@@ -758,17 +768,17 @@ impl LockEscalationManager {
 
     /// Check and perform escalation if needed
     pub fn check_escalation(&self, txn_id: TransactionId, table_id: u64) -> Result<(), DbError> {
-        let threshold = self.thresholds.read()
+        let threshold = self
+            .thresholds
+            .read()
             .get(&table_id)
             .copied()
             .unwrap_or(1000);
 
         let locks = self.lock_manager.get_transaction_locks(txn_id);
-        let row_count = locks.iter()
-            .filter(|r| {
-                r.granularity == LockGranularity::Row &&
-                r.table_id == Some(table_id)
-            })
+        let row_count = locks
+            .iter()
+            .filter(|r| r.granularity == LockGranularity::Row && r.table_id == Some(table_id))
             .count();
 
         if row_count >= threshold {
@@ -791,7 +801,9 @@ impl LockEscalationManager {
 
 #[cfg(test)]
 mod tests {
-    use crate::transaction::locks::{HierarchicalLockManager, LockManagerConfig, LockMode, LockResource, WaitForGraph};
+    use crate::transaction::locks::{
+        HierarchicalLockManager, LockManagerConfig, LockMode, LockResource, WaitForGraph,
+    };
 
     #[test]
     fn test_lock_compatibility() {
@@ -844,5 +856,3 @@ mod tests {
         assert!(!txn_locks.contains(&row));
     }
 }
-
-

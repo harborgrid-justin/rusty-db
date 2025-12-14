@@ -13,11 +13,11 @@
 // - Swiss table option for SIMD-accelerated probing
 // - Cache-efficient layouts reducing miss rate by 78%
 
-use std::collections::HashSet;
 use crate::Result;
 use parking_lot::RwLock;
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::collections::HashSet;
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
 // Extendible Hash Index
@@ -50,7 +50,10 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
 
         let mut directory = Vec::with_capacity(directory_size);
         for _ in 0..directory_size {
-            directory.push(Arc::new(RwLock::new(Bucket::new(bucket_capacity, initial_depth))));
+            directory.push(Arc::new(RwLock::new(Bucket::new(
+                bucket_capacity,
+                initial_depth,
+            ))));
         }
 
         Self {
@@ -429,10 +432,7 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
     // Calculate current load factor
     fn current_load_factor(&self) -> f64 {
         let buckets = self.buckets.read();
-        let total_entries: usize = buckets
-            .iter()
-            .map(|b| b.read().entries.len())
-            .sum();
+        let total_entries: usize = buckets.iter().map(|b| b.read().entries.len()).sum();
 
         let capacity = buckets.len() * self.bucket_capacity;
         total_entries as f64 / capacity as f64
@@ -461,15 +461,9 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
         let level = *self.level.read();
         let next_to_split = *self.next_to_split.read();
 
-        let total_entries: usize = buckets
-            .iter()
-            .map(|b| b.read().entries.len())
-            .sum();
+        let total_entries: usize = buckets.iter().map(|b| b.read().entries.len()).sum();
 
-        let total_overflow: usize = buckets
-            .iter()
-            .map(|b| b.read().overflow_count)
-            .sum();
+        let total_overflow: usize = buckets.iter().map(|b| b.read().overflow_count).sum();
 
         LinearHashStats {
             num_buckets: buckets.len(),
@@ -508,7 +502,7 @@ pub struct ExtendibleHashStats {
     pub total_entries: usize,
     pub bucket_count: (),
     pub entry_count: (),
-    pub load_factor: ()
+    pub load_factor: (),
 }
 
 // Linear hash statistics
@@ -521,7 +515,7 @@ pub struct LinearHashStats {
     pub total_overflow: usize,
     pub load_factor: f64,
     pub bucket_count: (),
-    pub entry_count: ()
+    pub entry_count: (),
 }
 
 #[cfg(test)]

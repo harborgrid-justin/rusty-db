@@ -1,10 +1,9 @@
+use super::super::{Event, EventValue};
+use super::approximate::{HeavyHitters, HyperLogLog};
 /// Aggregate Operators Module
 ///
 /// Aggregation operators for stream processing including exact and approximate algorithms.
-
 use super::pipeline::StreamOperator;
-use super::approximate::{HyperLogLog, HeavyHitters};
-use super::super::{Event, EventValue};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -15,13 +14,13 @@ use std::time::SystemTime;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AggregationType {
     Count,
-    Sum(String),       // field name
-    Avg(String),       // field name
-    Min(String),       // field name
-    Max(String),       // field name
-    First(String),     // field name
-    Last(String),      // field name
-    Collect(String),   // field name
+    Sum(String),           // field name
+    Avg(String),           // field name
+    Min(String),           // field name
+    Max(String),           // field name
+    First(String),         // field name
+    Last(String),          // field name
+    Collect(String),       // field name
     CountDistinct(String), // field name
 }
 
@@ -199,9 +198,15 @@ impl AggregationState {
                 }
             }
 
-            AggregationType::Min(_) => self.min.map(EventValue::Float64).unwrap_or(EventValue::Null),
+            AggregationType::Min(_) => self
+                .min
+                .map(EventValue::Float64)
+                .unwrap_or(EventValue::Null),
 
-            AggregationType::Max(_) => self.max.map(EventValue::Float64).unwrap_or(EventValue::Null),
+            AggregationType::Max(_) => self
+                .max
+                .map(EventValue::Float64)
+                .unwrap_or(EventValue::Null),
 
             AggregationType::First(_) => self.first.clone().unwrap_or(EventValue::Null),
 

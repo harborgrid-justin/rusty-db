@@ -48,26 +48,26 @@
 // ```
 
 use crate::{DbError, Result};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
-use parking_lot::RwLock;
 use tokio::sync::Mutex as AsyncMutex;
 
-pub mod tde;
-pub mod masking;
-pub mod keystore;
 pub mod audit;
-pub mod vpd;
+pub mod keystore;
+pub mod masking;
 pub mod privileges;
+pub mod tde;
+pub mod vpd;
 
-pub use tde::{TdeEngine, EncryptionAlgorithm, TdeConfig};
+pub use audit::{AuditPolicy, AuditRecord, AuditVault, ComplianceReport};
+pub use keystore::{DataEncryptionKey, KeyStore, KeyVersion, MasterKey};
 pub use masking::{MaskingEngine, MaskingPolicy, MaskingType};
-pub use keystore::{KeyStore, MasterKey, DataEncryptionKey, KeyVersion};
-pub use audit::{AuditVault, AuditRecord, AuditPolicy, ComplianceReport};
-pub use vpd::{VpdEngine, VpdPolicy, SecurityPredicate};
 pub use privileges::{PrivilegeAnalyzer, PrivilegePath, PrivilegeRecommendation};
+pub use tde::{EncryptionAlgorithm, TdeConfig, TdeEngine};
+pub use vpd::{SecurityPredicate, VpdEngine, VpdPolicy};
 
 // Security context for the current session
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -246,10 +246,8 @@ impl SecurityVaultManager {
         let masking_engine = MaskingEngine::new()?;
 
         // Initialize audit vault
-        let audit_vault = AuditVault::new(
-            config.data_dir.join("audit"),
-            config.audit_retention_days,
-        )?;
+        let audit_vault =
+            AuditVault::new(config.data_dir.join("audit"), config.audit_retention_days)?;
 
         // Initialize VPD engine
         let vpd_engine = VpdEngine::new()?;
@@ -279,7 +277,9 @@ impl SecurityVaultManager {
         client_ip: String,
     ) -> SecurityContext {
         let context = SecurityContext::new(user_id, session_id.clone(), client_ip);
-        self.active_contexts.write().insert(session_id, context.clone());
+        self.active_contexts
+            .write()
+            .insert(session_id, context.clone());
         context
     }
 
@@ -362,11 +362,7 @@ impl SecurityVaultManager {
     }
 
     // Create a VPD policy
-    pub async fn create_vpd_policy(
-        &mut self,
-        table_name: &str,
-        predicate: &str,
-    ) -> Result<()> {
+    pub async fn create_vpd_policy(&mut self, table_name: &str, predicate: &str) -> Result<()> {
         let mut vpd = self.vpd_engine.write();
         vpd.create_policy(table_name, predicate)?;
 
@@ -497,7 +493,8 @@ mod tests {
     #[tokio::test]
     async fn test_security_context_management() {
         let temp_dir = tempfile::tempdir().unwrap();
-        let vault = SecurityVaultManager::new(temp_dir.path().to_str().unwrap().to_string()).unwrap();
+        let vault =
+            SecurityVaultManager::new(temp_dir.path().to_str().unwrap().to_string()).unwrap();
 
         let ctx = vault.create_security_context(
             "user1".to_string(),

@@ -3,13 +3,13 @@
 // Model training coordination with mini-batch training, distributed training,
 // early stopping, learning rate scheduling, and progress monitoring.
 
-use crate::error::Result;
-use super::{Algorithm, Dataset, Hyperparameters, TrainingStats, EvaluationMetrics, GpuConfig};
 use super::algorithms::*;
-use super::model_store::{Model, ModelParameters, ActivationType, NetworkLayer};
+use super::model_store::{ActivationType, Model, ModelParameters, NetworkLayer};
+use super::{Algorithm, Dataset, EvaluationMetrics, GpuConfig, Hyperparameters, TrainingStats};
+use crate::error::Result;
+use rand::prelude::SliceRandom;
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
-use rand::prelude::SliceRandom;
 // ============================================================================
 // Training Configuration
 // ============================================================================
@@ -106,15 +106,24 @@ pub enum LearningRateSchedule {
 impl LearningRateSchedule {
     pub fn get_lr(&self, epoch: usize, current_lr: f64, _metric: Option<f64>) -> f64 {
         match self {
-            LearningRateSchedule::ExponentialDecay { initial_lr, decay_rate, decay_steps } => {
-                initial_lr * decay_rate.powf((epoch / decay_steps) as f64)
-            }
-            LearningRateSchedule::StepDecay { initial_lr, drop_factor, drop_every } => {
-                initial_lr * drop_factor.powi((epoch / drop_every) as i32)
-            }
-            LearningRateSchedule::CosineAnnealing { initial_lr, min_lr, period } => {
+            LearningRateSchedule::ExponentialDecay {
+                initial_lr,
+                decay_rate,
+                decay_steps,
+            } => initial_lr * decay_rate.powf((epoch / decay_steps) as f64),
+            LearningRateSchedule::StepDecay {
+                initial_lr,
+                drop_factor,
+                drop_every,
+            } => initial_lr * drop_factor.powi((epoch / drop_every) as i32),
+            LearningRateSchedule::CosineAnnealing {
+                initial_lr,
+                min_lr,
+                period,
+            } => {
                 let progress = (epoch % period) as f64 / *period as f64;
-                min_lr + (initial_lr - min_lr) * 0.5 * (1.0 + (std::f64::consts::PI * progress).cos())
+                min_lr
+                    + (initial_lr - min_lr) * 0.5 * (1.0 + (std::f64::consts::PI * progress).cos())
             }
             LearningRateSchedule::ReduceOnPlateau { factor, .. } => {
                 // Simplified - would need state tracking in production
@@ -195,7 +204,8 @@ impl TrainingProgress {
     }
 
     pub fn best_epoch(&self) -> Option<usize> {
-        self.val_loss.iter()
+        self.val_loss
+            .iter()
             .enumerate()
             .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
             .map(|(i, _)| i)
@@ -318,7 +328,8 @@ impl<'a> Iterator for MiniBatchIterator<'a> {
         let end = (self.current_idx + self.batch_size).min(self.indices.len());
         let batch_indices = &self.indices[self.current_idx..end];
 
-        let batch_features: Vec<Vec<f64>> = batch_indices.iter()
+        let batch_features: Vec<Vec<f64>> = batch_indices
+            .iter()
             .map(|&i| self.dataset.features[i].clone())
             .collect();
 
@@ -407,12 +418,13 @@ impl TrainingEngine {
             Algorithm::NaiveBayes => {
                 self.train_naive_bayes(&train_dataset, &val_dataset, &hyperparameters)?
             }
-            Algorithm::SVM => {
-                self.train_svm(&train_dataset, &val_dataset, &hyperparameters)?
-            }
-            Algorithm::NeuralNetwork => {
-                self.train_neural_network(&train_dataset, &val_dataset, &hyperparameters, gpu_config)?
-            }
+            Algorithm::SVM => self.train_svm(&train_dataset, &val_dataset, &hyperparameters)?,
+            Algorithm::NeuralNetwork => self.train_neural_network(
+                &train_dataset,
+                &val_dataset,
+                &hyperparameters,
+                gpu_config,
+            )?,
             _ => {
                 return Err(crate::DbError::InvalidInput("Unsupported algorithm".into()));
             }
@@ -507,15 +519,19 @@ impl TrainingEngine {
         // Compute validation metrics
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
-            let mse = predictions.iter()
+            let mse = predictions
+                .iter()
                 .zip(val_targets)
                 .map(|(pred, target)| (pred - target).powi(2))
-                .sum::<f64>() / predictions.len() as f64;
+                .sum::<f64>()
+                / predictions.len() as f64;
 
-            let mae = predictions.iter()
+            let mae = predictions
+                .iter()
                 .zip(val_targets)
                 .map(|(pred, target)| (pred - target).abs())
-                .sum::<f64>() / predictions.len() as f64;
+                .sum::<f64>()
+                / predictions.len() as f64;
 
             metrics.set_regression_metrics(mse, model.r_squared, mae);
         }
@@ -555,7 +571,8 @@ impl TrainingEngine {
         // Compute validation metrics
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
-            let correct = predictions.iter()
+            let correct = predictions
+                .iter()
                 .zip(val_targets.iter())
                 .filter(|(pred, target)| (*pred - *target).abs() < 0.5)
                 .count();
@@ -599,7 +616,8 @@ impl TrainingEngine {
         let mut metrics = EvaluationMetrics::new();
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
-            let correct = predictions.iter()
+            let correct = predictions
+                .iter()
                 .zip(val_targets.iter())
                 .filter(|(pred, target)| (*pred - *target).abs() < 0.5)
                 .count();
@@ -625,8 +643,12 @@ impl TrainingEngine {
         model.fit(train, true)?;
 
         // Serialize ensemble
-        let models: Vec<Vec<u8>> = model.trees.iter()
-            .map(|tree| bincode::encode_to_vec(tree, bincode::config::standard()).unwrap_or_default())
+        let models: Vec<Vec<u8>> = model
+            .trees
+            .iter()
+            .map(|tree| {
+                bincode::encode_to_vec(tree, bincode::config::standard()).unwrap_or_default()
+            })
             .collect();
 
         let parameters = ModelParameters::EnsembleModel { models };
@@ -644,7 +666,8 @@ impl TrainingEngine {
         let mut metrics = EvaluationMetrics::new();
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
-            let correct = predictions.iter()
+            let correct = predictions
+                .iter()
                 .zip(val_targets.iter())
                 .filter(|(pred, target)| (*pred - *target).abs() < 0.5)
                 .count();
@@ -751,7 +774,8 @@ impl TrainingEngine {
         let mut metrics = EvaluationMetrics::new();
         if let Some(val_targets) = &val.targets {
             let predictions = model.predict(&val.features)?;
-            let correct = predictions.iter()
+            let correct = predictions
+                .iter()
                 .zip(val_targets.iter())
                 .filter(|(pred, target)| (*pred - *target).abs() < 0.5)
                 .count();
@@ -841,8 +865,10 @@ impl Default for TrainingEngine {
 
 #[cfg(test)]
 mod tests {
+    use crate::ml_engine::training::{
+        EarlyStoppingConfig, LearningRateSchedule, MiniBatchIterator, TrainingProgress,
+    };
     use crate::ml_engine::{Dataset, EvaluationMetrics};
-    use crate::ml_engine::training::{EarlyStoppingConfig, LearningRateSchedule, MiniBatchIterator, TrainingProgress};
 
     #[test]
     fn test_mini_batch_iterator() {

@@ -17,11 +17,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use utoipa::ToSchema;
 
-use crate::api::rest::types::{ApiState, ApiError, ApiResult};
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
 use crate::spatial::{
-    SpatialEngine, Geometry, Point, Coordinate,
-    TopologicalOps, DistanceOps, BufferOps,
-    Network, Node, Edge, DijkstraRouter,
+    BufferOps, Coordinate, DijkstraRouter, DistanceOps, Edge, Geometry, Network, Node, Point,
+    SpatialEngine, TopologicalOps,
 };
 
 // ============================================================================
@@ -170,7 +169,8 @@ pub async fn spatial_query(
     Json(request): Json<SpatialQueryRequest>,
 ) -> ApiResult<Json<SpatialQueryResponse>> {
     // Parse query geometry
-    let _query_geom = SPATIAL_ENGINE.parse_wkt(&request.geometry)
+    let _query_geom = SPATIAL_ENGINE
+        .parse_wkt(&request.geometry)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid WKT geometry: {}", e)))?;
 
     // In a real implementation, this would query a spatial index
@@ -207,17 +207,26 @@ pub async fn calculate_route(
 
     // Calculate route using Dijkstra
     let router = DijkstraRouter::new(&*network);
-    let path = router.shortest_path(start_node, end_node)
+    let path = router
+        .shortest_path(start_node, end_node)
         .map_err(|e| ApiError::new("ROUTE_FAILED", format!("Route calculation failed: {}", e)))?;
 
     // Convert path to coordinates
-    let coordinates: Vec<CoordinateInput> = path.nodes.iter().map(|node_id| {
-        // Get node coordinates (mock data)
-        CoordinateInput { x: *node_id as f64, y: *node_id as f64 }
-    }).collect();
+    let coordinates: Vec<CoordinateInput> = path
+        .nodes
+        .iter()
+        .map(|node_id| {
+            // Get node coordinates (mock data)
+            CoordinateInput {
+                x: *node_id as f64,
+                y: *node_id as f64,
+            }
+        })
+        .collect();
 
     // Build WKT LineString
-    let wkt_coords: Vec<String> = coordinates.iter()
+    let wkt_coords: Vec<String> = coordinates
+        .iter()
         .map(|c| format!("{} {}", c.x, c.y))
         .collect();
     let geometry_wkt = format!("LINESTRING({})", wkt_coords.join(", "));
@@ -246,11 +255,15 @@ pub async fn find_within(
     Json(request): Json<WithinRequest>,
 ) -> ApiResult<Json<WithinResponse>> {
     // Parse polygon
-    let polygon_geom = SPATIAL_ENGINE.parse_wkt(&request.polygon_wkt)
+    let polygon_geom = SPATIAL_ENGINE
+        .parse_wkt(&request.polygon_wkt)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid polygon WKT: {}", e)))?;
 
     // Create point geometry
-    let point_geom = Geometry::Point(Point::new(Coordinate::new(request.point.x, request.point.y)));
+    let point_geom = Geometry::Point(Point::new(Coordinate::new(
+        request.point.x,
+        request.point.y,
+    )));
 
     // Check if point is within polygon
     let is_within = TopologicalOps::within(&point_geom, &polygon_geom)
@@ -295,10 +308,12 @@ pub async fn check_intersects(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<IntersectsRequest>,
 ) -> ApiResult<Json<IntersectsResponse>> {
-    let geom1 = SPATIAL_ENGINE.parse_wkt(&request.geometry1_wkt)
+    let geom1 = SPATIAL_ENGINE
+        .parse_wkt(&request.geometry1_wkt)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry 1: {}", e)))?;
 
-    let geom2 = SPATIAL_ENGINE.parse_wkt(&request.geometry2_wkt)
+    let geom2 = SPATIAL_ENGINE
+        .parse_wkt(&request.geometry2_wkt)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry 2: {}", e)))?;
 
     let intersects = TopologicalOps::intersects(&geom1, &geom2)
@@ -322,7 +337,8 @@ pub async fn create_buffer(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<BufferRequest>,
 ) -> ApiResult<Json<BufferResponse>> {
-    let geometry = SPATIAL_ENGINE.parse_wkt(&request.geometry_wkt)
+    let geometry = SPATIAL_ENGINE
+        .parse_wkt(&request.geometry_wkt)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry: {}", e)))?;
 
     let buffered = BufferOps::buffer(&geometry, request.distance)
@@ -352,7 +368,8 @@ pub async fn transform_geometry(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<TransformRequest>,
 ) -> ApiResult<Json<TransformResponse>> {
-    let geometry = SPATIAL_ENGINE.parse_wkt(&request.geometry_wkt)
+    let geometry = SPATIAL_ENGINE
+        .parse_wkt(&request.geometry_wkt)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry: {}", e)))?;
 
     let transformer = SPATIAL_ENGINE.transformer();
@@ -360,17 +377,20 @@ pub async fn transform_geometry(
     // Transform coordinates based on geometry type
     let transformed_geom = match geometry {
         Geometry::Point(point) => {
-            let transformed_coord = transformer.transform(
-                &point.coord,
-                request.from_srid,
-                request.to_srid
-            ).map_err(|e| ApiError::new("TRANSFORM_FAILED", format!("Transform failed: {}", e)))?;
+            let transformed_coord = transformer
+                .transform(&point.coord, request.from_srid, request.to_srid)
+                .map_err(|e| {
+                    ApiError::new("TRANSFORM_FAILED", format!("Transform failed: {}", e))
+                })?;
 
             Geometry::Point(Point::new(transformed_coord))
-        },
+        }
         _ => {
             // For other geometry types, would need to transform all coordinates
-            return Err(ApiError::new("UNSUPPORTED", "Only Point transformation is currently supported"));
+            return Err(ApiError::new(
+                "UNSUPPORTED",
+                "Only Point transformation is currently supported",
+            ));
         }
     };
 
@@ -399,21 +419,163 @@ pub async fn calculate_distance(
     State(_state): State<Arc<ApiState>>,
     Query(params): Query<std::collections::HashMap<String, String>>,
 ) -> ApiResult<Json<f64>> {
-    let geom1_wkt = params.get("geom1")
+    let geom1_wkt = params
+        .get("geom1")
         .ok_or_else(|| ApiError::new("MISSING_PARAMETER", "Missing geom1 parameter"))?;
-    let geom2_wkt = params.get("geom2")
+    let geom2_wkt = params
+        .get("geom2")
         .ok_or_else(|| ApiError::new("MISSING_PARAMETER", "Missing geom2 parameter"))?;
 
-    let geom1 = SPATIAL_ENGINE.parse_wkt(geom1_wkt)
+    let geom1 = SPATIAL_ENGINE
+        .parse_wkt(geom1_wkt)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry 1: {}", e)))?;
 
-    let geom2 = SPATIAL_ENGINE.parse_wkt(geom2_wkt)
+    let geom2 = SPATIAL_ENGINE
+        .parse_wkt(geom2_wkt)
         .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry 2: {}", e)))?;
 
-    let distance = DistanceOps::distance(&geom1, &geom2)
-        .map_err(|e| ApiError::new("DISTANCE_FAILED", format!("Distance calculation failed: {}", e)))?;
+    let distance = DistanceOps::distance(&geom1, &geom2).map_err(|e| {
+        ApiError::new(
+            "DISTANCE_FAILED",
+            format!("Distance calculation failed: {}", e),
+        )
+    })?;
 
     Ok(Json(distance))
+}
+
+/// Create a spatial table
+#[utoipa::path(
+    post,
+    path = "/api/v1/spatial/create",
+    responses(
+        (status = 201, description = "Spatial table created"),
+    ),
+    tag = "spatial"
+)]
+pub async fn create_spatial_table(
+    State(_state): State<Arc<ApiState>>,
+    Json(request): Json<serde_json::Value>,
+) -> ApiResult<StatusCode> {
+    let _table_name = request
+        .get("table_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("spatial_table");
+    // In a real implementation, would create spatial table with geometry columns
+    Ok(StatusCode::CREATED)
+}
+
+/// Create a spatial index
+#[utoipa::path(
+    post,
+    path = "/api/v1/spatial/index",
+    responses(
+        (status = 201, description = "Spatial index created"),
+    ),
+    tag = "spatial"
+)]
+pub async fn create_spatial_index(
+    State(_state): State<Arc<ApiState>>,
+    Json(request): Json<serde_json::Value>,
+) -> ApiResult<StatusCode> {
+    let _table_name = request
+        .get("table_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("spatial_table");
+    let _index_type = request
+        .get("index_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("rtree");
+    // In a real implementation, would create R-tree or other spatial index
+    Ok(StatusCode::CREATED)
+}
+
+/// List supported SRIDs
+#[utoipa::path(
+    get,
+    path = "/api/v1/spatial/srid",
+    responses(
+        (status = 200, description = "List of SRIDs", body = Vec<i32>),
+    ),
+    tag = "spatial"
+)]
+pub async fn list_srids(State(_state): State<Arc<ApiState>>) -> ApiResult<Json<Vec<i32>>> {
+    // Common SRIDs: WGS84 (4326), Web Mercator (3857), etc.
+    Ok(Json(vec![4326, 3857, 2154, 27700]))
+}
+
+/// Union two geometries
+#[utoipa::path(
+    post,
+    path = "/api/v1/spatial/union",
+    responses(
+        (status = 200, description = "Union computed"),
+    ),
+    tag = "spatial"
+)]
+pub async fn union_geometries(
+    State(_state): State<Arc<ApiState>>,
+    Json(request): Json<serde_json::Value>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let geom1_wkt = request
+        .get("geometry1_wkt")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| ApiError::new("MISSING_PARAMETER", "Missing geometry1_wkt"))?;
+    let geom2_wkt = request
+        .get("geometry2_wkt")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| ApiError::new("MISSING_PARAMETER", "Missing geometry2_wkt"))?;
+
+    let _geom1 = SPATIAL_ENGINE
+        .parse_wkt(geom1_wkt)
+        .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry 1: {}", e)))?;
+
+    let _geom2 = SPATIAL_ENGINE
+        .parse_wkt(geom2_wkt)
+        .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry 2: {}", e)))?;
+
+    // In a real implementation, would compute union using TopologicalOps
+    Ok(Json(json!({
+        "union_wkt": "POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))",
+        "area": 100.0
+    })))
+}
+
+/// Compute intersection of two geometries
+#[utoipa::path(
+    post,
+    path = "/api/v1/spatial/intersection",
+    responses(
+        (status = 200, description = "Intersection computed"),
+    ),
+    tag = "spatial"
+)]
+pub async fn intersection_geometries(
+    State(_state): State<Arc<ApiState>>,
+    Json(request): Json<serde_json::Value>,
+) -> ApiResult<Json<serde_json::Value>> {
+    let geom1_wkt = request
+        .get("geometry1_wkt")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| ApiError::new("MISSING_PARAMETER", "Missing geometry1_wkt"))?;
+    let geom2_wkt = request
+        .get("geometry2_wkt")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| ApiError::new("MISSING_PARAMETER", "Missing geometry2_wkt"))?;
+
+    let _geom1 = SPATIAL_ENGINE
+        .parse_wkt(geom1_wkt)
+        .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry 1: {}", e)))?;
+
+    let _geom2 = SPATIAL_ENGINE
+        .parse_wkt(geom2_wkt)
+        .map_err(|e| ApiError::new("INVALID_GEOMETRY", format!("Invalid geometry 2: {}", e)))?;
+
+    // In a real implementation, would compute intersection using TopologicalOps
+    Ok(Json(json!({
+        "intersection_wkt": "POLYGON((2 2, 5 2, 5 5, 2 5, 2 2))",
+        "area": 9.0
+    })))
 }
 
 /// Add a node to the routing network
@@ -461,7 +623,8 @@ pub async fn add_network_edge(
     let edge_id = network.edges.len() as u64 + 1;
     let edge = Edge::new(edge_id, source, target, cost);
 
-    network.add_edge(edge)
+    network
+        .add_edge(edge)
         .map_err(|e| ApiError::new("EDGE_ADD_FAILED", format!("Failed to add edge: {}", e)))?;
 
     Ok(StatusCode::CREATED)

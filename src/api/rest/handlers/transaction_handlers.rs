@@ -6,13 +6,13 @@ use axum::{
     extract::{Path, State},
     response::Json as AxumJson,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use utoipa::ToSchema;
-use parking_lot::RwLock;
 
 use super::super::types::*;
 
@@ -54,7 +54,7 @@ pub struct TransactionDetails {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct LockInfo {
     pub lock_id: String,
-    pub lock_type: String, // shared, exclusive, row_shared, row_exclusive
+    pub lock_type: String,     // shared, exclusive, row_shared, row_exclusive
     pub resource_type: String, // table, row, page
     pub resource_id: String,
     pub transaction_id: TransactionId,
@@ -212,7 +212,8 @@ pub async fn get_transaction(
     let txn_id = TransactionId(id);
 
     if let Some(txn) = transactions.get(&txn_id) {
-        let txn_locks: Vec<LockInfo> = locks.values()
+        let txn_locks: Vec<LockInfo> = locks
+            .values()
             .filter(|lock| lock.transaction_id == txn_id)
             .cloned()
             .collect();
@@ -233,7 +234,10 @@ pub async fn get_transaction(
 
         Ok(AxumJson(details))
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Transaction {} not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Transaction {} not found", id),
+        ))
     }
 }
 
@@ -266,7 +270,10 @@ pub async fn rollback_transaction(
             "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
         })))
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Transaction {} not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Transaction {} not found", id),
+        ))
     }
 }
 
@@ -377,7 +384,13 @@ pub async fn get_mvcc_status(
         dead_tuples: 50_000,
         live_tuples: 950_000,
         vacuum_running: false,
-        last_vacuum: Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64 - 3600),
+        last_vacuum: Some(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64
+                - 3600,
+        ),
     };
 
     Ok(AxumJson(status))
@@ -416,9 +429,7 @@ pub async fn trigger_vacuum(
         (status = 200, description = "WAL status", body = WalStatus),
     )
 )]
-pub async fn get_wal_status(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<AxumJson<WalStatus>> {
+pub async fn get_wal_status(State(_state): State<Arc<ApiState>>) -> ApiResult<AxumJson<WalStatus>> {
     let status = WalStatus {
         current_lsn: "0/1A2B3C4D".to_string(),
         checkpoint_lsn: "0/1A2B0000".to_string(),
@@ -426,7 +437,11 @@ pub async fn get_wal_status(
         wal_size_bytes: 100_000_000,
         write_rate_mbps: 25.5,
         sync_rate_mbps: 20.3,
-        last_checkpoint: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64 - 300,
+        last_checkpoint: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64
+            - 300,
         checkpoint_in_progress: false,
     };
 
@@ -445,7 +460,10 @@ pub async fn get_wal_status(
 pub async fn force_checkpoint(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<CheckpointResult>> {
-    let started = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+    let started = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
 
     // Simulate checkpoint operation
     let result = CheckpointResult {
@@ -458,4 +476,598 @@ pub async fn force_checkpoint(
     };
 
     Ok(AxumJson(result))
+}
+
+// ============================================================================
+// Savepoint Operations
+// ============================================================================
+
+/// Savepoint request
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct SavepointRequest {
+    pub savepoint_name: String,
+}
+
+/// Savepoint response
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct SavepointResponse {
+    pub transaction_id: TransactionId,
+    pub savepoint_name: String,
+    pub created_at: i64,
+    pub savepoint_id: String,
+}
+
+/// Create a savepoint within a transaction
+#[utoipa::path(
+    post,
+    path = "/api/v1/transactions/{id}/savepoint",
+    tag = "transactions",
+    params(
+        ("id" = u64, Path, description = "Transaction ID")
+    ),
+    request_body = SavepointRequest,
+    responses(
+        (status = 200, description = "Savepoint created", body = SavepointResponse),
+        (status = 404, description = "Transaction not found", body = ApiError),
+    )
+)]
+pub async fn create_savepoint(
+    State(_state): State<Arc<ApiState>>,
+    Path(id): Path<u64>,
+    AxumJson(request): AxumJson<SavepointRequest>,
+) -> ApiResult<AxumJson<SavepointResponse>> {
+    let transactions = ACTIVE_TRANSACTIONS.read();
+    let txn_id = TransactionId(id);
+
+    if transactions.contains_key(&txn_id) {
+        let response = SavepointResponse {
+            transaction_id: txn_id,
+            savepoint_name: request.savepoint_name.clone(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+            savepoint_id: format!("sp_{}_{}", id, request.savepoint_name),
+        };
+
+        Ok(AxumJson(response))
+    } else {
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Transaction {} not found", id),
+        ))
+    }
+}
+
+/// Release a savepoint
+#[utoipa::path(
+    post,
+    path = "/api/v1/transactions/{id}/release-savepoint",
+    tag = "transactions",
+    params(
+        ("id" = u64, Path, description = "Transaction ID")
+    ),
+    request_body = SavepointRequest,
+    responses(
+        (status = 200, description = "Savepoint released"),
+        (status = 404, description = "Transaction or savepoint not found", body = ApiError),
+    )
+)]
+pub async fn release_savepoint(
+    State(_state): State<Arc<ApiState>>,
+    Path(id): Path<u64>,
+    AxumJson(request): AxumJson<SavepointRequest>,
+) -> ApiResult<AxumJson<serde_json::Value>> {
+    let transactions = ACTIVE_TRANSACTIONS.read();
+    let txn_id = TransactionId(id);
+
+    if transactions.contains_key(&txn_id) {
+        Ok(AxumJson(json!({
+            "transaction_id": id,
+            "savepoint_name": request.savepoint_name,
+            "status": "released",
+            "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+        })))
+    } else {
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Transaction {} not found", id),
+        ))
+    }
+}
+
+/// Rollback to a savepoint
+#[utoipa::path(
+    post,
+    path = "/api/v1/transactions/{id}/rollback-to-savepoint",
+    tag = "transactions",
+    params(
+        ("id" = u64, Path, description = "Transaction ID")
+    ),
+    request_body = SavepointRequest,
+    responses(
+        (status = 200, description = "Rolled back to savepoint"),
+        (status = 404, description = "Transaction or savepoint not found", body = ApiError),
+    )
+)]
+pub async fn rollback_to_savepoint(
+    State(_state): State<Arc<ApiState>>,
+    Path(id): Path<u64>,
+    AxumJson(request): AxumJson<SavepointRequest>,
+) -> ApiResult<AxumJson<serde_json::Value>> {
+    let transactions = ACTIVE_TRANSACTIONS.read();
+    let txn_id = TransactionId(id);
+
+    if transactions.contains_key(&txn_id) {
+        Ok(AxumJson(json!({
+            "transaction_id": id,
+            "savepoint_name": request.savepoint_name,
+            "status": "rolled_back",
+            "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+        })))
+    } else {
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Transaction {} not found", id),
+        ))
+    }
+}
+
+// ============================================================================
+// Isolation Level Control
+// ============================================================================
+
+/// Isolation level update request
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct IsolationLevelRequest {
+    pub isolation_level: String, // READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ, SERIALIZABLE
+}
+
+/// Update transaction isolation level
+#[utoipa::path(
+    put,
+    path = "/api/v1/transactions/{id}/isolation-level",
+    tag = "transactions",
+    params(
+        ("id" = u64, Path, description = "Transaction ID")
+    ),
+    request_body = IsolationLevelRequest,
+    responses(
+        (status = 200, description = "Isolation level updated"),
+        (status = 400, description = "Invalid isolation level", body = ApiError),
+        (status = 404, description = "Transaction not found", body = ApiError),
+    )
+)]
+pub async fn update_isolation_level(
+    State(_state): State<Arc<ApiState>>,
+    Path(id): Path<u64>,
+    AxumJson(request): AxumJson<IsolationLevelRequest>,
+) -> ApiResult<AxumJson<serde_json::Value>> {
+    let mut transactions = ACTIVE_TRANSACTIONS.write();
+    let txn_id = TransactionId(id);
+
+    // Validate isolation level
+    let valid_levels = [
+        "READ_UNCOMMITTED",
+        "READ_COMMITTED",
+        "REPEATABLE_READ",
+        "SERIALIZABLE",
+    ];
+    if !valid_levels.contains(&request.isolation_level.as_str()) {
+        return Err(ApiError::new(
+            "INVALID_ISOLATION_LEVEL",
+            format!(
+                "Invalid isolation level: {}. Must be one of: {:?}",
+                request.isolation_level, valid_levels
+            ),
+        ));
+    }
+
+    if let Some(txn) = transactions.get_mut(&txn_id) {
+        txn.isolation_level = request.isolation_level.clone();
+
+        Ok(AxumJson(json!({
+            "transaction_id": id,
+            "isolation_level": request.isolation_level,
+            "status": "updated",
+            "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+        })))
+    } else {
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Transaction {} not found", id),
+        ))
+    }
+}
+
+// ============================================================================
+// Lock Control Operations
+// ============================================================================
+
+/// Release a specific lock
+#[utoipa::path(
+    post,
+    path = "/api/v1/transactions/locks/{id}/release",
+    tag = "transactions",
+    params(
+        ("id" = String, Path, description = "Lock ID")
+    ),
+    responses(
+        (status = 200, description = "Lock released"),
+        (status = 404, description = "Lock not found", body = ApiError),
+    )
+)]
+pub async fn release_lock(
+    State(_state): State<Arc<ApiState>>,
+    Path(lock_id): Path<String>,
+) -> ApiResult<AxumJson<serde_json::Value>> {
+    let mut locks = LOCKS.write();
+
+    if locks.remove(&lock_id).is_some() {
+        Ok(AxumJson(json!({
+            "lock_id": lock_id,
+            "status": "released",
+            "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+        })))
+    } else {
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Lock {} not found", lock_id),
+        ))
+    }
+}
+
+/// Release all locks for a transaction
+#[utoipa::path(
+    post,
+    path = "/api/v1/transactions/locks/release-all",
+    tag = "transactions",
+    request_body = inline(ReleaseAllLocksRequest),
+    responses(
+        (status = 200, description = "All locks released"),
+        (status = 404, description = "Transaction not found", body = ApiError),
+    )
+)]
+pub async fn release_all_locks(
+    State(_state): State<Arc<ApiState>>,
+    AxumJson(request): AxumJson<ReleaseAllLocksRequest>,
+) -> ApiResult<AxumJson<serde_json::Value>> {
+    let mut locks = LOCKS.write();
+    let txn_id = TransactionId(request.transaction_id);
+
+    // Find and remove all locks for this transaction
+    let lock_ids: Vec<String> = locks
+        .iter()
+        .filter(|(_, lock)| lock.transaction_id == txn_id)
+        .map(|(id, _)| id.clone())
+        .collect();
+
+    let count = lock_ids.len();
+    for lock_id in lock_ids {
+        locks.remove(&lock_id);
+    }
+
+    Ok(AxumJson(json!({
+        "transaction_id": request.transaction_id,
+        "locks_released": count,
+        "status": "success",
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+    })))
+}
+
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ReleaseAllLocksRequest {
+    pub transaction_id: u64,
+}
+
+/// Get lock wait graph
+#[utoipa::path(
+    get,
+    path = "/api/v1/transactions/locks/graph",
+    tag = "transactions",
+    responses(
+        (status = 200, description = "Lock wait graph", body = LockWaitGraph),
+    )
+)]
+pub async fn get_lock_graph(
+    State(_state): State<Arc<ApiState>>,
+) -> ApiResult<AxumJson<LockWaitGraph>> {
+    // In a real implementation, this would analyze the lock wait graph and detect cycles
+    let graph = LockWaitGraph {
+        waiters: vec![],
+        potential_deadlocks: vec![],
+    };
+
+    Ok(AxumJson(graph))
+}
+
+// ============================================================================
+// MVCC Control Operations
+// ============================================================================
+
+/// Snapshot information
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct SnapshotInfo {
+    pub snapshot_id: TransactionId,
+    pub created_at: i64,
+    pub isolation_level: String,
+    pub active_transactions: Vec<TransactionId>,
+    pub oldest_transaction: Option<TransactionId>,
+}
+
+/// Get all active MVCC snapshots
+#[utoipa::path(
+    get,
+    path = "/api/v1/transactions/mvcc/snapshots",
+    tag = "transactions",
+    responses(
+        (status = 200, description = "List of active snapshots", body = Vec<SnapshotInfo>),
+    )
+)]
+pub async fn get_mvcc_snapshots(
+    State(_state): State<Arc<ApiState>>,
+) -> ApiResult<AxumJson<Vec<SnapshotInfo>>> {
+    let transactions = ACTIVE_TRANSACTIONS.read();
+
+    let snapshots: Vec<SnapshotInfo> = transactions
+        .values()
+        .map(|txn| {
+            let active_txns: Vec<TransactionId> = transactions.keys().copied().collect();
+            let oldest = active_txns.iter().min().copied();
+
+            SnapshotInfo {
+                snapshot_id: txn.transaction_id,
+                created_at: txn.started_at,
+                isolation_level: txn.isolation_level.clone(),
+                active_transactions: active_txns,
+                oldest_transaction: oldest,
+            }
+        })
+        .collect();
+
+    Ok(AxumJson(snapshots))
+}
+
+/// Row version information
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct RowVersionInfo {
+    pub version_id: u64,
+    pub transaction_id: TransactionId,
+    pub created_at: i64,
+    pub committed: bool,
+    pub data: serde_json::Value,
+}
+
+/// Get all versions of a specific row
+#[utoipa::path(
+    get,
+    path = "/api/v1/transactions/mvcc/versions/{table}/{row}",
+    tag = "transactions",
+    params(
+        ("table" = String, Path, description = "Table name"),
+        ("row" = String, Path, description = "Row identifier")
+    ),
+    responses(
+        (status = 200, description = "List of row versions", body = Vec<RowVersionInfo>),
+        (status = 404, description = "Table or row not found", body = ApiError),
+    )
+)]
+pub async fn get_row_versions(
+    State(_state): State<Arc<ApiState>>,
+    Path((table, row)): Path<(String, String)>,
+) -> ApiResult<AxumJson<Vec<RowVersionInfo>>> {
+    // In a real implementation, this would query the MVCC version chain
+    let versions = vec![
+        RowVersionInfo {
+            version_id: 1,
+            transaction_id: TransactionId(100),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64
+                - 300,
+            committed: true,
+            data: json!({"id": row, "table": table, "value": "original"}),
+        },
+        RowVersionInfo {
+            version_id: 2,
+            transaction_id: TransactionId(101),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64
+                - 100,
+            committed: false,
+            data: json!({"id": row, "table": table, "value": "updated"}),
+        },
+    ];
+
+    Ok(AxumJson(versions))
+}
+
+/// Full vacuum request
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct FullVacuumRequest {
+    pub tables: Option<Vec<String>>, // Specific tables, or None for all
+    pub aggressive: Option<bool>,
+    pub freeze: Option<bool>,
+}
+
+/// Trigger full vacuum operation
+#[utoipa::path(
+    post,
+    path = "/api/v1/transactions/mvcc/vacuum/full",
+    tag = "transactions",
+    request_body = FullVacuumRequest,
+    responses(
+        (status = 200, description = "Full vacuum started"),
+    )
+)]
+pub async fn trigger_full_vacuum(
+    State(_state): State<Arc<ApiState>>,
+    AxumJson(request): AxumJson<FullVacuumRequest>,
+) -> ApiResult<AxumJson<serde_json::Value>> {
+    let tables = request
+        .tables
+        .clone()
+        .unwrap_or_else(|| vec!["all".to_string()]);
+
+    Ok(AxumJson(json!({
+        "status": "started",
+        "vacuum_type": "full",
+        "tables": tables,
+        "aggressive": request.aggressive.unwrap_or(false),
+        "freeze": request.freeze.unwrap_or(false),
+        "started_at": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+        "estimated_duration_seconds": 600
+    })))
+}
+
+// ============================================================================
+// WAL Control Operations
+// ============================================================================
+
+/// WAL segment information
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct WalSegmentInfo {
+    pub segment_name: String,
+    pub segment_number: u64,
+    pub start_lsn: String,
+    pub end_lsn: String,
+    pub size_bytes: u64,
+    pub created_at: i64,
+    pub archived: bool,
+}
+
+/// Get list of WAL segments
+#[utoipa::path(
+    get,
+    path = "/api/v1/transactions/wal/segments",
+    tag = "transactions",
+    responses(
+        (status = 200, description = "List of WAL segments", body = Vec<WalSegmentInfo>),
+    )
+)]
+pub async fn get_wal_segments(
+    State(_state): State<Arc<ApiState>>,
+) -> ApiResult<AxumJson<Vec<WalSegmentInfo>>> {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+
+    let segments = vec![
+        WalSegmentInfo {
+            segment_name: "000000010000000000000001".to_string(),
+            segment_number: 1,
+            start_lsn: "0/01000000".to_string(),
+            end_lsn: "0/02000000".to_string(),
+            size_bytes: 16_777_216, // 16MB
+            created_at: now - 3600,
+            archived: true,
+        },
+        WalSegmentInfo {
+            segment_name: "000000010000000000000002".to_string(),
+            segment_number: 2,
+            start_lsn: "0/02000000".to_string(),
+            end_lsn: "0/03000000".to_string(),
+            size_bytes: 16_777_216,
+            created_at: now - 1800,
+            archived: false,
+        },
+    ];
+
+    Ok(AxumJson(segments))
+}
+
+/// Archive WAL request
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ArchiveWalRequest {
+    pub segment_name: Option<String>, // Specific segment, or None for all ready segments
+    pub compress: Option<bool>,
+}
+
+/// Trigger WAL archiving
+#[utoipa::path(
+    post,
+    path = "/api/v1/transactions/wal/archive",
+    tag = "transactions",
+    request_body = ArchiveWalRequest,
+    responses(
+        (status = 200, description = "WAL archiving started"),
+    )
+)]
+pub async fn archive_wal(
+    State(_state): State<Arc<ApiState>>,
+    AxumJson(request): AxumJson<ArchiveWalRequest>,
+) -> ApiResult<AxumJson<serde_json::Value>> {
+    Ok(AxumJson(json!({
+        "status": "started",
+        "segment": request.segment_name.unwrap_or_else(|| "all".to_string()),
+        "compress": request.compress.unwrap_or(true),
+        "started_at": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+        "target_location": "/var/lib/rustydb/wal_archive"
+    })))
+}
+
+/// WAL replay status
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct WalReplayStatus {
+    pub replaying: bool,
+    pub current_lsn: String,
+    pub target_lsn: Option<String>,
+    pub replay_lag_bytes: u64,
+    pub replay_lag_seconds: u64,
+    pub last_replay_timestamp: i64,
+    pub segments_replayed: u64,
+}
+
+/// Get WAL replay status
+#[utoipa::path(
+    get,
+    path = "/api/v1/transactions/wal/replay-status",
+    tag = "transactions",
+    responses(
+        (status = 200, description = "WAL replay status", body = WalReplayStatus),
+    )
+)]
+pub async fn get_wal_replay_status(
+    State(_state): State<Arc<ApiState>>,
+) -> ApiResult<AxumJson<WalReplayStatus>> {
+    let status = WalReplayStatus {
+        replaying: false,
+        current_lsn: "0/1A2B3C4D".to_string(),
+        target_lsn: None,
+        replay_lag_bytes: 0,
+        replay_lag_seconds: 0,
+        last_replay_timestamp: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
+        segments_replayed: 42,
+    };
+
+    Ok(AxumJson(status))
+}
+
+/// Switch to a new WAL segment
+#[utoipa::path(
+    post,
+    path = "/api/v1/transactions/wal/switch",
+    tag = "transactions",
+    responses(
+        (status = 200, description = "WAL segment switched"),
+    )
+)]
+pub async fn switch_wal_segment(
+    State(_state): State<Arc<ApiState>>,
+) -> ApiResult<AxumJson<serde_json::Value>> {
+    Ok(AxumJson(json!({
+        "status": "switched",
+        "old_segment": "000000010000000000000002",
+        "new_segment": "000000010000000000000003",
+        "old_lsn": "0/02A5B3C1",
+        "new_lsn": "0/03000000",
+        "timestamp": SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+    })))
 }

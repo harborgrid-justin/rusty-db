@@ -1,14 +1,14 @@
 // Cluster Network Demo
 // This example demonstrates the usage of RustyDB's cluster networking capabilities
 
+use rusty_db::network::cluster_network::NodeCapacity;
 use rusty_db::network::{
-    ClusterNetworkManager, ClusterMessage, MessagePriority,
-    RoutingStrategy, MembershipEvent, NodeInfo, NodeState, NodeCapacity,
+    ClusterMessage, ClusterNetworkManager, MembershipEvent, MessagePriority, NodeCapacity,
+    NodeInfo, NodeState, RoutingStrategy,
 };
 use std::time::Duration;
 use tokio::time::sleep;
 use uuid::Uuid;
-use rusty_db::network::cluster_network::NodeCapacity;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -65,7 +65,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         addr: "127.0.0.1:7001".parse()?,
         state: NodeState::Alive,
         incarnation: 1,
-        metadata: vec![("role".to_string(), "worker".to_string())].into_iter().collect(),
+        metadata: vec![("role".to_string(), "worker".to_string())]
+            .into_iter()
+            .collect(),
         last_seen: std::time::Instant::now(),
         datacenter: "dc1".to_string(),
         rack: "rack1".to_string(),
@@ -88,7 +90,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         addr: "127.0.0.1:7002".parse()?,
         state: NodeState::Alive,
         incarnation: 1,
-        metadata: vec![("role".to_string(), "worker".to_string())].into_iter().collect(),
+        metadata: vec![("role".to_string(), "worker".to_string())]
+            .into_iter()
+            .collect(),
         last_seen: std::time::Instant::now(),
         datacenter: "dc1".to_string(),
         rack: "rack2".to_string(),
@@ -114,7 +118,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 5. Display cluster members
     println!("\n5. Current cluster members:");
     for member in manager.get_cluster_members() {
-        println!("   - Node {} at {} ({})",
+        println!(
+            "   - Node {} at {} ({})",
             member.id,
             member.addr,
             match member.state {
@@ -125,14 +130,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 NodeState::Joining => "JOINING",
             }
         );
-        println!("     Datacenter: {}, Rack: {}", member.datacenter, member.rack);
-        println!("     Capacity: {} cores, {}GB RAM, {}/{} connections",
+        println!(
+            "     Datacenter: {}, Rack: {}",
+            member.datacenter, member.rack
+        );
+        println!(
+            "     Capacity: {} cores, {}GB RAM, {}/{} connections",
             member.capacity.cpu_cores,
             member.capacity.memory_gb,
             member.capacity.current_connections,
             member.capacity.max_connections,
         );
-        println!("     Latency: {:.2}ms, IO Util: {:.1}%",
+        println!(
+            "     Latency: {:.2}ms, IO Util: {:.1}%",
             member.capacity.query_latency_ms,
             member.capacity.disk_io_utilization * 100.0,
         );
@@ -143,8 +153,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let queries = vec![
         ("SELECT * FROM users WHERE id = 1", MessagePriority::Normal),
         ("SELECT COUNT(*) FROM orders", MessagePriority::High),
-        ("UPDATE inventory SET quantity = 100", MessagePriority::Critical),
-        ("SELECT * FROM logs WHERE date > NOW() - INTERVAL 1 DAY", MessagePriority::Low),
+        (
+            "UPDATE inventory SET quantity = 100",
+            MessagePriority::Critical,
+        ),
+        (
+            "SELECT * FROM logs WHERE date > NOW() - INTERVAL 1 DAY",
+            MessagePriority::Low,
+        ),
     ];
 
     for (sql, priority) in queries {
@@ -172,7 +188,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("   Strategy: {:?}", strategy);
 
         for _ in 0..3 {
-            if let Ok(node) = manager.route_query("SELECT 1", MessagePriority::Normal).await {
+            if let Ok(node) = manager
+                .route_query("SELECT 1", MessagePriority::Normal)
+                .await
+            {
                 print!("   → {} ", node);
             }
         }
@@ -182,7 +201,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 8. Health check
     println!("\n8. Cluster health check:");
     let health = manager.health_check().await;
-    println!("   Status: {}", if health.healthy { "✓ HEALTHY" } else { "✗ UNHEALTHY" });
+    println!(
+        "   Status: {}",
+        if health.healthy {
+            "✓ HEALTHY"
+        } else {
+            "✗ UNHEALTHY"
+        }
+    );
     println!("   Timestamp: {}", health.timestamp);
     println!("   Metrics:");
     for (key, value) in health.metrics {
@@ -191,7 +217,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 9. Quorum check
     println!("\n9. Quorum status:");
-    println!("   Has quorum: {}", if manager.has_quorum() { "✓ YES" } else { "✗ NO" });
+    println!(
+        "   Has quorum: {}",
+        if manager.has_quorum() {
+            "✓ YES"
+        } else {
+            "✗ NO"
+        }
+    );
     println!("   Alive nodes: {}", manager.get_alive_members().len());
 
     // 10. Metrics collection

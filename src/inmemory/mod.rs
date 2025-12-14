@@ -9,38 +9,36 @@
 
 pub mod column_store;
 pub mod compression;
-pub mod vectorized_ops;
-pub mod population;
 pub mod join_engine;
+pub mod population;
+pub mod vectorized_ops;
 
 pub use column_store::{
-    ColumnStore, ColumnStoreConfig, ColumnSegment, DualFormat,
-    ColumnMetadata, ColumnStats, InMemoryArea,
+    ColumnMetadata, ColumnSegment, ColumnStats, ColumnStore, ColumnStoreConfig, DualFormat,
+    InMemoryArea,
 };
 
 pub use compression::{
-    CompressionType, CompressionAlgorithm, DictionaryEncoder,
-    RunLengthEncoder, BitPacker, DeltaEncoder, FrameOfReferenceEncoder,
-    HybridCompressor, CompressionStats,
+    BitPacker, CompressionAlgorithm, CompressionStats, CompressionType, DeltaEncoder,
+    DictionaryEncoder, FrameOfReferenceEncoder, HybridCompressor, RunLengthEncoder,
 };
 
 pub use vectorized_ops::{
-    VectorizedFilter, VectorizedAggregator, SimdOperator,
-    ComparisonOp, VectorMask, VectorBatch, CacheLine,
+    CacheLine, ComparisonOp, SimdOperator, VectorBatch, VectorMask, VectorizedAggregator,
+    VectorizedFilter,
 };
 
 pub use population::{
-    PopulationManager, PopulationStrategy, PopulationPriority,
-    PopulationProgress, PopulationStats, MemoryPressureHandler,
+    MemoryPressureHandler, PopulationManager, PopulationPriority, PopulationProgress,
+    PopulationStats, PopulationStrategy,
 };
 
 pub use join_engine::{
-    VectorizedJoin, HashJoinEngine, BloomFilter, JoinType,
-    JoinStats, PartitionedJoin,
+    BloomFilter, HashJoinEngine, JoinStats, JoinType, PartitionedJoin, VectorizedJoin,
 };
 
-use std::sync::Arc;
 use parking_lot::RwLock;
+use std::sync::Arc;
 
 // Global in-memory store instance
 pub struct InMemoryStore {
@@ -94,7 +92,11 @@ impl InMemoryStore {
         }
     }
 
-    pub fn create_column_store(&self, name: String, schema: Vec<ColumnMetadata>) -> Arc<ColumnStore> {
+    pub fn create_column_store(
+        &self,
+        name: String,
+        schema: Vec<ColumnMetadata>,
+    ) -> Arc<ColumnStore> {
         let store_config = ColumnStoreConfig {
             name: name.clone(),
             enable_compression: self.config.enable_compression,
@@ -131,7 +133,8 @@ impl InMemoryStore {
 
     pub fn check_memory_pressure(&self) -> bool {
         let usage = self.memory_usage();
-        let threshold = (self.config.max_memory as f64 * self.config.memory_pressure_threshold) as usize;
+        let threshold =
+            (self.config.max_memory as f64 * self.config.memory_pressure_threshold) as usize;
         usage > threshold
     }
 

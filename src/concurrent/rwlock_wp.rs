@@ -137,12 +137,11 @@ impl<T> RwLockWP<T> {
             }
 
             let new_state = state + 1;
-            if self.state.compare_exchange_weak(
-                state,
-                new_state,
-                Ordering::Acquire,
-                Ordering::Relaxed,
-            ).is_ok() {
+            if self
+                .state
+                .compare_exchange_weak(state, new_state, Ordering::Acquire, Ordering::Relaxed)
+                .is_ok()
+            {
                 #[cfg(feature = "stats")]
                 self.stats.record_read_acquire();
                 return;
@@ -166,12 +165,9 @@ impl<T> RwLockWP<T> {
         }
 
         let new_state = state + 1;
-        self.state.compare_exchange(
-            state,
-            new_state,
-            Ordering::Acquire,
-            Ordering::Relaxed,
-        ).is_ok()
+        self.state
+            .compare_exchange(state, new_state, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok()
     }
 
     /// Release read lock
@@ -205,12 +201,11 @@ impl<T> RwLockWP<T> {
             if (state & (READER_MASK | WRITER_BIT)) == 0 {
                 let new_state = (state & !WAITING_MASK) | WRITER_BIT;
 
-                if self.state.compare_exchange_weak(
-                    state,
-                    new_state,
-                    Ordering::Acquire,
-                    Ordering::Relaxed,
-                ).is_ok() {
+                if self
+                    .state
+                    .compare_exchange_weak(state, new_state, Ordering::Acquire, Ordering::Relaxed)
+                    .is_ok()
+                {
                     // Successfully acquired, decrement waiting count
                     self.decrement_waiting_writers();
                     #[cfg(feature = "stats")]
@@ -240,12 +235,9 @@ impl<T> RwLockWP<T> {
         }
 
         let new_state = state | WRITER_BIT;
-        self.state.compare_exchange(
-            state,
-            new_state,
-            Ordering::Acquire,
-            Ordering::Relaxed,
-        ).is_ok()
+        self.state
+            .compare_exchange(state, new_state, Ordering::Acquire, Ordering::Relaxed)
+            .is_ok()
     }
 
     /// Release write lock
@@ -280,12 +272,11 @@ impl<T> RwLockWP<T> {
             }
 
             let new_state = state + (1 << WAITING_SHIFT);
-            if self.state.compare_exchange_weak(
-                state,
-                new_state,
-                Ordering::AcqRel,
-                Ordering::Relaxed,
-            ).is_ok() {
+            if self
+                .state
+                .compare_exchange_weak(state, new_state, Ordering::AcqRel, Ordering::Relaxed)
+                .is_ok()
+            {
                 return;
             }
         }
@@ -303,8 +294,8 @@ impl<T> RwLockWP<T> {
         // Platform-specific parking
         #[cfg(target_os = "linux")]
         {
-            use std::sync::atomic::AtomicI32;
             use std::ptr;
+            use std::sync::atomic::AtomicI32;
 
             let futex = &self.state as *const AtomicU32 as *const AtomicI32;
             unsafe {
@@ -567,5 +558,3 @@ mod tests {
         assert_eq!(*r, 42);
     }
 }
-
-

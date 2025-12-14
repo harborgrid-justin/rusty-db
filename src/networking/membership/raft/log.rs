@@ -165,7 +165,12 @@ impl RaftLog {
     }
 
     /// Create a snapshot of the log up to given index
-    pub fn create_snapshot(&mut self, last_index: LogIndex, last_term: u64, data: Vec<u8>) -> Result<()> {
+    pub fn create_snapshot(
+        &mut self,
+        last_index: LogIndex,
+        last_term: u64,
+        data: Vec<u8>,
+    ) -> Result<()> {
         if last_index > self.last_index() {
             return Err(DbError::InvalidOperation(
                 "Cannot snapshot beyond last index".to_string(),

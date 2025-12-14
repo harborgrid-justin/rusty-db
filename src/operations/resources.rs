@@ -8,14 +8,14 @@
 // - Query timeout management
 // - Resource pools and allocation
 
-use std::time::SystemTime;
-use std::time::Instant;
-use crate::Result;
 use crate::error::DbError;
-use std::sync::Arc;
+use crate::Result;
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // Resource manager for the database
 pub struct ResourceManager {
@@ -43,9 +43,14 @@ impl ResourceManager {
     }
 
     // Allocate resources for a query
-    pub fn allocate_query_resources(&self, query_id: String, estimated_memory: u64) -> Result<ResourceAllocation> {
+    pub fn allocate_query_resources(
+        &self,
+        query_id: String,
+        estimated_memory: u64,
+    ) -> Result<ResourceAllocation> {
         // Check memory availability
-        self.memory_manager.allocate(query_id.clone(), estimated_memory)?;
+        self.memory_manager
+            .allocate(query_id.clone(), estimated_memory)?;
 
         // Register query with timeout
         self.timeout_manager.register_query(query_id.clone())?;
@@ -59,7 +64,8 @@ impl ResourceManager {
 
     // Release resources for a query
     pub fn release_query_resources(&self, allocation: &ResourceAllocation) {
-        self.memory_manager.release(&allocation.query_id, allocation.allocated_memory);
+        self.memory_manager
+            .release(&allocation.query_id, allocation.allocated_memory);
         self.timeout_manager.complete_query(&allocation.query_id);
     }
 
@@ -235,7 +241,7 @@ impl IoManager {
 
         if *bytes_this_second + bytes > self.max_bytes_per_sec {
             return Err(DbError::InvalidOperation(
-                "I/O rate limit exceeded".to_string()
+                "I/O rate limit exceeded".to_string(),
             ));
         }
 
@@ -272,7 +278,7 @@ impl ConnectionManager {
             // Try to evict low-priority connection
             if !self.try_evict_low_priority(&mut conns, priority) {
                 return Err(DbError::InvalidOperation(
-                    "Maximum connections reached".to_string()
+                    "Maximum connections reached".to_string(),
                 ));
             }
         }
@@ -474,21 +480,27 @@ impl QuotaManager {
                         // Would check query count in production
                         Ok(())
                     } else {
-                        Err(DbError::InvalidOperation("Query quota exceeded".to_string()))
+                        Err(DbError::InvalidOperation(
+                            "Query quota exceeded".to_string(),
+                        ))
                     }
                 }
                 QuotaOperation::Storage(bytes) => {
                     if bytes <= quota.max_storage_bytes {
                         Ok(())
                     } else {
-                        Err(DbError::InvalidOperation("Storage quota exceeded".to_string()))
+                        Err(DbError::InvalidOperation(
+                            "Storage quota exceeded".to_string(),
+                        ))
                     }
                 }
                 QuotaOperation::Connection => {
                     if quota.max_connections > 0 {
                         Ok(())
                     } else {
-                        Err(DbError::InvalidOperation("Connection quota exceeded".to_string()))
+                        Err(DbError::InvalidOperation(
+                            "Connection quota exceeded".to_string(),
+                        ))
                     }
                 }
             }
@@ -554,14 +566,22 @@ mod tests {
     fn test_connection_manager() {
         let manager = ConnectionManager::new(3);
 
-        assert!(manager.accept_connection("conn1".to_string(), ConnectionPriority::Normal).is_ok());
-        assert!(manager.accept_connection("conn2".to_string(), ConnectionPriority::High).is_ok());
-        assert!(manager.accept_connection("conn3".to_string(), ConnectionPriority::Low).is_ok());
+        assert!(manager
+            .accept_connection("conn1".to_string(), ConnectionPriority::Normal)
+            .is_ok());
+        assert!(manager
+            .accept_connection("conn2".to_string(), ConnectionPriority::High)
+            .is_ok());
+        assert!(manager
+            .accept_connection("conn3".to_string(), ConnectionPriority::Low)
+            .is_ok());
 
         assert_eq!(manager.active_count(), 3);
 
         // Should evict low priority connection
-        assert!(manager.accept_connection("conn4".to_string(), ConnectionPriority::High).is_ok());
+        assert!(manager
+            .accept_connection("conn4".to_string(), ConnectionPriority::High)
+            .is_ok());
         assert_eq!(manager.active_count(), 3);
     }
 
@@ -603,7 +623,11 @@ mod tests {
             },
         );
 
-        assert!(manager.check_quota("user1", QuotaOperation::Storage(500)).is_ok());
-        assert!(manager.check_quota("user1", QuotaOperation::Storage(1500)).is_err());
+        assert!(manager
+            .check_quota("user1", QuotaOperation::Storage(500))
+            .is_ok());
+        assert!(manager
+            .check_quota("user1", QuotaOperation::Storage(1500))
+            .is_err());
     }
 }

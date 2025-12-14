@@ -3,7 +3,7 @@
 // Clock-Sweep, LRU-K, Touch Count Optimizer, and Cost-Aware replacement.
 
 use super::common::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // Clock-Sweep (Second-Chance) algorithm implementation
 pub struct ClockSweepPolicy {
@@ -66,7 +66,8 @@ impl ClockSweepPolicy {
             if !had_reference {
                 // Found victim
                 self.stats.evictions.fetch_add(1, Ordering::Relaxed);
-                self.hand.store((current_hand + 1) % capacity, Ordering::Relaxed);
+                self.hand
+                    .store((current_hand + 1) % capacity, Ordering::Relaxed);
                 return Some(current_hand);
             } else {
                 // Give second chance
@@ -150,7 +151,9 @@ impl LruKPolicy {
         // Keep only K most recent accesses
         if page_history.len() > self.k {
             page_history.pop_front();
-            self.stats.history_promotions.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .history_promotions
+                .fetch_add(1, Ordering::Relaxed);
         }
     }
 
@@ -274,7 +277,8 @@ impl TouchCountOptimizer {
     // Get touch count for a page
     pub fn get_count(&self, page_id: PageId) -> u64 {
         let counts = self.touch_counts.read();
-        counts.get(&page_id)
+        counts
+            .get(&page_id)
             .map(|c| c.load(Ordering::Relaxed))
             .unwrap_or(0)
     }
@@ -402,7 +406,8 @@ impl CostAwareReplacement {
         let freq = self.access_freq.read();
 
         let cost = costs.get(&page_id).copied().unwrap_or(1.0);
-        let frequency = freq.get(&page_id)
+        let frequency = freq
+            .get(&page_id)
             .map(|f| f.load(Ordering::Relaxed))
             .unwrap_or(1) as f64;
 

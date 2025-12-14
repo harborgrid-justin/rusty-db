@@ -69,15 +69,15 @@
 // # }
 // ```
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
 use crate::replication::types::*;
 use parking_lot::{Mutex, RwLock};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use tokio::time::interval;
@@ -86,7 +86,10 @@ use tokio::time::interval;
 #[derive(Error, Debug)]
 pub enum WalError {
     #[error("WAL I/O error: {operation} - {source}")]
-    IoError { operation: String, source: std::io::Error },
+    IoError {
+        operation: String,
+        source: std::io::Error,
+    },
 
     #[error("WAL corruption detected at LSN {lsn}: {reason}")]
     CorruptionDetected { lsn: u64, reason: String },
@@ -98,7 +101,10 @@ pub enum WalError {
     LsnOutOfRange { requested: u64, min: u64, max: u64 },
 
     #[error("WAL buffer full: current size {current_size}, max size {max_size}")]
-    BufferFull { current_size: usize, max_size: usize },
+    BufferFull {
+        current_size: usize,
+        max_size: usize,
+    },
 
     #[error("Invalid WAL configuration: {reason}")]
     InvalidConfiguration { reason: String },
@@ -151,7 +157,7 @@ impl Default for WalConfig {
             segment_size: 16 * 1024 * 1024,   // 16MB
             compression_enabled: true,
             archive_timeout: Duration::from_secs(300), // 5 minutes
-            buffer_size: 64 * 1024,          // 64KB
+            buffer_size: 64 * 1024,                    // 64KB
             sync_frequency: Duration::from_millis(100),
             max_segments: 1000,
             enable_checksums: true,
@@ -200,11 +206,7 @@ pub struct WalSegment {
 
 impl WalSegment {
     // Creates a new WAL segment
-    pub fn new(
-        id: String,
-        start_lsn: LogSequenceNumber,
-        file_path: PathBuf,
-    ) -> Self {
+    pub fn new(id: String, start_lsn: LogSequenceNumber, file_path: PathBuf) -> Self {
         let now = SystemTime::now();
         Self {
             id,
@@ -292,9 +294,9 @@ impl WalBuffer {
 
     // Checks if buffer should be flushed
     fn should_flush(&self, max_age: Duration) -> bool {
-        !self.entries.is_empty() &&
-        (self.current_size >= self.max_size ||
-         self.last_flush.elapsed().unwrap_or_default() >= max_age)
+        !self.entries.is_empty()
+            && (self.current_size >= self.max_size
+                || self.last_flush.elapsed().unwrap_or_default() >= max_age)
     }
 
     // Returns current buffer statistics
@@ -354,21 +356,45 @@ pub struct WalManager {
 #[derive(Debug, Clone)]
 pub enum WalEvent {
     // New entry appended to WAL
-    EntryAppended { lsn: LogSequenceNumber, size_bytes: usize },
+    EntryAppended {
+        lsn: LogSequenceNumber,
+        size_bytes: usize,
+    },
     // WAL segment created
-    SegmentCreated { segment_id: String, start_lsn: LogSequenceNumber },
+    SegmentCreated {
+        segment_id: String,
+        start_lsn: LogSequenceNumber,
+    },
     // WAL segment archived
-    SegmentArchived { segment_id: String, archive_path: PathBuf },
+    SegmentArchived {
+        segment_id: String,
+        archive_path: PathBuf,
+    },
     // WAL segment removed
-    SegmentRemoved { segment_id: String, reason: String },
+    SegmentRemoved {
+        segment_id: String,
+        reason: String,
+    },
     // Streaming started for replica
-    StreamingStarted { replica_id: String, from_lsn: LogSequenceNumber },
+    StreamingStarted {
+        replica_id: String,
+        from_lsn: LogSequenceNumber,
+    },
     // Streaming stopped for replica
-    StreamingStopped { replica_id: String, reason: String },
+    StreamingStopped {
+        replica_id: String,
+        reason: String,
+    },
     // WAL corruption detected
-    CorruptionDetected { lsn: LogSequenceNumber, reason: String },
+    CorruptionDetected {
+        lsn: LogSequenceNumber,
+        reason: String,
+    },
     // Buffer flushed to disk
-    BufferFlushed { entry_count: usize, size_bytes: usize },
+    BufferFlushed {
+        entry_count: usize,
+        size_bytes: usize,
+    },
 }
 
 impl WalManager {
@@ -393,11 +419,10 @@ impl WalManager {
         Self::validate_config(&config)?;
 
         // Create WAL directory if it doesn't exist
-        std::fs::create_dir_all(&wal_directory)
-            .map_err(|e| WalError::IoError {
-                operation: "create_wal_directory".to_string(),
-                source: e,
-            })?;
+        std::fs::create_dir_all(&wal_directory).map_err(|e| WalError::IoError {
+            operation: "create_wal_directory".to_string(),
+            source: e,
+        })?;
 
         // Create event channel
         let (event_sender, _) = mpsc::unbounded_channel();
@@ -452,11 +477,10 @@ impl WalManager {
 
     // Loads existing WAL segments from disk
     async fn load_existing_segments(&self) -> Result<(), WalError> {
-        let entries = std::fs::read_dir(&self.wal_directory)
-            .map_err(|e| WalError::IoError {
-                operation: "read_wal_directory".to_string(),
-                source: e,
-            })?;
+        let entries = std::fs::read_dir(&self.wal_directory).map_err(|e| WalError::IoError {
+            operation: "read_wal_directory".to_string(),
+            source: e,
+        })?;
 
         let mut max_lsn = LogSequenceNumber::new(0);
         let mut segments = self.segments.write();
@@ -486,16 +510,16 @@ impl WalManager {
     // Loads a single WAL segment from file
     async fn load_segment(&self, path: &Path) -> Result<WalSegment, WalError> {
         // For now, create a basic segment from the file_name
-        let segment_id = path.file_stem()
+        let segment_id = path
+            .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
             .to_string();
 
-        let metadata = std::fs::metadata(path)
-            .map_err(|e| WalError::IoError {
-                operation: "read_segment_metadata".to_string(),
-                source: e,
-            })?;
+        let metadata = std::fs::metadata(path).map_err(|e| WalError::IoError {
+            operation: "read_segment_metadata".to_string(),
+            source: e,
+        })?;
 
         let mut segment = WalSegment::new(
             segment_id,
@@ -572,7 +596,8 @@ impl WalManager {
 
         // Validate entry if checksums enabled
         if self.config.enable_checksums {
-            entry.validate_checksum()
+            entry
+                .validate_checksum()
                 .map_err(|e| WalError::CorruptionDetected {
                     lsn: lsn.value(),
                     reason: e.to_string(),
@@ -624,7 +649,8 @@ impl WalManager {
         let segments = self.segments.read();
 
         // Find segments containing the requested LSN range
-        let mut relevant_segments: Vec<_> = segments.values()
+        let mut relevant_segments: Vec<_> = segments
+            .values()
             .filter(|seg| seg.end_lsn >= from_lsn)
             .collect();
 
@@ -636,11 +662,9 @@ impl WalManager {
                 break;
             }
 
-            let segment_entries = self.read_entries_from_segment(
-                segment,
-                from_lsn,
-                limit - entries.len(),
-            ).await?;
+            let segment_entries = self
+                .read_entries_from_segment(segment, from_lsn, limit - entries.len())
+                .await?;
 
             entries.extend(segment_entries);
         }
@@ -691,11 +715,10 @@ impl WalManager {
             if let Some(segment) = segments.remove(&segment_id) {
                 // Remove file from disk
                 if segment.file_path.exists() {
-                    std::fs::remove_file(&segment.file_path)
-                        .map_err(|e| WalError::IoError {
-                            operation: "remove_segment_file".to_string(),
-                            source: e,
-                        })?;
+                    std::fs::remove_file(&segment.file_path).map_err(|e| WalError::IoError {
+                        operation: "remove_segment_file".to_string(),
+                        source: e,
+                    })?;
                 }
 
                 // Publish event
@@ -724,15 +747,12 @@ impl WalManager {
         let segments = self.segments.read();
         let current_lsn = *self.current_lsn.lock();
 
-        let total_entries: usize = segments.values()
-            .map(|seg| seg.entry_count)
-            .sum();
+        let total_entries: usize = segments.values().map(|seg| seg.entry_count).sum();
 
-        let size_bytes: u64 = segments.values()
-            .map(|seg| seg.size_bytes)
-            .sum();
+        let size_bytes: u64 = segments.values().map(|seg| seg.size_bytes).sum();
 
-        let oldest_lsn = segments.values()
+        let oldest_lsn = segments
+            .values()
             .map(|seg| seg.start_lsn)
             .min()
             .unwrap_or(LogSequenceNumber::new(0));
@@ -787,7 +807,8 @@ impl WalManager {
         });
 
         // Start streaming task for this replica
-        self.start_replica_streaming_task(replica_id.clone(), from_lsn).await;
+        self.start_replica_streaming_task(replica_id.clone(), from_lsn)
+            .await;
 
         Ok(())
     }
@@ -953,7 +974,8 @@ impl WalManager {
 
                 let should_stream = {
                     let states = streaming_states.read();
-                    states.get(&replica_id)
+                    states
+                        .get(&replica_id)
                         .map(|state| state.active)
                         .unwrap_or(false)
                 };
@@ -999,12 +1021,12 @@ pub struct WalStats {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-    use tempfile::TempDir;
     use crate::replication;
-    use crate::replication::ReplicationOperation;
     use crate::replication::types::{LogSequenceNumber, ReplicaId, TableName, WalEntry};
     use crate::replication::wal::{WalBuffer, WalConfig, WalError, WalManager, WalSegment};
+    use crate::replication::ReplicationOperation;
+    use std::path::PathBuf;
+    use tempfile::TempDir;
 
     #[tokio::test]
     async fn test_wal_manager_creation() {
@@ -1015,23 +1037,23 @@ mod tests {
         assert!(wal_manager.is_ok());
     }
 
-#[tokio::test]
-        async fn test_invalid_wal_config() {
-            let temp_dir = TempDir::new().unwrap();
-            let config = WalConfig {
-                max_wal_size: 0, // Invalid
-                ..WalConfig::default()
-            };
+    #[tokio::test]
+    async fn test_invalid_wal_config() {
+        let temp_dir = TempDir::new().unwrap();
+        let config = WalConfig {
+            max_wal_size: 0, // Invalid
+            ..WalConfig::default()
+        };
 
-let result = WalManager::new(config, temp_dir.path()).await;
-                assert!(result.is_err());
-                if let Err(err) = result {
-                    match err {
-                        WalError::InvalidConfiguration { .. } => (),
-                        _ => panic!("Expected InvalidConfiguration error"),
-                    }
-                }
+        let result = WalManager::new(config, temp_dir.path()).await;
+        assert!(result.is_err());
+        if let Err(err) = result {
+            match err {
+                WalError::InvalidConfiguration { .. } => (),
+                _ => panic!("Expected InvalidConfiguration error"),
+            }
         }
+    }
 
     #[tokio::test]
     async fn test_wal_entry_append() {
@@ -1045,7 +1067,8 @@ let result = WalManager::new(config, temp_dir.path()).await;
             replication::types::ReplicationOperation::Insert,
             table_name,
             b"test data".to_vec(),
-        ).unwrap();
+        )
+        .unwrap();
 
         let result = wal_manager.append(entry).await;
         assert!(result.is_ok());
@@ -1108,7 +1131,8 @@ let result = WalManager::new(config, temp_dir.path()).await;
             replication::types::ReplicationOperation::Insert,
             table_name,
             b"data".to_vec(),
-        ).unwrap();
+        )
+        .unwrap();
 
         assert!(buffer.add_entry(entry).is_ok());
 

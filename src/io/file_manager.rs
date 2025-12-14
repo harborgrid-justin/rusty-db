@@ -3,16 +3,16 @@
 // High-performance file manager with batched operations, Direct I/O,
 // and buffer pooling.
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use crate::io::{
-    AsyncIoEngine, IoRequest, IoOpType, IoHandle, AlignedBuffer, BufferPool,
-    BufferPoolConfig, PAGE_SIZE, SECTOR_SIZE, align_up, align_down,
+    align_down, align_up, AlignedBuffer, AsyncIoEngine, BufferPool, BufferPoolConfig, IoHandle,
+    IoOpType, IoRequest, PAGE_SIZE, SECTOR_SIZE,
 };
+use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use parking_lot::RwLock;
-use std::fs::{File, OpenOptions};
 
 #[cfg(unix)]
 use std::os::unix::io::AsRawFd;
@@ -268,8 +268,7 @@ impl DirectIoFile {
                 opts.custom_flags(libc::O_DIRECT);
             }
 
-            opts.open(path)
-                .map_err(|e| DbError::Io(e))?
+            opts.open(path).map_err(|e| DbError::Io(e))?
         };
 
         #[cfg(windows)]
@@ -287,8 +286,7 @@ impl DirectIoFile {
                 opts.custom_flags(0x80000000);
             }
 
-            opts.open(path)
-                .map_err(|e| DbError::Io(e))?
+            opts.open(path).map_err(|e| DbError::Io(e))?
         };
 
         #[cfg(not(any(unix, windows)))]
@@ -301,9 +299,7 @@ impl DirectIoFile {
                 .map_err(|e| DbError::Io(e))?
         };
 
-        let metadata = file
-            .metadata()
-            .map_err(|e| DbError::Io(e))?;
+        let metadata = file.metadata().map_err(|e| DbError::Io(e))?;
 
         let size = metadata.len();
 
@@ -324,12 +320,8 @@ impl DirectIoFile {
             size,
             direct_io: options.direct_io,
             read_only: metadata.permissions().readonly(),
-            created: metadata
-                .created()
-                .unwrap_or(std::time::SystemTime::now()),
-            modified: metadata
-                .modified()
-                .unwrap_or(std::time::SystemTime::now()),
+            created: metadata.created().unwrap_or(std::time::SystemTime::now()),
+            modified: metadata.modified().unwrap_or(std::time::SystemTime::now()),
         };
 
         Ok(Self {
@@ -349,9 +341,7 @@ impl DirectIoFile {
 
     /// Set file size
     pub fn set_size(&self, new_size: u64) -> Result<()> {
-        self.file
-            .set_len(new_size)
-            .map_err(|e| DbError::Io(e))?;
+        self.file.set_len(new_size).map_err(|e| DbError::Io(e))?;
         self.size.store(new_size, Ordering::Release);
         Ok(())
     }
@@ -382,14 +372,10 @@ impl DirectIoFile {
                 }
 
                 #[cfg(not(unix))]
-                self.file
-                    .sync_data()
-                    .map_err(|e| DbError::Io(e))?;
+                self.file.sync_data().map_err(|e| DbError::Io(e))?;
             }
             FlushMode::Full => {
-                self.file
-                    .sync_all()
-                    .map_err(|e| DbError::Io(e))?;
+                self.file.sync_all().map_err(|e| DbError::Io(e))?;
             }
             FlushMode::Async => {
                 // For async, we don't wait
@@ -558,7 +544,12 @@ impl FileManager {
     }
 
     /// Write data to file
-    pub async fn write(&self, handle: FileHandle, options: WriteOptions, data: &[u8]) -> Result<()> {
+    pub async fn write(
+        &self,
+        handle: FileHandle,
+        options: WriteOptions,
+        data: &[u8],
+    ) -> Result<()> {
         let files = self.files.read();
         let file = files
             .get(&handle)
@@ -735,7 +726,7 @@ pub struct FileManagerStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::SystemTime;
+    use std::time::SystemTime;
 
     #[test]
     fn test_file_handle() {

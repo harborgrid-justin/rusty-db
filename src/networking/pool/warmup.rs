@@ -3,14 +3,14 @@
 // Strategies for pre-establishing connections to minimize latency.
 // Supports eager, lazy, and on-demand warmup policies.
 
+use super::{NodePool, PoolConfig};
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
-use super::{NodePool, PoolConfig};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
 
 /// Warmup strategy for connection pools
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -333,10 +333,7 @@ impl WarmupCoordinator {
 
         for node_id in nodes.iter() {
             if let Some(pool) = pools.get(node_id) {
-                let result = self.warmup_with_retry(
-                    pool,
-                    pool_config,
-                ).await;
+                let result = self.warmup_with_retry(pool, pool_config).await;
 
                 results.insert(node_id.clone(), result);
             }
@@ -346,11 +343,7 @@ impl WarmupCoordinator {
     }
 
     /// Warm up with retry logic
-    async fn warmup_with_retry(
-        &self,
-        pool: &NodePool,
-        config: &PoolConfig,
-    ) -> Result<()> {
+    async fn warmup_with_retry(&self, pool: &NodePool, config: &PoolConfig) -> Result<()> {
         let mut attempts = 0;
         let max_attempts = if self.config.retry_on_failure {
             self.config.max_retries + 1
@@ -361,10 +354,9 @@ impl WarmupCoordinator {
         loop {
             attempts += 1;
 
-            match tokio::time::timeout(
-                self.config.timeout,
-                self.manager.warmup_pool(pool, config),
-            ).await {
+            match tokio::time::timeout(self.config.timeout, self.manager.warmup_pool(pool, config))
+                .await
+            {
                 Ok(Ok(())) => return Ok(()),
                 Ok(Err(e)) if attempts >= max_attempts => return Err(e),
                 Err(_) if attempts >= max_attempts => {
@@ -413,10 +405,9 @@ mod tests {
     async fn test_node_strategy_override() {
         let manager = WarmupManager::new(WarmupStrategy::Eager);
 
-        manager.set_node_strategy(
-            "node-1".to_string(),
-            WarmupStrategy::Lazy,
-        ).await;
+        manager
+            .set_node_strategy("node-1".to_string(), WarmupStrategy::Lazy)
+            .await;
 
         let strategy = manager.get_node_strategy(&"node-1".to_string()).await;
         assert_eq!(strategy, WarmupStrategy::Lazy);

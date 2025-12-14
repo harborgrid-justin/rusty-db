@@ -1,3 +1,5 @@
+pub mod event_correlation;
+pub mod nfa_matcher;
 /// Complex Event Processing (CEP) Module
 ///
 /// Implements Oracle MATCH_RECOGNIZE-like pattern matching on event streams with
@@ -10,30 +12,21 @@
 /// - `nfa_matcher`: NFA-based optimized pattern matching
 ///
 /// Public API re-exports all necessary types to maintain compatibility.
-
 pub mod pattern_matching;
-pub mod event_correlation;
 pub mod temporal_operators;
-pub mod nfa_matcher;
 
 // Re-export all public types for backward compatibility
 pub use pattern_matching::{
-    Pattern, PatternSpec, PatternElement, Quantifier, Condition,
-    PatternVariable, PatternMatcher,
+    Condition, Pattern, PatternElement, PatternMatcher, PatternSpec, PatternVariable, Quantifier,
 };
 
-pub use event_correlation::{
-    EventHierarchy, CorrelationEngine, CorrelationRule, CorrelatedEvent,
-};
+pub use event_correlation::{CorrelatedEvent, CorrelationEngine, CorrelationRule, EventHierarchy};
 
 pub use temporal_operators::{
-    TemporalConstraint, Measure, Aggregation, SkipStrategy,
-    PatternMatch, MatchContext,
+    Aggregation, MatchContext, Measure, PatternMatch, SkipStrategy, TemporalConstraint,
 };
 
-pub use nfa_matcher::{
-    NFA, NFAPatternMatcher,
-};
+pub use nfa_matcher::{NFAPatternMatcher, NFA};
 
 #[cfg(test)]
 mod tests {
@@ -54,7 +47,10 @@ mod tests {
     fn test_condition_evaluation() {
         let condition = Condition::EventType("test".to_string());
         let event = Event::new("test");
-        let pattern = Pattern::new("test", PatternSpec::Element(PatternElement::new("A", condition.clone())));
+        let pattern = Pattern::new(
+            "test",
+            PatternSpec::Element(PatternElement::new("A", condition.clone())),
+        );
         let context = MatchContext::new(Arc::new(pattern));
 
         assert!(condition.evaluate(&event, &context));

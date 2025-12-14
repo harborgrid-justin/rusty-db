@@ -143,9 +143,7 @@ impl ConsistentHashBalancer {
         let ring = self.ring.read().await;
 
         if ring.is_empty() {
-            return Err(DbError::Unavailable(
-                "Hash ring is empty".to_string(),
-            ));
+            return Err(DbError::Unavailable("Hash ring is empty".to_string()));
         }
 
         let key_hash = self.hasher.hash(key.as_bytes());
@@ -167,17 +165,11 @@ impl ConsistentHashBalancer {
     }
 
     /// Find backend with bounded loads
-    async fn find_backend_bounded(
-        &self,
-        key: &str,
-        backends: &[Backend],
-    ) -> Result<Backend> {
+    async fn find_backend_bounded(&self, key: &str, backends: &[Backend]) -> Result<Backend> {
         let ring = self.ring.read().await;
 
         if ring.is_empty() {
-            return Err(DbError::Unavailable(
-                "Hash ring is empty".to_string(),
-            ));
+            return Err(DbError::Unavailable("Hash ring is empty".to_string()));
         }
 
         // Calculate average load
@@ -233,11 +225,7 @@ impl Default for ConsistentHashBalancer {
 
 #[async_trait]
 impl LoadBalancingStrategy for ConsistentHashBalancer {
-    async fn select(
-        &self,
-        backends: &[Backend],
-        context: &LoadBalancerContext,
-    ) -> Result<Backend> {
+    async fn select(&self, backends: &[Backend], context: &LoadBalancerContext) -> Result<Backend> {
         if backends.is_empty() {
             return Err(DbError::Unavailable("No backends available".to_string()));
         }
@@ -307,11 +295,7 @@ impl Default for RendezvousHashBalancer {
 
 #[async_trait]
 impl LoadBalancingStrategy for RendezvousHashBalancer {
-    async fn select(
-        &self,
-        backends: &[Backend],
-        context: &LoadBalancerContext,
-    ) -> Result<Backend> {
+    async fn select(&self, backends: &[Backend], context: &LoadBalancerContext) -> Result<Backend> {
         if backends.is_empty() {
             return Err(DbError::Unavailable("No backends available".to_string()));
         }
@@ -394,7 +378,10 @@ mod tests {
         }
 
         // Should use at least 3 different backends
-        assert!(backend_ids.len() >= 3, "Should distribute across multiple backends");
+        assert!(
+            backend_ids.len() >= 3,
+            "Should distribute across multiple backends"
+        );
     }
 
     #[tokio::test]
@@ -464,7 +451,10 @@ mod tests {
 
         // Each backend should get roughly 100 selections (with some variance)
         for count in selections.values() {
-            assert!(*count > 50 && *count < 150, "Distribution should be relatively even");
+            assert!(
+                *count > 50 && *count < 150,
+                "Distribution should be relatively even"
+            );
         }
     }
 }

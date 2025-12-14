@@ -3,16 +3,15 @@
 // This example demonstrates the comprehensive connection pooling features
 // of RustyDB, including elastic sizing, partitioning, monitoring, and more.
 
+use async_trait::async_trait;
 use rusty_db::pool::{
-    ConnectionPool, PoolConfig, ConnectionFactory, PoolError,
-    PartitionManager, RoutingStrategy, PartitionRequest, PartitionType,
-    PartitionLimits, DashboardProvider, MonitoringExporter, ExportFormat,
-    LeakDetector, AgingPolicy, RecyclingStrategy,
+    AgingPolicy, ConnectionFactory, ConnectionPool, DashboardProvider, ExportFormat, LeakDetector,
+    MonitoringExporter, PartitionLimits, PartitionManager, PartitionRequest, PartitionType,
+    PoolConfig, PoolError, RecyclingStrategy, RoutingStrategy,
 };
 use rusty_db::Result;
 use std::sync::Arc;
 use std::time::Duration;
-use async_trait::async_trait;
 
 // Example connection type
 #[derive(Debug, Clone)]
@@ -101,7 +100,8 @@ async fn basic_pool_example() -> std::result::Result<(), Box<dyn std::error::Err
     });
 
     // Create pool
-    let pool = ConnectionPool::new(config, factory).await
+    let pool = ConnectionPool::new(config, factory)
+        .await
         .map_err(|e| format!("Failed to create pool: {}", e))?;
 
     println!("\nPool created successfully!");
@@ -146,7 +146,10 @@ async fn basic_pool_example() -> std::result::Result<(), Box<dyn std::error::Err
     println!("\nPool statistics:");
     println!("  - Connections created: {}", stats.connections_created);
     println!("  - Connections acquired: {}", stats.connections_acquired);
-    println!("  - Acquire success rate: {:.2}%", stats.success_rate * 100.0);
+    println!(
+        "  - Acquire success rate: {:.2}%",
+        stats.success_rate * 100.0
+    );
     println!("  - Average acquire time: {:?}", stats.average_acquire_time);
 
     println!("\n");
@@ -159,9 +162,8 @@ async fn partitioned_pool_example() -> std::result::Result<(), Box<dyn std::erro
     println!("----------------------------------");
 
     // Create partition manager
-    let partition_manager = PartitionManager::<DatabaseConnection>::new(
-        RoutingStrategy::TenantBased
-    );
+    let partition_manager =
+        PartitionManager::<DatabaseConnection>::new(RoutingStrategy::TenantBased);
 
     // Create partitions for different tenants
     let tenant1_limits = PartitionLimits {
@@ -237,7 +239,8 @@ async fn monitoring_example() -> std::result::Result<(), Box<dyn std::error::Err
         connection_string: "rusty-db://localhost:5432/mydb".to_string(),
     });
 
-    let pool = ConnectionPool::new(config, factory).await
+    let pool = ConnectionPool::new(config, factory)
+        .await
         .map_err(|e| format!("Failed to create pool: {}", e))?;
 
     // Simulate some activity
@@ -276,8 +279,14 @@ async fn monitoring_example() -> std::result::Result<(), Box<dyn std::error::Err
     println!("    - Peak hour: {}", stats.usage_patterns.peak_hour);
 
     println!("\n  Efficiency Metrics:");
-    println!("    - Pool utilization: {:.2}%", stats.efficiency_metrics.pool_utilization * 100.0);
-    println!("    - Connection reuse rate: {:.2}%", stats.efficiency_metrics.connection_reuse_rate * 100.0);
+    println!(
+        "    - Pool utilization: {:.2}%",
+        stats.efficiency_metrics.pool_utilization * 100.0
+    );
+    println!(
+        "    - Connection reuse rate: {:.2}%",
+        stats.efficiency_metrics.connection_reuse_rate * 100.0
+    );
 
     // Export metrics in different formats
     println!("\n  Exporting metrics...");

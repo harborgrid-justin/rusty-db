@@ -38,7 +38,8 @@ async fn test_swagger_ui_accessible() {
             if let Some(content_type) = response.headers().get("content-type") {
                 let content_type_str = content_type.to_str().unwrap_or("");
                 assert!(
-                    content_type_str.contains("text/html") || content_type_str.contains("text/plain"),
+                    content_type_str.contains("text/html")
+                        || content_type_str.contains("text/plain"),
                     "Swagger UI should return HTML content, got: {}",
                     content_type_str
                 );
@@ -46,11 +47,11 @@ async fn test_swagger_ui_accessible() {
 
             // Check that response contains Swagger UI markers
             if let Ok(body) = response.text().await {
-                let has_swagger_markers = body.contains("swagger") ||
-                                         body.contains("Swagger") ||
-                                         body.contains("openapi") ||
-                                         body.contains("OpenAPI") ||
-                                         body.contains("api-docs");
+                let has_swagger_markers = body.contains("swagger")
+                    || body.contains("Swagger")
+                    || body.contains("openapi")
+                    || body.contains("OpenAPI")
+                    || body.contains("api-docs");
 
                 assert!(
                     has_swagger_markers,
@@ -99,10 +100,7 @@ async fn test_openapi_spec_valid() {
             match response.json::<Value>().await {
                 Ok(spec) => {
                     // Validate OpenAPI spec structure
-                    assert!(
-                        spec.is_object(),
-                        "OpenAPI spec should be a JSON object"
-                    );
+                    assert!(spec.is_object(), "OpenAPI spec should be a JSON object");
 
                     // Check for required OpenAPI fields
                     assert!(
@@ -170,12 +168,8 @@ async fn test_all_endpoints_documented() {
             if let Ok(spec) = response.json::<Value>().await {
                 if let Some(paths) = spec.get("paths").and_then(|p| p.as_object()) {
                     // List of critical endpoints that should be documented
-                    let expected_endpoints = vec![
-                        "/health",
-                        "/api/query",
-                        "/api/tables",
-                        "/api/execute",
-                    ];
+                    let expected_endpoints =
+                        vec!["/health", "/api/query", "/api/tables", "/api/execute"];
 
                     let mut found_endpoints = 0;
                     let mut missing_endpoints = Vec::new();
@@ -183,9 +177,9 @@ async fn test_all_endpoints_documented() {
                     for endpoint in &expected_endpoints {
                         // Check for exact match or pattern match
                         let found = paths.keys().any(|path| {
-                            path == endpoint ||
-                            path.starts_with(endpoint) ||
-                            endpoint.contains(path.as_str())
+                            path == endpoint
+                                || path.starts_with(endpoint)
+                                || endpoint.contains(path.as_str())
                         });
 
                         if found {
@@ -197,9 +191,9 @@ async fn test_all_endpoints_documented() {
                     }
 
                     // Also check for WebSocket endpoint
-                    let has_ws_endpoint = paths.keys().any(|path| {
-                        path.contains("/ws") || path.contains("websocket")
-                    });
+                    let has_ws_endpoint = paths
+                        .keys()
+                        .any(|path| path.contains("/ws") || path.contains("websocket"));
 
                     if has_ws_endpoint {
                         println!("Found WebSocket endpoint in documentation");
@@ -207,7 +201,11 @@ async fn test_all_endpoints_documented() {
 
                     println!("\nEndpoint documentation summary:");
                     println!("Total endpoints documented: {}", paths.len());
-                    println!("Expected endpoints found: {}/{}", found_endpoints, expected_endpoints.len());
+                    println!(
+                        "Expected endpoints found: {}/{}",
+                        found_endpoints,
+                        expected_endpoints.len()
+                    );
 
                     if !missing_endpoints.is_empty() {
                         println!("Missing endpoints: {:?}", missing_endpoints);
@@ -229,7 +227,10 @@ async fn test_all_endpoints_documented() {
             }
         }
         Ok(response) => {
-            println!("OpenAPI spec endpoint returned status: {}", response.status());
+            println!(
+                "OpenAPI spec endpoint returned status: {}",
+                response.status()
+            );
         }
         Err(e) => {
             println!("OpenAPI spec endpoint not available: {:?}", e);
@@ -276,10 +277,10 @@ async fn test_security_schemes_defined() {
                         let has_bearer = schemes.values().any(|s| {
                             s.get("type")
                                 .and_then(|t| t.as_str())
-                                .map_or(false, |t| t == "http") &&
-                            s.get("scheme")
-                                .and_then(|s| s.as_str())
-                                .map_or(false, |s| s == "bearer")
+                                .map_or(false, |t| t == "http")
+                                && s.get("scheme")
+                                    .and_then(|s| s.as_str())
+                                    .map_or(false, |s| s == "bearer")
                         });
 
                         let has_oauth2 = schemes.values().any(|s| {
@@ -313,7 +314,10 @@ async fn test_security_schemes_defined() {
             }
         }
         Ok(response) => {
-            println!("OpenAPI spec endpoint returned status: {}", response.status());
+            println!(
+                "OpenAPI spec endpoint returned status: {}",
+                response.status()
+            );
         }
         Err(e) => {
             println!("OpenAPI spec endpoint not available: {:?}", e);
@@ -358,7 +362,10 @@ async fn test_openapi_servers_defined() {
             }
         }
         Ok(response) => {
-            println!("OpenAPI spec endpoint returned status: {}", response.status());
+            println!(
+                "OpenAPI spec endpoint returned status: {}",
+                response.status()
+            );
         }
         Err(e) => {
             println!("OpenAPI spec endpoint not available: {:?}", e);
@@ -423,7 +430,10 @@ async fn test_openapi_schemas_defined() {
             }
         }
         Ok(response) => {
-            println!("OpenAPI spec endpoint returned status: {}", response.status());
+            println!(
+                "OpenAPI spec endpoint returned status: {}",
+                response.status()
+            );
         }
         Err(e) => {
             println!("OpenAPI spec endpoint not available: {:?}", e);
@@ -487,7 +497,9 @@ async fn test_openapi_spec_structure() {
                 if let Ok(expected_content) = std::fs::read_to_string(expected_path) {
                     if let Ok(expected) = serde_json::from_str::<Value>(&expected_content) {
                         // Validate required fields match expected structure
-                        if let Some(required_fields) = expected.get("required_fields").and_then(|f| f.as_array()) {
+                        if let Some(required_fields) =
+                            expected.get("required_fields").and_then(|f| f.as_array())
+                        {
                             for field in required_fields {
                                 if let Some(field_path) = field.as_str() {
                                     let parts: Vec<&str> = field_path.split('.').collect();
@@ -523,7 +535,10 @@ async fn test_openapi_spec_structure() {
             }
         }
         Ok(response) => {
-            println!("OpenAPI spec endpoint returned status: {}", response.status());
+            println!(
+                "OpenAPI spec endpoint returned status: {}",
+                response.status()
+            );
         }
         Err(e) => {
             println!("OpenAPI spec endpoint not available: {:?}", e);

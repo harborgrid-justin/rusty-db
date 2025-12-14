@@ -44,251 +44,224 @@
 // ```
 
 // Refactored modular API structure
-pub mod rest;
+pub mod enterprise;
+pub mod gateway;
 pub mod graphql;
 pub mod monitoring;
-pub mod gateway;
-pub mod enterprise;
+pub mod rest;
 
 // For backward compatibility, create module aliases
-pub use rest as rest_api;
-pub use graphql as graphql_api;
 pub use enterprise as enterprise_integration;
+pub use graphql as graphql_api;
+pub use rest as rest_api;
 
-pub use rest::{
-    RestApiServer,
-    ApiConfig,
-    ApiError,
-    ApiResult,
-};
+pub use rest::{ApiConfig, ApiError, ApiResult, RestApiServer};
 
 pub use monitoring::{
-    MonitoringApi,
-    MonitoringConfig,
-    MetricsRegistry,
-    HealthCheckCoordinator,
-    AlertManager,
-    DashboardManager,
-    PrometheusExporter,
-    TimeSeriesDatabase,
-    HealthStatus,
-    HealthCheckResult,
-    Alert,
-    AlertSeverity,
-    Dashboard,
-    TimeSeriesQuery,
-    TimeSeriesResult,
-    ExportFormat,
+    Alert, AlertManager, AlertSeverity, Dashboard, DashboardManager, ExportFormat,
+    HealthCheckCoordinator, HealthCheckResult, HealthStatus, MetricsRegistry, MonitoringApi,
+    MonitoringConfig, PrometheusExporter, TimeSeriesDatabase, TimeSeriesQuery, TimeSeriesResult,
 };
 
 pub use gateway::{
-    ApiGateway,
-    GatewayConfig,
-    ApiRequest,
-    ApiResponse,
-    Route,
-    BackendService,
-    Protocol,
-    Session,
-    RateLimitConfig,
-    RateLimitType,
-    GatewayMetrics,
+    ApiGateway, ApiRequest, ApiResponse, BackendService, GatewayConfig, GatewayMetrics, Protocol,
+    RateLimitConfig, RateLimitType, Route, Session,
 };
 
 pub use graphql::{
     // Schema building
     build_schema,
     build_schema_with_config,
-    SchemaConfig,
-
-    // Root types
-    QueryRoot,
-    MutationRoot,
-    SubscriptionRoot,
-
-    // Core engine
-    GraphQLEngine,
-
-    // Schema types
-    DatabaseSchema,
-    TableType,
-    ColumnType,
-    RowType,
-    FieldValue,
-    DataType,
-    IndexInfo,
-    ConstraintInfo,
-
-    // Scalar types
-    DateTime,
-    Json,
-    Binary,
+    AggregateChange,
+    AggregateFunc,
+    AggregateInput,
+    AggregateResult,
+    ArgumentInfo,
+    AuthorizationContext,
+    BatchExecutor,
     BigInt,
 
-    // Enums
-    SortOrder,
-    FilterOp,
-    AggregateFunc,
-    JoinType,
-    IsolationLevel,
+    Binary,
+    BuiltMutation,
+    BuiltQuery,
     ChangeType,
 
-    // Input types
-    FilterCondition,
-    WhereClause,
-    OrderBy,
-    AggregateInput,
-    JoinInput,
-    TransactionOperation,
-    TransactionOpType,
-
-    // Result types
-    QueryResult,
-    QuerySuccess,
-    QueryError,
-    MutationResult,
-    MutationSuccess,
-    MutationError,
-    AggregateResult,
-    TransactionResult,
-    TransactionExecutionResult,
-
-    // Pagination
-    PageInfo,
-    RowEdge,
-    RowConnection,
-
-    // Statistics
-    TableStatistics,
     ColumnStatistics,
-    HistogramBucket,
-
-    // Search
-    SearchResult,
-    SearchMatch,
-
-    // Query planning
-    QueryPlan,
-    PlanOperation,
-
-    // Subscription events
-    TableChange,
-    RowInserted,
-    RowUpdated,
-    RowDeleted,
-    RowChange,
-    AggregateChange,
-    QueryChange,
-    Heartbeat,
-
-    // Subscription management
-    SubscriptionManager,
-    SubscriptionInfo,
-
+    ColumnType,
     // Performance & Security
     ComplexityAnalyzer,
     ComplexityMetrics,
-    RateLimiter as GraphQLRateLimiter,
-    RateLimit,
-    AuthorizationContext,
-    QueryCache,
+    ConstraintInfo,
+
     DataLoader,
-    PersistedQueries,
-    PerformanceExtension,
+    DataType,
+    // Schema types
+    DatabaseSchema,
+    // Scalar types
+    DateTime,
     DepthLimitExtension,
+
+    FieldInfo,
+    FieldValue,
+    // Input types
+    FilterCondition,
+    FilterEvaluator,
+    FilterOp,
+    // Core engine
+    GraphQLEngine,
+
+    Heartbeat,
+
+    HistogramBucket,
+
+    IndexInfo,
+    IsolationLevel,
+    JoinInput,
+    JoinType,
+    Json,
+    Metrics,
+    MetricsCollector,
+    MutationBuilder,
+    MutationError,
+    MutationOperation,
+    MutationResult,
+    MutationRoot,
+    MutationSuccess,
+    OptimizationSuggestions,
+    OrderBy,
+    // Pagination
+    PageInfo,
+    PerformanceExtension,
+    PersistedQueries,
+    PlanOperation,
 
     // Utilities & Helpers
     QueryBuilder,
-    BuiltQuery,
-    MutationBuilder,
-    BuiltMutation,
-    MutationOperation,
+    QueryCache,
+    QueryChange,
+    QueryError,
+    QueryOptimizer,
+    // Query planning
+    QueryPlan,
+    // Result types
+    QueryResult,
+    // Root types
+    QueryRoot,
+    QuerySuccess,
+    RateLimit,
+    RateLimiter as GraphQLRateLimiter,
+    RequestValidator,
+    ResultFormatter,
+    RowChange,
+    RowConnection,
+
+    RowDeleted,
+    RowEdge,
+    RowInserted,
+    RowType,
+    RowUpdated,
+    SchemaConfig,
+
     SchemaIntrospector,
+    SearchMatch,
+
+    // Search
+    SearchResult,
+    // Enums
+    SortOrder,
+    SubscriptionInfo,
+
+    // Subscription management
+    SubscriptionManager,
+    SubscriptionRoot,
+
+    // Subscription events
+    TableChange,
+    // Statistics
+    TableStatistics,
+    TableStats,
+    TableType,
+    TransactionExecutionResult,
+
+    TransactionOpType,
+
+    TransactionOperation,
+    TransactionResult,
     TypeInfo,
     TypeKind,
-    FieldInfo,
-    ArgumentInfo,
-    QueryOptimizer,
-    OptimizationSuggestions,
-    TableStats,
-    RequestValidator,
-    BatchExecutor,
-    ResultFormatter,
-    FilterEvaluator,
-    MetricsCollector,
-    Metrics,
+    WhereClause,
 };
 
 // Enterprise Integration exports
 pub use enterprise::{
-    // Main integrator
-    EnterpriseIntegrator,
-    IntegratorConfig,
-
-    // Service Registry
-    ServiceRegistry,
-    ServiceMetadata,
-    ServiceState,
-    ServiceRegistration,
-    ServiceLifecycleHandler,
-    HealthCheck,
-    HealthCheckStatus,
-    DependencyContainer,
-    FeatureFlagManager,
-    VersionCompatibilityChecker,
-    ConfigurationAggregator,
-
-    // Cross-Cutting Concerns
-    CorrelationId,
-    TraceContext,
-    Span,
-    DistributedTracingManager,
+    ApiGatewayCoordinator,
+    ApiVersionManager,
+    BackwardCompatibilityLayer,
+    BatchRequest,
+    BatchRequestHandler,
+    BatchResponse,
     CentralizedLogger,
-    LogLevel,
-    LogEntry,
-    ErrorHandlingPolicy,
-    RetryPolicyExecutor,
     CircuitBreaker,
     CircuitBreakerCoordinator,
     CircuitState,
 
-    // Resource Orchestration
-    ResourceBudget,
-    ResourceOrchestrator,
-    MemoryBudgetAllocator,
+    ConfigurationAggregator,
+
     ConnectionQuotaManager,
-    ThreadPoolCoordinator,
-    IoScheduler,
+    // Cross-Cutting Concerns
+    CorrelationId,
+    DependencyContainer,
+    DistributedTracingManager,
+    // Main integrator
+    EnterpriseIntegrator,
+    ErrorHandlingPolicy,
+    FeatureFlagManager,
+    HealthCheck,
+    HealthCheckStatus,
+    HotReloadManager,
+    IntegratorConfig,
+
     IoOperation,
     IoOperationType,
+    IoScheduler,
+    LogEntry,
+    LogLevel,
+    MemoryBudgetAllocator,
     PriorityManager,
+    RateLimiter,
+
+    RecoveryOrchestrator,
+    // Resource Orchestration
+    ResourceBudget,
     ResourceContentionHandler,
 
+    ResourceOrchestrator,
+    ResourceUsageSnapshot,
+    RetryPolicyExecutor,
+    RollingUpgradeCoordinator,
+    ServiceLifecycleHandler,
+    ServiceMetadata,
+    ServiceRegistration,
+    // Service Registry
+    ServiceRegistry,
+    ServiceState,
+    ShutdownCoordinator,
+    ShutdownPhase,
+    Span,
+    StartupOrchestrator,
+    StartupPhase,
+    StatePersistenceManager,
+    // Health and Status
+    SystemHealthStatus,
+    SystemLifecycleManager,
+    // Lifecycle Management
+    SystemState,
+    ThreadPoolCoordinator,
+    TraceContext,
     // API Facade
     UnifiedApiRequest,
     UnifiedApiResponse,
-    BatchRequestHandler,
-    BatchRequest,
-    BatchResponse,
-    ApiVersionManager,
-    BackwardCompatibilityLayer,
-    ApiGatewayCoordinator,
-    RateLimiter,
-
-    // Lifecycle Management
-    SystemState,
-    SystemLifecycleManager,
-    StartupOrchestrator,
-    ShutdownCoordinator,
-    HotReloadManager,
-    RollingUpgradeCoordinator,
-    StatePersistenceManager,
-    RecoveryOrchestrator,
-    StartupPhase,
-    ShutdownPhase,
     UpgradeState,
 
-    // Health and Status
-    SystemHealthStatus,
-    ResourceUsageSnapshot,
+    VersionCompatibilityChecker,
 };

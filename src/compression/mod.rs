@@ -2,15 +2,14 @@
 // Provides enterprise-grade compression capabilities for RustyDB
 
 pub mod algorithms;
+pub mod dedup;
 pub mod hcc;
 pub mod oltp;
-pub mod dedup;
 pub mod tiered;
 
-use std::sync::Arc;
 use std::error::Error;
 use std::fmt;
-
+use std::sync::Arc;
 
 // Compression level from 0 (none) to 9 (maximum)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -78,9 +77,15 @@ impl fmt::Display for CompressionError {
         match self {
             CompressionError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
             CompressionError::CompressionFailed(msg) => write!(f, "Compression failed: {}", msg),
-            CompressionError::DecompressionFailed(msg) => write!(f, "Decompression failed: {}", msg),
+            CompressionError::DecompressionFailed(msg) => {
+                write!(f, "Decompression failed: {}", msg)
+            }
             CompressionError::BufferTooSmall(required, available) => {
-                write!(f, "Buffer too small: need {} bytes, have {}", required, available)
+                write!(
+                    f,
+                    "Buffer too small: need {} bytes, have {}",
+                    required, available
+                )
             }
             CompressionError::UnsupportedAlgorithm(algo) => {
                 write!(f, "Unsupported algorithm: {}", algo)
@@ -134,7 +139,8 @@ impl CompressionStats {
         if self.compression_time_us == 0 {
             0.0
         } else {
-            (self.uncompressed_size as f64 / 1_048_576.0) / (self.compression_time_us as f64 / 1_000_000.0)
+            (self.uncompressed_size as f64 / 1_048_576.0)
+                / (self.compression_time_us as f64 / 1_000_000.0)
         }
     }
 
@@ -142,7 +148,8 @@ impl CompressionStats {
         if self.decompression_time_us == 0 {
             0.0
         } else {
-            (self.uncompressed_size as f64 / 1_048_576.0) / (self.decompression_time_us as f64 / 1_000_000.0)
+            (self.uncompressed_size as f64 / 1_048_576.0)
+                / (self.decompression_time_us as f64 / 1_000_000.0)
         }
     }
 }
@@ -197,10 +204,18 @@ pub trait StreamingCompressor: Send + Sync {
 // Columnar compression trait for HCC
 pub trait ColumnarCompressor: Send + Sync {
     // Transform row-major data to column-major format
-    fn transform_to_columnar(&self, rows: &[Vec<u8>], num_columns: usize) -> CompressionResult<Vec<Vec<u8>>>;
+    fn transform_to_columnar(
+        &self,
+        rows: &[Vec<u8>],
+        num_columns: usize,
+    ) -> CompressionResult<Vec<Vec<u8>>>;
 
     // Transform column-major data back to row-major format
-    fn transform_to_rows(&self, columns: &[Vec<u8>], num_rows: usize) -> CompressionResult<Vec<Vec<u8>>>;
+    fn transform_to_rows(
+        &self,
+        columns: &[Vec<u8>],
+        num_rows: usize,
+    ) -> CompressionResult<Vec<Vec<u8>>>;
 
     // Compress a single column
     fn compress_column(&self, column: &[u8], output: &mut [u8]) -> CompressionResult<usize>;
@@ -277,7 +292,10 @@ pub trait TieredCompressionManager: Send + Sync {
     fn migrate_block(&mut self, block_id: u64, new_temp: DataTemperature) -> CompressionResult<()>;
 
     // Get compression recommendation for a block
-    fn get_compression_recommendation(&self, block_id: u64) -> (CompressionAlgorithm, CompressionLevel);
+    fn get_compression_recommendation(
+        &self,
+        block_id: u64,
+    ) -> (CompressionAlgorithm, CompressionLevel);
 
     // Get tier statistics
     fn tier_stats(&self) -> TierStats;
@@ -345,8 +363,12 @@ pub struct CompressionMetadata {
 }
 
 impl CompressionMetadata {
-    pub fn new(algorithm: CompressionAlgorithm, level: CompressionLevel,
-               uncompressed_size: usize, compressed_size: usize) -> Self {
+    pub fn new(
+        algorithm: CompressionAlgorithm,
+        level: CompressionLevel,
+        uncompressed_size: usize,
+        compressed_size: usize,
+    ) -> Self {
         Self {
             algorithm,
             level,
@@ -375,16 +397,18 @@ impl CompressionMetadata {
     // Deserialize metadata from bytes
     pub fn from_bytes(bytes: &[u8]) -> CompressionResult<Self> {
         if bytes.len() < 32 {
-            return Err(CompressionError::InvalidMetadata(
-                format!("Metadata too short: {} bytes", bytes.len())
-            ));
+            return Err(CompressionError::InvalidMetadata(format!(
+                "Metadata too short: {} bytes",
+                bytes.len()
+            )));
         }
 
         let version = bytes[0];
         if version != 1 {
-            return Err(CompressionError::InvalidMetadata(
-                format!("Unsupported metadata version: {}", version)
-            ));
+            return Err(CompressionError::InvalidMetadata(format!(
+                "Unsupported metadata version: {}",
+                version
+            )));
         }
 
         let algorithm = match bytes[1] {
@@ -396,9 +420,12 @@ impl CompressionMetadata {
             5 => CompressionAlgorithm::Huffman,
             6 => CompressionAlgorithm::Adaptive,
             7 => CompressionAlgorithm::HCC,
-            _ => return Err(CompressionError::InvalidMetadata(
-                format!("Unknown algorithm: {}", bytes[1])
-            )),
+            _ => {
+                return Err(CompressionError::InvalidMetadata(format!(
+                    "Unknown algorithm: {}",
+                    bytes[1]
+                )))
+            }
         };
 
         let level = CompressionLevel::from(bytes[2]);
@@ -519,7 +546,10 @@ pub mod utils {
 
 #[cfg(test)]
 mod tests {
-    use crate::compression::{utils, CompressionAlgorithm, CompressionLevel, CompressionMetadata, CompressionStats, DataTemperature};
+    use crate::compression::{
+        utils, CompressionAlgorithm, CompressionLevel, CompressionMetadata, CompressionStats,
+        DataTemperature,
+    };
 
     #[test]
     fn test_compression_stats() {

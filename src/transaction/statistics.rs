@@ -139,7 +139,10 @@ impl TransactionStatistics {
         }
         latencies.sort_unstable();
         let idx = (latencies.len() as f64 * 0.99) as usize;
-        latencies.get(idx.min(latencies.len() - 1)).copied().unwrap_or(0)
+        latencies
+            .get(idx.min(latencies.len() - 1))
+            .copied()
+            .unwrap_or(0)
     }
 }
 

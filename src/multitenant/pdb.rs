@@ -20,15 +20,15 @@
 // - **Closed**: PDB is completely closed
 // - **Migrating**: PDB is being migrated
 
-use std::fmt;
+use super::isolation::ResourceLimits;
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
-use super::isolation::ResourceLimits;
 
 // Unique identifier for a Pluggable Database
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -396,7 +396,10 @@ impl ApplicationContainer {
 
     // Add a child PDB
     pub async fn add_child(&self, child_id: PdbId, child: PluggableDatabase) -> Result<()> {
-        self.children.write().await.insert(child_id, Arc::new(RwLock::new(child)));
+        self.children
+            .write()
+            .await
+            .insert(child_id, Arc::new(RwLock::new(child)));
         Ok(())
     }
 
@@ -548,8 +551,10 @@ impl PluggableDatabase {
         };
 
         // Initialize default tablespaces
-        pdb.create_tablespace(&config.default_tablespace, 100 * 1024 * 1024).await?;
-        pdb.create_tablespace(&config.temp_tablespace, 50 * 1024 * 1024).await?;
+        pdb.create_tablespace(&config.default_tablespace, 100 * 1024 * 1024)
+            .await?;
+        pdb.create_tablespace(&config.temp_tablespace, 50 * 1024 * 1024)
+            .await?;
 
         // Create admin user
         pdb.create_user(PdbUser {
@@ -558,8 +563,12 @@ impl PluggableDatabase {
             default_tablespace: config.default_tablespace.clone(),
             temp_tablespace: config.temp_tablespace.clone(),
             locked: false,
-            created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
-        }).await?;
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        })
+        .await?;
 
         // Update state to Closed
         *pdb.state.write().await = PdbLifecycleState::Closed;
@@ -596,11 +605,12 @@ impl PluggableDatabase {
     pub async fn open_with_mode(&mut self, mode: PdbMode) -> Result<()> {
         let current_state = *self.state.read().await;
 
-        if current_state != PdbLifecycleState::Closed
-            && current_state != PdbLifecycleState::Mounted {
-            return Err(DbError::InvalidState(
-                format!("Cannot open PDB in state: {:?}", current_state)
-            ));
+        if current_state != PdbLifecycleState::Closed && current_state != PdbLifecycleState::Mounted
+        {
+            return Err(DbError::InvalidState(format!(
+                "Cannot open PDB in state: {:?}",
+                current_state
+            )));
         }
 
         // Mount first if not mounted
@@ -663,7 +673,10 @@ impl PluggableDatabase {
             max_size_bytes: size_bytes * 10, // 10x initial size
         };
 
-        self.tablespaces.write().await.insert(name.to_string(), tablespace);
+        self.tablespaces
+            .write()
+            .await
+            .insert(name.to_string(), tablespace);
         self.metadata.write().await.tablespace_count += 1;
 
         Ok(())
@@ -686,7 +699,10 @@ impl PluggableDatabase {
             id: snapshot_id,
             name: name.to_string(),
             source_pdb_id: PdbId::new(0), // Will be set by caller
-            created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             scn,
             size_bytes: self.metadata.read().await.total_size_bytes,
             snapshot_type: SnapshotType::Full,
@@ -780,9 +796,10 @@ impl PluggableDatabase {
         let quota = self.config.resource_limits.storage_quota_bytes;
 
         if metadata.total_size_bytes >= quota {
-            return Err(DbError::QuotaExceeded(
-                format!("Storage quota exceeded: {} >= {}", metadata.total_size_bytes, quota)
-            ));
+            return Err(DbError::QuotaExceeded(format!(
+                "Storage quota exceeded: {} >= {}",
+                metadata.total_size_bytes, quota
+            )));
         }
 
         Ok(())
@@ -794,7 +811,7 @@ impl PluggableDatabase {
 
         if current_state != PdbLifecycleState::Closed {
             return Err(DbError::InvalidState(
-                "PDB must be closed to rename".to_string()
+                "PDB must be closed to rename".to_string(),
             ));
         }
 
@@ -818,7 +835,7 @@ impl PluggableDatabase {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_pdb_creation() {

@@ -1,10 +1,13 @@
 // Adaptive Compression - Intelligently selects best algorithm
 
-use crate::compression::{Compressor, CompressionLevel, CompressionAlgorithm, CompressionResult, CompressionStats, CompressionError, utils};
-use super::lz4_compression::LZ4Compressor;
-use super::zstd_compression::{ZstdCompressor, HuffmanCompressor};
-use super::dictionary_compression::DictionaryCompressor;
 use super::column_encodings::*;
+use super::dictionary_compression::DictionaryCompressor;
+use super::lz4_compression::LZ4Compressor;
+use super::zstd_compression::{HuffmanCompressor, ZstdCompressor};
+use crate::compression::{
+    utils, CompressionAlgorithm, CompressionError, CompressionLevel, CompressionResult,
+    CompressionStats, Compressor,
+};
 use parking_lot::Mutex;
 use std::sync::Arc;
 
@@ -78,9 +81,10 @@ impl Compressor for AdaptiveCompressor {
         let compressor_idx = input[0] as usize;
 
         if compressor_idx >= self.compressors.len() {
-            return Err(CompressionError::UnsupportedAlgorithm(
-                format!("Invalid algorithm index: {}", compressor_idx)
-            ));
+            return Err(CompressionError::UnsupportedAlgorithm(format!(
+                "Invalid algorithm index: {}",
+                compressor_idx
+            )));
         }
 
         let decompressed_size = self.compressors[compressor_idx].decompress(&input[1..], output)?;
@@ -140,7 +144,10 @@ impl CascadedCompressor {
             return 0;
         }
 
-        let unique_count = values.iter().collect::<std::collections::HashSet<_>>().len();
+        let unique_count = values
+            .iter()
+            .collect::<std::collections::HashSet<_>>()
+            .len();
         if unique_count < values.len() / 4 {
             return 3; // RLE
         }
@@ -208,40 +215,43 @@ impl CascadedCompressor {
         Ok(result)
     }
 
-pub fn decompress_u32(&self, compressed: &[u8]) -> CompressionResult<Vec<u32>> {
-            if compressed.is_empty() {
-                return Ok(Vec::new());
-            }
-
-            let encoding = compressed[0];
-            let data = &compressed[1..];
-
-            let values = match encoding {
-                1 => self.for_encoder.decode(data)?,
-                2 => self.delta_encoder.decode(data)?,
-                3 => self.rle_encoder.decode_u32(data)?,
-                4 => {
-                    let estimated_size = data.len() * 4;
-                    let mut decompressed = vec![0u8; estimated_size];
-                    let size = self.lz4_compressor.decompress(data, &mut decompressed)?;
-                    decompressed.truncate(size);
-
-                    let mut values = Vec::new();
-                    for chunk in decompressed.chunks_exact(4) {
-                        values.push(u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
-                    }
-                    values
-                }
-                _ => return Err(CompressionError::UnsupportedAlgorithm(
-                    format!("Unknown encoding: {}", encoding)
-                )),
-            };
-
-            let mut stats = self.stats.lock();
-            stats.blocks_decompressed += 1;
-
-            Ok(values)
+    pub fn decompress_u32(&self, compressed: &[u8]) -> CompressionResult<Vec<u32>> {
+        if compressed.is_empty() {
+            return Ok(Vec::new());
         }
+
+        let encoding = compressed[0];
+        let data = &compressed[1..];
+
+        let values = match encoding {
+            1 => self.for_encoder.decode(data)?,
+            2 => self.delta_encoder.decode(data)?,
+            3 => self.rle_encoder.decode_u32(data)?,
+            4 => {
+                let estimated_size = data.len() * 4;
+                let mut decompressed = vec![0u8; estimated_size];
+                let size = self.lz4_compressor.decompress(data, &mut decompressed)?;
+                decompressed.truncate(size);
+
+                let mut values = Vec::new();
+                for chunk in decompressed.chunks_exact(4) {
+                    values.push(u32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]));
+                }
+                values
+            }
+            _ => {
+                return Err(CompressionError::UnsupportedAlgorithm(format!(
+                    "Unknown encoding: {}",
+                    encoding
+                )))
+            }
+        };
+
+        let mut stats = self.stats.lock();
+        stats.blocks_decompressed += 1;
+
+        Ok(values)
+    }
 }
 
 impl Default for CascadedCompressor {
@@ -262,7 +272,9 @@ mod tests {
         let mut decompressed = vec![0u8; input.len()];
 
         let comp_size = compressor.compress(input, &mut compressed).unwrap();
-        let decomp_size = compressor.decompress(&compressed[..comp_size], &mut decompressed).unwrap();
+        let decomp_size = compressor
+            .decompress(&compressed[..comp_size], &mut decompressed)
+            .unwrap();
 
         assert_eq!(&decompressed[..decomp_size], input);
     }

@@ -6,13 +6,12 @@
 // - Recovery from total cluster failure
 // - Seed node discovery
 
-use crate::error::{DbError, Result};
 use crate::common::NodeId;
-use crate::networking::membership::{
-    NodeInfo, MembershipConfig, MembershipCoordinator,
-    RaftMembership, SwimMembership,
-};
+use crate::error::{DbError, Result};
 use crate::networking::membership::view::ViewManager;
+use crate::networking::membership::{
+    MembershipConfig, MembershipCoordinator, NodeInfo, RaftMembership, SwimMembership,
+};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -97,10 +96,8 @@ impl BootstrapManager {
         );
 
         // Initialize Raft as leader (single node)
-        let (mut raft, _raft_rx) = RaftMembership::new(
-            self.config.node_id.clone(),
-            self.config.raft_config.clone(),
-        );
+        let (mut raft, _raft_rx) =
+            RaftMembership::new(self.config.node_id.clone(), self.config.raft_config.clone());
 
         // Start Raft
         raft.start().await?;
@@ -121,10 +118,8 @@ impl BootstrapManager {
         self.view_manager.add_node(local_node.clone()).await?;
 
         // Create coordinator
-        let (mut coordinator, _event_rx) = MembershipCoordinator::new(
-            self.config.clone(),
-            self.view_manager.clone(),
-        );
+        let (mut coordinator, _event_rx) =
+            MembershipCoordinator::new(self.config.clone(), self.view_manager.clone());
 
         // Initialize coordinator
         coordinator.initialize(raft, swim).await?;
@@ -172,14 +167,14 @@ impl BootstrapManager {
 
         if !join_accepted {
             self.state = BootstrapState::Failed("Join request rejected".to_string());
-            return Err(DbError::Cluster("Join request rejected by leader".to_string()));
+            return Err(DbError::Cluster(
+                "Join request rejected by leader".to_string(),
+            ));
         }
 
         // Initialize Raft as follower
-        let (mut raft, _raft_rx) = RaftMembership::new(
-            self.config.node_id.clone(),
-            self.config.raft_config.clone(),
-        );
+        let (mut raft, _raft_rx) =
+            RaftMembership::new(self.config.node_id.clone(), self.config.raft_config.clone());
 
         raft.start().await?;
 
@@ -196,10 +191,8 @@ impl BootstrapManager {
         self.view_manager.add_node(local_node.clone()).await?;
 
         // Create coordinator
-        let (mut coordinator, _event_rx) = MembershipCoordinator::new(
-            self.config.clone(),
-            self.view_manager.clone(),
-        );
+        let (mut coordinator, _event_rx) =
+            MembershipCoordinator::new(self.config.clone(), self.view_manager.clone());
 
         // Initialize coordinator
         coordinator.initialize(raft, swim).await?;
@@ -272,10 +265,7 @@ impl BootstrapManager {
         tokio::time::sleep(Duration::from_millis(100)).await;
 
         // Simulate response with leader info
-        Ok((
-            format!("leader-{}", seed_addr.port()),
-            *seed_addr,
-        ))
+        Ok((format!("leader-{}", seed_addr.port()), *seed_addr))
     }
 
     /// Send join request to cluster leader

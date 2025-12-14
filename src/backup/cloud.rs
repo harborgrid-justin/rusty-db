@@ -1,19 +1,19 @@
 // Cloud Backup Integration - Multi-cloud backup with S3/Azure/GCS support
 // Provides multipart upload, bandwidth throttling, and resumable transfers
 
-use std::time::Instant;
-use std::collections::VecDeque;
-use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::fs::{File, metadata};
-use std::io::{Read, Write};
-use std::time::{SystemTime};
-use std::collections::{HashMap};
-use parking_lot::{Mutex, RwLock};
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::{Mutex, RwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fs::{metadata, File};
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // Cloud storage provider
 #[repr(C)]
@@ -105,10 +105,20 @@ pub struct UploadPart {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum UploadStatus {
     Pending,
-    Uploading { progress_pct: f64, bytes_uploaded: u64 },
-    Paused { bytes_uploaded: u64 },
-    Completed { duration_secs: u64 },
-    Failed { error: String, retry_count: u32 },
+    Uploading {
+        progress_pct: f64,
+        bytes_uploaded: u64,
+    },
+    Paused {
+        bytes_uploaded: u64,
+    },
+    Completed {
+        duration_secs: u64,
+    },
+    Failed {
+        error: String,
+        retry_count: u32,
+    },
 }
 
 // Upload session for resumable uploads
@@ -128,7 +138,13 @@ pub struct UploadSession {
 }
 
 impl UploadSession {
-    pub fn new(session_id: String, backup_id: String, source_path: PathBuf, cloud_key: String, total_size_bytes: u64) -> Self {
+    pub fn new(
+        session_id: String,
+        backup_id: String,
+        source_path: PathBuf,
+        cloud_key: String,
+        total_size_bytes: u64,
+    ) -> Self {
         Self {
             session_id,
             backup_id,
@@ -210,7 +226,8 @@ impl BandwidthThrottler {
         let now = Instant::now();
         let transfers = self.bytes_transferred.lock();
 
-        let total_bytes: u64 = transfers.iter()
+        let total_bytes: u64 = transfers
+            .iter()
             .filter(|(time, _)| now.duration_since(*time) <= self.window_size)
             .map(|(_, bytes)| bytes)
             .sum();
@@ -272,12 +289,18 @@ impl CloudBackupManager {
         }
 
         // Store session
-        self.active_sessions.write().insert(session_id.clone(), session);
+        self.active_sessions
+            .write()
+            .insert(session_id.clone(), session);
 
         Ok(session_id)
     }
 
-    fn upload_single(&self, session: &mut UploadSession, storage_class: StorageClass) -> Result<()> {
+    fn upload_single(
+        &self,
+        session: &mut UploadSession,
+        storage_class: StorageClass,
+    ) -> Result<()> {
         session.status = UploadStatus::Uploading {
             progress_pct: 0.0,
             bytes_uploaded: 0,
@@ -291,7 +314,8 @@ impl CloudBackupManager {
         let mut total_uploaded = 0u64;
 
         loop {
-            let bytes_read = file.read(&mut buffer)
+            let bytes_read = file
+                .read(&mut buffer)
                 .map_err(|e| DbError::BackupError(format!("Failed to read file: {}", e)))?;
 
             if bytes_read == 0 {
@@ -317,7 +341,9 @@ impl CloudBackupManager {
         // Complete upload
         session.end_time = Some(SystemTime::now());
         session.status = UploadStatus::Completed {
-            duration_secs: session.end_time.unwrap()
+            duration_secs: session
+                .end_time
+                .unwrap()
                 .duration_since(session.start_time)
                 .unwrap_or_default()
                 .as_secs(),
@@ -339,12 +365,18 @@ impl CloudBackupManager {
             parts: Vec::new(),
         };
 
-        self.backups.write().insert(session.backup_id.clone(), cloud_backup);
+        self.backups
+            .write()
+            .insert(session.backup_id.clone(), cloud_backup);
 
         Ok(())
     }
 
-    fn upload_multipart(&self, session: &mut UploadSession, storage_class: StorageClass) -> Result<()> {
+    fn upload_multipart(
+        &self,
+        session: &mut UploadSession,
+        storage_class: StorageClass,
+    ) -> Result<()> {
         // Initiate multipart upload
         let multipart_id = self.initiate_multipart_upload(&session.cloud_key)?;
         session.multipart_upload_id = Some(multipart_id.clone());
@@ -358,13 +390,8 @@ impl CloudBackupManager {
         let mut parts = Vec::new();
 
         for part_num in 1..=num_parts {
-            let part_result = self.upload_part(
-                &mut file,
-                &multipart_id,
-                part_num,
-                chunk_size,
-                session,
-            )?;
+            let part_result =
+                self.upload_part(&mut file, &multipart_id, part_num, chunk_size, session)?;
 
             parts.push(part_result);
             session.parts_completed.push(part_num);
@@ -380,7 +407,9 @@ impl CloudBackupManager {
 
         session.end_time = Some(SystemTime::now());
         session.status = UploadStatus::Completed {
-            duration_secs: session.end_time.unwrap()
+            duration_secs: session
+                .end_time
+                .unwrap()
                 .duration_since(session.start_time)
                 .unwrap_or_default()
                 .as_secs(),
@@ -402,7 +431,9 @@ impl CloudBackupManager {
             parts,
         };
 
-        self.backups.write().insert(session.backup_id.clone(), cloud_backup);
+        self.backups
+            .write()
+            .insert(session.backup_id.clone(), cloud_backup);
 
         Ok(())
     }
@@ -416,7 +447,8 @@ impl CloudBackupManager {
         session: &mut UploadSession,
     ) -> Result<UploadPart> {
         let mut buffer = vec![0u8; chunk_size as usize];
-        let bytes_read = file.read(&mut buffer)
+        let bytes_read = file
+            .read(&mut buffer)
             .map_err(|e| DbError::BackupError(format!("Failed to read part: {}", e)))?;
 
         buffer.truncate(bytes_read);
@@ -447,7 +479,9 @@ impl CloudBackupManager {
                 Err(e) => {
                     last_error = Some(e);
                     attempts += 1;
-                    std::thread::sleep(Duration::from_millis(self.config.retry_delay_ms * attempts as u64));
+                    std::thread::sleep(Duration::from_millis(
+                        self.config.retry_delay_ms * attempts as u64,
+                    ));
                 }
             }
         }
@@ -455,7 +489,12 @@ impl CloudBackupManager {
         Err(last_error.unwrap_or_else(|| DbError::BackupError("Upload failed".to_string())))
     }
 
-    fn upload_part_with_retry(&self, _data: &[u8], multipart_id: &str, part_num: u32) -> Result<String> {
+    fn upload_part_with_retry(
+        &self,
+        _data: &[u8],
+        multipart_id: &str,
+        part_num: u32,
+    ) -> Result<String> {
         // Simulate part upload
         Ok(format!("ETAG-{}-{}", multipart_id, part_num))
     }
@@ -472,12 +511,17 @@ impl CloudBackupManager {
 
     // Download a backup from cloud storage
     pub fn download_backup(&self, backup_id: &str, destination_path: PathBuf) -> Result<()> {
-        let backup = self.backups.read().get(backup_id).cloned()
+        let backup = self
+            .backups
+            .read()
+            .get(backup_id)
+            .cloned()
             .ok_or_else(|| DbError::BackupError("Backup not found in cloud".to_string()))?;
 
         // Simulate download
-        let mut file = File::create(&destination_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?;
+        let mut file = File::create(&destination_path).map_err(|e| {
+            DbError::BackupError(format!("Failed to create destination file: {}", e))
+        })?;
 
         let mut downloaded = 0u64;
         let chunk_size = 1024 * 1024; // 1MB chunks
@@ -505,7 +549,8 @@ impl CloudBackupManager {
     // Resume a paused upload
     pub fn resume_upload(&self, session_id: &str) -> Result<()> {
         let mut sessions = self.active_sessions.write();
-        let session = sessions.get_mut(session_id)
+        let session = sessions
+            .get_mut(session_id)
             .ok_or_else(|| DbError::BackupError("Upload session not found".to_string()))?;
 
         if !matches!(session.status, UploadStatus::Paused { .. }) {
@@ -525,7 +570,8 @@ impl CloudBackupManager {
     // Pause an active upload
     pub fn pause_upload(&self, session_id: &str) -> Result<()> {
         let mut sessions = self.active_sessions.write();
-        let session = sessions.get_mut(session_id)
+        let session = sessions
+            .get_mut(session_id)
             .ok_or_else(|| DbError::BackupError("Upload session not found".to_string()))?;
 
         if let UploadStatus::Uploading { bytes_uploaded, .. } = session.status {
@@ -537,7 +583,10 @@ impl CloudBackupManager {
 
     // Delete a backup from cloud storage
     pub fn delete_cloud_backup(&self, backup_id: &str) -> Result<()> {
-        let _backup = self.backups.write().remove(backup_id)
+        let _backup = self
+            .backups
+            .write()
+            .remove(backup_id)
             .ok_or_else(|| DbError::BackupError("Backup not found".to_string()))?;
 
         // Simulate deletion from cloud

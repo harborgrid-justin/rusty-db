@@ -120,10 +120,7 @@ impl StaticListDiscovery {
 
         // Check if file exists
         if !file_path.exists() {
-            return Err(DbError::NotFound(format!(
-                "Seed file not found: {}",
-                path
-            )));
+            return Err(DbError::NotFound(format!("Seed file not found: {}", path)));
         }
 
         // Read file contents
@@ -236,10 +233,7 @@ impl ServiceDiscovery for StaticListDiscovery {
         let nodes = self.load_nodes().await?;
         *self.nodes.write().await = nodes;
 
-        tracing::info!(
-            "Loaded {} seed nodes",
-            self.nodes.read().await.len()
-        );
+        tracing::info!("Loaded {} seed nodes", self.nodes.read().await.len());
 
         // Start hot reload if enabled
         self.start_hot_reload();
@@ -308,8 +302,8 @@ impl ServiceDiscovery for StaticListDiscovery {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
     use super::*;
+    use std::time::Duration;
 
     #[tokio::test]
     async fn test_static_discovery_with_seeds() {

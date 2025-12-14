@@ -51,7 +51,11 @@ impl PerformanceCounter {
             fast_path_count: fast,
             medium_path_count: medium,
             slow_path_count: slow,
-            fast_path_ratio: if total > 0 { fast as f64 / total as f64 } else { 0.0 },
+            fast_path_ratio: if total > 0 {
+                fast as f64 / total as f64
+            } else {
+                0.0
+            },
             cache_conflicts: self.cache_conflicts.load(Ordering::Relaxed),
             tlb_misses: self.tlb_misses.load(Ordering::Relaxed),
             page_faults: self.page_faults.load(Ordering::Relaxed),
@@ -221,11 +225,11 @@ impl BandwidthMonitor {
             let elapsed_secs = elapsed.as_secs_f64();
             self.alloc_bandwidth.store(
                 (alloc_bytes as f64 / elapsed_secs) as u64,
-                Ordering::Relaxed
+                Ordering::Relaxed,
             );
             self.dealloc_bandwidth.store(
                 (dealloc_bytes as f64 / elapsed_secs) as u64,
-                Ordering::Relaxed
+                Ordering::Relaxed,
             );
 
             *last = now;

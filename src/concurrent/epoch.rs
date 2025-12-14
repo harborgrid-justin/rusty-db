@@ -7,7 +7,6 @@
 // by Hoffman et al. It allows safe reclamation of memory in lock-free structures
 // by tracking which threads are accessing which epoch.
 
-use std::sync::Mutex;
 use std::cell::{Cell, RefCell};
 use std::marker::PhantomData;
 use std::mem::{self};
@@ -15,6 +14,7 @@ use std::ops::{Deref, DerefMut};
 use std::ptr;
 use std::sync::atomic::{fence, AtomicPtr, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::Mutex;
 
 /// Number of epochs to track (3 provides enough lag for reclamation)
 const EPOCH_COUNT: usize = 3;
@@ -168,12 +168,9 @@ impl Epoch {
 
         if min_epoch == global {
             // All active participants have caught up, advance the epoch
-            GLOBAL_EPOCH.compare_exchange(
-                global,
-                global + 1,
-                Ordering::Release,
-                Ordering::Relaxed,
-            ).is_ok()
+            GLOBAL_EPOCH
+                .compare_exchange(global, global + 1, Ordering::Release, Ordering::Relaxed)
+                .is_ok()
         } else {
             false
         }
@@ -303,12 +300,10 @@ impl<T> Atomic<T> {
         failure: Ordering,
         _guard: &'g EpochGuard,
     ) -> Result<Shared<'g, T>, Shared<'g, T>> {
-        match self.ptr.compare_exchange(
-            current.ptr,
-            new.ptr,
-            success,
-            failure,
-        ) {
+        match self
+            .ptr
+            .compare_exchange(current.ptr, new.ptr, success, failure)
+        {
             Ok(ptr) => Ok(Shared {
                 ptr,
                 _marker: PhantomData,
@@ -329,12 +324,10 @@ impl<T> Atomic<T> {
         failure: Ordering,
         _guard: &'g EpochGuard,
     ) -> Result<Shared<'g, T>, Shared<'g, T>> {
-        match self.ptr.compare_exchange_weak(
-            current.ptr,
-            new.ptr,
-            success,
-            failure,
-        ) {
+        match self
+            .ptr
+            .compare_exchange_weak(current.ptr, new.ptr, success, failure)
+        {
             Ok(ptr) => Ok(Shared {
                 ptr,
                 _marker: PhantomData,
@@ -627,5 +620,3 @@ mod tests {
         assert!(count_after > count_before);
     }
 }
-
-

@@ -3,15 +3,15 @@
 // Real-time document change notifications with change stream cursors,
 // resume tokens, filtered streams, and document diff generation.
 
-use std::collections::VecDeque;
+use super::document::{Document, DocumentId};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::{Arc, RwLock};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
-use crate::error::Result;
-use super::document::{Document, DocumentId};
 
 // Change event type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -57,7 +57,7 @@ pub struct ChangeEvent {
     pub resume_token: ResumeToken,
     pub document_id: (),
     pub timestamp: (),
-    pub document: ()
+    pub document: (),
 }
 
 impl ChangeEvent {
@@ -111,11 +111,7 @@ impl ChangeEvent {
         old_doc: &Document,
         new_doc: &Document,
     ) -> Result<Self> {
-        let mut event = Self::new(
-            ChangeEventType::Update,
-            collection,
-            Some(document_id),
-        );
+        let mut event = Self::new(ChangeEventType::Update, collection, Some(document_id));
 
         let update_desc = UpdateDescription::generate(old_doc, new_doc)?;
         event.update_description = Some(update_desc);
@@ -178,14 +174,13 @@ impl ResumeToken {
         let parts: Vec<&str> = s.split(':').collect();
         if parts.len() != 2 {
             return Err(crate::error::DbError::InvalidInput(
-                "Invalid resume token format".to_string()
+                "Invalid resume token format".to_string(),
             ));
         }
 
-        let timestamp = parts[0].parse::<u64>()
-            .map_err(|_| crate::error::DbError::InvalidInput(
-                "Invalid timestamp in resume token".to_string()
-            ))?;
+        let timestamp = parts[0].parse::<u64>().map_err(|_| {
+            crate::error::DbError::InvalidInput("Invalid timestamp in resume token".to_string())
+        })?;
 
         Ok(Self {
             timestamp,
@@ -348,10 +343,7 @@ pub struct ChangeStreamCursor {
 
 impl ChangeStreamCursor {
     // Create a new cursor
-    pub fn new(
-        events: Arc<RwLock<VecDeque<ChangeEvent>>>,
-        filter: ChangeStreamFilter,
-    ) -> Self {
+    pub fn new(events: Arc<RwLock<VecDeque<ChangeEvent>>>, filter: ChangeStreamFilter) -> Self {
         Self {
             id: Uuid::new_v4().to_string(),
             position: 0,
@@ -415,7 +407,9 @@ impl ChangeStreamCursor {
     pub fn get_resume_token(&self) -> Option<ResumeToken> {
         let events = self.events.read().unwrap();
         if self.position > 0 && self.position <= events.len() {
-            events.get(self.position - 1).map(|e| e.resume_token.clone())
+            events
+                .get(self.position - 1)
+                .map(|e| e.resume_token.clone())
         } else {
             None
         }
@@ -616,15 +610,14 @@ impl DiffOperation {
     // Apply this operation to a JSON value
     pub fn apply(&self, value: &mut Value) -> Result<()> {
         match self {
-            DiffOperation::Add { path, value: new_value } => {
-                Self::set_value_at_path(value, path, new_value.clone())
-            }
-            DiffOperation::Remove { path } => {
-                Self::remove_value_at_path(value, path)
-            }
-            DiffOperation::Replace { path, new_value, .. } => {
-                Self::set_value_at_path(value, path, new_value.clone())
-            }
+            DiffOperation::Add {
+                path,
+                value: new_value,
+            } => Self::set_value_at_path(value, path, new_value.clone()),
+            DiffOperation::Remove { path } => Self::remove_value_at_path(value, path),
+            DiffOperation::Replace {
+                path, new_value, ..
+            } => Self::set_value_at_path(value, path, new_value.clone()),
         }
     }
 
@@ -647,12 +640,14 @@ impl DiffOperation {
             } else {
                 // Navigate to the next level
                 if let Value::Object(obj) = current {
-                    current = obj.entry(part.to_string())
+                    current = obj
+                        .entry(part.to_string())
                         .or_insert_with(|| Value::Object(serde_json::Map::new()));
                 } else {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Cannot navigate path: {}", path)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Cannot navigate path: {}",
+                        path
+                    )));
                 }
             }
         }
@@ -678,14 +673,14 @@ impl DiffOperation {
             } else {
                 // Navigate to the next level
                 if let Value::Object(obj) = current {
-                    current = obj.get_mut(*part)
-                        .ok_or_else(|| crate::error::DbError::NotFound(
-                            format!("Path not found: {}", path)
-                        ))?;
+                    current = obj.get_mut(*part).ok_or_else(|| {
+                        crate::error::DbError::NotFound(format!("Path not found: {}", path))
+                    })?;
                 } else {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Cannot navigate path: {}", path)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Cannot navigate path: {}",
+                        path
+                    )));
                 }
             }
         }
@@ -698,7 +693,7 @@ impl DiffOperation {
 mod tests {
     use super::*;
     use serde_json::json;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_change_event_creation() {
@@ -706,7 +701,8 @@ use std::time::UNIX_EPOCH;
             DocumentId::new_custom("1"),
             "users".to_string(),
             json!({"name": "Alice"}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let event = ChangeEvent::insert("users".to_string(), &doc).unwrap();
 
@@ -729,13 +725,15 @@ use std::time::UNIX_EPOCH;
             DocumentId::new_custom("1"),
             "users".to_string(),
             json!({"name": "Alice", "age": 30}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let new_doc = Document::from_json(
             DocumentId::new_custom("1"),
             "users".to_string(),
             json!({"name": "Alice", "age": 31, "city": "NYC"}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let desc = UpdateDescription::generate(&old_doc, &new_doc).unwrap();
 

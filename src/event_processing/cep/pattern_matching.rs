@@ -1,9 +1,10 @@
 /// Pattern Matching Module
 ///
 /// Core pattern definitions and matching logic for Complex Event Processing (CEP).
-
 use super::super::{Event, EventValue};
-use super::temporal_operators::{MatchContext, PatternMatch, TemporalConstraint, Measure, SkipStrategy};
+use super::temporal_operators::{
+    MatchContext, Measure, PatternMatch, SkipStrategy, TemporalConstraint,
+};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
@@ -149,28 +150,16 @@ pub enum Condition {
     EventType(String),
 
     /// Field equals value
-    FieldEquals {
-        field: String,
-        value: EventValue,
-    },
+    FieldEquals { field: String, value: EventValue },
 
     /// Field greater than value
-    FieldGreaterThan {
-        field: String,
-        value: EventValue,
-    },
+    FieldGreaterThan { field: String, value: EventValue },
 
     /// Field less than value
-    FieldLessThan {
-        field: String,
-        value: EventValue,
-    },
+    FieldLessThan { field: String, value: EventValue },
 
     /// Field matches regex
-    FieldMatches {
-        field: String,
-        pattern: String,
-    },
+    FieldMatches { field: String, pattern: String },
 
     /// Field exists
     FieldExists(String),
@@ -185,9 +174,7 @@ pub enum Condition {
     Not(Box<Condition>),
 
     /// Custom predicate
-    Custom {
-        name: String,
-    },
+    Custom { name: String },
 }
 
 impl Condition {
@@ -374,7 +361,9 @@ impl PatternMatcher {
         for start_idx in 0..events.len() {
             let mut context = MatchContext::new(pattern.clone());
 
-            if let Some(pattern_match) = self.try_match_from_index(&events, start_idx, &pattern.spec, &mut context) {
+            if let Some(pattern_match) =
+                self.try_match_from_index(&events, start_idx, &pattern.spec, &mut context)
+            {
                 // Check temporal constraints
                 let matched_events: Vec<&Event> = pattern_match.events.values().flatten().collect();
 
@@ -419,7 +408,9 @@ impl PatternMatcher {
                 let event = events[start_idx];
                 if element.condition.evaluate(event, context) {
                     let mut pattern_match = PatternMatch::new();
-                    pattern_match.events.insert(element.variable.clone(), vec![(*event).clone()]);
+                    pattern_match
+                        .events
+                        .insert(element.variable.clone(), vec![(*event).clone()]);
                     pattern_match.start_time = event.event_time;
                     pattern_match.end_time = event.event_time;
 

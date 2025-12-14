@@ -40,11 +40,11 @@ pub use core::*;
 mod types;
 pub use types::ReplicaId;
 
-mod core;
-mod monitor;
-mod legacy_types;
-mod wal;
-mod snapshots;
-mod slots;
-mod manager;
 mod conflicts;
+mod core;
+mod legacy_types;
+mod manager;
+mod monitor;
+mod slots;
+mod snapshots;
+mod wal;

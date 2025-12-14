@@ -11,22 +11,22 @@
 // - Expression Indexes: Function-based computed indexes
 // - Index Advisor: Intelligent index recommendations
 
-pub mod btree;
-pub mod lsm_index;
-pub mod hash_index;
-pub mod bitmap;
-pub mod spatial;
-pub mod fulltext;
 pub mod advisor;
+pub mod bitmap;
+pub mod btree;
+pub mod fulltext;
+pub mod hash_index;
+pub mod lsm_index;
 pub mod partial;
-pub mod swiss_table;
 pub mod simd_bloom;
+pub mod spatial;
+pub mod swiss_table;
 
-use std::collections::BTreeMap;
-use parking_lot::RwLock;
-use std::sync::Arc;
-use serde::{Deserialize, Serialize};
 use crate::error::{DbError, Result};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::sync::Arc;
 
 // Index key type
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -164,7 +164,9 @@ impl Index {
             Index::LSMTree(idx) => idx.insert(key, value),
             Index::ExtendibleHash(idx) => idx.insert(key, value),
             Index::LinearHash(idx) => idx.insert(key, value),
-            _ => Err(DbError::Internal("Insert not supported for this index type".into())),
+            _ => Err(DbError::Internal(
+                "Insert not supported for this index type".into(),
+            )),
         }
     }
 
@@ -172,20 +174,16 @@ impl Index {
         match self {
             Index::BTree(idx) => idx.search(key),
             Index::Hash(idx) => idx.search(key),
-            Index::BPlusTree(idx) => {
-                idx.search(key).map(|opt| opt.into_iter().collect())
-            }
-            Index::LSMTree(idx) => {
-                idx.get(key).map(|opt| opt.into_iter().collect())
-            }
-            Index::ExtendibleHash(idx) => {
-                idx.get(key).map(|opt| opt.into_iter().collect())
-            }
-            Index::LinearHash(idx) => {
-                idx.get(key).map(|opt| opt.into_iter().collect())
-            }
-            Index::Bitmap(idx) => idx.get(key).map(|v| v.into_iter().map(|i| i as u64).collect()),
-            _ => Err(DbError::Internal("Search not supported for this index type".into())),
+            Index::BPlusTree(idx) => idx.search(key).map(|opt| opt.into_iter().collect()),
+            Index::LSMTree(idx) => idx.get(key).map(|opt| opt.into_iter().collect()),
+            Index::ExtendibleHash(idx) => idx.get(key).map(|opt| opt.into_iter().collect()),
+            Index::LinearHash(idx) => idx.get(key).map(|opt| opt.into_iter().collect()),
+            Index::Bitmap(idx) => idx
+                .get(key)
+                .map(|v| v.into_iter().map(|i| i as u64).collect()),
+            _ => Err(DbError::Internal(
+                "Search not supported for this index type".into(),
+            )),
         }
     }
 
@@ -206,7 +204,9 @@ impl Index {
                 idx.delete(key)?;
                 Ok(())
             }
-            _ => Err(DbError::Internal("Delete not supported for this index type".into())),
+            _ => Err(DbError::Internal(
+                "Delete not supported for this index type".into(),
+            )),
         }
     }
 }
@@ -223,7 +223,7 @@ impl IndexManager {
         Self {
             indexes: Arc::new(RwLock::new(std::collections::HashMap::new())),
             advisor: Arc::new(RwLock::new(advisor::IndexAdvisor::new(
-                advisor::AdvisorConfig::default()
+                advisor::AdvisorConfig::default(),
             ))),
         }
     }
@@ -233,22 +233,23 @@ impl IndexManager {
         let mut indexes = self.indexes.write();
 
         if indexes.contains_key(&name) {
-            return Err(DbError::Internal(format!("Index '{}' already exists", name)));
+            return Err(DbError::Internal(format!(
+                "Index '{}' already exists",
+                name
+            )));
         }
 
         let index = match index_type {
             IndexType::BTree => Index::BTree(BTreeIndex::new(name.clone())),
             IndexType::Hash => Index::Hash(HashIndex::new(name.clone())),
             IndexType::BPlusTree => Index::BPlusTree(btree::BPlusTree::new()),
-            IndexType::LSMTree => Index::LSMTree(lsm_index::LSMTreeIndex::new(
-                lsm_index::LSMConfig::default()
-            )),
+            IndexType::LSMTree => {
+                Index::LSMTree(lsm_index::LSMTreeIndex::new(lsm_index::LSMConfig::default()))
+            }
             IndexType::ExtendibleHash => {
                 Index::ExtendibleHash(hash_index::ExtendibleHashIndex::new(64))
             }
-            IndexType::LinearHash => {
-                Index::LinearHash(hash_index::LinearHashIndex::new(16, 64))
-            }
+            IndexType::LinearHash => Index::LinearHash(hash_index::LinearHashIndex::new(16, 64)),
             IndexType::Bitmap => Index::Bitmap(bitmap::BitmapIndex::new()),
             IndexType::Spatial => Index::Spatial(spatial::RTree::new()),
         };
@@ -360,7 +361,7 @@ pub enum IndexStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::collections::HashMap;
+    use std::collections::HashMap;
 
     #[test]
     fn test_btree_index() -> Result<()> {

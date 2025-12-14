@@ -3,13 +3,13 @@
 // Implements various windowing strategies (tumbling, sliding, session, hopping)
 // with watermark-based late arrival handling and custom triggers.
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
 use super::{Event, EventValue, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::collections::{BTreeMap, HashMap};
 use std::time::Duration;
+use std::time::SystemTime;
 
 /// Window identifier
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
@@ -33,34 +33,22 @@ impl WindowId {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WindowType {
     /// Tumbling window (fixed-size, non-overlapping)
-    Tumbling {
-        size: Duration,
-    },
+    Tumbling { size: Duration },
 
     /// Sliding window (fixed-size, overlapping)
-    Sliding {
-        size: Duration,
-        slide: Duration,
-    },
+    Sliding { size: Duration, slide: Duration },
 
     /// Session window (dynamic size based on inactivity gap)
-    Session {
-        gap: Duration,
-    },
+    Session { gap: Duration },
 
     /// Hopping window (fixed-size with fixed hop)
-    Hopping {
-        size: Duration,
-        hop: Duration,
-    },
+    Hopping { size: Duration, hop: Duration },
 
     /// Global window (all events in one window)
     Global,
 
     /// Custom window
-    Custom {
-        name: String,
-    },
+    Custom { name: String },
 }
 
 impl WindowType {
@@ -95,8 +83,8 @@ impl WindowType {
                         * slide.as_millis()
                         - offset;
 
-                    let start = SystemTime::UNIX_EPOCH
-                        + Duration::from_millis(window_start_ms as u64);
+                    let start =
+                        SystemTime::UNIX_EPOCH + Duration::from_millis(window_start_ms as u64);
                     let end = start + *size;
 
                     if event_time >= start && event_time < end {
@@ -195,7 +183,9 @@ impl Window {
     }
 
     pub fn duration(&self) -> Duration {
-        self.end.duration_since(self.start).unwrap_or(Duration::from_secs(0))
+        self.end
+            .duration_since(self.start)
+            .unwrap_or(Duration::from_secs(0))
     }
 }
 
@@ -298,9 +288,7 @@ pub enum TriggerPolicy {
     OnWatermark,
 
     /// Trigger when specific condition is met
-    OnCondition {
-        description: String,
-    },
+    OnCondition { description: String },
 
     /// Composite trigger (any of the conditions)
     Any(Vec<TriggerPolicy>),
@@ -362,9 +350,7 @@ pub enum EvictionPolicy {
     OnTrigger,
 
     /// Evict after watermark passes window end + grace period
-    OnWatermark {
-        grace_period: Duration,
-    },
+    OnWatermark { grace_period: Duration },
 
     /// Evict after specific time
     AfterTime(Duration),
@@ -615,9 +601,7 @@ impl SessionWindowState {
                 if time_since_last <= self.gap {
                     merged_windows.push(i);
                 }
-            } else if let Ok(time_until_event) =
-                window.last_event_time.duration_since(event_time)
-            {
+            } else if let Ok(time_until_event) = window.last_event_time.duration_since(event_time) {
                 if time_until_event <= self.gap {
                     merged_windows.push(i);
                 }
@@ -874,12 +858,10 @@ impl PaneBasedWindow {
     pub fn add_event(&mut self, event: Event, value: f64) -> Result<()> {
         let pane_id = self.get_pane_id(event.event_time);
 
-        let pane = self.panes
-            .entry(pane_id)
-            .or_insert_with(|| {
-                let start_time = SystemTime::UNIX_EPOCH + Duration::from_millis(pane_id);
-                Pane::new(start_time, self.pane_size)
-            });
+        let pane = self.panes.entry(pane_id).or_insert_with(|| {
+            let start_time = SystemTime::UNIX_EPOCH + Duration::from_millis(pane_id);
+            Pane::new(start_time, self.pane_size)
+        });
 
         pane.add_event(event, value);
 
@@ -901,7 +883,11 @@ impl PaneBasedWindow {
     }
 
     /// Compute window aggregate at given time - O(w/p) where w=window, p=pane
-    pub fn compute_aggregate(&self, window_end: SystemTime, agg_type: AggregateType) -> Option<f64> {
+    pub fn compute_aggregate(
+        &self,
+        window_end: SystemTime,
+        agg_type: AggregateType,
+    ) -> Option<f64> {
         let window_start = window_end - self.window_size;
 
         let start_pane_id = self.get_pane_id(window_start);
@@ -929,7 +915,13 @@ impl PaneBasedWindow {
         match agg_type {
             AggregateType::Count => Some(count as f64),
             AggregateType::Sum => Some(sum),
-            AggregateType::Avg => if count > 0 { Some(sum / count as f64) } else { None },
+            AggregateType::Avg => {
+                if count > 0 {
+                    Some(sum / count as f64)
+                } else {
+                    None
+                }
+            }
             AggregateType::Min => min,
             AggregateType::Max => max,
         }
@@ -1001,7 +993,7 @@ impl SlidingWindowAggregator {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_tumbling_window() {
@@ -1066,9 +1058,8 @@ use std::time::UNIX_EPOCH;
         let window_type = WindowType::Tumbling {
             size: Duration::from_secs(60),
         };
-        let mut aggregator = WindowedAggregator::new(window_type, |events| {
-            EventValue::Int64(events.len() as i64)
-        });
+        let mut aggregator =
+            WindowedAggregator::new(window_type, |events| EventValue::Int64(events.len() as i64));
 
         aggregator.add_event(Event::new("test")).unwrap();
         aggregator.add_event(Event::new("test")).unwrap();

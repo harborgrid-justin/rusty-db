@@ -26,10 +26,8 @@
 // └─────────────────────────────────────────────────────────┘
 // ```
 
-use base64::{Engine as _, engine::general_purpose};
-use async_graphql::{
-    Enum, SimpleObject,
-};
+use async_graphql::{Enum, SimpleObject};
+use base64::{engine::general_purpose, Engine as _};
 use chrono::{DateTime as ChronoDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -60,7 +58,9 @@ impl async_graphql::ScalarType for DateTime {
         if let async_graphql::Value::String(s) = value {
             ChronoDateTime::parse_from_rfc3339(&s)
                 .map(|dt| DateTime(dt.with_timezone(&Utc)))
-                .map_err(|e| async_graphql::InputValueError::custom(format!("Invalid datetime: {}", e)))
+                .map_err(|e| {
+                    async_graphql::InputValueError::custom(format!("Invalid datetime: {}", e))
+                })
         } else {
             Err(async_graphql::InputValueError::expected_type(value))
         }
@@ -94,8 +94,7 @@ impl async_graphql::ScalarType for Json {
     }
 
     fn to_value(&self) -> async_graphql::Value {
-        serde_json::from_value(self.0.clone())
-            .unwrap_or(async_graphql::Value::Null)
+        serde_json::from_value(self.0.clone()).unwrap_or(async_graphql::Value::Null)
     }
 }
 
@@ -107,9 +106,12 @@ pub struct Binary(Vec<u8>);
 impl async_graphql::ScalarType for Binary {
     fn parse(value: async_graphql::Value) -> async_graphql::InputValueResult<Self> {
         if let async_graphql::Value::String(s) = value {
-            general_purpose::STANDARD.decode(&s)
+            general_purpose::STANDARD
+                .decode(&s)
                 .map(Binary)
-                .map_err(|e| async_graphql::InputValueError::custom(format!("Invalid base64: {}", e)))
+                .map_err(|e| {
+                    async_graphql::InputValueError::custom(format!("Invalid base64: {}", e))
+                })
         } else {
             Err(async_graphql::InputValueError::expected_type(value))
         }
@@ -128,9 +130,9 @@ pub struct BigInt(pub i64);
 impl async_graphql::ScalarType for BigInt {
     fn parse(value: async_graphql::Value) -> async_graphql::InputValueResult<Self> {
         if let async_graphql::Value::String(s) = value {
-            s.parse::<i64>()
-                .map(BigInt)
-                .map_err(|e| async_graphql::InputValueError::custom(format!("Invalid BigInt: {}", e)))
+            s.parse::<i64>().map(BigInt).map_err(|e| {
+                async_graphql::InputValueError::custom(format!("Invalid BigInt: {}", e))
+            })
         } else if let async_graphql::Value::Number(n) = value {
             n.as_i64()
                 .map(BigInt)

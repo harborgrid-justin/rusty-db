@@ -8,14 +8,13 @@
 // - Join order optimization with dynamic programming
 // - Index selection optimization
 
-use std::time::SystemTime;
 use crate::error::DbError;
 use crate::execution::planner::PlanNode;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
-
+use std::time::SystemTime;
 
 // Query plan cache
 pub struct PlanCache {
@@ -187,7 +186,11 @@ impl StatisticsCollector {
     }
 
     // Get column statistics
-    pub fn get_column_stats(&self, table_name: &str, column_name: &str) -> Option<ColumnStatistics> {
+    pub fn get_column_stats(
+        &self,
+        table_name: &str,
+        column_name: &str,
+    ) -> Option<ColumnStatistics> {
         self.column_stats
             .read()
             .get(&(table_name.to_string(), column_name.to_string()))
@@ -469,9 +472,7 @@ impl EnhancedCostModel {
             PlanNode::Project { input, .. } => {
                 self.estimate_cost(input) * 1.05 // Small projection overhead
             }
-            PlanNode::Subquery { plan, .. } => {
-                self.estimate_cost(plan)
-            }
+            PlanNode::Subquery { plan, .. } => self.estimate_cost(plan),
         }
     }
 
@@ -514,7 +515,7 @@ impl JoinOrderOptimizer {
                 Ok(self.create_join(left.clone(), right.clone()))
             } else {
                 Ok(self.create_join(right.clone(), left.clone()))
-            }
+            };
         }
 
         // For more tables, use dynamic programming (simplified)
@@ -611,7 +612,7 @@ impl IndexSelector {
             }
             IndexType::Hash => {
                 // Hash only good for equality
-                predicate.contains('=') && !predicate.contains('>')  && !predicate.contains('<')
+                predicate.contains('=') && !predicate.contains('>') && !predicate.contains('<')
             }
             IndexType::FullText => {
                 // Full-text for text search
@@ -715,17 +716,9 @@ mod tests {
     fn test_index_selector() {
         let selector = IndexSelector::new();
 
-        selector.register_index(
-            "users".to_string(),
-            "id".to_string(),
-            IndexType::BTree,
-        );
+        selector.register_index("users".to_string(), "id".to_string(), IndexType::BTree);
 
-        selector.register_index(
-            "users".to_string(),
-            "email".to_string(),
-            IndexType::Hash,
-        );
+        selector.register_index("users".to_string(), "email".to_string(), IndexType::Hash);
 
         let index = selector.select_index("users", "id", "id > 100");
         assert_eq!(index, Some(IndexType::BTree));

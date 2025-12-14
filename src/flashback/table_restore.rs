@@ -27,10 +27,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
 
-use crate::common::{TableId, RowId, Value, Schema, IndexId};
-use crate::error::{Result, DbError};
-use super::time_travel::{SCN, Timestamp, TimeTravelEngine};
+use super::time_travel::{TimeTravelEngine, Timestamp, SCN};
 use super::versions::VersionManager;
+use crate::common::{IndexId, RowId, Schema, TableId, Value};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Table Restore Manager
@@ -180,11 +180,8 @@ impl TableRestoreManager {
         let partition_id = self.get_partition_id(table_id, partition_name)?;
 
         // Reconstruct partition state
-        let partition_state = self.reconstruct_partition_state(
-            table_id,
-            partition_id,
-            target_scn,
-        )?;
+        let partition_state =
+            self.reconstruct_partition_state(table_id, partition_id, target_scn)?;
 
         // Apply partition state
         self.apply_partition_state(table_id, partition_id, partition_state)?;
@@ -257,7 +254,8 @@ impl TableRestoreManager {
     /// Drop a restore point
     pub fn drop_restore_point(&self, name: &str) -> Result<()> {
         let mut restore_points = self.restore_points.write().unwrap();
-        restore_points.remove(name)
+        restore_points
+            .remove(name)
             .ok_or_else(|| DbError::Validation(format!("Restore point '{}' not found", name)))?;
         Ok(())
     }
@@ -265,7 +263,8 @@ impl TableRestoreManager {
     /// Get restore point SCN
     pub fn get_restore_point_scn(&self, name: &str) -> Result<SCN> {
         let restore_points = self.restore_points.read().unwrap();
-        restore_points.get(name)
+        restore_points
+            .get(name)
             .map(|rp| rp.scn)
             .ok_or_else(|| DbError::Validation(format!("Restore point '{}' not found", name)))
     }
@@ -279,7 +278,7 @@ impl TableRestoreManager {
 
         if target_scn >= current_scn {
             return Err(DbError::Validation(
-                "Cannot flashback to future SCN".to_string()
+                "Cannot flashback to future SCN".to_string(),
             ));
         }
 
@@ -287,12 +286,9 @@ impl TableRestoreManager {
         Ok(())
     }
 
-    fn reconstruct_table_state(
-        &self,
-        table_id: TableId,
-        target_scn: SCN,
-    ) -> Result<TableState> {
-        let historical_rows = self.time_travel
+    fn reconstruct_table_state(&self, table_id: TableId, target_scn: SCN) -> Result<TableState> {
+        let historical_rows = self
+            .time_travel
             .query_as_of_scn(table_id, target_scn, None)?;
 
         let mut rows = HashMap::new();
@@ -420,12 +416,7 @@ impl RecycleBin {
         }
     }
 
-    fn add(
-        &mut self,
-        table_id: TableId,
-        original_name: String,
-        schema: Schema,
-    ) -> Result<String> {
+    fn add(&mut self, table_id: TableId, original_name: String, schema: Schema) -> Result<String> {
         self.sequence += 1;
         let recycle_name = format!("BIN${}$", self.sequence);
 
@@ -435,7 +426,7 @@ impl RecycleBin {
             recycle_name: recycle_name.clone(),
             _schema: schema,
             _drop_time: SystemTime::now(),
-            _drop_scn: 0, // Would be set from current SCN
+            _drop_scn: 0,   // Would be set from current SCN
             _space_used: 0, // Would be calculated
         };
 
@@ -449,23 +440,18 @@ impl RecycleBin {
     }
 
     fn find_by_original_name(&self, name: &str) -> Result<&DroppedTable> {
-        let recycle_names = self.name_mapping
-            .get(name)
-            .ok_or_else(|| DbError::Validation(
-                format!("Table '{}' not found in recycle bin", name)
-            ))?;
+        let recycle_names = self.name_mapping.get(name).ok_or_else(|| {
+            DbError::Validation(format!("Table '{}' not found in recycle bin", name))
+        })?;
 
         // Get the most recently dropped instance
         let recycle_name = recycle_names
             .last()
-            .ok_or_else(|| DbError::Validation(
-                format!("No recycle entry for '{}'", name)
-            ))?;
+            .ok_or_else(|| DbError::Validation(format!("No recycle entry for '{}'", name)))?;
 
-        self.tables.get(recycle_name)
-            .ok_or_else(|| DbError::Validation(
-                "Recycle bin entry not found".to_string()
-            ))
+        self.tables
+            .get(recycle_name)
+            .ok_or_else(|| DbError::Validation("Recycle bin entry not found".to_string()))
     }
 
     fn remove(&mut self, recycle_name: &str) {
@@ -477,11 +463,12 @@ impl RecycleBin {
     }
 
     fn purge_table(&mut self, original_name: &str) -> Result<()> {
-        let recycle_names = self.name_mapping
-            .remove(original_name)
-            .ok_or_else(|| DbError::Validation(
-                format!("Table '{}' not found in recycle bin", original_name)
-            ))?;
+        let recycle_names = self.name_mapping.remove(original_name).ok_or_else(|| {
+            DbError::Validation(format!(
+                "Table '{}' not found in recycle bin",
+                original_name
+            ))
+        })?;
 
         for recycle_name in recycle_names {
             self.tables.remove(&recycle_name);
@@ -602,7 +589,7 @@ pub struct FlashbackOptions {
 
     /// Enable row movement (for partitioned tables)
     pub enable_row_movement: bool,
-    pub enable_triggers: ()
+    pub enable_triggers: (),
 }
 
 impl Default for FlashbackOptions {
@@ -690,19 +677,18 @@ pub struct TableRestoreStats {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::time_travel::TimeTravelConfig;
+    use super::*;
 
     #[test]
     fn test_recycle_bin() {
         let mut recycle_bin = RecycleBin::new();
 
-        let schema = Schema::new(
-            "test_table".to_string(),
-            vec![],
-        );
+        let schema = Schema::new("test_table".to_string(), vec![]);
 
-        let recycle_name = recycle_bin.add(1, "test_table".to_string(), schema).unwrap();
+        let recycle_name = recycle_bin
+            .add(1, "test_table".to_string(), schema)
+            .unwrap();
         assert!(recycle_name.starts_with("BIN$"));
 
         let dropped = recycle_bin.find_by_original_name("test_table").unwrap();
@@ -716,13 +702,12 @@ mod tests {
     fn test_restore_point() {
         let time_travel = Arc::new(TimeTravelEngine::new(TimeTravelConfig::default()));
         let version_manager = Arc::new(VersionManager::new(Default::default()));
-        let manager = TableRestoreManager::new(
-            time_travel,
-            version_manager,
-            TableRestoreConfig::default(),
-        );
+        let manager =
+            TableRestoreManager::new(time_travel, version_manager, TableRestoreConfig::default());
 
-        manager.create_restore_point("test_point".to_string(), 1000).unwrap();
+        manager
+            .create_restore_point("test_point".to_string(), 1000)
+            .unwrap();
         let scn = manager.get_restore_point_scn("test_point").unwrap();
         assert_eq!(scn, 1000);
 
@@ -734,11 +719,8 @@ mod tests {
     fn test_flashback_validation() {
         let time_travel = Arc::new(TimeTravelEngine::new(TimeTravelConfig::default()));
         let version_manager = Arc::new(VersionManager::new(Default::default()));
-        let manager = TableRestoreManager::new(
-            time_travel,
-            version_manager,
-            TableRestoreConfig::default(),
-        );
+        let manager =
+            TableRestoreManager::new(time_travel, version_manager, TableRestoreConfig::default());
 
         // Cannot flashback to future
         let result = manager.validate_flashback(1, u64::MAX);

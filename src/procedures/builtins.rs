@@ -220,9 +220,7 @@ impl ResultSet {
 
     /// Reserved for table functions
 
-
     #[allow(dead_code)]
-
 
     fn add_row(&mut self, row: Vec<RuntimeValue>) {
         self.rows.push(row);
@@ -1055,12 +1053,18 @@ enum JobType {
 #[derive(Debug, Clone)]
 enum Schedule {
     // Run once at a specific time
-    Once { run_date: String },
+    Once {
+        run_date: String,
+    },
     // Recurring with interval
-    Recurring { interval: String },
+    Recurring {
+        interval: String,
+    },
     // Calendar expression
     #[allow(dead_code)]
-    Calendar { expression: String },
+    Calendar {
+        expression: String,
+    },
 }
 
 impl DbmsScheduler {
@@ -1571,7 +1575,10 @@ impl DbmsScheduler {
 
     // SECURITY: Validate executable path for dangerous characters
     fn validate_executable_path(path: &str) -> Result<()> {
-        let dangerous_chars = ['|', '&', ';', '$', '`', '(', ')', '{', '}', '[', ']', '<', '>', '!', '*', '?', '#', '~', '\n', '\r'];
+        let dangerous_chars = [
+            '|', '&', ';', '$', '`', '(', ')', '{', '}', '[', ']', '<', '>', '!', '*', '?', '#',
+            '~', '\n', '\r',
+        ];
 
         for ch in dangerous_chars {
             if path.contains(ch) {
@@ -1623,7 +1630,8 @@ impl DbmsScheduler {
                 let next_char = arg.chars().nth(dollar_idx + 1).unwrap();
                 if next_char.is_alphabetic() || next_char == '_' || next_char == '{' {
                     return Err(DbError::Security(
-                        "Environment variable expansion not allowed in command arguments".to_string(),
+                        "Environment variable expansion not allowed in command arguments"
+                            .to_string(),
                     ));
                 }
             }

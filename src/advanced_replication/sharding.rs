@@ -3,14 +3,14 @@
 // Advanced sharding with hash, range, list, and composite strategies.
 // Includes shard rebalancing and cross-shard query support.
 
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
-use parking_lot::RwLock;
-use std::time::{Duration};
 use crate::error::DbError;
-use std::hash::{Hash, Hasher};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
 use std::collections::hash_map::DefaultHasher;
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
+use std::time::Duration;
 
 type Result<T> = std::result::Result<T, DbError>;
 
@@ -23,13 +23,9 @@ pub enum ShardingStrategy {
         hash_function: HashFunction,
     },
     /// Range-based sharding
-    Range {
-        ranges: Vec<RangeDefinition>,
-    },
+    Range { ranges: Vec<RangeDefinition> },
     /// List-based sharding
-    List {
-        lists: Vec<ListDefinition>,
-    },
+    List { lists: Vec<ListDefinition> },
     /// Composite sharding (combine multiple strategies)
     Composite {
         strategies: Vec<Box<ShardingStrategy>>,
@@ -70,7 +66,19 @@ pub struct ListDefinition {
 }
 
 /// Shard key value
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    bincode::Encode,
+    bincode::Decode,
+)]
 pub enum ShardKey {
     Integer(i64),
     String(String),
@@ -96,7 +104,8 @@ impl ShardKey {
             HashFunction::Fnv => {
                 // FNV-1a hash
                 let mut hash = 0xcbf29ce484222325u64;
-                let bytes = bincode::encode_to_vec(self, bincode::config::standard()).unwrap_or_default();
+                let bytes =
+                    bincode::encode_to_vec(self, bincode::config::standard()).unwrap_or_default();
                 for byte in bytes {
                     hash ^= byte as u64;
                     hash = hash.wrapping_mul(0x100000001b3);
@@ -253,9 +262,10 @@ impl ShardingEngine {
 
         let key = format!("{}.{}", table.schema_name, table.table_name);
         if tables.contains_key(&key) {
-            return Err(DbError::Replication(
-                format!("Table {} is already sharded", key)
-            ));
+            return Err(DbError::Replication(format!(
+                "Table {} is already sharded",
+                key
+            )));
         }
 
         // Validate shards
@@ -278,10 +288,9 @@ impl ShardingEngine {
     pub fn route_query(&self, table: &str, shard_key: &ShardKey) -> Result<Vec<String>> {
         let tables = self.tables.read();
 
-        let sharded_table = tables.get(table)
-            .ok_or_else(|| DbError::Replication(
-                format!("Table {} is not sharded", table)
-            ))?;
+        let sharded_table = tables
+            .get(table)
+            .ok_or_else(|| DbError::Replication(format!("Table {} is not sharded", table)))?;
 
         let shard_ids = self.determine_shards(&sharded_table.strategy, shard_key)?;
 
@@ -291,7 +300,10 @@ impl ShardingEngine {
     /// Determine which shard(s) a key belongs to
     fn determine_shards(&self, strategy: &ShardingStrategy, key: &ShardKey) -> Result<Vec<String>> {
         match strategy {
-            ShardingStrategy::Hash { num_shards, hash_function } => {
+            ShardingStrategy::Hash {
+                num_shards,
+                hash_function,
+            } => {
                 let hash = key.hash_key(hash_function);
                 let shard_num = (hash % (*num_shards as u64)) as usize;
                 Ok(vec![format!("shard-{}", shard_num)])
@@ -302,9 +314,10 @@ impl ShardingEngine {
                         return Ok(vec![range.shard_id.clone()]);
                     }
                 }
-                Err(DbError::Replication(
-                    format!("No shard found for key {:?}", key)
-                ))
+                Err(DbError::Replication(format!(
+                    "No shard found for key {:?}",
+                    key
+                )))
             }
             ShardingStrategy::List { lists } => {
                 for list in lists {
@@ -312,9 +325,10 @@ impl ShardingEngine {
                         return Ok(vec![list.shard_id.clone()]);
                     }
                 }
-                Err(DbError::Replication(
-                    format!("No shard found for key {:?}", key)
-                ))
+                Err(DbError::Replication(format!(
+                    "No shard found for key {:?}",
+                    key
+                )))
             }
             ShardingStrategy::Composite { strategies } => {
                 let mut all_shards = Vec::new();
@@ -331,13 +345,14 @@ impl ShardingEngine {
     pub fn plan_cross_shard_query(&self, table: &str, sql: &str) -> Result<CrossShardQuery> {
         let tables = self.tables.read();
 
-        let sharded_table = tables.get(table)
-            .ok_or_else(|| DbError::Replication(
-                format!("Table {} is not sharded", table)
-            ))?;
+        let sharded_table = tables
+            .get(table)
+            .ok_or_else(|| DbError::Replication(format!("Table {} is not sharded", table)))?;
 
         // Get all shards for this table
-        let shard_ids: Vec<String> = sharded_table.shards.iter()
+        let shard_ids: Vec<String> = sharded_table
+            .shards
+            .iter()
             .filter(|s| s.status == ShardStatus::Active)
             .map(|s| s.id.clone())
             .collect();
@@ -353,9 +368,9 @@ impl ShardingEngine {
             sql: sql.to_string(),
             shards: shard_ids,
             shard_queries,
-            requires_aggregation: sql.to_uppercase().contains("GROUP BY") ||
-                                 sql.to_uppercase().contains("COUNT") ||
-                                 sql.to_uppercase().contains("SUM"),
+            requires_aggregation: sql.to_uppercase().contains("GROUP BY")
+                || sql.to_uppercase().contains("COUNT")
+                || sql.to_uppercase().contains("SUM"),
             sort_columns: vec![],
         };
 
@@ -366,10 +381,7 @@ impl ShardingEngine {
     }
 
     /// Execute a cross-shard query
-    pub async fn execute_cross_shard_query(
-        &self,
-        query: &CrossShardQuery,
-    ) -> Result<Vec<Vec<u8>>> {
+    pub async fn execute_cross_shard_query(&self, query: &CrossShardQuery) -> Result<Vec<Vec<u8>>> {
         let mut results = Vec::new();
 
         // Execute query on each shard
@@ -395,10 +407,9 @@ impl ShardingEngine {
     async fn execute_on_shard(&self, shard_id: &str, _sql: &str) -> Result<Vec<Vec<u8>>> {
         let shards = self.shards.read();
 
-        let _shard = shards.get(shard_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Shard {} not found", shard_id)
-            ))?;
+        let _shard = shards
+            .get(shard_id)
+            .ok_or_else(|| DbError::Replication(format!("Shard {} not found", shard_id)))?;
 
         // In a real implementation, would execute on the shard's server
         // For now, return empty result
@@ -425,15 +436,13 @@ impl ShardingEngine {
     ) -> Result<RebalancePlan> {
         let shards = self.shards.read();
 
-        let source = shards.get(source_shard)
-            .ok_or_else(|| DbError::Replication(
-                format!("Source shard {} not found", source_shard)
-            ))?;
+        let source = shards.get(source_shard).ok_or_else(|| {
+            DbError::Replication(format!("Source shard {} not found", source_shard))
+        })?;
 
-        let _target = shards.get(target_shard)
-            .ok_or_else(|| DbError::Replication(
-                format!("Target shard {} not found", target_shard)
-            ))?;
+        let _target = shards.get(target_shard).ok_or_else(|| {
+            DbError::Replication(format!("Target shard {} not found", target_shard))
+        })?;
 
         let plan = RebalancePlan {
             id: format!("rebalance-{}", uuid::Uuid::new_v4()),
@@ -446,7 +455,9 @@ impl ShardingEngine {
             progress: 0,
         };
 
-        self.rebalance_plans.write().insert(plan.id.clone(), plan.clone());
+        self.rebalance_plans
+            .write()
+            .insert(plan.id.clone(), plan.clone());
 
         Ok(plan)
     }
@@ -455,10 +466,11 @@ impl ShardingEngine {
     pub async fn execute_rebalance(&self, plan_id: &str) -> Result<()> {
         let _plan = {
             let plans = self.rebalance_plans.read();
-            plans.get(plan_id)
-                .ok_or_else(|| DbError::Replication(
-                    format!("Rebalance plan {} not found", plan_id)
-                ))?
+            plans
+                .get(plan_id)
+                .ok_or_else(|| {
+                    DbError::Replication(format!("Rebalance plan {} not found", plan_id))
+                })?
                 .clone()
         };
 
@@ -529,10 +541,8 @@ impl ShardingEngine {
         let mut sorted: Vec<_> = column_scores.into_iter().collect();
         sorted.sort_by(|a, b| b.1.cmp(&a.1));
 
-        let recommended_columns: Vec<_> = sorted.iter()
-            .take(3)
-            .map(|(col, _)| col.clone())
-            .collect();
+        let recommended_columns: Vec<_> =
+            sorted.iter().take(3).map(|(col, _)| col.clone()).collect();
 
         let recommended_strategy = if recommended_columns.is_empty() {
             None
@@ -560,10 +570,9 @@ impl ShardingEngine {
     pub fn get_shard_stats(&self, shard_id: &str) -> Result<ShardStatistics> {
         let shards = self.shards.read();
 
-        let shard = shards.get(shard_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Shard {} not found", shard_id)
-            ))?;
+        let shard = shards
+            .get(shard_id)
+            .ok_or_else(|| DbError::Replication(format!("Shard {} not found", shard_id)))?;
 
         Ok(ShardStatistics {
             shard_id: shard.id.clone(),
@@ -586,9 +595,10 @@ impl ShardingEngine {
         let mut shards = self.shards.write();
 
         if shards.contains_key(&shard.id) {
-            return Err(DbError::Replication(
-                format!("Shard {} already exists", shard.id)
-            ));
+            return Err(DbError::Replication(format!(
+                "Shard {} already exists",
+                shard.id
+            )));
         }
 
         shards.insert(shard.id.clone(), shard);
@@ -604,10 +614,9 @@ impl ShardingEngine {
     pub fn remove_shard(&self, shard_id: &str) -> Result<()> {
         let mut shards = self.shards.write();
 
-        shards.remove(shard_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Shard {} not found", shard_id)
-            ))?;
+        shards
+            .remove(shard_id)
+            .ok_or_else(|| DbError::Replication(format!("Shard {} not found", shard_id)))?;
 
         let mut stats = self.stats.write();
         stats.total_shards = stats.total_shards.saturating_sub(1);
@@ -620,10 +629,9 @@ impl ShardingEngine {
     pub fn update_shard_status(&self, shard_id: &str, status: ShardStatus) -> Result<()> {
         let mut shards = self.shards.write();
 
-        let shard = shards.get_mut(shard_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Shard {} not found", shard_id)
-            ))?;
+        let shard = shards
+            .get_mut(shard_id)
+            .ok_or_else(|| DbError::Replication(format!("Shard {} not found", shard_id)))?;
 
         let old_status = shard.status.clone();
         shard.status = status.clone();

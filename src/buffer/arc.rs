@@ -29,10 +29,10 @@
 
 use crate::buffer::eviction::{EvictionPolicy, EvictionStats};
 use crate::buffer::page_cache::{BufferFrame, FrameId};
+use parking_lot::Mutex;
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use parking_lot::Mutex;
 
 // ============================================================================
 // ARC Lists
@@ -208,9 +208,8 @@ impl ArcState {
     fn replace(&mut self, frames: &[Arc<BufferFrame>], inb2: bool) -> Option<FrameId> {
         loop {
             // Decide which list to evict from based on target_t1
-            let evict_from_t1 = if !self.t1.is_empty() &&
-                (self.t1.len() > self.target_t1 ||
-                 (self.t1.len() == self.target_t1 && inb2))
+            let evict_from_t1 = if !self.t1.is_empty()
+                && (self.t1.len() > self.target_t1 || (self.t1.len() == self.target_t1 && inb2))
             {
                 true
             } else if !self.t2.is_empty() {
@@ -338,7 +337,12 @@ impl ArcEvictionPolicy {
     /// Get list sizes (for monitoring and debugging)
     pub fn list_sizes(&self) -> (usize, usize, usize, usize) {
         let state = self.state.lock();
-        (state.t1.len(), state.t2.len(), state.b1.len(), state.b2.len())
+        (
+            state.t1.len(),
+            state.t2.len(),
+            state.b1.len(),
+            state.b2.len(),
+        )
     }
 
     /// Get adaptation count
@@ -466,7 +470,7 @@ impl EvictionPolicy for ArcEvictionPolicy {
         EvictionStats {
             victim_searches,
             evictions: state.evictions,
-            failed_evictions: 0, // ARC always finds a victim if cache is full
+            failed_evictions: 0,    // ARC always finds a victim if cache is full
             clock_hand_position: 0, // Not applicable for ARC
             avg_search_length: if victim_searches > 0 {
                 1.0 // ARC has O(1) eviction

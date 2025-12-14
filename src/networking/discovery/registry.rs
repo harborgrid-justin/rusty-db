@@ -70,7 +70,8 @@ impl Registry {
         // Static list discovery
         if self.config.enable_static {
             if let Some(static_config) = self.config.static_config.clone() {
-                let mut backend = Box::new(super::static_list::StaticListDiscovery::new(static_config));
+                let mut backend =
+                    Box::new(super::static_list::StaticListDiscovery::new(static_config));
                 backend.initialize().await?;
                 tracing::info!("Initialized static list discovery backend");
                 self.backends.push(backend);
@@ -205,7 +206,11 @@ impl Registry {
         for backend in &self.backends {
             match backend.register_node(node).await {
                 Ok(()) => {
-                    tracing::debug!("Registered node {} with backend: {}", node.id, backend.name());
+                    tracing::debug!(
+                        "Registered node {} with backend: {}",
+                        node.id,
+                        backend.name()
+                    );
                 }
                 Err(e) => {
                     tracing::warn!(
@@ -348,7 +353,10 @@ impl Registry {
             state.add_node(node);
         }
 
-        tracing::info!("Discovery refresh completed. Total nodes: {}", state.nodes.len());
+        tracing::info!(
+            "Discovery refresh completed. Total nodes: {}",
+            state.nodes.len()
+        );
         Ok(())
     }
 
@@ -361,7 +369,8 @@ impl Registry {
         let node_ttl = self.config.node_ttl;
 
         // Create a minimal context for the refresh task
-        let _backend_names: Vec<String> = self.backends.iter().map(|b| b.name().to_string()).collect();
+        let _backend_names: Vec<String> =
+            self.backends.iter().map(|b| b.name().to_string()).collect();
 
         let handle = tokio::spawn(async move {
             let mut ticker = time::interval(refresh_interval);
@@ -405,7 +414,9 @@ impl Registry {
     }
 
     /// Gets an event receiver for discovery events
-    pub fn event_receiver(&mut self) -> Option<tokio::sync::mpsc::UnboundedReceiver<DiscoveryEvent>> {
+    pub fn event_receiver(
+        &mut self,
+    ) -> Option<tokio::sync::mpsc::UnboundedReceiver<DiscoveryEvent>> {
         self.event_rx.take()
     }
 

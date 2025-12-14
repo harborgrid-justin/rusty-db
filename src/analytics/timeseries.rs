@@ -9,12 +9,12 @@
 // - Forecasting with multiple methods
 // - Change point detection
 
-use std::collections::BTreeMap;
-use std::time::{SystemTime, UNIX_EPOCH};
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::time::{Duration};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // Time-series data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -136,10 +136,15 @@ impl TimeSeriesAnalyzer {
             // Check if we have a point at current_time
             if point_index < self.series.points.len() {
                 let point = &self.series.points[point_index];
-                let point_secs = point.timestamp.duration_since(UNIX_EPOCH)
-                    .unwrap_or(Duration::from_secs(0)).as_secs();
-                let current_secs = current_time.duration_since(UNIX_EPOCH)
-                    .unwrap_or(Duration::from_secs(0)).as_secs();
+                let point_secs = point
+                    .timestamp
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or(Duration::from_secs(0))
+                    .as_secs();
+                let current_secs = current_time
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or(Duration::from_secs(0))
+                    .as_secs();
 
                 if point_secs == current_secs {
                     // Exact match
@@ -185,34 +190,46 @@ impl TimeSeriesAnalyzer {
         match method {
             InterpolationMethod::Previous => {
                 // Find last point before timestamp
-                let prev = self.series.points.iter()
+                let prev = self
+                    .series
+                    .points
+                    .iter()
                     .filter(|p| p.timestamp <= timestamp)
                     .last();
                 Ok(prev.map(|p| p.value).unwrap_or(0.0))
             }
             InterpolationMethod::Next => {
                 // Find first point after timestamp
-                let next = self.series.points.iter()
-                    .find(|p| p.timestamp >= timestamp);
+                let next = self.series.points.iter().find(|p| p.timestamp >= timestamp);
                 Ok(next.map(|p| p.value).unwrap_or(0.0))
             }
             InterpolationMethod::Linear => {
                 // Linear interpolation between neighbors
-                let ts_secs = timestamp.duration_since(UNIX_EPOCH)
-                    .unwrap_or(Duration::from_secs(0)).as_secs() as f64;
+                let ts_secs = timestamp
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or(Duration::from_secs(0))
+                    .as_secs() as f64;
 
-                let prev = self.series.points.iter()
+                let prev = self
+                    .series
+                    .points
+                    .iter()
                     .filter(|p| p.timestamp <= timestamp)
                     .last();
-                let next = self.series.points.iter()
-                    .find(|p| p.timestamp >= timestamp);
+                let next = self.series.points.iter().find(|p| p.timestamp >= timestamp);
 
                 match (prev, next) {
                     (Some(p), Some(n)) => {
-                        let p_secs = p.timestamp.duration_since(UNIX_EPOCH)
-                            .unwrap_or(Duration::from_secs(0)).as_secs() as f64;
-                        let n_secs = n.timestamp.duration_since(UNIX_EPOCH)
-                            .unwrap_or(Duration::from_secs(0)).as_secs() as f64;
+                        let p_secs = p
+                            .timestamp
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap_or(Duration::from_secs(0))
+                            .as_secs() as f64;
+                        let n_secs = n
+                            .timestamp
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap_or(Duration::from_secs(0))
+                            .as_secs() as f64;
 
                         let ratio = (ts_secs - p_secs) / (n_secs - p_secs);
                         Ok(p.value + ratio * (n.value - p.value))
@@ -223,11 +240,13 @@ impl TimeSeriesAnalyzer {
                 }
             }
             InterpolationMethod::Average => {
-                let prev = self.series.points.iter()
+                let prev = self
+                    .series
+                    .points
+                    .iter()
                     .filter(|p| p.timestamp <= timestamp)
                     .last();
-                let next = self.series.points.iter()
-                    .find(|p| p.timestamp >= timestamp);
+                let next = self.series.points.iter().find(|p| p.timestamp >= timestamp);
 
                 match (prev, next) {
                     (Some(p), Some(n)) => Ok((p.value + n.value) / 2.0),
@@ -256,7 +275,8 @@ impl TimeSeriesAnalyzer {
         // Group points into buckets
         for point in &self.series.points {
             let bucket_key = self.get_bucket_key(point.timestamp, &bucket)?;
-            buckets.entry(bucket_key)
+            buckets
+                .entry(bucket_key)
                 .or_insert_with(Vec::new)
                 .push(point.value);
         }
@@ -285,8 +305,10 @@ impl TimeSeriesAnalyzer {
 
     // Get bucket key for timestamp
     fn get_bucket_key(&self, timestamp: SystemTime, bucket: &TimeBucket) -> Result<u64> {
-        let secs = timestamp.duration_since(UNIX_EPOCH)
-            .unwrap_or(Duration::from_secs(0)).as_secs();
+        let secs = timestamp
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or(Duration::from_secs(0))
+            .as_secs();
         let bucket_secs = bucket.duration.as_secs();
 
         let bucket_key = match bucket.alignment {
@@ -296,9 +318,11 @@ impl TimeSeriesAnalyzer {
                 (secs / bucket_secs) * bucket_secs
             }
             BucketAlignment::FirstPoint => {
-                let start_secs = self.series.points[0].timestamp
+                let start_secs = self.series.points[0]
+                    .timestamp
                     .duration_since(UNIX_EPOCH)
-                    .unwrap_or(Duration::from_secs(0)).as_secs();
+                    .unwrap_or(Duration::from_secs(0))
+                    .as_secs();
                 let offset = secs - start_secs;
                 start_secs + (offset / bucket_secs) * bucket_secs
             }
@@ -314,15 +338,15 @@ impl TimeSeriesAnalyzer {
         }
 
         let result = match method {
-            AggregationMethod::Mean => {
-                values.iter().sum::<f64>() / values.len() as f64
-            }
+            AggregationMethod::Mean => values.iter().sum::<f64>() / values.len() as f64,
             AggregationMethod::Sum => values.iter().sum(),
-            AggregationMethod::Min => values.iter()
+            AggregationMethod::Min => values
+                .iter()
                 .cloned()
                 .min_by(|a, b| a.partial_cmp(b).unwrap())
                 .unwrap_or(0.0),
-            AggregationMethod::Max => values.iter()
+            AggregationMethod::Max => values
+                .iter()
                 .cloned()
                 .max_by(|a, b| a.partial_cmp(b).unwrap())
                 .unwrap_or(0.0),
@@ -331,9 +355,8 @@ impl TimeSeriesAnalyzer {
             AggregationMethod::Count => values.len() as f64,
             AggregationMethod::StdDev => {
                 let mean = values.iter().sum::<f64>() / values.len() as f64;
-                let variance = values.iter()
-                    .map(|v| (v - mean).powi(2))
-                    .sum::<f64>() / values.len() as f64;
+                let variance =
+                    values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
                 variance.sqrt()
             }
             AggregationMethod::Median => {
@@ -358,7 +381,11 @@ impl TimeSeriesAnalyzer {
         match ma_type {
             MovingAverageType::Simple { window_size } => {
                 for i in 0..self.series.points.len() {
-                    let start = if i >= window_size { i - window_size + 1 } else { 0 };
+                    let start = if i >= window_size {
+                        i - window_size + 1
+                    } else {
+                        0
+                    };
                     let window = &self.series.points[start..=i];
                     let avg = window.iter().map(|p| p.value).sum::<f64>() / window.len() as f64;
 
@@ -371,9 +398,7 @@ impl TimeSeriesAnalyzer {
             }
             MovingAverageType::Exponential { alpha } => {
                 if alpha <= 0.0 || alpha > 1.0 {
-                    return Err(DbError::InvalidInput(
-                        "Alpha must be in (0, 1]".to_string()
-                    ));
+                    return Err(DbError::InvalidInput("Alpha must be in (0, 1]".to_string()));
                 }
 
                 let mut ema = self.series.points[0].value;
@@ -388,10 +413,15 @@ impl TimeSeriesAnalyzer {
             }
             MovingAverageType::Weighted { weights } => {
                 for i in 0..self.series.points.len() {
-                    let start = if i >= weights.len() { i - weights.len() + 1 } else { 0 };
+                    let start = if i >= weights.len() {
+                        i - weights.len() + 1
+                    } else {
+                        0
+                    };
                     let window = &self.series.points[start..=i];
 
-                    let weighted_sum: f64 = window.iter()
+                    let weighted_sum: f64 = window
+                        .iter()
                         .zip(weights.iter())
                         .map(|(p, w)| p.value * w)
                         .sum();
@@ -462,7 +492,11 @@ impl TimeSeriesAnalyzer {
 
         Ok(SeasonalityInfo {
             has_seasonality,
-            period: if has_seasonality { Some(best_period) } else { None },
+            period: if has_seasonality {
+                Some(best_period)
+            } else {
+                None
+            },
             strength: best_correlation,
             patterns: Vec::new(),
         })
@@ -502,7 +536,8 @@ impl TimeSeriesAnalyzer {
         let trend = self.calculate_trend(&values, window_size);
 
         // Detrend to get seasonal + residual
-        let detrended: Vec<f64> = values.iter()
+        let detrended: Vec<f64> = values
+            .iter()
             .zip(trend.iter())
             .map(|(v, t)| v - t)
             .collect();
@@ -516,7 +551,8 @@ impl TimeSeriesAnalyzer {
         };
 
         // Residual = original - trend - seasonal
-        let residual: Vec<f64> = values.iter()
+        let residual: Vec<f64> = values
+            .iter()
             .zip(trend.iter())
             .zip(seasonal.iter())
             .map(|((v, t), s)| v - t - s)
@@ -533,7 +569,11 @@ impl TimeSeriesAnalyzer {
         let mut trend = Vec::new();
 
         for i in 0..values.len() {
-            let start = if i >= window_size / 2 { i - window_size / 2 } else { 0 };
+            let start = if i >= window_size / 2 {
+                i - window_size / 2
+            } else {
+                0
+            };
             let end = (i + window_size / 2).min(values.len());
             let window = &values[start..end];
             let avg = window.iter().sum::<f64>() / window.len() as f64;
@@ -616,7 +656,8 @@ impl TimeSeriesAnalyzer {
         }
 
         // Calculate intervals between consecutive points
-        let intervals: Vec<Duration> = points.windows(2)
+        let intervals: Vec<Duration> = points
+            .windows(2)
             .filter_map(|w| w[1].timestamp.duration_since(w[0].timestamp).ok())
             .collect();
 
@@ -625,9 +666,8 @@ impl TimeSeriesAnalyzer {
         }
 
         // Find most common interval (simplified - would use mode in production)
-        let avg_interval_secs = intervals.iter()
-            .map(|d| d.as_secs())
-            .sum::<u64>() / intervals.len() as u64;
+        let avg_interval_secs =
+            intervals.iter().map(|d| d.as_secs()).sum::<u64>() / intervals.len() as u64;
 
         Some(Duration::from_secs(avg_interval_secs))
     }
@@ -693,7 +733,8 @@ mod tests {
         let series = create_test_series();
         let analyzer = TimeSeriesAnalyzer::new(series);
 
-        let ma = analyzer.moving_average(MovingAverageType::Simple { window_size: 5 })
+        let ma = analyzer
+            .moving_average(MovingAverageType::Simple { window_size: 5 })
             .unwrap();
 
         assert_eq!(ma.points.len(), 100);
@@ -709,7 +750,9 @@ mod tests {
             alignment: BucketAlignment::Epoch,
         };
 
-        let downsampled = analyzer.downsample(bucket, AggregationMethod::Mean).unwrap();
+        let downsampled = analyzer
+            .downsample(bucket, AggregationMethod::Mean)
+            .unwrap();
 
         assert!(downsampled.points.len() < 100);
     }
@@ -719,10 +762,9 @@ mod tests {
         let series = create_test_series();
         let analyzer = TimeSeriesAnalyzer::new(series);
 
-        let filled = analyzer.fill_gaps(
-            Duration::from_secs(3600),
-            InterpolationMethod::Linear,
-        ).unwrap();
+        let filled = analyzer
+            .fill_gaps(Duration::from_secs(3600), InterpolationMethod::Linear)
+            .unwrap();
 
         assert_eq!(filled.points.len(), 100);
     }

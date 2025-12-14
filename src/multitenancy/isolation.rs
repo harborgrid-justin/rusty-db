@@ -1,15 +1,15 @@
 // Resource isolation mechanisms for multi-tenant environments
 // Implements memory, I/O, CPU, and network isolation using Rust ownership and resource governors
 
-use std::fmt;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::VecDeque;
+use std::fmt;
+use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::time::SystemTime;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
-use std::time::{SystemTime};
 
 // Isolation error types
 #[derive(Debug, Clone)]
@@ -27,10 +27,14 @@ impl fmt::Display for IsolationError {
         match self {
             IsolationError::ResourceExhausted(msg) => write!(f, "Resource exhausted: {}", msg),
             IsolationError::AllocationFailed(msg) => write!(f, "Allocation failed: {}", msg),
-            IsolationError::InvalidConfiguration(msg) => write!(f, "Invalid configuration: {}", msg),
+            IsolationError::InvalidConfiguration(msg) => {
+                write!(f, "Invalid configuration: {}", msg)
+            }
             IsolationError::ThrottlingActive(msg) => write!(f, "Throttling active: {}", msg),
             IsolationError::QuotaExceeded(msg) => write!(f, "Quota exceeded: {}", msg),
-            IsolationError::LockContentionTimeout(msg) => write!(f, "Lock contention timeout: {}", msg),
+            IsolationError::LockContentionTimeout(msg) => {
+                write!(f, "Lock contention timeout: {}", msg)
+            }
         }
     }
 }
@@ -77,30 +81,33 @@ impl MemoryIsolator {
         let mut global_allocated = self.global_allocated.write().await;
 
         // Get or create tenant allocation record
-        let tenant_alloc = allocations.entry(tenant_id.to_string())
-            .or_insert_with(|| TenantMemoryAllocation {
-                tenant_id: tenant_id.to_string(),
-                allocated_bytes: 0,
-                quota_bytes: 1024 * 1024 * 1024, // Default 1GB
-                peak_usage_bytes: 0,
-                allocation_count: 0,
-                deallocation_count: 0,
-                oom_count: 0,
-                last_allocation: SystemTime::now(),
-            });
+        let tenant_alloc =
+            allocations
+                .entry(tenant_id.to_string())
+                .or_insert_with(|| TenantMemoryAllocation {
+                    tenant_id: tenant_id.to_string(),
+                    allocated_bytes: 0,
+                    quota_bytes: 1024 * 1024 * 1024, // Default 1GB
+                    peak_usage_bytes: 0,
+                    allocation_count: 0,
+                    deallocation_count: 0,
+                    oom_count: 0,
+                    last_allocation: SystemTime::now(),
+                });
 
         // Check tenant quota
         if tenant_alloc.allocated_bytes + size_bytes > tenant_alloc.quota_bytes {
             tenant_alloc.oom_count += 1;
-            return Err(IsolationError::QuotaExceeded(
-                format!("Tenant {} memory quota exceeded", tenant_id)
-            ));
+            return Err(IsolationError::QuotaExceeded(format!(
+                "Tenant {} memory quota exceeded",
+                tenant_id
+            )));
         }
 
         // Check global limit
         if *global_allocated + size_bytes > self.global_memory_limit {
             return Err(IsolationError::ResourceExhausted(
-                "Global memory limit reached".to_string()
+                "Global memory limit reached".to_string(),
             ));
         }
 
@@ -128,7 +135,9 @@ impl MemoryIsolator {
         let mut global_allocated = self.global_allocated.write().await;
 
         if let Some(tenant_alloc) = allocations.get_mut(&allocation.tenant_id) {
-            tenant_alloc.allocated_bytes = tenant_alloc.allocated_bytes.saturating_sub(allocation.size_bytes);
+            tenant_alloc.allocated_bytes = tenant_alloc
+                .allocated_bytes
+                .saturating_sub(allocation.size_bytes);
             tenant_alloc.deallocation_count += 1;
         }
 
@@ -141,17 +150,19 @@ impl MemoryIsolator {
     pub async fn set_quota(&self, tenant_id: &str, quota_bytes: u64) -> IsolationResult<()> {
         let mut allocations = self.tenant_allocations.write().await;
 
-        let tenant_alloc = allocations.entry(tenant_id.to_string())
-            .or_insert_with(|| TenantMemoryAllocation {
-                tenant_id: tenant_id.to_string(),
-                allocated_bytes: 0,
-                quota_bytes: 0,
-                peak_usage_bytes: 0,
-                allocation_count: 0,
-                deallocation_count: 0,
-                oom_count: 0,
-                last_allocation: SystemTime::now(),
-            });
+        let tenant_alloc =
+            allocations
+                .entry(tenant_id.to_string())
+                .or_insert_with(|| TenantMemoryAllocation {
+                    tenant_id: tenant_id.to_string(),
+                    allocated_bytes: 0,
+                    quota_bytes: 0,
+                    peak_usage_bytes: 0,
+                    allocation_count: 0,
+                    deallocation_count: 0,
+                    oom_count: 0,
+                    last_allocation: SystemTime::now(),
+                });
 
         tenant_alloc.quota_bytes = quota_bytes;
 
@@ -172,7 +183,8 @@ impl MemoryIsolator {
         MemoryGlobalStats {
             total_allocated_bytes: global_allocated,
             total_limit_bytes: self.global_memory_limit,
-            utilization_percent: (global_allocated as f64 / self.global_memory_limit as f64) * 100.0,
+            utilization_percent: (global_allocated as f64 / self.global_memory_limit as f64)
+                * 100.0,
             tenant_count: allocations.len(),
         }
     }
@@ -202,7 +214,7 @@ pub struct IoBandwidthAllocator {
 #[derive(Debug, Clone)]
 pub struct TokenBucket {
     pub tenant_id: String,
-    pub capacity: u64,           // Maximum tokens (bytes)
+    pub capacity: u64,            // Maximum tokens (bytes)
     pub tokens: u64,              // Current tokens
     pub refill_rate_per_sec: u64, // Tokens added per second
     pub last_refill: Instant,
@@ -256,28 +268,27 @@ impl IoBandwidthAllocator {
     // Configure I/O bandwidth for tenant
     pub async fn configure_tenant(&self, tenant_id: String, bandwidth_mbps: u32) {
         let mut buckets = self.tenant_buckets.write().await;
-        buckets.insert(tenant_id.clone(), TokenBucket::new(tenant_id, bandwidth_mbps));
+        buckets.insert(
+            tenant_id.clone(),
+            TokenBucket::new(tenant_id, bandwidth_mbps),
+        );
     }
 
     // Request I/O bandwidth
-    pub async fn request_bandwidth(
-        &self,
-        tenant_id: &str,
-        bytes: u64,
-    ) -> IsolationResult<()> {
+    pub async fn request_bandwidth(&self, tenant_id: &str, bytes: u64) -> IsolationResult<()> {
         let mut buckets = self.tenant_buckets.write().await;
 
-        let bucket = buckets.get_mut(tenant_id)
-            .ok_or_else(|| IsolationError::InvalidConfiguration(
-                format!("Tenant {} not configured", tenant_id)
-            ))?;
+        let bucket = buckets.get_mut(tenant_id).ok_or_else(|| {
+            IsolationError::InvalidConfiguration(format!("Tenant {} not configured", tenant_id))
+        })?;
 
         if bucket.consume(bytes) {
             Ok(())
         } else {
-            Err(IsolationError::ThrottlingActive(
-                format!("Bandwidth limit reached for tenant {}", tenant_id)
-            ))
+            Err(IsolationError::ThrottlingActive(format!(
+                "Bandwidth limit reached for tenant {}",
+                tenant_id
+            )))
         }
     }
 
@@ -296,7 +307,7 @@ impl IoBandwidthAllocator {
                 Err(_) => {
                     if start.elapsed() > timeout {
                         return Err(IsolationError::ThrottlingActive(
-                            "Bandwidth wait timeout".to_string()
+                            "Bandwidth wait timeout".to_string(),
                         ));
                     }
                     tokio::time::sleep(Duration::from_millis(10)).await;
@@ -363,7 +374,7 @@ impl CpuScheduler {
     ) -> IsolationResult<()> {
         if min_percent > 100 || max_percent > 100 || min_percent > max_percent {
             return Err(IsolationError::InvalidConfiguration(
-                "Invalid CPU percentage configuration".to_string()
+                "Invalid CPU percentage configuration".to_string(),
             ));
         }
 
@@ -404,8 +415,9 @@ impl CpuScheduler {
         let fair_percent = (shares.shares as f64 / total_shares as f64) * 100.0;
 
         // Apply min/max constraints
-        let allocation = fair_percent.max(shares.min_percent as f64)
-                                     .min(shares.max_percent as f64);
+        let allocation = fair_percent
+            .max(shares.min_percent as f64)
+            .min(shares.max_percent as f64);
 
         Some(allocation)
     }
@@ -541,9 +553,7 @@ impl PortAllocator {
 
     /// Reserved for resource management
 
-
     #[allow(dead_code)]
-
 
     fn deallocate(&mut self, port: u16) {
         self.allocated_ports.remove(&port);
@@ -566,7 +576,8 @@ impl NetworkIsolator {
         max_connections: u32,
     ) -> IsolationResult<u16> {
         let mut allocator = self.port_allocator.write().await;
-        let port = allocator.allocate(&tenant_id)
+        let port = allocator
+            .allocate(&tenant_id)
             .ok_or_else(|| IsolationError::ResourceExhausted("No ports available".to_string()))?;
 
         drop(allocator);
@@ -590,10 +601,9 @@ impl NetworkIsolator {
     // Check if tenant can accept new connection
     pub async fn can_accept_connection(&self, tenant_id: &str) -> IsolationResult<bool> {
         let tenant_ports = self.tenant_ports.read().await;
-        let config = tenant_ports.get(tenant_id)
-            .ok_or_else(|| IsolationError::InvalidConfiguration(
-                format!("Tenant {} not configured", tenant_id)
-            ))?;
+        let config = tenant_ports.get(tenant_id).ok_or_else(|| {
+            IsolationError::InvalidConfiguration(format!("Tenant {} not configured", tenant_id))
+        })?;
 
         Ok(config.current_connections < config.max_connections)
     }
@@ -601,13 +611,14 @@ impl NetworkIsolator {
     // Increment connection count
     pub async fn increment_connections(&self, tenant_id: &str) -> IsolationResult<()> {
         let mut tenant_ports = self.tenant_ports.write().await;
-        let config = tenant_ports.get_mut(tenant_id)
-            .ok_or_else(|| IsolationError::InvalidConfiguration(
-                format!("Tenant {} not configured", tenant_id)
-            ))?;
+        let config = tenant_ports.get_mut(tenant_id).ok_or_else(|| {
+            IsolationError::InvalidConfiguration(format!("Tenant {} not configured", tenant_id))
+        })?;
 
         if config.current_connections >= config.max_connections {
-            return Err(IsolationError::ResourceExhausted("Max connections reached".to_string()));
+            return Err(IsolationError::ResourceExhausted(
+                "Max connections reached".to_string(),
+            ));
         }
 
         config.current_connections += 1;
@@ -679,9 +690,10 @@ impl LockContentionIsolator {
 
         if elapsed > self.max_wait_time {
             self.record_timeout(tenant_id).await;
-            return Err(IsolationError::LockContentionTimeout(
-                format!("Lock timeout for tenant {} on resource {}", tenant_id, resource_id)
-            ));
+            return Err(IsolationError::LockContentionTimeout(format!(
+                "Lock timeout for tenant {} on resource {}",
+                tenant_id, resource_id
+            )));
         }
 
         self.record_acquisition(tenant_id, elapsed).await;
@@ -695,7 +707,8 @@ impl LockContentionIsolator {
 
     async fn record_acquisition(&self, tenant_id: &str, wait_time: Duration) {
         let mut tenant_locks = self.tenant_locks.write().await;
-        let stats = tenant_locks.entry(tenant_id.to_string())
+        let stats = tenant_locks
+            .entry(tenant_id.to_string())
             .or_insert_with(|| TenantLockStats {
                 tenant_id: tenant_id.to_string(),
                 locks_acquired: 0,
@@ -717,7 +730,8 @@ impl LockContentionIsolator {
 
     async fn record_timeout(&self, tenant_id: &str) {
         let mut tenant_locks = self.tenant_locks.write().await;
-        let stats = tenant_locks.entry(tenant_id.to_string())
+        let stats = tenant_locks
+            .entry(tenant_id.to_string())
             .or_insert_with(|| TenantLockStats {
                 tenant_id: tenant_id.to_string(),
                 locks_acquired: 0,
@@ -778,13 +792,11 @@ impl BufferPoolPartitioner {
     ) -> IsolationResult<()> {
         let mut partitions = self.tenant_partitions.write().await;
 
-        let total_allocated: u64 = partitions.values()
-            .map(|p| p.quota_bytes)
-            .sum();
+        let total_allocated: u64 = partitions.values().map(|p| p.quota_bytes).sum();
 
         if total_allocated + quota_bytes > self.total_buffer_size {
             return Err(IsolationError::ResourceExhausted(
-                "Buffer pool exhausted".to_string()
+                "Buffer pool exhausted".to_string(),
             ));
         }
 
@@ -808,10 +820,9 @@ impl BufferPoolPartitioner {
     pub async fn cache_page(&self, tenant_id: &str, page_size: u64) -> IsolationResult<()> {
         let mut partitions = self.tenant_partitions.write().await;
 
-        let partition = partitions.get_mut(tenant_id)
-            .ok_or_else(|| IsolationError::InvalidConfiguration(
-                format!("Tenant {} not configured", tenant_id)
-            ))?;
+        let partition = partitions.get_mut(tenant_id).ok_or_else(|| {
+            IsolationError::InvalidConfiguration(format!("Tenant {} not configured", tenant_id))
+        })?;
 
         if partition.allocated_bytes + page_size > partition.quota_bytes {
             // Evict pages
@@ -858,7 +869,8 @@ impl BufferPoolPartitioner {
             tenant_id: tenant_id.to_string(),
             allocated_bytes: partition.allocated_bytes,
             quota_bytes: partition.quota_bytes,
-            utilization_percent: (partition.allocated_bytes as f64 / partition.quota_bytes as f64) * 100.0,
+            utilization_percent: (partition.allocated_bytes as f64 / partition.quota_bytes as f64)
+                * 100.0,
             cached_pages: partition.cached_pages,
             hit_ratio,
             eviction_count: partition.eviction_count,
@@ -885,7 +897,10 @@ mod tests {
     async fn test_memory_isolation() {
         let isolator = MemoryIsolator::new(1024); // 1GB
 
-        isolator.set_quota("tenant1", 100 * 1024 * 1024).await.unwrap();
+        isolator
+            .set_quota("tenant1", 100 * 1024 * 1024)
+            .await
+            .unwrap();
 
         let alloc = isolator.allocate("tenant1", 50 * 1024 * 1024).await;
         assert!(alloc.is_ok());
@@ -907,12 +922,9 @@ mod tests {
     async fn test_cpu_scheduler() {
         let scheduler = CpuScheduler::new();
 
-        let result = scheduler.configure_tenant(
-            "tenant1".to_string(),
-            1000,
-            10,
-            50,
-        ).await;
+        let result = scheduler
+            .configure_tenant("tenant1".to_string(), 1000, 10, 50)
+            .await;
 
         assert!(result.is_ok());
 
@@ -924,11 +936,9 @@ mod tests {
     async fn test_network_isolation() {
         let isolator = NetworkIsolator::new(10000, 20000);
 
-        let port = isolator.allocate_tenant(
-            "tenant1".to_string(),
-            100,
-            50,
-        ).await;
+        let port = isolator
+            .allocate_tenant("tenant1".to_string(), 100, 50)
+            .await;
 
         assert!(port.is_ok());
         let port_value = port.unwrap();
@@ -939,10 +949,9 @@ mod tests {
     async fn test_buffer_pool_partitioning() {
         let partitioner = BufferPoolPartitioner::new(1024); // 1GB
 
-        let result = partitioner.allocate_partition(
-            "tenant1".to_string(),
-            100 * 1024 * 1024,
-        ).await;
+        let result = partitioner
+            .allocate_partition("tenant1".to_string(), 100 * 1024 * 1024)
+            .await;
 
         assert!(result.is_ok());
 

@@ -27,8 +27,14 @@ impl CteStatistics {
         row_count: usize,
         memory_bytes: usize,
     ) {
-        *self.execution_counts.entry(cte_name.to_string()).or_insert(0) += 1;
-        *self.execution_times.entry(cte_name.to_string()).or_insert(0) += duration_ms;
+        *self
+            .execution_counts
+            .entry(cte_name.to_string())
+            .or_insert(0) += 1;
+        *self
+            .execution_times
+            .entry(cte_name.to_string())
+            .or_insert(0) += duration_ms;
         self.row_counts.insert(cte_name.to_string(), row_count);
         self.memory_usage.insert(cte_name.to_string(), memory_bytes);
     }
@@ -53,7 +59,9 @@ impl CteStatistics {
             total_ctes: self.execution_counts.len(),
             total_executions: self.execution_counts.values().sum(),
             total_memory_bytes: self.get_total_memory_usage(),
-            cte_details: self.execution_counts.keys()
+            cte_details: self
+                .execution_counts
+                .keys()
                 .map(|name| {
                     let count = self.execution_counts.get(name).copied().unwrap_or(0);
                     let avg_time = self.get_average_execution_time(name).unwrap_or(0.0);

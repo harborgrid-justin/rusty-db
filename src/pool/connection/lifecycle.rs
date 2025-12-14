@@ -8,11 +8,11 @@
 // - Lifetime enforcement
 // - Connection validation
 
+use crate::error::{DbError, Result};
+use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
-use async_trait::async_trait;
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
 
 use super::core::{PooledConnection, RecyclingStrategy};
 
@@ -63,16 +63,16 @@ impl AgingPolicy {
     #[allow(private_interfaces)]
     pub fn should_recycle<C>(&self, conn: &PooledConnection<C>) -> bool {
         match self {
-            AgingPolicy::TimeBased { max_lifetime } => {
-                conn.age() > *max_lifetime
-            }
-            AgingPolicy::UsageBased { max_borrows } => {
-                conn.borrow_count >= *max_borrows
-            }
-            AgingPolicy::Combined { max_lifetime, max_borrows } => {
-                conn.age() > *max_lifetime || conn.borrow_count >= *max_borrows
-            }
-            AgingPolicy::Adaptive { base_lifetime, error_threshold } => {
+            AgingPolicy::TimeBased { max_lifetime } => conn.age() > *max_lifetime,
+            AgingPolicy::UsageBased { max_borrows } => conn.borrow_count >= *max_borrows,
+            AgingPolicy::Combined {
+                max_lifetime,
+                max_borrows,
+            } => conn.age() > *max_lifetime || conn.borrow_count >= *max_borrows,
+            AgingPolicy::Adaptive {
+                base_lifetime,
+                error_threshold,
+            } => {
                 let error_rate = if conn.metrics.queries_executed > 0 {
                     conn.metrics.errors as f64 / conn.metrics.queries_executed as f64
                 } else {
@@ -232,7 +232,7 @@ impl RecyclingManager {
                 // Connection will be replaced by caller
                 self.replaced_count.fetch_add(1, Ordering::SeqCst);
                 return Err(DbError::InvalidOperation(
-                    "Connection should be replaced".to_string()
+                    "Connection should be replaced".to_string(),
                 ));
             }
             RecyclingStrategy::Adaptive => {
@@ -298,19 +298,13 @@ impl LifetimeEnforcer {
             let age = conn.age();
             if age > max {
                 self.enforced_count.fetch_add(1, Ordering::SeqCst);
-                return LifetimeStatus::Exceeded {
-                    current: age,
-                    max,
-                };
+                return LifetimeStatus::Exceeded { current: age, max };
             }
 
             if let Some(threshold) = self.soft_lifetime_threshold {
                 if age > threshold {
                     self.warnings_issued.fetch_add(1, Ordering::SeqCst);
-                    return LifetimeStatus::NearExpiry {
-                        current: age,
-                        max,
-                    };
+                    return LifetimeStatus::NearExpiry { current: age, max };
                 }
             }
         }
@@ -346,22 +340,13 @@ pub enum LifetimeStatus {
     Valid,
 
     // Connection lifetime exceeded
-    Exceeded {
-        current: Duration,
-        max: Duration,
-    },
+    Exceeded { current: Duration, max: Duration },
 
     // Connection is near expiry
-    NearExpiry {
-        current: Duration,
-        max: Duration,
-    },
+    NearExpiry { current: Duration, max: Duration },
 
     // Connection idle timeout
-    IdleTimeout {
-        idle_time: Duration,
-        max: Duration,
-    },
+    IdleTimeout { idle_time: Duration, max: Duration },
 }
 
 // Lifetime enforcement statistics

@@ -1,9 +1,8 @@
 /// Free Frame Manager - Manages allocation/deallocation of buffer frames
-
 use crate::buffer::page_cache::{FrameId, PerCoreFramePool};
 use parking_lot::Mutex;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 /// Manages free frames using a lock-free stack or per-core pools
 #[allow(dead_code)]
@@ -25,11 +24,7 @@ pub struct FreeFrameManager {
 impl FreeFrameManager {
     /// Create a new free frame manager
     #[allow(dead_code)]
-    pub fn new(
-        num_frames: usize,
-        enable_per_core_pools: bool,
-        frames_per_core: usize,
-    ) -> Self {
+    pub fn new(num_frames: usize, enable_per_core_pools: bool, frames_per_core: usize) -> Self {
         let num_cores = num_cpus::get();
 
         let per_core_pools = if enable_per_core_pools {

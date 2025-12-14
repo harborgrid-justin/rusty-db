@@ -2,41 +2,35 @@
 //
 // Comprehensive security core with modular components.
 
-pub mod common;
-pub mod threat_detection;
 pub mod access_control;
-pub mod security_policies;
+pub mod common;
 pub mod manager;
+pub mod security_policies;
+pub mod threat_detection;
 
 // Re-export main types
 pub use threat_detection::{
-    SecurityEventCorrelator, CorrelatedEvent, EventSeverity,
-    AttackPattern, EventIndicator, SecurityIncident, IncidentStatus,
-    CorrelationRule, CorrelatorStatistics,
-    ThreatIntelligence, IndicatorOfCompromise, IocType,
-    ThreatActor, ThreatSophistication, Vulnerability,
-    ReputationScore, ReputationCategory, ThreatIntelligenceStatistics,
+    AttackPattern, CorrelatedEvent, CorrelationRule, CorrelatorStatistics, EventIndicator,
+    EventSeverity, IncidentStatus, IndicatorOfCompromise, IocType, ReputationCategory,
+    ReputationScore, SecurityEventCorrelator, SecurityIncident, ThreatActor, ThreatIntelligence,
+    ThreatIntelligenceStatistics, ThreatSophistication, Vulnerability,
 };
 
 pub use access_control::{
-    SecurityPolicyEngine, PolicyId, SecurityPolicy, PolicyType,
-    PolicyRule, PolicyEffect, PolicyCondition, ConditionOperator,
-    PolicyDecision, AttributeProvider, EvaluationContext,
-    PolicyEngineStatistics,
-    DefenseOrchestrator, DefenseLayer, LayerStatus,
-    ThreatLevel, DefenseCoverageReport,
+    AttributeProvider, ConditionOperator, DefenseCoverageReport, DefenseLayer, DefenseOrchestrator,
+    EvaluationContext, LayerStatus, PolicyCondition, PolicyDecision, PolicyEffect,
+    PolicyEngineStatistics, PolicyId, PolicyRule, PolicyType, SecurityPolicy, SecurityPolicyEngine,
+    ThreatLevel,
 };
 
 pub use security_policies::{
-    ComplianceValidator, ComplianceFramework, ComplianceControl,
-    ControlAssessment, ComplianceStatus, ComplianceEvidence,
-    ComplianceSummary,
-    SecurityMetrics, MetricValue, TimeSeriesPoint, SecurityPostureScore,
-    PenetrationTestHarness, PenTestResult, TestStatus, PenTestScenario,
-    TestCategory, PenTestReport, PenTestSummary,
+    ComplianceControl, ComplianceEvidence, ComplianceFramework, ComplianceStatus,
+    ComplianceSummary, ComplianceValidator, ControlAssessment, MetricValue, PenTestReport,
+    PenTestResult, PenTestScenario, PenTestSummary, PenetrationTestHarness, SecurityMetrics,
+    SecurityPostureScore, TestCategory, TestStatus, TimeSeriesPoint,
 };
 
 pub use manager::{
-    UnifiedSecurityCore, SecurityDashboard, DashboardData,
-    DashboardView, ExecutiveSummary, SecurityStatus,
+    DashboardData, DashboardView, ExecutiveSummary, SecurityDashboard, SecurityStatus,
+    UnifiedSecurityCore,
 };

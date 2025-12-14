@@ -26,8 +26,8 @@
 // }
 // ```
 
-use std::collections::HashSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 // Inferred data type from column analysis.
 //
@@ -131,16 +131,16 @@ impl InferredType {
         if trimmed.len() == 36 && trimmed.chars().filter(|c| *c == '-').count() == 4 {
             let parts: Vec<&str> = trimmed.split('-').collect();
             if parts.len() == 5
-                && parts.iter().all(|p| p.chars().all(|c| c.is_ascii_hexdigit()))
+                && parts
+                    .iter()
+                    .all(|p| p.chars().all(|c| c.is_ascii_hexdigit()))
             {
                 return InferredType::Uuid;
             }
         }
 
         // IP address pattern (simple check)
-        if trimmed.split('.').count() == 4
-            && trimmed.split('.').all(|p| p.parse::<u8>().is_ok())
-        {
+        if trimmed.split('.').count() == 4 && trimmed.split('.').all(|p| p.parse::<u8>().is_ok()) {
             return InferredType::IpAddress;
         }
 
@@ -164,10 +164,7 @@ impl InferredType {
         // Phone number (simplified)
         let digits_only: String = trimmed.chars().filter(|c| c.is_ascii_digit()).collect();
         if digits_only.len() >= 10 && digits_only.len() <= 15 {
-            let non_digit_chars: String = trimmed
-                .chars()
-                .filter(|c| !c.is_ascii_digit())
-                .collect();
+            let non_digit_chars: String = trimmed.chars().filter(|c| !c.is_ascii_digit()).collect();
             if non_digit_chars.chars().all(|c| "+-() .".contains(c)) {
                 return InferredType::Phone;
             }
@@ -315,7 +312,12 @@ impl BitmapIndex {
     // Returns row positions matching all given criteria (AND).
     //
     // Takes another bitmap index and returns intersection of matches.
-    pub fn intersect(&self, other: &BitmapIndex, self_value: &str, other_value: &str) -> Vec<usize> {
+    pub fn intersect(
+        &self,
+        other: &BitmapIndex,
+        self_value: &str,
+        other_value: &str,
+    ) -> Vec<usize> {
         let self_positions = self.lookup(self_value);
         let other_positions = other.lookup(other_value);
 
@@ -451,19 +453,13 @@ impl DataProfiler {
             .collect();
 
         // Sample values
-        profile.sample_values = distinct
-            .into_iter()
-            .take(self.max_sample_size)
-            .collect();
+        profile.sample_values = distinct.into_iter().take(self.max_sample_size).collect();
 
         // Determine primary type
         if let Some((primary_type, _)) = type_counts.iter().max_by_key(|(_, count)| *count) {
             profile.inferred_type = primary_type.clone();
         }
-        profile.type_distribution = type_counts
-            .into_iter()
-            .map(|(k, v)| (k, v))
-            .collect();
+        profile.type_distribution = type_counts.into_iter().map(|(k, v)| (k, v)).collect();
 
         // Cache the profile
         self.profiles.insert(name.to_string(), profile.clone());
@@ -472,10 +468,7 @@ impl DataProfiler {
     }
 
     // Profiles multiple columns efficiently.
-    pub fn profile_columns(
-        &mut self,
-        columns: &[(&str, &[Option<String>])],
-    ) -> Vec<ColumnProfile> {
+    pub fn profile_columns(&mut self, columns: &[(&str, &[Option<String>])]) -> Vec<ColumnProfile> {
         columns
             .iter()
             .map(|(name, values)| self.profile_column(name, values))
@@ -548,10 +541,7 @@ mod tests {
         assert_eq!(InferredType::infer("12.34"), InferredType::Float);
         assert_eq!(InferredType::infer("true"), InferredType::Boolean);
         assert_eq!(InferredType::infer("2024-01-15"), InferredType::Date);
-        assert_eq!(
-            InferredType::infer("test@example.com"),
-            InferredType::Email
-        );
+        assert_eq!(InferredType::infer("test@example.com"), InferredType::Email);
         assert_eq!(
             InferredType::infer("https://example.com"),
             InferredType::Url

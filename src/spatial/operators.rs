@@ -10,9 +10,7 @@
 
 use crate::error::DbError;
 use crate::error::Result;
-use crate::spatial::geometry::{
-    Coordinate, Geometry, LinearRing, LineString, Point, Polygon,
-};
+use crate::spatial::geometry::{Coordinate, Geometry, LineString, LinearRing, Point, Polygon};
 
 // Spatial relationship types based on DE-9IM (Dimensionally Extended 9-Intersection Model)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -234,10 +232,7 @@ impl TopologicalOps {
     }
 
     fn on_segment(p: &Coordinate, q: &Coordinate, r: &Coordinate) -> bool {
-        q.x <= p.x.max(r.x)
-            && q.x >= p.x.min(r.x)
-            && q.y <= p.y.max(r.y)
-            && q.y >= p.y.min(r.y)
+        q.x <= p.x.max(r.x) && q.x >= p.x.min(r.x) && q.y <= p.y.max(r.y) && q.y >= p.y.min(r.y)
     }
 
     // LineString intersects LineString
@@ -305,8 +300,7 @@ impl DistanceOps {
             return point.distance_2d(seg_start);
         }
 
-        let t = ((point.x - seg_start.x) * dx + (point.y - seg_start.y) * dy)
-            / (dx * dx + dy * dy);
+        let t = ((point.x - seg_start.x) * dx + (point.y - seg_start.y) * dy) / (dx * dx + dy * dy);
 
         let t = t.max(0.0).min(1.0);
 
@@ -385,7 +379,9 @@ impl BufferOps {
             Geometry::Point(point) => Self::buffer_point(point, distance),
             Geometry::LineString(ls) => Self::buffer_linestring(ls, distance),
             Geometry::Polygon(poly) => Self::buffer_polygon(poly, distance),
-            _ => Err(DbError::NotImplemented("Buffer for this geometry type".to_string())),
+            _ => Err(DbError::NotImplemented(
+                "Buffer for this geometry type".to_string(),
+            )),
         }
     }
 
@@ -547,7 +543,9 @@ impl SetOps {
             (Geometry::Polygon(poly_a), Geometry::Polygon(poly_b)) => {
                 Self::polygon_union(poly_a, poly_b)
             }
-            _ => Err(DbError::NotImplemented("Union for this geometry pair".to_string())),
+            _ => Err(DbError::NotImplemented(
+                "Union for this geometry pair".to_string(),
+            )),
         }
     }
 
@@ -621,7 +619,9 @@ impl SetOps {
             .collect();
 
         if diff_coords.len() < 3 {
-            return Err(DbError::InvalidInput("Difference results in empty geometry".to_string()));
+            return Err(DbError::InvalidInput(
+                "Difference results in empty geometry".to_string(),
+            ));
         }
 
         diff_coords.push(diff_coords[0]);

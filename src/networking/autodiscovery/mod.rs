@@ -61,12 +61,12 @@ pub mod membership;
 pub mod serf;
 
 // Re-exports
-pub use anti_entropy::{AntiEntropyEngine, MerkleTree, CrdtCounter};
+pub use anti_entropy::{AntiEntropyEngine, CrdtCounter, MerkleTree};
 pub use beacon::BeaconProtocol;
 pub use broadcast::BroadcastDiscovery;
 pub use gossip::{GossipDiscovery, MemberState};
 pub use mdns::MdnsDiscovery;
-pub use membership::{MembershipList, VersionVector, Member, MembershipDelta, MembershipSnapshot};
+pub use membership::{Member, MembershipDelta, MembershipList, MembershipSnapshot, VersionVector};
 pub use serf::SerfProtocol;
 
 /// Node information exchanged during discovery
@@ -108,7 +108,9 @@ impl NodeInfo {
 }
 
 /// Node health status
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, bincode::Encode, bincode::Decode,
+)]
 pub enum NodeStatus {
     /// Node is alive and healthy
     Alive,
@@ -285,36 +287,22 @@ impl AutoDiscovery {
         let membership = Arc::new(RwLock::new(MembershipList::new()));
 
         let backend: Box<dyn DiscoveryProtocol> = match config.backend {
-            DiscoveryBackend::Gossip => {
-                Box::new(GossipDiscovery::new(
-                    config.clone(),
-                    event_tx.clone(),
-                    membership.clone(),
-                )?)
-            }
+            DiscoveryBackend::Gossip => Box::new(GossipDiscovery::new(
+                config.clone(),
+                event_tx.clone(),
+                membership.clone(),
+            )?),
             DiscoveryBackend::Mdns => {
-                Box::new(MdnsDiscovery::new(
-                    config.clone(),
-                    event_tx.clone(),
-                )?)
+                Box::new(MdnsDiscovery::new(config.clone(), event_tx.clone())?)
             }
             DiscoveryBackend::Broadcast => {
-                Box::new(BroadcastDiscovery::new(
-                    config.clone(),
-                    event_tx.clone(),
-                )?)
+                Box::new(BroadcastDiscovery::new(config.clone(), event_tx.clone())?)
             }
             DiscoveryBackend::Beacon => {
-                Box::new(BeaconProtocol::new(
-                    config.clone(),
-                    event_tx.clone(),
-                )?)
+                Box::new(BeaconProtocol::new(config.clone(), event_tx.clone())?)
             }
             DiscoveryBackend::Serf => {
-                Box::new(SerfProtocol::new(
-                    config.clone(),
-                    event_tx.clone(),
-                )?)
+                Box::new(SerfProtocol::new(config.clone(), event_tx.clone())?)
             }
         };
 
@@ -364,10 +352,9 @@ impl AutoDiscovery {
     /// Subscribe to discovery events (consumes the receiver)
     pub async fn subscribe(&self) -> Result<mpsc::Receiver<DiscoveryEvent>> {
         let mut rx_guard = self.event_rx.write().await;
-        rx_guard.take()
-            .ok_or_else(|| DbError::InvalidOperation(
-                "Event receiver already consumed".to_string()
-            ))
+        rx_guard
+            .take()
+            .ok_or_else(|| DbError::InvalidOperation("Event receiver already consumed".to_string()))
     }
 }
 

@@ -19,14 +19,14 @@
 // - CoW layer: Modified blocks for the clone
 // - Metadata layer: Tracks block ownership and deltas
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use super::pdb::{PdbId, PdbSnapshot};
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
-use super::pdb::{PdbId, PdbSnapshot};
 
 /// Clone type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -138,7 +138,10 @@ impl CloningEngine {
             source_pdb_id,
             cloned_pdb_id,
             clone_type: CloneType::Full,
-            created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             source_scn,
             current_scn: source_scn,
             status: CloneStatus::Creating,
@@ -179,7 +182,10 @@ impl CloningEngine {
             source_pdb_id,
             cloned_pdb_id,
             clone_type: CloneType::Thin,
-            created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             source_scn,
             current_scn: source_scn,
             status: CloneStatus::Creating,
@@ -238,7 +244,10 @@ impl CloningEngine {
             source_pdb_id,
             cloned_pdb_id,
             clone_type: CloneType::Snapshot,
-            created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             source_scn: snapshot_scn,
             current_scn: snapshot_scn,
             status: CloneStatus::Creating,
@@ -279,13 +288,21 @@ impl CloningEngine {
             source_pdb_id,
             cloned_pdb_id,
             clone_type: CloneType::Refreshable,
-            created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            created_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             source_scn,
             current_scn: source_scn,
             status: CloneStatus::Creating,
             size_bytes: 0,
             cow_layer_bytes: 0,
-            last_refresh_at: Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()),
+            last_refresh_at: Some(
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs(),
+            ),
             parent_clone_id: None,
         };
 
@@ -313,7 +330,7 @@ impl CloningEngine {
         if let Some(meta) = clones.get_mut(&clone_id) {
             if meta.clone_type != CloneType::Refreshable {
                 return Err(DbError::InvalidInput(
-                    "Clone is not refreshable".to_string()
+                    "Clone is not refreshable".to_string(),
                 ));
             }
 
@@ -329,7 +346,10 @@ impl CloningEngine {
                 meta.current_scn = target_scn;
                 meta.status = CloneStatus::Active;
                 meta.last_refresh_at = Some(
-                    SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
                 );
             }
 
@@ -348,9 +368,7 @@ impl CloningEngine {
 
             // Clean up CoW layer if thin clone
             if meta.clone_type == CloneType::Thin || meta.clone_type == CloneType::Refreshable {
-                self.cow_engine
-                    .delete_cow_layer(meta.cloned_pdb_id)
-                    .await?;
+                self.cow_engine.delete_cow_layer(meta.cloned_pdb_id).await?;
             }
 
             clones.remove(&clone_id);
@@ -458,7 +476,10 @@ impl CopyOnWriteEngine {
             // In real implementation, would read from source PDB
             Ok(vec![0; layer.block_size])
         } else {
-            Err(DbError::NotFound(format!("CoW layer not found for PDB {:?}", clone_pdb_id)))
+            Err(DbError::NotFound(format!(
+                "CoW layer not found for PDB {:?}",
+                clone_pdb_id
+            )))
         }
     }
 
@@ -482,7 +503,10 @@ impl CopyOnWriteEngine {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("CoW layer not found for PDB {:?}", clone_pdb_id)))
+            Err(DbError::NotFound(format!(
+                "CoW layer not found for PDB {:?}",
+                clone_pdb_id
+            )))
         }
     }
 
@@ -497,7 +521,10 @@ impl CopyOnWriteEngine {
                 block_size: layer.block_size,
             })
         } else {
-            Err(DbError::NotFound(format!("CoW layer not found for PDB {:?}", clone_pdb_id)))
+            Err(DbError::NotFound(format!(
+                "CoW layer not found for PDB {:?}",
+                clone_pdb_id
+            )))
         }
     }
 }
@@ -633,7 +660,9 @@ mod tests {
         let engine = CloningEngine::new();
         let source_pdb_id = PdbId::new(1);
 
-        let result = engine.create_full_clone(source_pdb_id, "CLONE1", 1000).await;
+        let result = engine
+            .create_full_clone(source_pdb_id, "CLONE1", 1000)
+            .await;
         assert!(result.is_ok());
 
         let (clone_id, _cloned_pdb_id) = result.unwrap();
@@ -646,7 +675,9 @@ mod tests {
         let engine = CloningEngine::new();
         let source_pdb_id = PdbId::new(1);
 
-        let result = engine.create_thin_clone(source_pdb_id, "CLONE2", 1000).await;
+        let result = engine
+            .create_thin_clone(source_pdb_id, "CLONE2", 1000)
+            .await;
         assert!(result.is_ok());
 
         let (clone_id, _cloned_pdb_id) = result.unwrap();
@@ -660,10 +691,16 @@ mod tests {
         let source_pdb_id = PdbId::new(1);
         let clone_pdb_id = PdbId::new(2);
 
-        engine.create_cow_layer(source_pdb_id, clone_pdb_id).await.unwrap();
+        engine
+            .create_cow_layer(source_pdb_id, clone_pdb_id)
+            .await
+            .unwrap();
 
         let block_data = vec![1, 2, 3, 4];
-        engine.write_block(clone_pdb_id, 0, block_data.clone()).await.unwrap();
+        engine
+            .write_block(clone_pdb_id, 0, block_data.clone())
+            .await
+            .unwrap();
 
         let read_data = engine.read_block(clone_pdb_id, 0).await.unwrap();
         assert_eq!(read_data, block_data);

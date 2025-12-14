@@ -3,22 +3,22 @@
 // Logical replication using CDC for table-level replication with transformations,
 // conflict detection and resolution, bidirectional replication, and monitoring.
 
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::time::Duration;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{Instant, SystemTime};
-use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
-use crate::common::Value;
-use tokio::time::interval;
-use crate::error::{DbError, Result};
-use crate::common::{TableId};
-use super::cdc::{ChangeEvent, ChangeType, CDCEngine};
+use super::cdc::{CDCEngine, ChangeEvent, ChangeType};
 use super::publisher::EventPublisher;
 use super::subscriber::EventSubscriber;
+use crate::common::TableId;
+use crate::common::Value;
+use crate::error::{DbError, Result};
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::{Instant, SystemTime};
+use tokio::time::interval;
 
 // Replication mode
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -168,7 +168,8 @@ impl ReplicationRule {
         let mut remapped = HashMap::new();
 
         for (source_col, value) in columns {
-            let dest_col = self.column_mappings
+            let dest_col = self
+                .column_mappings
                 .get(source_col)
                 .cloned()
                 .unwrap_or_else(|| source_col.clone());
@@ -356,7 +357,9 @@ impl LogicalReplication {
 
     // Remove replication rule
     pub fn remove_rule(&self, rule_id: u64) -> Result<()> {
-        self.rules.write().remove(&rule_id)
+        self.rules
+            .write()
+            .remove(&rule_id)
             .ok_or_else(|| DbError::NotFound(format!("Rule {} not found", rule_id)))?;
         Ok(())
     }
@@ -372,9 +375,10 @@ impl LogicalReplication {
 
         let mut slots = self.slots.write();
         if slots.contains_key(&name) {
-            return Err(DbError::InvalidOperation(
-                format!("Slot '{}' already exists", name)
-            ));
+            return Err(DbError::InvalidOperation(format!(
+                "Slot '{}' already exists",
+                name
+            )));
         }
 
         slots.insert(name, slot.clone());
@@ -383,7 +387,9 @@ impl LogicalReplication {
 
     // Drop replication slot
     pub fn drop_slot(&self, name: &str) -> Result<()> {
-        self.slots.write().remove(name)
+        self.slots
+            .write()
+            .remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Slot '{}' not found", name)))?;
         Ok(())
     }
@@ -398,7 +404,9 @@ impl LogicalReplication {
         let start_time = Instant::now();
 
         // Check if this event should be replicated
-        let matching_rules: Vec<_> = self.rules.read()
+        let matching_rules: Vec<_> = self
+            .rules
+            .read()
             .values()
             .filter(|r| r.should_replicate(&event))
             .cloned()
@@ -445,7 +453,11 @@ impl LogicalReplication {
     }
 
     // Detect conflicts between local and remote changes
-    pub fn detect_conflict(&self, local: &ChangeEvent, remote: &ChangeEvent) -> Option<ReplicationConflict> {
+    pub fn detect_conflict(
+        &self,
+        local: &ChangeEvent,
+        remote: &ChangeEvent,
+    ) -> Option<ReplicationConflict> {
         // Check if events affect the same row
         if local.table_id != remote.table_id || local.row_id != remote.row_id {
             return None;
@@ -461,7 +473,10 @@ impl LogicalReplication {
     }
 
     // Resolve a conflict
-    pub async fn resolve_conflict(&self, conflict: &mut ReplicationConflict) -> Result<ChangeEvent> {
+    pub async fn resolve_conflict(
+        &self,
+        conflict: &mut ReplicationConflict,
+    ) -> Result<ChangeEvent> {
         let winner = match self.config.conflict_resolution {
             ConflictResolution::LastWriteWins => {
                 // Compare timestamps
@@ -488,7 +503,7 @@ impl LogicalReplication {
             }
             ConflictResolution::Manual => {
                 return Err(DbError::InvalidOperation(
-                    "Manual conflict resolution required".to_string()
+                    "Manual conflict resolution required".to_string(),
                 ));
             }
         };
@@ -524,11 +539,12 @@ impl LogicalReplication {
         let event_lag = remote_lsn.saturating_sub(local_lsn);
         let byte_lag = event_lag * 1024; // Rough estimate
 
-        let time_lag_seconds = if let Ok(duration) = remote_timestamp.duration_since(SystemTime::now()) {
-            duration.as_secs_f64().abs()
-        } else {
-            0.0
-        };
+        let time_lag_seconds =
+            if let Ok(duration) = remote_timestamp.duration_since(SystemTime::now()) {
+                duration.as_secs_f64().abs()
+            } else {
+                0.0
+            };
 
         let apply_rate = self.stats.read().events_per_second;
         let estimated_catch_up_seconds = if apply_rate > 0.0 {
@@ -566,7 +582,8 @@ impl LogicalReplication {
                 match event_rx.recv().await {
                     Ok(event) => {
                         // Check if any rules match
-                        let matching_rules: Vec<_> = rules.read()
+                        let matching_rules: Vec<_> = rules
+                            .read()
                             .values()
                             .filter(|r| r.should_replicate(&event))
                             .cloned()
@@ -641,8 +658,8 @@ impl LogicalReplication {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::cdc::CDCConfig;
+    use super::*;
 
     #[test]
     fn test_replication_rule() {
