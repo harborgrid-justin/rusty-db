@@ -4,14 +4,12 @@
 //! and version information according to Instance Layout Spec v1.0.
 
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
+    extract::State,
     response::Json as AxumJson,
     routing::{get, put},
     Router,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 
@@ -515,7 +513,7 @@ pub async fn get_version_info(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<VersionInfoResponse>> {
     Ok(AxumJson(VersionInfoResponse {
-        binary_version: "0.3.001".to_string(),
+        binary_version: "0.3.1".to_string(),
         layout_version: "1.0".to_string(),
         data_format_version: 2,
         wal_format_version: 2,

@@ -182,7 +182,7 @@ pub struct CompatibilityPolicy {
     pub protocol: Option<SupportedRange<ProtocolVersion>>,
 }
 
-/// RustyDB v0.3.001 compatibility policy.
+/// RustyDB v0.3.1 compatibility policy.
 ///
 /// This defines what versions of instance layouts, data formats,
 /// WAL formats, and protocols this version of RustyDB supports.

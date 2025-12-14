@@ -29,13 +29,13 @@
 
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::io::{self, Write as IoWrite};
+use std::io::Write as IoWrite;
 use std::path::{Path, PathBuf};
 
 use crate::error::{DbError, Result};
 
-/// RustyDB binary version (0.3.001)
-pub const RUSTYDB_VERSION: &str = "0.3.001";
+/// RustyDB binary version (0.3.1)
+pub const RUSTYDB_VERSION: &str = "0.3.1";
 
 /// Current layout version
 pub const CURRENT_LAYOUT_VERSION: &str = "1.0";
@@ -80,10 +80,10 @@ impl BinaryVersion {
 
     /// Get the current RustyDB binary version.
     pub fn current() -> Self {
-        Self::new(0, 3, 1) // 0.3.001
+        Self::new(0, 3, 1) // 0.3.1
     }
 
-    /// Parse a version string like "0.3.001" or "0.3.1".
+    /// Parse a version string like "0.3.1".
     ///
     /// # Arguments
     /// * `s` - Version string to parse
@@ -117,13 +117,13 @@ impl BinaryVersion {
 
     /// Convert to string representation.
     pub fn to_string_repr(&self) -> String {
-        format!("{}.{}.{:03}", self.major, self.minor, self.patch)
+        format!("{}.{}.{}", self.major, self.minor, self.patch)
     }
 }
 
 impl std::fmt::Display for BinaryVersion {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}.{}.{:03}", self.major, self.minor, self.patch)
+        write!(f, "{}.{}.{}", self.major, self.minor, self.patch)
     }
 }
 
@@ -651,7 +651,7 @@ mod tests {
 
     #[test]
     fn test_binary_version_parse() {
-        let v = BinaryVersion::parse("0.3.001").unwrap();
+        let v = BinaryVersion::parse("0.3.1").unwrap();
         assert_eq!(v.major, 0);
         assert_eq!(v.minor, 3);
         assert_eq!(v.patch, 1);
@@ -665,7 +665,7 @@ mod tests {
     #[test]
     fn test_binary_version_display() {
         let v = BinaryVersion::new(0, 3, 1);
-        assert_eq!(v.to_string(), "0.3.001");
+        assert_eq!(v.to_string(), "0.3.1");
     }
 
     #[test]

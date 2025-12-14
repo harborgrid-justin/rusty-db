@@ -117,7 +117,7 @@ pub mod metadata;
 // **Key Components:**
 // - `CompatibilityPolicy`: Version support ranges
 // - `check_compat`: Main compatibility checking function
-// - `COMPAT_POLICY_V1`: RustyDB v0.3.001 compatibility policy
+// - `COMPAT_POLICY_V1`: RustyDB v0.3.1 compatibility policy
 //
 // **Target LOC:** 400+ lines
 pub mod compat;

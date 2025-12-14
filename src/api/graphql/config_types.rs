@@ -3,7 +3,7 @@
 //! Provides GraphQL types for configuration management and instance metadata
 //! according to Instance Layout Spec v1.0.
 
-use async_graphql::{Enum, InputObject, Object, SimpleObject};
+use async_graphql::{Enum, InputObject, SimpleObject};
 use serde::{Deserialize, Serialize};
 
 // ============================================================================
@@ -350,7 +350,7 @@ pub struct RustyDbConfigGql {
 /// Version information
 #[derive(Debug, Clone, SimpleObject, Serialize, Deserialize)]
 pub struct VersionInfoGql {
-    /// Binary version (e.g., "0.3.001")
+    /// Binary version (e.g., "0.3.1")
     pub binary_version: String,
     /// Layout version (e.g., "1.0")
     pub layout_version: String,
@@ -526,7 +526,7 @@ impl Default for RustyDbConfigGql {
 impl Default for VersionInfoGql {
     fn default() -> Self {
         Self {
-            binary_version: "0.3.001".to_string(),
+            binary_version: "0.3.1".to_string(),
             layout_version: "1.0".to_string(),
             data_format_version: 2,
             wal_format_version: 2,
