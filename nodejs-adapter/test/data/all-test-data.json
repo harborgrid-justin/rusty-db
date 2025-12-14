@@ -1,0 +1,518 @@
+{
+  "_meta": {
+    "description": "Comprehensive test data for RustyDB Node.js adapter PR48 updates",
+    "version": "0.2.640",
+    "created": "2025-12-14",
+    "coverage": "100% API coverage across all subsystems"
+  },
+  "storage": {
+    "disks": [
+      {
+        "disk_id": "disk0",
+        "device_path": "/dev/sda1",
+        "mount_point": "/data",
+        "total_bytes": 1000000000000,
+        "used_bytes": 500000000000,
+        "available_bytes": 500000000000,
+        "read_iops": 1000,
+        "write_iops": 800,
+        "read_throughput_mbps": 150.5,
+        "write_throughput_mbps": 120.3,
+        "avg_latency_ms": 2.5
+      },
+      {
+        "disk_id": "disk1",
+        "device_path": "/dev/sdb1",
+        "mount_point": "/data2",
+        "total_bytes": 2000000000000,
+        "used_bytes": 800000000000,
+        "available_bytes": 1200000000000,
+        "read_iops": 1500,
+        "write_iops": 1200,
+        "read_throughput_mbps": 200.0,
+        "write_throughput_mbps": 180.0,
+        "avg_latency_ms": 1.8
+      }
+    ],
+    "partitions": [
+      {
+        "partition_id": "part_001",
+        "table_name": "sales",
+        "partition_name": "sales_2024_q1",
+        "partition_type": "range",
+        "partition_key": "sale_date",
+        "partition_value": "2024-01-01 TO 2024-03-31",
+        "row_count": 1500000,
+        "size_bytes": 524288000,
+        "created_at": 1704067200
+      },
+      {
+        "partition_id": "part_002",
+        "table_name": "sales",
+        "partition_name": "sales_2024_q2",
+        "partition_type": "range",
+        "partition_key": "sale_date",
+        "partition_value": "2024-04-01 TO 2024-06-30",
+        "row_count": 1800000,
+        "size_bytes": 629145600,
+        "created_at": 1711929600
+      }
+    ],
+    "tablespaces": [
+      {
+        "tablespace_id": "ts_system",
+        "name": "system",
+        "location": "/data/tablespaces/system",
+        "size_bytes": 10000000000,
+        "used_bytes": 5000000000,
+        "auto_extend": true,
+        "max_size_bytes": 50000000000,
+        "status": "online"
+      },
+      {
+        "tablespace_id": "ts_users",
+        "name": "users",
+        "location": "/data/tablespaces/users",
+        "size_bytes": 50000000000,
+        "used_bytes": 20000000000,
+        "auto_extend": true,
+        "max_size_bytes": 100000000000,
+        "status": "online"
+      }
+    ],
+    "buffer_pool": {
+      "total_pages": 100000,
+      "used_pages": 85000,
+      "free_pages": 15000,
+      "dirty_pages": 5000,
+      "hit_ratio": 0.985,
+      "evictions": 150000,
+      "reads": 5000000,
+      "writes": 2000000,
+      "flushes": 50000
+    }
+  },
+  "transactions": {
+    "active_transactions": [
+      {
+        "transaction_id": 1001,
+        "session_id": 101,
+        "started_at": 1702500000,
+        "isolation_level": "READ_COMMITTED",
+        "state": "active",
+        "read_only": false,
+        "queries_executed": 15,
+        "rows_affected": 500,
+        "locks_held": 3
+      },
+      {
+        "transaction_id": 1002,
+        "session_id": 102,
+        "started_at": 1702500100,
+        "isolation_level": "SERIALIZABLE",
+        "state": "active",
+        "read_only": true,
+        "queries_executed": 5,
+        "rows_affected": 0,
+        "locks_held": 1
+      }
+    ],
+    "locks": [
+      {
+        "lock_id": "lock_001",
+        "lock_type": "exclusive",
+        "resource_type": "table",
+        "resource_id": "users",
+        "transaction_id": 1001,
+        "granted": true,
+        "acquired_at": 1702500050
+      },
+      {
+        "lock_id": "lock_002",
+        "lock_type": "shared",
+        "resource_type": "row",
+        "resource_id": "users:row_123",
+        "transaction_id": 1002,
+        "granted": true,
+        "acquired_at": 1702500150
+      }
+    ],
+    "mvcc_status": {
+      "oldest_active_transaction": 1001,
+      "oldest_snapshot": 1000,
+      "total_versions": 50000,
+      "dead_tuples": 5000,
+      "live_tuples": 45000,
+      "vacuum_running": false,
+      "last_vacuum": 1702400000
+    },
+    "wal_status": {
+      "current_lsn": "0/3000000",
+      "checkpoint_lsn": "0/2800000",
+      "wal_files": 10,
+      "wal_size_bytes": 167772160,
+      "write_rate_mbps": 5.2,
+      "sync_rate_mbps": 4.8,
+      "last_checkpoint": 1702499000,
+      "checkpoint_in_progress": false
+    }
+  },
+  "security": {
+    "roles": [
+      {
+        "id": "role_admin",
+        "name": "admin",
+        "description": "Database administrator",
+        "permissions": ["ALL"],
+        "is_active": true,
+        "created_at": 1700000000
+      },
+      {
+        "id": "role_developer",
+        "name": "developer",
+        "description": "Application developer",
+        "permissions": ["SELECT", "INSERT", "UPDATE", "DELETE"],
+        "is_active": true,
+        "created_at": 1700000000
+      },
+      {
+        "id": "role_readonly",
+        "name": "readonly",
+        "description": "Read-only access",
+        "permissions": ["SELECT"],
+        "is_active": true,
+        "created_at": 1700000000
+      }
+    ],
+    "encryption": {
+      "tde_enabled": true,
+      "algorithm": "AES-256-GCM",
+      "master_key_id": "mk_001",
+      "key_rotation_interval_days": 90,
+      "last_rotation": 1700000000,
+      "encrypted_tablespaces": ["system", "users"]
+    },
+    "masking_policies": [
+      {
+        "policy_id": "mask_001",
+        "name": "ssn_masking",
+        "column": "ssn",
+        "masking_function": "partial_mask",
+        "parameters": {"visible_chars": 4, "position": "end"}
+      },
+      {
+        "policy_id": "mask_002",
+        "name": "email_masking",
+        "column": "email",
+        "masking_function": "email_mask",
+        "parameters": {"domain_visible": true}
+      }
+    ],
+    "vpd_policies": [
+      {
+        "policy_id": "vpd_001",
+        "name": "tenant_isolation",
+        "table": "orders",
+        "predicate": "tenant_id = SYS_CONTEXT('APP_CTX', 'TENANT_ID')"
+      }
+    ],
+    "threat_status": {
+      "enabled": true,
+      "total_assessments": 50000,
+      "critical_threats": 0,
+      "high_threats": 5,
+      "blocked_queries": 12,
+      "exfiltration_attempts": 0,
+      "escalation_attempts": 3,
+      "baselines_established": 100
+    }
+  },
+  "query_optimizer": {
+    "hints": [
+      {
+        "name": "USE_INDEX",
+        "category": "index",
+        "description": "Force use of specific index",
+        "parameters": ["index_name"],
+        "example": "/*+ USE_INDEX(employees emp_idx) */"
+      },
+      {
+        "name": "FULL",
+        "category": "access",
+        "description": "Force full table scan",
+        "parameters": ["table_name"],
+        "example": "/*+ FULL(employees) */"
+      },
+      {
+        "name": "PARALLEL",
+        "category": "parallelism",
+        "description": "Enable parallel execution",
+        "parameters": ["degree"],
+        "example": "/*+ PARALLEL(8) */"
+      }
+    ],
+    "plan_baselines": [
+      {
+        "fingerprint": "abc123def456",
+        "enabled": true,
+        "fixed": false,
+        "origin": "AUTO-CAPTURE",
+        "created_at": "2024-01-15T10:30:00Z",
+        "execution_count": 5000,
+        "avg_execution_time_ms": 12.5,
+        "accepted_plans_count": 2
+      }
+    ],
+    "adaptive_execution": {
+      "enabled": true,
+      "joins_adapted": 150,
+      "plans_reoptimized": 25,
+      "statistics_feedback_enabled": true
+    }
+  },
+  "replication_rac": {
+    "replicas": [
+      {
+        "replica_id": "replica_001",
+        "name": "standby1",
+        "mode": "synchronous",
+        "state": "streaming",
+        "lag_ms": 50,
+        "bytes_behind": 1024000,
+        "last_wal_received": "0/2FF0000",
+        "last_wal_applied": "0/2FE0000"
+      },
+      {
+        "replica_id": "replica_002",
+        "name": "standby2",
+        "mode": "asynchronous",
+        "state": "streaming",
+        "lag_ms": 500,
+        "bytes_behind": 10240000,
+        "last_wal_received": "0/2F00000",
+        "last_wal_applied": "0/2E00000"
+      }
+    ],
+    "rac_status": {
+      "cache_fusion_enabled": true,
+      "nodes": 3,
+      "interconnect_bandwidth_gbps": 100,
+      "global_cache_size_gb": 256,
+      "block_transfers_per_sec": 50000,
+      "gc_current_blocks": 1000000,
+      "gc_cr_blocks": 500000
+    },
+    "cluster_topology": {
+      "total_nodes": 3,
+      "healthy_nodes": 3,
+      "leader_id": "node_001",
+      "current_term": 42,
+      "has_quorum": true
+    }
+  },
+  "index_memory": {
+    "indexes": [
+      {
+        "index_id": "idx_001",
+        "index_name": "users_email_idx",
+        "table_name": "users",
+        "columns": ["email"],
+        "index_type": "btree",
+        "is_unique": true,
+        "size_bytes": 104857600,
+        "row_count": 1000000
+      },
+      {
+        "index_id": "idx_002",
+        "index_name": "orders_customer_date_idx",
+        "table_name": "orders",
+        "columns": ["customer_id", "order_date"],
+        "index_type": "btree",
+        "is_unique": false,
+        "size_bytes": 524288000,
+        "row_count": 5000000
+      },
+      {
+        "index_id": "idx_003",
+        "index_name": "products_name_ft_idx",
+        "table_name": "products",
+        "columns": ["name", "description"],
+        "index_type": "fulltext",
+        "is_unique": false,
+        "size_bytes": 209715200,
+        "row_count": 100000
+      }
+    ],
+    "memory_status": {
+      "total_allocated": 8589934592,
+      "current_usage": 6442450944,
+      "peak_usage": 7516192768,
+      "fragmentation_ratio": 0.05,
+      "pressure_level": "low"
+    },
+    "simd_status": {
+      "available": true,
+      "enabled": true,
+      "features": [
+        {"name": "AVX2", "available": true, "enabled": true},
+        {"name": "AVX-512", "available": true, "enabled": false},
+        {"name": "SSE4.2", "available": true, "enabled": true}
+      ]
+    }
+  },
+  "monitoring": {
+    "health_status": {
+      "status": "healthy",
+      "components": [
+        {"name": "storage", "status": "healthy", "response_time_ms": 2},
+        {"name": "network", "status": "healthy", "response_time_ms": 1},
+        {"name": "transaction", "status": "healthy", "response_time_ms": 3},
+        {"name": "replication", "status": "healthy", "response_time_ms": 5}
+      ]
+    },
+    "metrics": {
+      "cpu_usage": 45.5,
+      "memory_used": 12884901888,
+      "memory_total": 34359738368,
+      "memory_percent": 37.5,
+      "disk_used": 500000000000,
+      "disk_total": 1000000000000,
+      "disk_percent": 50.0,
+      "active_connections": 150,
+      "total_connections": 200,
+      "qps": 5000,
+      "cache_hit_ratio": 0.985
+    },
+    "alerts": [
+      {
+        "id": "alert_001",
+        "name": "High CPU Usage",
+        "category": "performance",
+        "severity": "warning",
+        "state": "active",
+        "message": "CPU usage exceeded 80% threshold",
+        "triggered_at": 1702500000
+      }
+    ]
+  },
+  "ml_analytics": {
+    "models": [
+      {
+        "model_id": "model_001",
+        "name": "customer_churn_predictor",
+        "model_type": "logistic_regression",
+        "status": "trained",
+        "accuracy": 0.92,
+        "created_at": 1700000000
+      },
+      {
+        "model_id": "model_002",
+        "name": "sales_forecaster",
+        "model_type": "linear_regression",
+        "status": "trained",
+        "accuracy": 0.87,
+        "created_at": 1701000000
+      },
+      {
+        "model_id": "model_003",
+        "name": "fraud_detector",
+        "model_type": "random_forest",
+        "status": "training",
+        "accuracy": null,
+        "created_at": 1702000000
+      }
+    ],
+    "automl_jobs": [
+      {
+        "job_id": "automl_001",
+        "name": "best_model_search",
+        "status": "completed",
+        "best_model": "gradient_boosting",
+        "best_accuracy": 0.945,
+        "models_evaluated": 15,
+        "duration_seconds": 3600
+      }
+    ],
+    "timeseries": {
+      "forecast_horizon": 30,
+      "models_available": ["arima", "prophet", "lstm"],
+      "anomaly_detection_enabled": true
+    }
+  },
+  "enterprise_spatial": {
+    "tenants": [
+      {
+        "tenant_id": "tenant_001",
+        "name": "Acme Corp",
+        "status": "active",
+        "resource_limits": {
+          "max_connections": 100,
+          "max_storage_bytes": 107374182400,
+          "max_cpu_percent": 25
+        }
+      },
+      {
+        "tenant_id": "tenant_002",
+        "name": "Globex Inc",
+        "status": "active",
+        "resource_limits": {
+          "max_connections": 200,
+          "max_storage_bytes": 214748364800,
+          "max_cpu_percent": 50
+        }
+      }
+    ],
+    "blockchain": {
+      "chains": [
+        {
+          "chain_id": "chain_001",
+          "name": "audit_trail",
+          "block_count": 50000,
+          "last_block_hash": "abc123...",
+          "status": "active"
+        }
+      ]
+    },
+    "autonomous": {
+      "auto_tune_enabled": true,
+      "auto_index_enabled": true,
+      "self_heal_enabled": true,
+      "recommendations_applied": 25,
+      "performance_improvement_percent": 15.5
+    },
+    "spatial": {
+      "coordinate_systems": ["WGS84", "EPSG:3857", "EPSG:4326"],
+      "index_type": "rtree",
+      "geometry_types": ["Point", "LineString", "Polygon", "MultiPolygon"]
+    }
+  },
+  "graphql_subscriptions": {
+    "active_subscriptions": [
+      "schemaChanges",
+      "partitionEvents",
+      "clusterTopologyChanges",
+      "nodeHealthChanges",
+      "activeQueriesStream",
+      "slowQueriesStream",
+      "queryPlanChanges",
+      "transactionEvents",
+      "lockEvents",
+      "deadlockDetection",
+      "alertStream",
+      "healthStatusChanges",
+      "storageStatusChanges",
+      "bufferPoolMetrics",
+      "ioStatisticsStream",
+      "sessionEvents",
+      "connectionPoolEvents",
+      "securityEvents",
+      "auditStream",
+      "threatAlerts",
+      "replicationLag",
+      "walEvents",
+      "trainingEvents",
+      "predictionStream"
+    ],
+    "total_subscriptions": 29
+  }
+}
