@@ -185,6 +185,8 @@ export { ReplicationRACClient, createReplicationRACClient } from './api/replicat
 export { BackupRecoveryClient, createBackupRecoveryClient } from './api/backup-recovery';
 export { MLAnalyticsClient, createMLAnalyticsClient } from './api/ml-analytics';
 export { GraphQLClient, createGraphQLClient } from './api/graphql-client';
+export { IndexMemoryClient, createIndexMemoryClient } from './api/index-memory';
+export { EnterpriseSpatialClient, createEnterpriseSpatialClient } from './api/enterprise-spatial';
 
 // Re-export all types from API modules
 export * from './api/storage';
@@ -197,6 +199,8 @@ export * from './api/replication-rac';
 export * from './api/backup-recovery';
 export * from './api/ml-analytics';
 export * from './api/graphql-client';
+export * from './api/index-memory';
+export * from './api/enterprise-spatial';
 
 // ============================================================================
 // Factory Functions

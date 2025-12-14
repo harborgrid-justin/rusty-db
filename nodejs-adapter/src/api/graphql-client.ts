@@ -1935,6 +1935,633 @@ export class RustyDBGraphQLClient {
   }
 
   // ============================================================================
+  // PR48 SUBSCRIPTIONS - DDL Events
+  // ============================================================================
+
+  /**
+   * Subscribe to schema changes (DDL events)
+   */
+  subscribeSchemaChanges(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription SchemaChanges {
+        schemaChanges {
+          changeType
+          objectType
+          objectName
+          schemaName
+          timestamp
+          userId
+          ddlStatement
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to partition events
+   */
+  subscribePartitionEvents(
+    tableName?: string,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription PartitionEvents($tableName: String) {
+        partitionEvents(tableName: $tableName) {
+          eventType
+          tableName
+          partitionName
+          partitionKey
+          rowCount
+          sizeBytes
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, { tableName }, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - Cluster Events
+  // ============================================================================
+
+  /**
+   * Subscribe to cluster topology changes
+   */
+  subscribeClusterTopologyChanges(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription ClusterTopologyChanges {
+        clusterTopologyChanges {
+          changeType
+          nodeId
+          nodeName
+          nodeRole
+          nodeStatus
+          address
+          timestamp
+          term
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to node health changes
+   */
+  subscribeNodeHealthChanges(
+    nodeId?: string,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription NodeHealthChanges($nodeId: String) {
+        nodeHealthChanges(nodeId: $nodeId) {
+          nodeId
+          previousStatus
+          currentStatus
+          cpuUsage
+          memoryUsage
+          diskUsage
+          lastHeartbeat
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, { nodeId }, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - Query & Performance Events
+  // ============================================================================
+
+  /**
+   * Subscribe to active queries stream
+   */
+  subscribeActiveQueriesStream(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription ActiveQueriesStream {
+        activeQueriesStream {
+          queryId
+          sessionId
+          username
+          sqlText
+          state
+          startTime
+          durationMs
+          rowsProcessed
+          waitEvent
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to slow queries stream
+   */
+  subscribeSlowQueriesStream(
+    thresholdMs?: number,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription SlowQueriesStream($thresholdMs: Int) {
+        slowQueriesStream(thresholdMs: $thresholdMs) {
+          queryId
+          sqlText
+          executionTimeMs
+          startTime
+          endTime
+          username
+          database
+          rowsReturned
+        }
+      }
+    `;
+    return this.subscribe(subscription, { thresholdMs }, onData, onError);
+  }
+
+  /**
+   * Subscribe to query plan changes
+   */
+  subscribeQueryPlanChanges(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription QueryPlanChanges {
+        queryPlanChanges {
+          queryFingerprint
+          previousPlanHash
+          newPlanHash
+          reason
+          estimatedCostChange
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - Transaction & Lock Events
+  // ============================================================================
+
+  /**
+   * Subscribe to transaction events
+   */
+  subscribeTransactionEvents(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription TransactionEvents {
+        transactionEvents {
+          transactionId
+          eventType
+          sessionId
+          isolationLevel
+          timestamp
+          rowsAffected
+          durationMs
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to lock events
+   */
+  subscribeLockEvents(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription LockEvents {
+        lockEvents {
+          lockId
+          eventType
+          transactionId
+          lockType
+          lockMode
+          resource
+          tableName
+          timestamp
+          waitTimeMs
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to deadlock detection events
+   */
+  subscribeDeadlockDetection(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription DeadlockDetection {
+        deadlockDetection {
+          deadlockId
+          detectedAt
+          transactions
+          victimTransaction
+          resourceGraph
+          resolution
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - Alert & Health Events
+  // ============================================================================
+
+  /**
+   * Subscribe to alert stream
+   */
+  subscribeAlertStream(
+    severity?: string,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription AlertStream($severity: AlertSeverity) {
+        alertStream(severity: $severity) {
+          id
+          name
+          category
+          severity
+          state
+          message
+          details
+          triggeredAt
+          escalationLevel
+        }
+      }
+    `;
+    return this.subscribe(subscription, { severity }, onData, onError);
+  }
+
+  /**
+   * Subscribe to health status changes
+   */
+  subscribeHealthStatusChanges(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription HealthStatusChanges {
+        healthStatusChanges {
+          status
+          components {
+            name
+            status
+            responseTimeMs
+            details
+          }
+          errors
+          warnings
+          checkedAt
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - Storage Events
+  // ============================================================================
+
+  /**
+   * Subscribe to storage status changes
+   */
+  subscribeStorageStatusChanges(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription StorageStatusChanges {
+        storageStatusChanges {
+          totalBytes
+          usedBytes
+          availableBytes
+          usagePercent
+          dataFiles
+          dataSize
+          indexFiles
+          indexSize
+          walSize
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to buffer pool metrics
+   */
+  subscribeBufferPoolMetrics(
+    intervalSeconds?: number,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription BufferPoolMetrics($intervalSeconds: Int) {
+        bufferPoolMetrics(intervalSeconds: $intervalSeconds) {
+          sizeBytes
+          totalPages
+          freePages
+          dirtyPages
+          hitRatio
+          totalReads
+          totalWrites
+          cacheHits
+          cacheMisses
+          evictions
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, { intervalSeconds }, onData, onError);
+  }
+
+  /**
+   * Subscribe to I/O statistics stream
+   */
+  subscribeIoStatisticsStream(
+    intervalSeconds?: number,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription IoStatisticsStream($intervalSeconds: Int) {
+        ioStatisticsStream(intervalSeconds: $intervalSeconds) {
+          reads
+          writes
+          bytesRead
+          bytesWritten
+          avgReadLatencyUs
+          avgWriteLatencyUs
+          readThroughputBps
+          writeThroughputBps
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, { intervalSeconds }, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - Session Events
+  // ============================================================================
+
+  /**
+   * Subscribe to session events
+   */
+  subscribeSessionEvents(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription SessionEvents {
+        sessionEvents {
+          eventType
+          sessionId
+          userId
+          username
+          clientAddress
+          database
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to connection pool events
+   */
+  subscribeConnectionPoolEvents(
+    poolId?: string,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription ConnectionPoolEvents($poolId: String) {
+        connectionPoolEvents(poolId: $poolId) {
+          eventType
+          poolId
+          poolName
+          activeConnections
+          idleConnections
+          waitingRequests
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, { poolId }, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - Security Events
+  // ============================================================================
+
+  /**
+   * Subscribe to security events
+   */
+  subscribeSecurityEvents(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription SecurityEvents {
+        securityEvents {
+          eventType
+          userId
+          username
+          action
+          resource
+          result
+          clientIp
+          timestamp
+          details
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to audit stream
+   */
+  subscribeAuditStream(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription AuditStream {
+        auditStream {
+          auditId
+          timestamp
+          userId
+          username
+          action
+          objectType
+          objectName
+          sqlText
+          result
+          clientInfo
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to threat alerts
+   */
+  subscribeThreatAlerts(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription ThreatAlerts {
+        threatAlerts {
+          alertId
+          threatLevel
+          threatType
+          userId
+          description
+          riskScore
+          timestamp
+          mitigationAction
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - Replication Events
+  // ============================================================================
+
+  /**
+   * Subscribe to replication lag updates
+   */
+  subscribeReplicationLag(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription ReplicationLag {
+        replicationLag {
+          replicaId
+          replicaName
+          lagMs
+          bytesBehind
+          lastWalReceived
+          lastWalApplied
+          status
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  /**
+   * Subscribe to WAL events
+   */
+  subscribeWalEvents(
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription WalEvents {
+        walEvents {
+          eventType
+          lsn
+          walFile
+          sizeBytes
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, {}, onData, onError);
+  }
+
+  // ============================================================================
+  // PR48 SUBSCRIPTIONS - ML Events
+  // ============================================================================
+
+  /**
+   * Subscribe to ML training events
+   */
+  subscribeTrainingEvents(
+    modelId?: string,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription TrainingEvents($modelId: String) {
+        trainingEvents(modelId: $modelId) {
+          modelId
+          eventType
+          epoch
+          loss
+          accuracy
+          validationLoss
+          validationAccuracy
+          progress
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, { modelId }, onData, onError);
+  }
+
+  /**
+   * Subscribe to prediction stream
+   */
+  subscribePredictionStream(
+    modelId?: string,
+    onData?: (data: any) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const subscription = `
+      subscription PredictionStream($modelId: String) {
+        predictionStream(modelId: $modelId) {
+          predictionId
+          modelId
+          input
+          prediction
+          confidence
+          latencyMs
+          timestamp
+        }
+      }
+    `;
+    return this.subscribe(subscription, { modelId }, onData, onError);
+  }
+
+  // ============================================================================
   // SUBSCRIPTION HELPER METHOD
   // ============================================================================
 
