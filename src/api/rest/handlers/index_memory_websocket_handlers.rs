@@ -440,7 +440,9 @@ async fn handle_memory_events_websocket(mut socket: WebSocket, _state: Arc<ApiSt
         }
     }
 
-    let (mut sender, mut receiver) = socket.split();
+    let (sender, mut receiver) = socket.split();
+    let sender = Arc::new(Mutex::new(sender));
+    let sender_clone = sender.clone();
 
     let streaming_task = tokio::spawn(async move {
         let mut ticker = interval(Duration::from_secs(3));
@@ -497,7 +499,7 @@ async fn handle_memory_events_websocket(mut socket: WebSocket, _state: Arc<ApiSt
 
             let event = &sample_events[sequence as usize % sample_events.len()];
             if let Ok(event_json) = serde_json::to_string(event) {
-                if sender.send(Message::Text(event_json.into())).await.is_err() {
+                if sender_clone.lock().await.send(Message::Text(event_json.into())).await.is_err() {
                     break;
                 }
             }
@@ -509,7 +511,7 @@ async fn handle_memory_events_websocket(mut socket: WebSocket, _state: Arc<ApiSt
             match msg {
                 Message::Close(_) => break,
                 Message::Ping(data) => {
-                    if sender.send(Message::Pong(data)).await.is_err() {
+                    if sender.lock().await.send(Message::Pong(data)).await.is_err() {
                         break;
                     }
                 }
@@ -543,7 +545,9 @@ async fn handle_buffer_pool_events_websocket(mut socket: WebSocket, _state: Arc<
         }
     }
 
-    let (mut sender, mut receiver) = socket.split();
+    let (sender, mut receiver) = socket.split();
+    let sender = Arc::new(Mutex::new(sender));
+    let sender_clone = sender.clone();
 
     let streaming_task = tokio::spawn(async move {
         let mut ticker = interval(Duration::from_secs(2));
@@ -584,7 +588,7 @@ async fn handle_buffer_pool_events_websocket(mut socket: WebSocket, _state: Arc<
 
             let event = &sample_events[sequence as usize % sample_events.len()];
             if let Ok(event_json) = serde_json::to_string(event) {
-                if sender.send(Message::Text(event_json.into())).await.is_err() {
+                if sender_clone.lock().await.send(Message::Text(event_json.into())).await.is_err() {
                     break;
                 }
             }
@@ -596,7 +600,7 @@ async fn handle_buffer_pool_events_websocket(mut socket: WebSocket, _state: Arc<
             match msg {
                 Message::Close(_) => break,
                 Message::Ping(data) => {
-                    if sender.send(Message::Pong(data)).await.is_err() {
+                    if sender.lock().await.send(Message::Pong(data)).await.is_err() {
                         break;
                     }
                 }
@@ -630,7 +634,9 @@ async fn handle_simd_metrics_websocket(mut socket: WebSocket, _state: Arc<ApiSta
         }
     }
 
-    let (mut sender, mut receiver) = socket.split();
+    let (sender, mut receiver) = socket.split();
+    let sender = Arc::new(Mutex::new(sender));
+    let sender_clone = sender.clone();
 
     let streaming_task = tokio::spawn(async move {
         let mut ticker = interval(Duration::from_millis(500));
@@ -679,7 +685,7 @@ async fn handle_simd_metrics_websocket(mut socket: WebSocket, _state: Arc<ApiSta
 
             let event = &sample_events[sequence as usize % sample_events.len()];
             if let Ok(event_json) = serde_json::to_string(event) {
-                if sender.send(Message::Text(event_json.into())).await.is_err() {
+                if sender_clone.lock().await.send(Message::Text(event_json.into())).await.is_err() {
                     break;
                 }
             }
@@ -691,7 +697,7 @@ async fn handle_simd_metrics_websocket(mut socket: WebSocket, _state: Arc<ApiSta
             match msg {
                 Message::Close(_) => break,
                 Message::Ping(data) => {
-                    if sender.send(Message::Pong(data)).await.is_err() {
+                    if sender.lock().await.send(Message::Pong(data)).await.is_err() {
                         break;
                     }
                 }
@@ -725,7 +731,9 @@ async fn handle_inmemory_events_websocket(mut socket: WebSocket, _state: Arc<Api
         }
     }
 
-    let (mut sender, mut receiver) = socket.split();
+    let (sender, mut receiver) = socket.split();
+    let sender = Arc::new(Mutex::new(sender));
+    let sender_clone = sender.clone();
 
     let streaming_task = tokio::spawn(async move {
         let mut ticker = interval(Duration::from_secs(4));
@@ -780,7 +788,7 @@ async fn handle_inmemory_events_websocket(mut socket: WebSocket, _state: Arc<Api
 
             let event = &sample_events[sequence as usize % sample_events.len()];
             if let Ok(event_json) = serde_json::to_string(event) {
-                if sender.send(Message::Text(event_json.into())).await.is_err() {
+                if sender_clone.lock().await.send(Message::Text(event_json.into())).await.is_err() {
                     break;
                 }
             }
@@ -792,7 +800,7 @@ async fn handle_inmemory_events_websocket(mut socket: WebSocket, _state: Arc<Api
             match msg {
                 Message::Close(_) => break,
                 Message::Ping(data) => {
-                    if sender.send(Message::Pong(data)).await.is_err() {
+                    if sender.lock().await.send(Message::Pong(data)).await.is_err() {
                         break;
                     }
                 }

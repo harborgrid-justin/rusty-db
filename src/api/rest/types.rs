@@ -100,7 +100,7 @@ impl Default for ApiConfig {
 pub struct SessionId(pub u64);
 
 // Newtype for transaction ID
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema)]
 pub struct TransactionId(pub u64);
 
 // Shared API state with proper encapsulation

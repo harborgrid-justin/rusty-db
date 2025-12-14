@@ -670,8 +670,8 @@ impl PerformanceSubscriptionRoot {
                 let event = QueryPlanChangeEvent {
                     event_id: ID::from(format!("plan_change_{}", uuid::Uuid::new_v4())),
                     sql_fingerprint: "SELECT * FROM orders WHERE customer_id = ? AND date > ?".to_string(),
-                    old_plan_hash: format!("hash_{:08x}", 0xabcd1234),
-                    new_plan_hash: format!("hash_{:08x}", 0xdcba4321),
+                    old_plan_hash: format!("hash_{:08x}", 0xabcd1234u32),
+                    new_plan_hash: format!("hash_{:08x}", 0xdcba4321u32),
                     change_reason: PlanChangeReason::StatisticsUpdated,
                     old_plan_cost: 15000.0,
                     new_plan_cost: 2500.0,
@@ -857,7 +857,7 @@ impl PerformanceSubscriptionRoot {
 
             loop {
                 interval_timer.tick().await;
-                usage = (usage + 1.5).min(95.0);
+                usage = (usage + 1.5_f64).min(95.0_f64);
 
                 let total = 1099511627776i64; // 1 TB
                 let used = (total as f64 * (usage / 100.0)) as i64;
