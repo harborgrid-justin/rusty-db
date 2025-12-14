@@ -18,6 +18,7 @@ use async_graphql::{Result as GqlResult, ID};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::broadcast;
+use futures_util;
 
 // ============================================================================
 // GRAPHQL ENGINE - Core Implementation
@@ -827,5 +828,99 @@ impl GraphQLEngine {
             is_healthy: true,
             timestamp: DateTime::now(),
         })
+    }
+
+    // ========================================================================
+    // QUERY EXECUTION SUBSCRIPTION METHODS
+    // ========================================================================
+
+    /// Register a subscription for query progress updates
+    pub async fn register_query_progress_subscription(
+        &self,
+        _query_id: &str,
+        _tx: broadcast::Sender<super::query_subscriptions::QueryProgressUpdate>,
+    ) {
+        // Mock implementation - would integrate with actual query execution tracker
+    }
+
+    /// Register a subscription for execution plan updates
+    pub async fn register_execution_plan_subscription(
+        &self,
+        _query_id: &str,
+        _tx: broadcast::Sender<super::query_subscriptions::ExecutionPlanNode>,
+    ) {
+        // Mock implementation
+    }
+
+    /// Stream query results in chunks
+    pub async fn stream_query_results(
+        &self,
+        _query_id: &str,
+        _chunk_size: usize,
+    ) -> Result<Box<dyn futures_util::Stream<Item = super::query_subscriptions::ResultChunk> + Send + Unpin>, DbError> {
+        // Mock implementation - returns empty stream
+        Ok(Box::new(futures_util::stream::empty()))
+    }
+
+    /// Register a subscription for optimizer hint events
+    pub async fn register_optimizer_hint_subscription(
+        &self,
+        _query_id: &str,
+        _tx: broadcast::Sender<super::query_subscriptions::OptimizerHintEvent>,
+    ) {
+        // Mock implementation
+    }
+
+    /// Register a subscription for plan change events
+    pub async fn register_plan_change_subscription(
+        &self,
+        _query_id: &str,
+        _tx: broadcast::Sender<super::query_subscriptions::PlanChangeEvent>,
+    ) {
+        // Mock implementation
+    }
+
+    /// Register a subscription for CTE evaluation events
+    pub async fn register_cte_evaluation_subscription(
+        &self,
+        _query_id: &str,
+        _tx: broadcast::Sender<super::query_subscriptions::CteEvaluationEvent>,
+    ) {
+        // Mock implementation
+    }
+
+    /// Register a subscription for parallel worker events
+    pub async fn register_parallel_worker_subscription(
+        &self,
+        _query_id: &str,
+        _tx: broadcast::Sender<super::query_subscriptions::ParallelWorkerEvent>,
+    ) {
+        // Mock implementation
+    }
+
+    /// Register a subscription for query compilation events
+    pub async fn register_query_compilation_subscription(
+        &self,
+        _query_id: &str,
+        _tx: broadcast::Sender<super::query_subscriptions::QueryCompilationEvent>,
+    ) {
+        // Mock implementation
+    }
+
+    /// Register a subscription for adaptive optimization events
+    pub async fn register_adaptive_optimization_subscription(
+        &self,
+        _query_id: &str,
+        _tx: broadcast::Sender<super::query_subscriptions::AdaptiveOptimizationEvent>,
+    ) {
+        // Mock implementation
+    }
+
+    /// Get active query cost estimates
+    pub async fn get_active_query_costs(
+        &self,
+    ) -> Result<Vec<super::query_subscriptions::CostEstimate>, DbError> {
+        // Mock implementation - returns empty vector
+        Ok(vec![])
     }
 }

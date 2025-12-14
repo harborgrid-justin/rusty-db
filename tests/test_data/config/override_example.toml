@@ -1,0 +1,21 @@
+# RustyDB Override Configuration Example
+# Version: 0.3.001
+#
+# Place files like this in conf/overrides.d/ for environment-specific overrides.
+# Files are loaded in lexicographic order and merged into the base configuration.
+#
+# Example: conf/overrides.d/10-logging.toml
+
+# Override logging settings for this environment
+[logging]
+level = "warn"
+audit_enabled = true
+
+# Override cache settings
+[cache]
+max_size_mb = 1024
+
+# Override metrics endpoint
+[metrics]
+listen_host = "0.0.0.0"
+listen_port = 9200

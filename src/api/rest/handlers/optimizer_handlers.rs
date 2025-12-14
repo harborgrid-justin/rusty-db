@@ -17,8 +17,8 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::SystemTime;
 
-use crate::api::rest::types::ApiState;
-use crate::error::{DbError, Result};
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::error::DbError;
 use crate::optimizer_pro::{
     HintParser, OptimizerConfig, PhysicalPlan, PlanBaselineManager, QueryFingerprint,
     QueryOptimizer, SqlPlanBaseline,
@@ -163,7 +163,7 @@ pub struct ExplainPlan {
 pub async fn list_hints(
     State(_state): State<Arc<ApiState>>,
     AxumQuery(query): AxumQuery<ListHintsQuery>,
-) -> Result<Response> {
+) -> impl IntoResponse {
     let hint_parser = HintParser::new();
     let all_hints = hint_parser.get_supported_hints();
 
@@ -197,29 +197,27 @@ pub async fn list_hints(
 
     hints.sort_by(|a, b| a.name.cmp(&b.name));
 
-    Ok((
+    (
         StatusCode::OK,
         Json(serde_json::json!({
             "hints": hints,
             "total": hints.len(),
         })),
     )
-        .into_response())
 }
 
 /// GET /api/v1/optimizer/hints/active
 /// Get active hints for current session
-pub async fn get_active_hints(State(_state): State<Arc<ApiState>>) -> Result<Response> {
+pub async fn get_active_hints(State(_state): State<Arc<ApiState>>) -> impl IntoResponse {
     // In a real implementation, this would retrieve hints from session state
     // For now, return an empty list
-    Ok((
+    (
         StatusCode::OK,
         Json(ActiveHintsResponse {
             session_id: "current".to_string(),
             hints: vec![],
         }),
     )
-        .into_response())
 }
 
 /// POST /api/v1/optimizer/hints
@@ -227,7 +225,7 @@ pub async fn get_active_hints(State(_state): State<Arc<ApiState>>) -> Result<Res
 pub async fn apply_hints(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<ApplyHintRequest>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let hint_parser = HintParser::new();
 
     // Parse hints from the query
@@ -244,7 +242,7 @@ pub async fn apply_hints(
         warnings: vec![],
     };
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    Ok((StatusCode::OK, Json(response)))
 }
 
 /// DELETE /api/v1/optimizer/hints/{id}
@@ -252,16 +250,15 @@ pub async fn apply_hints(
 pub async fn remove_hint(
     State(_state): State<Arc<ApiState>>,
     Path(id): Path<String>,
-) -> Result<Response> {
+) -> impl IntoResponse {
     // In a real implementation, this would remove the hint from session state
-    Ok((
+    (
         StatusCode::OK,
         Json(serde_json::json!({
             "message": format!("Hint {} removed", id),
             "success": true,
         })),
     )
-        .into_response())
 }
 
 /// GET /api/v1/optimizer/hints/recommendations
@@ -269,7 +266,7 @@ pub async fn remove_hint(
 pub async fn get_hint_recommendations(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<ExplainRequest>,
-) -> Result<Response> {
+) -> impl IntoResponse {
     let hint_parser = HintParser::new();
 
     // Analyze query and recommend hints
@@ -294,7 +291,7 @@ pub async fn get_hint_recommendations(
         },
     ];
 
-    Ok((
+    (
         StatusCode::OK,
         Json(serde_json::json!({
             "query": request.query,
@@ -302,7 +299,6 @@ pub async fn get_hint_recommendations(
             "total": recommendations.len(),
         })),
     )
-        .into_response())
 }
 
 #[derive(Debug, Serialize)]
@@ -319,21 +315,20 @@ pub struct HintRecommendation {
 
 /// GET /api/v1/optimizer/baselines
 /// List all plan baselines
-pub async fn list_baselines(State(_state): State<Arc<ApiState>>) -> Result<Response> {
+pub async fn list_baselines(State(_state): State<Arc<ApiState>>) -> impl IntoResponse {
     let baseline_manager = PlanBaselineManager::new();
     let baselines = baseline_manager.get_all_baselines();
 
     let baseline_responses: Vec<BaselineResponse> =
         baselines.iter().map(|b| baseline_to_response(b)).collect();
 
-    Ok((
+    (
         StatusCode::OK,
         Json(serde_json::json!({
             "baselines": baseline_responses,
             "total": baseline_responses.len(),
         })),
     )
-        .into_response())
 }
 
 /// POST /api/v1/optimizer/baselines
@@ -341,7 +336,7 @@ pub async fn list_baselines(State(_state): State<Arc<ApiState>>) -> Result<Respo
 pub async fn create_baseline(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<CreateBaselineRequest>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let baseline_manager = PlanBaselineManager::new();
 
     // Create query fingerprint
@@ -372,7 +367,7 @@ pub async fn create_baseline(
 
     let response = baseline_to_response(&baseline);
 
-    Ok((StatusCode::CREATED, Json(response)).into_response())
+    Ok((StatusCode::CREATED, Json(response)))
 }
 
 /// GET /api/v1/optimizer/baselines/{id}
@@ -380,7 +375,7 @@ pub async fn create_baseline(
 pub async fn get_baseline(
     State(_state): State<Arc<ApiState>>,
     Path(fingerprint_str): Path<String>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let baseline_manager = PlanBaselineManager::new();
 
     // Parse fingerprint from string (simplified)
@@ -407,7 +402,7 @@ pub async fn get_baseline(
             .collect(),
     };
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    Ok((StatusCode::OK, Json(response)))
 }
 
 /// PUT /api/v1/optimizer/baselines/{id}
@@ -416,7 +411,7 @@ pub async fn update_baseline(
     State(_state): State<Arc<ApiState>>,
     Path(fingerprint_str): Path<String>,
     Json(request): Json<UpdateBaselineRequest>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let baseline_manager = PlanBaselineManager::new();
     let fingerprint = QueryFingerprint::new(&fingerprint_str, vec![], 1);
 
@@ -434,8 +429,7 @@ pub async fn update_baseline(
             "message": "Baseline updated successfully",
             "fingerprint": fingerprint_str,
         })),
-    )
-        .into_response())
+    ))
 }
 
 /// DELETE /api/v1/optimizer/baselines/{id}
@@ -443,7 +437,7 @@ pub async fn update_baseline(
 pub async fn delete_baseline(
     State(_state): State<Arc<ApiState>>,
     Path(fingerprint_str): Path<String>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let baseline_manager = PlanBaselineManager::new();
     let fingerprint = QueryFingerprint::new(&fingerprint_str, vec![], 1);
 
@@ -455,8 +449,7 @@ pub async fn delete_baseline(
             "message": "Baseline deleted successfully",
             "fingerprint": fingerprint_str,
         })),
-    )
-        .into_response())
+    ))
 }
 
 /// POST /api/v1/optimizer/baselines/{id}/evolve
@@ -464,7 +457,7 @@ pub async fn delete_baseline(
 pub async fn evolve_baseline(
     State(_state): State<Arc<ApiState>>,
     Path(_fingerprint_str): Path<String>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let baseline_manager = PlanBaselineManager::new();
     let start = std::time::Instant::now();
 
@@ -480,7 +473,7 @@ pub async fn evolve_baseline(
         evolution_time_ms,
     };
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    Ok((StatusCode::OK, Json(response)))
 }
 
 /// POST /api/v1/optimizer/baselines/load
@@ -488,7 +481,7 @@ pub async fn evolve_baseline(
 pub async fn load_baselines(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<LoadBaselinesRequest>,
-) -> Result<Response> {
+) -> impl IntoResponse {
     let baseline_manager = PlanBaselineManager::new();
     let start = std::time::Instant::now();
 
@@ -504,7 +497,7 @@ pub async fn load_baselines(
         status: "success".to_string(),
     };
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    (StatusCode::OK, Json(response))
 }
 
 #[derive(Debug, Deserialize)]
@@ -530,7 +523,7 @@ pub struct LoadBaselinesResponse {
 pub async fn explain_query(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<ExplainRequest>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let start = std::time::Instant::now();
 
     let optimizer = QueryOptimizer::new(OptimizerConfig::default());
@@ -552,7 +545,7 @@ pub async fn explain_query(
         execution_time_ms: None,
     };
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    Ok((StatusCode::OK, Json(response)))
 }
 
 /// POST /api/v1/query/explain/analyze
@@ -560,7 +553,7 @@ pub async fn explain_query(
 pub async fn explain_analyze_query(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<ExplainRequest>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let start = std::time::Instant::now();
 
     let optimizer = QueryOptimizer::new(OptimizerConfig::default());
@@ -589,7 +582,7 @@ pub async fn explain_analyze_query(
         execution_time_ms: Some(execution_time),
     };
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    Ok((StatusCode::OK, Json(response)))
 }
 
 // ============================================================================
@@ -742,7 +735,7 @@ fn format_system_time(time: SystemTime) -> String {
 
 /// GET /api/v1/optimizer/adaptive/status
 /// Get adaptive execution status and configuration
-pub async fn get_adaptive_status(State(_state): State<Arc<ApiState>>) -> Result<Response> {
+pub async fn get_adaptive_status(State(_state): State<Arc<ApiState>>) -> impl IntoResponse {
     let status = AdaptiveStatusResponse {
         enabled: true,
         active_sessions: 5,
@@ -756,7 +749,7 @@ pub async fn get_adaptive_status(State(_state): State<Arc<ApiState>>) -> Result<
         statistics_collection_enabled: true,
     };
 
-    Ok((StatusCode::OK, Json(status)).into_response())
+    (StatusCode::OK, Json(status))
 }
 
 #[derive(Debug, Serialize)]
@@ -774,7 +767,7 @@ pub struct AdaptiveStatusResponse {
 pub async fn enable_adaptive_execution(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<EnableAdaptiveRequest>,
-) -> Result<Response> {
+) -> impl IntoResponse {
     // In production, update global configuration
     let response = EnableAdaptiveResponse {
         enabled: request.enabled,
@@ -787,7 +780,7 @@ pub async fn enable_adaptive_execution(
         previous_state: !request.enabled,
     };
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    (StatusCode::OK, Json(response))
 }
 
 #[derive(Debug, Deserialize)]
@@ -806,7 +799,7 @@ pub struct EnableAdaptiveResponse {
 
 /// GET /api/v1/optimizer/adaptive/statistics
 /// Get adaptive execution statistics
-pub async fn get_adaptive_statistics(State(_state): State<Arc<ApiState>>) -> Result<Response> {
+pub async fn get_adaptive_statistics(State(_state): State<Arc<ApiState>>) -> impl IntoResponse {
     let stats = AdaptiveStatisticsResponse {
         total_executions: 15234,
         adaptive_corrections: 892,
@@ -837,7 +830,7 @@ pub async fn get_adaptive_statistics(State(_state): State<Arc<ApiState>>) -> Res
         },
     };
 
-    Ok((StatusCode::OK, Json(stats)).into_response())
+    (StatusCode::OK, Json(stats))
 }
 
 #[derive(Debug, Serialize)]
@@ -871,7 +864,7 @@ pub struct PerformanceGains {
 
 /// GET /api/v1/optimizer/parallel/config
 /// Get parallel query execution configuration
-pub async fn get_parallel_config(State(_state): State<Arc<ApiState>>) -> Result<Response> {
+pub async fn get_parallel_config(State(_state): State<Arc<ApiState>>) -> impl IntoResponse {
     let config = ParallelConfigResponse {
         enabled: true,
         max_workers: 8,
@@ -883,7 +876,7 @@ pub async fn get_parallel_config(State(_state): State<Arc<ApiState>>) -> Result<
         adaptive_parallelism: true,
     };
 
-    Ok((StatusCode::OK, Json(config)).into_response())
+    (StatusCode::OK, Json(config))
 }
 
 #[derive(Debug, Serialize)]
@@ -903,7 +896,7 @@ pub struct ParallelConfigResponse {
 pub async fn update_parallel_config(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<UpdateParallelConfigRequest>,
-) -> Result<Response> {
+) -> impl IntoResponse {
     // In production, update configuration
 
     let response = serde_json::json!({
@@ -911,7 +904,7 @@ pub async fn update_parallel_config(
         "updated_fields": request,
     });
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    (StatusCode::OK, Json(response))
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -927,7 +920,7 @@ pub struct UpdateParallelConfigRequest {
 
 /// GET /api/v1/optimizer/parallel/statistics
 /// Get parallel query execution statistics
-pub async fn get_parallel_statistics(State(_state): State<Arc<ApiState>>) -> Result<Response> {
+pub async fn get_parallel_statistics(State(_state): State<Arc<ApiState>>) -> impl IntoResponse {
     let stats = ParallelStatisticsResponse {
         total_parallel_queries: 4567,
         avg_workers_used: 4.2,
@@ -957,7 +950,7 @@ pub async fn get_parallel_statistics(State(_state): State<Arc<ApiState>>) -> Res
         }],
     };
 
-    Ok((StatusCode::OK, Json(stats)).into_response())
+    (StatusCode::OK, Json(stats))
 }
 
 #[derive(Debug, Serialize)]
@@ -995,7 +988,7 @@ pub struct ParallelQueryInfo {
 pub async fn explain_query_with_visualization(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<ExplainRequest>,
-) -> Result<Response> {
+) -> ApiResult<impl IntoResponse> {
     let start = std::time::Instant::now();
 
     let optimizer = QueryOptimizer::new(OptimizerConfig::default());
@@ -1027,7 +1020,7 @@ pub async fn explain_query_with_visualization(
         },
     };
 
-    Ok((StatusCode::OK, Json(response)).into_response())
+    Ok((StatusCode::OK, Json(response)))
 }
 
 #[derive(Debug, Serialize)]

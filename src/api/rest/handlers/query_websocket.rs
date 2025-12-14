@@ -14,6 +14,7 @@ use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::time::{interval, Duration};
 use utoipa::ToSchema;
@@ -193,7 +194,9 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
     }
 
     // Split socket for concurrent read/write
-    let (mut sender, mut receiver) = socket.split();
+    let (sender, mut receiver) = socket.split();
+    let sender = Arc::new(Mutex::new(sender));
+    let sender_clone = sender.clone();
 
     // Spawn monitoring task
     let state_clone = state.clone();
@@ -209,7 +212,7 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
             for (query_id, _query_info) in active_queries.iter() {
                 // Send progress update
                 let progress = QueryProgressUpdate {
-                    query_id: query_id.clone(),
+                    query_id: query_id.to_string(),
                     rows_scanned: 1000,
                     rows_returned: 500,
                     percentage_complete: 45.5,
@@ -220,7 +223,7 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
 
                 let message = QueryExecutionMessage {
                     message_type: "query_progress".to_string(),
-                    query_id: query_id.clone(),
+                    query_id: query_id.to_string(),
                     data: serde_json::to_value(&progress).unwrap(),
                     timestamp: SystemTime::now()
                         .duration_since(UNIX_EPOCH)
@@ -229,14 +232,14 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
                 };
 
                 if let Ok(msg_json) = serde_json::to_string(&message) {
-                    if sender.send(Message::Text(msg_json.into())).await.is_err() {
+                    if sender_clone.lock().await.send(Message::Text(msg_json.into())).await.is_err() {
                         return;
                     }
                 }
 
                 // Send execution plan update
                 let plan_update = ExecutionPlanUpdate {
-                    query_id: query_id.clone(),
+                    query_id: query_id.to_string(),
                     plan_node: "HashJoin".to_string(),
                     node_index: 2,
                     total_nodes: 5,
@@ -248,7 +251,7 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
 
                 let plan_message = QueryExecutionMessage {
                     message_type: "execution_plan_update".to_string(),
-                    query_id: query_id.clone(),
+                    query_id: query_id.to_string(),
                     data: serde_json::to_value(&plan_update).unwrap(),
                     timestamp: SystemTime::now()
                         .duration_since(UNIX_EPOCH)
@@ -257,7 +260,7 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
                 };
 
                 if let Ok(msg_json) = serde_json::to_string(&plan_message) {
-                    if sender.send(Message::Text(msg_json.into())).await.is_err() {
+                    if sender_clone.lock().await.send(Message::Text(msg_json.into())).await.is_err() {
                         return;
                     }
                 }
@@ -293,7 +296,7 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
                         };
 
                         if let Ok(msg_json) = serde_json::to_string(&msg) {
-                            if sender.send(Message::Text(msg_json.into())).await.is_err() {
+                            if sender.lock().await.send(Message::Text(msg_json.into())).await.is_err() {
                                 break;
                             }
                         }
@@ -339,7 +342,7 @@ async fn handle_result_streaming_websocket(mut socket: WebSocket) {
 
     for chunk_index in 0..total_chunks {
         let chunk = ResultSetChunk {
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             chunk_index,
             total_chunks: Some(total_chunks),
             rows: vec![
@@ -352,7 +355,7 @@ async fn handle_result_streaming_websocket(mut socket: WebSocket) {
 
         let message = QueryExecutionMessage {
             message_type: "result_chunk".to_string(),
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             data: serde_json::to_value(&chunk).unwrap(),
             timestamp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -372,7 +375,7 @@ async fn handle_result_streaming_websocket(mut socket: WebSocket) {
     // Send completion message
     let completion = QueryExecutionMessage {
         message_type: "result_complete".to_string(),
-        query_id: query_id.clone(),
+        query_id: query_id.to_string(),
         data: json!({
             "total_chunks": total_chunks,
             "total_rows": total_chunks * 2,
@@ -416,7 +419,7 @@ async fn handle_cte_monitoring_websocket(mut socket: WebSocket) {
     // Simulate CTE evaluation events
     let cte_events = vec![
         CteEvaluationEvent {
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             cte_name: "user_stats".to_string(),
             evaluation_type: "materialized".to_string(),
             rows_produced: 5000,
@@ -424,7 +427,7 @@ async fn handle_cte_monitoring_websocket(mut socket: WebSocket) {
             iterations: None,
         },
         CteEvaluationEvent {
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             cte_name: "recursive_hierarchy".to_string(),
             evaluation_type: "recursive".to_string(),
             rows_produced: 1500,
@@ -436,7 +439,7 @@ async fn handle_cte_monitoring_websocket(mut socket: WebSocket) {
     for event in cte_events {
         let message = QueryExecutionMessage {
             message_type: "cte_evaluation".to_string(),
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             data: serde_json::to_value(&event).unwrap(),
             timestamp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -483,7 +486,7 @@ async fn handle_parallel_execution_websocket(mut socket: WebSocket) {
     // Simulate parallel worker events
     for worker_id in 0..num_workers {
         let start_event = ParallelWorkerEvent {
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             worker_id,
             event_type: "started".to_string(),
             rows_processed: 0,
@@ -492,7 +495,7 @@ async fn handle_parallel_execution_websocket(mut socket: WebSocket) {
 
         let message = QueryExecutionMessage {
             message_type: "parallel_worker".to_string(),
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             data: serde_json::to_value(&start_event).unwrap(),
             timestamp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)
@@ -513,16 +516,16 @@ async fn handle_parallel_execution_websocket(mut socket: WebSocket) {
 
         for worker_id in 0..num_workers {
             let progress_event = ParallelWorkerEvent {
-                query_id: query_id.clone(),
+                query_id: query_id.to_string(),
                 worker_id,
                 event_type: "progress".to_string(),
-                rows_processed: (worker_id + 1) * 250,
+                rows_processed: ((worker_id + 1) * 250) as u64,
                 data_partition: format!("partition_{}", worker_id),
             };
 
             let message = QueryExecutionMessage {
                 message_type: "parallel_worker".to_string(),
-                query_id: query_id.clone(),
+                query_id: query_id.to_string(),
                 data: serde_json::to_value(&progress_event).unwrap(),
                 timestamp: SystemTime::now()
                     .duration_since(UNIX_EPOCH)
@@ -567,14 +570,14 @@ async fn handle_adaptive_optimization_websocket(mut socket: WebSocket) {
     // Simulate adaptive optimization events
     let events = vec![
         AdaptiveOptimizationEvent {
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             correction_type: "join_order_change".to_string(),
             detected_issue: "Cardinality estimate was off by 10x".to_string(),
             action_taken: "Switched from nested loop to hash join".to_string(),
             performance_impact: 3.5, // 3.5x improvement
         },
         AdaptiveOptimizationEvent {
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             correction_type: "index_selection".to_string(),
             detected_issue: "Sequential scan slower than expected".to_string(),
             action_taken: "Switched to index scan on users_email_idx".to_string(),
@@ -585,7 +588,7 @@ async fn handle_adaptive_optimization_websocket(mut socket: WebSocket) {
     for event in events {
         let message = QueryExecutionMessage {
             message_type: "adaptive_optimization".to_string(),
-            query_id: query_id.clone(),
+            query_id: query_id.to_string(),
             data: serde_json::to_value(&event).unwrap(),
             timestamp: SystemTime::now()
                 .duration_since(UNIX_EPOCH)

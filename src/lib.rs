@@ -95,6 +95,33 @@ pub mod error;
 // All modules should use types from this module for consistency.
 pub mod common;
 
+// Instance metadata management
+//
+// Types and utilities for managing instance metadata according to Instance Layout Spec v1.0.
+// Includes version tracking, instance identity, and metadata persistence.
+//
+// **Key Components:**
+// - `InstanceMetadata`: Instance identity and format versions
+// - `BinaryVersion`: Semver-style version representation
+// - `LayoutVersion`: Instance directory structure version
+// - `MetaPaths`: Canonical metadata file paths
+//
+// **Target LOC:** 500+ lines
+pub mod metadata;
+
+// Compatibility checking
+//
+// Compile-time compatibility policies and runtime checks for instance layout,
+// data format, WAL format, and protocol versions.
+//
+// **Key Components:**
+// - `CompatibilityPolicy`: Version support ranges
+// - `check_compat`: Main compatibility checking function
+// - `COMPAT_POLICY_V1`: RustyDB v0.3.1 compatibility policy
+//
+// **Target LOC:** 400+ lines
+pub mod compat;
+
 // ============================================================================
 // Storage Layer - Data persistence and buffer management
 // ============================================================================

@@ -1,0 +1,9 @@
+{
+  "min_binary": {
+    "major": 0,
+    "minor": 3,
+    "patch": 1
+  },
+  "max_binary": null,
+  "notes": "Instance created with RustyDB 0.3.001. Requires minimum version 0.3.001 for full functionality."
+}

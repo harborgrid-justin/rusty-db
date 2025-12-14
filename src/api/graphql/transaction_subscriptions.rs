@@ -396,3 +396,6 @@ impl TransactionSubscriptions {
 ///     }
 /// }
 /// ```
+///
+/// This example shows how to integrate transaction subscriptions with your GraphQL schema.
+pub struct TransactionSubscriptionsExample;

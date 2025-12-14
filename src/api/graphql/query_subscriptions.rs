@@ -5,12 +5,13 @@
 use async_graphql::{
     Context, Enum, Object, SimpleObject, Subscription,
 };
-use futures_util::stream::Stream;
+use futures_util::{stream::Stream, StreamExt};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use super::types::*;
+use super::models::RowType;
 use super::GraphQLEngine;
 
 // ============================================================================

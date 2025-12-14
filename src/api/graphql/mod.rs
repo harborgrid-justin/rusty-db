@@ -5,6 +5,8 @@
 pub mod builders;
 pub mod cluster_subscriptions;
 pub mod complexity;
+pub mod config_queries;
+pub mod config_types;
 pub mod ddl_subscriptions;
 pub mod engine;
 pub mod enterprise_subscriptions;
@@ -81,7 +83,7 @@ pub use performance_subscriptions::{
     ActiveQueryEvent, AlertCategory, AlertSeverity as PerformanceAlertSeverity,
     BufferPoolMetricsEvent, HealthMetric, HealthStatus as PerformanceHealthStatus,
     HealthStatusChangeEvent, IoStatisticsEvent, PerformanceSubscriptionRoot, PlanChangeReason,
-    QueryPlanChangeEvent, QueryState, SlowQueryEvent, StorageStatus, StorageStatusChangeEvent,
+    QueryPlanChangeEvent, QueryState, SlowQueryEvent, StorageStatusChangeEvent,
     SystemAlertEvent,
 };
 

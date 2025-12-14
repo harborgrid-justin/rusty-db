@@ -1,0 +1,11 @@
+# Minimal RustyDB Configuration
+# Version: 0.3.001
+# Instance Layout Spec: v1.0
+#
+# This is the minimal valid configuration for RustyDB.
+
+[instance]
+name = "test"
+
+[server]
+listen_port = 54321

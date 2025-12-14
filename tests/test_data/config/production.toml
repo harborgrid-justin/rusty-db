@@ -1,0 +1,99 @@
+# RustyDB Production Configuration
+# Version: 0.3.001
+# Instance Layout Spec: v1.0
+#
+# Full production configuration with security, TLS, and all enterprise features.
+
+[instance]
+name = "production"
+description = "Production database instance"
+
+[paths]
+conf_dir = "conf"
+data_dir = "data"
+logs_dir = "logs"
+run_dir = "run"
+cache_dir = "cache"
+tmp_dir = "tmp"
+backup_dir = "backup"
+diag_dir = "diag"
+
+[server]
+listen_host = "0.0.0.0"
+listen_port = 54321
+max_connections = 1000
+idle_timeout_ms = 300000
+request_timeout_ms = 30000
+query_timeout_ms = 600000
+backlog = 2048
+
+[server.ipc]
+enabled = true
+path = "sockets"
+
+[security]
+mode = "prod"
+
+[tls]
+enabled = true
+cert_path = "secrets/tls/server.crt"
+key_path = "secrets/tls/server.key"
+ca_path = "secrets/tls/ca.crt"
+min_version = "1.3"
+require_client_cert = false
+
+[auth]
+mode = "password"
+session_timeout_ms = 1800000
+max_failed_attempts = 3
+lockout_duration_ms = 600000
+
+[logging]
+mode = "file"
+format = "json"
+level = "info"
+audit_enabled = true
+rotate = true
+max_files = 30
+max_file_size_mb = 100
+include_timestamps = true
+
+[storage]
+fsync = true
+sync_interval_ms = 1000
+page_size = 8192
+buffer_pool_pages = 10000
+
+[wal]
+enabled = true
+dir = "wal"
+max_segment_mb = 128
+checkpoint_interval_ms = 30000
+sync_mode = "local"
+archive_enabled = true
+
+[cache]
+enabled = true
+max_size_mb = 4096
+ml_enabled = true
+query_cache_enabled = true
+query_cache_ttl_ms = 60000
+query_cache_max_entries = 50000
+
+[metrics]
+enabled = true
+mode = "pull"
+listen_host = "127.0.0.1"
+listen_port = 9100
+path = "/metrics"
+
+[diagnostics]
+write_build_info = true
+write_runtime_info = true
+max_log_bytes = 52428800
+core_dumps_enabled = false
+bundle_compression = "gzip"
+
+[compat]
+fail_on_unsupported_layout = true
+fail_on_unsupported_data_format = true

@@ -1,0 +1,26 @@
+{
+  "layout_version": "1.0",
+  "instance_id": "550e8400-e29b-41d4-a716-446655440000",
+  "created_at_rfc3339": "2025-12-14T00:00:00Z",
+  "data_format": 2,
+  "wal_format": 2,
+  "protocol": 2,
+  "last_upgraded_from": null,
+  "engine_features": {
+    "simd_enabled": true,
+    "inmemory_enabled": true,
+    "ml_engine_enabled": true,
+    "graph_engine_enabled": true,
+    "document_store_enabled": true,
+    "spatial_enabled": true
+  },
+  "compat_hints": {
+    "min_binary": {
+      "major": 0,
+      "minor": 3,
+      "patch": 1
+    },
+    "max_binary": null,
+    "notes": "Created with RustyDB 0.3.001"
+  }
+}

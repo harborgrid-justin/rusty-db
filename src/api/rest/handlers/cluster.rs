@@ -14,6 +14,8 @@ use std::sync::Arc;
 use std::time::SystemTime;
 
 use super::super::types::*;
+use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use std::time::UNIX_EPOCH;
 
 // Lazy-initialized shared state for cluster management

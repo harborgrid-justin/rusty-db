@@ -1,0 +1,85 @@
+# RustyDB Development Configuration
+# Version: 0.3.001
+# Instance Layout Spec: v1.0
+#
+# Full development configuration with all features for local testing.
+
+[instance]
+name = "development"
+description = "Local development instance"
+
+[paths]
+conf_dir = "conf"
+data_dir = "data"
+logs_dir = "logs"
+run_dir = "run"
+cache_dir = "cache"
+tmp_dir = "tmp"
+backup_dir = "backup"
+diag_dir = "diag"
+
+[server]
+listen_host = "127.0.0.1"
+listen_port = 54321
+max_connections = 100
+idle_timeout_ms = 300000
+request_timeout_ms = 30000
+
+[server.ipc]
+enabled = true
+path = "sockets"
+
+[security]
+mode = "dev"
+
+[tls]
+enabled = false
+
+[auth]
+mode = "none"
+
+[logging]
+mode = "file"
+format = "text"
+level = "debug"
+audit_enabled = false
+rotate = true
+max_files = 5
+max_file_size_mb = 50
+
+[storage]
+fsync = false
+sync_interval_ms = 5000
+page_size = 4096
+buffer_pool_pages = 500
+
+[wal]
+enabled = true
+dir = "wal"
+max_segment_mb = 32
+checkpoint_interval_ms = 120000
+sync_mode = "off"
+
+[cache]
+enabled = true
+max_size_mb = 256
+ml_enabled = true
+query_cache_enabled = true
+query_cache_ttl_ms = 30000
+
+[metrics]
+enabled = true
+mode = "pull"
+listen_host = "127.0.0.1"
+listen_port = 9100
+path = "/metrics"
+
+[diagnostics]
+write_build_info = true
+write_runtime_info = true
+max_log_bytes = 5242880
+core_dumps_enabled = true
+
+[compat]
+fail_on_unsupported_layout = false
+fail_on_unsupported_data_format = false
