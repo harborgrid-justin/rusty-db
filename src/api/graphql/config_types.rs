@@ -526,7 +526,7 @@ impl Default for RustyDbConfigGql {
 impl Default for VersionInfoGql {
     fn default() -> Self {
         Self {
-            binary_version: "0.3.1".to_string(),
+            binary_version: crate::metadata::RUSTYDB_VERSION.to_string(),
             layout_version: "1.0".to_string(),
             data_format_version: 2,
             wal_format_version: 2,
