@@ -1,4 +1,4 @@
-# rustydb.toml - Canonical Instance Configuration (v0.3.001)
+# rustydb.toml - Canonical Instance Configuration (v0.3.1)
 # Instance Layout Spec v1.0
 #
 # This file is intended to be stable, human-managed, and suitable for automation.
