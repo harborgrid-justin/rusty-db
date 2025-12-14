@@ -83,7 +83,7 @@ pub use performance_subscriptions::{
     ActiveQueryEvent, AlertCategory, AlertSeverity as PerformanceAlertSeverity,
     BufferPoolMetricsEvent, HealthMetric, HealthStatus as PerformanceHealthStatus,
     HealthStatusChangeEvent, IoStatisticsEvent, PerformanceSubscriptionRoot, PlanChangeReason,
-    QueryPlanChangeEvent, QueryState, SlowQueryEvent, StorageStatus, StorageStatusChangeEvent,
+    QueryPlanChangeEvent, QueryState, SlowQueryEvent, StorageStatusChangeEvent,
     SystemAlertEvent,
 };
 

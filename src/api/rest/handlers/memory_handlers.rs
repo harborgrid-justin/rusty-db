@@ -2,7 +2,7 @@
 //
 // Handler functions for memory management and monitoring operations
 
-use axum::{http::StatusCode, response::Json as AxumJson};
+use axum::{extract::Path, http::StatusCode, response::Json as AxumJson};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -628,7 +628,6 @@ pub async fn list_allocators() -> Result<AxumJson<Vec<String>>, (StatusCode, Axu
 pub async fn get_allocator_stats_by_name(
     Path(name): Path<String>,
 ) -> Result<AxumJson<AllocatorStatistics>, (StatusCode, AxumJson<ApiError>)> {
-    use axum::extract::Path;
 
     let manager = MEMORY_MANAGER.read();
     let stats = manager.get_comprehensive_stats();

@@ -19,6 +19,33 @@ use super::handlers::db::{
     begin_transaction, commit_transaction, create_table, delete_table, execute_batch,
     execute_query, get_schema, get_table, rollback_transaction, update_table,
 };
+use super::handlers::transaction_handlers::{
+    get_active_transactions, get_transaction, create_savepoint, release_savepoint,
+    rollback_to_savepoint, update_isolation_level, get_locks, get_lock_waiters,
+    get_lock_graph, release_lock, release_all_locks, get_deadlocks, detect_deadlocks,
+    get_mvcc_status, get_mvcc_snapshots, get_row_versions, trigger_vacuum, trigger_full_vacuum,
+    get_wal_status, get_wal_segments, force_checkpoint, archive_wal, get_wal_replay_status,
+    switch_wal_segment,
+};
+use super::handlers::transaction_websocket_handlers::{
+    ws_transaction_lifecycle, ws_lock_events, ws_deadlock_events, ws_mvcc_events, ws_wal_events,
+};
+use super::handlers::optimizer_handlers::{
+    list_hints, get_active_hints, apply_hints, remove_hint, get_hint_recommendations,
+    list_baselines, create_baseline, get_baseline, update_baseline, delete_baseline,
+    evolve_baseline, load_baselines, explain_query, explain_analyze_query,
+    explain_query_with_visualization, get_adaptive_status, enable_adaptive_execution,
+    get_adaptive_statistics, get_parallel_config, update_parallel_config, get_parallel_statistics,
+};
+use super::handlers::query_operations::{
+    execute_query_with_monitoring, cancel_query, get_query_status, get_query_plan,
+    execute_parallel_query, execute_cte_query, execute_adaptive_query, execute_vectorized_query,
+    list_active_queries,
+};
+use super::handlers::query_websocket::{
+    ws_query_execution, ws_result_streaming, ws_cte_monitoring, ws_parallel_execution,
+    ws_adaptive_optimization,
+};
 use super::handlers::monitoring::{
     acknowledge_alert, get_alerts, get_logs, get_metrics, get_performance_data,
     get_prometheus_metrics, get_query_stats, get_session_stats,

@@ -3,7 +3,7 @@
 // Handler functions for Oracle RAC-like clustering features including Cache Fusion,
 // Global Resource Directory (GRD), and cluster interconnect management.
 
-use axum::{extract::State, response::Json as AxumJson};
+use axum::{extract::{Path, State}, http::StatusCode, response::Json as AxumJson};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use serde_json::json;

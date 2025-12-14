@@ -16,6 +16,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde_json::json;
 use futures::{StreamExt, SinkExt};
@@ -326,10 +327,13 @@ async fn handle_index_events_websocket(mut socket: WebSocket, _state: Arc<ApiSta
     }
 
     // Split socket for concurrent read/write
-    let (mut sender, mut receiver) = socket.split();
+    let (sender, mut receiver) = socket.split();
+    let sender = Arc::new(Mutex::new(sender));
+    let sender_clone = sender.clone();
 
     // Spawn event streaming task
     let streaming_task = tokio::spawn(async move {
+        let sender = sender_clone;
         let mut ticker = interval(Duration::from_secs(5));
         let mut sequence = 0u64;
 
@@ -389,7 +393,7 @@ async fn handle_index_events_websocket(mut socket: WebSocket, _state: Arc<ApiSta
             // Send one sample event per interval
             let event = &sample_events[sequence as usize % sample_events.len()];
             if let Ok(event_json) = serde_json::to_string(event) {
-                if sender.send(Message::Text(event_json.into())).await.is_err() {
+                if sender.lock().await.send(Message::Text(event_json.into())).await.is_err() {
                     break;
                 }
             }
@@ -402,7 +406,7 @@ async fn handle_index_events_websocket(mut socket: WebSocket, _state: Arc<ApiSta
             match msg {
                 Message::Close(_) => break,
                 Message::Ping(data) => {
-                    if sender.send(Message::Pong(data)).await.is_err() {
+                    if sender.lock().await.send(Message::Pong(data)).await.is_err() {
                         break;
                     }
                 }

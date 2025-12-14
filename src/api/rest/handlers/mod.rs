@@ -31,8 +31,12 @@ pub mod dashboard_handlers;
 pub mod diagnostics_handlers;
 pub mod document_handlers;
 pub mod encryption_handlers;
-mod flashback_handlers;
-mod gateway_handlers;
+pub mod flashback_handlers;
+pub mod gateway_handlers;
+pub mod autonomous_handlers;
+pub mod blockchain_handlers;
+pub mod event_processing_handlers;
+pub mod multitenant_handlers;
 pub mod graph_handlers;
 pub mod health_handlers;
 pub mod index_handlers;
@@ -50,10 +54,10 @@ pub mod query_operations;
 pub mod query_websocket;
 pub mod rac_handlers;
 pub mod replication_websocket_types;
-mod security_handlers;
+pub mod security_handlers;
 pub mod security_websocket_handlers;
 pub mod spatial_handlers;
-mod streams_handlers;
+pub mod streams_handlers;
 pub mod vpd_handlers;
 pub mod websocket_handlers;
 pub mod transaction_websocket_handlers;
@@ -343,7 +347,7 @@ pub use memory_handlers::{
 
 // Buffer Pool handlers
 pub use buffer_pool_handlers::{
-    get_buffer_pool_stats, get_buffer_pool_config, update_buffer_pool_config,
+    get_buffer_pool_config, update_buffer_pool_config,
     flush_buffer_pool as flush_buffer_pool_handler, get_eviction_stats, get_prefetch_config,
     update_prefetch_config, get_hugepages_config, pin_page, unpin_page,
     prefetch_pages, get_hit_ratio,
