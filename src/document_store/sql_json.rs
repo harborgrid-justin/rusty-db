@@ -3,10 +3,10 @@
 // Oracle-like SQL/JSON functions including JSON_TABLE, JSON_QUERY, JSON_VALUE,
 // JSON_EXISTS, IS JSON predicate, and JSON generation functions.
 
+use super::jsonpath::{JsonPathEvaluator, JsonPathParser};
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use crate::error::Result;
-use super::jsonpath::{JsonPathParser, JsonPathEvaluator};
 
 // JSON_TABLE function result
 #[derive(Debug, Clone)]
@@ -134,9 +134,7 @@ impl JsonTableFunction {
         rowpath: &str,
         columns: Vec<JsonTableColumn>,
     ) -> Result<JsonTableResult> {
-        let mut result = JsonTableResult::new(
-            columns.iter().map(|c| c.name.clone()).collect()
-        );
+        let mut result = JsonTableResult::new(columns.iter().map(|c| c.name.clone()).collect());
 
         // Parse row path
         let mut parser = JsonPathParser::new(rowpath.to_string());
@@ -178,7 +176,11 @@ impl JsonTableFunction {
         Self::convert_type(value, column.data_type, column)
     }
 
-    fn convert_type(value: &Value, data_type: JsonDataType, column: &JsonTableColumn) -> Result<Value> {
+    fn convert_type(
+        value: &Value,
+        data_type: JsonDataType,
+        column: &JsonTableColumn,
+    ) -> Result<Value> {
         match data_type {
             JsonDataType::String => {
                 if let Some(s) = value.as_str() {
@@ -225,9 +227,10 @@ impl JsonTableFunction {
         match &column.on_error {
             ErrorHandling::Null => Ok(Value::Null),
             ErrorHandling::Default(v) => Ok(v.clone()),
-            ErrorHandling::Error => Err(crate::error::DbError::InvalidInput(
-                format!("Type conversion error for column '{}'", column.name)
-            )),
+            ErrorHandling::Error => Err(crate::error::DbError::InvalidInput(format!(
+                "Type conversion error for column '{}'",
+                column.name
+            ))),
         }
     }
 
@@ -235,9 +238,10 @@ impl JsonTableFunction {
         match &column.on_empty {
             ErrorHandling::Null => Ok(Value::Null),
             ErrorHandling::Default(v) => Ok(v.clone()),
-            ErrorHandling::Error => Err(crate::error::DbError::InvalidInput(
-                format!("Empty value for column '{}'", column.name)
-            )),
+            ErrorHandling::Error => Err(crate::error::DbError::InvalidInput(format!(
+                "Empty value for column '{}'",
+                column.name
+            ))),
         }
     }
 }
@@ -249,11 +253,7 @@ impl JsonQueryFunction {
     // Execute JSON_QUERY
     //
     // Extracts a JSON fragment from a JSON document
-    pub fn execute(
-        json: &Value,
-        path: &str,
-        wrapper: JsonWrapper,
-    ) -> Result<Option<Value>> {
+    pub fn execute(json: &Value, path: &str, wrapper: JsonWrapper) -> Result<Option<Value>> {
         let mut parser = JsonPathParser::new(path.to_string());
         let json_path = parser.parse()?;
 
@@ -271,15 +271,13 @@ impl JsonQueryFunction {
                     Ok(Some(Value::Array(results)))
                 }
             }
-            JsonWrapper::WithWrapper => {
-                Ok(Some(Value::Array(results)))
-            }
+            JsonWrapper::WithWrapper => Ok(Some(Value::Array(results))),
             JsonWrapper::WithoutWrapper => {
                 if results.len() == 1 {
                     Ok(Some(results[0].clone()))
                 } else {
                     Err(crate::error::DbError::InvalidInput(
-                        "Multiple values found, use WITH WRAPPER".to_string()
+                        "Multiple values found, use WITH WRAPPER".to_string(),
                     ))
                 }
             }
@@ -330,7 +328,7 @@ impl JsonValueFunction {
 
         if results.len() > 1 {
             return Err(crate::error::DbError::InvalidInput(
-                "JSON_VALUE requires a single scalar value".to_string()
+                "JSON_VALUE requires a single scalar value".to_string(),
             ));
         }
 
@@ -339,7 +337,7 @@ impl JsonValueFunction {
         // Ensure it's a scalar value
         if value.is_object() || value.is_array() {
             return Err(crate::error::DbError::InvalidInput(
-                "JSON_VALUE requires a scalar value, not object or array".to_string()
+                "JSON_VALUE requires a scalar value, not object or array".to_string(),
             ));
         }
 
@@ -368,11 +366,7 @@ impl JsonExistsFunction {
     }
 
     // Execute JSON_EXISTS with filter
-    pub fn execute_with_filter(
-        json: &Value,
-        path: &str,
-        filter: &str,
-    ) -> Result<bool> {
+    pub fn execute_with_filter(json: &Value, path: &str, filter: &str) -> Result<bool> {
         let full_path = format!("{}[?({})]", path, filter);
         Self::execute(json, &full_path)
     }
@@ -584,12 +578,14 @@ impl TransformOperation {
                 }
             } else {
                 if let Value::Object(obj) = current {
-                    current = obj.entry(part.to_string())
+                    current = obj
+                        .entry(part.to_string())
                         .or_insert_with(|| Value::Object(serde_json::Map::new()));
                 } else {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Cannot navigate path: {}", path)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Cannot navigate path: {}",
+                        path
+                    )));
                 }
             }
         }
@@ -613,14 +609,14 @@ impl TransformOperation {
                 }
             } else {
                 if let Value::Object(obj) = current {
-                    current = obj.get_mut(*part)
-                        .ok_or_else(|| crate::error::DbError::NotFound(
-                            format!("Path not found: {}", path)
-                        ))?;
+                    current = obj.get_mut(*part).ok_or_else(|| {
+                        crate::error::DbError::NotFound(format!("Path not found: {}", path))
+                    })?;
                 } else {
-                    return Err(crate::error::DbError::InvalidInput(
-                        format!("Cannot navigate path: {}", path)
-                    ));
+                    return Err(crate::error::DbError::InvalidInput(format!(
+                        "Cannot navigate path: {}",
+                        path
+                    )));
                 }
             }
         }
@@ -643,11 +639,7 @@ impl SqlJsonFunctions {
     }
 
     // Execute JSON_QUERY
-    pub fn json_query(
-        json: &Value,
-        path: &str,
-        wrapper: JsonWrapper,
-    ) -> Result<Option<Value>> {
+    pub fn json_query(json: &Value, path: &str, wrapper: JsonWrapper) -> Result<Option<Value>> {
         JsonQueryFunction::execute(json, path, wrapper)
     }
 
@@ -707,11 +699,7 @@ mod tests {
             JsonTableColumn::new("price", "$.price", JsonDataType::Float),
         ];
 
-        let result = JsonTableFunction::execute(
-            &data,
-            "$.store.books[*]",
-            columns,
-        ).unwrap();
+        let result = JsonTableFunction::execute(&data, "$.store.books[*]", columns).unwrap();
 
         assert_eq!(result.row_count(), 2);
         assert_eq!(result.column_count(), 2);
@@ -727,11 +715,7 @@ mod tests {
             ]
         });
 
-        let result = JsonQueryFunction::execute(
-            &data,
-            "$.contacts",
-            JsonWrapper::None,
-        ).unwrap();
+        let result = JsonQueryFunction::execute(&data, "$.contacts", JsonWrapper::None).unwrap();
 
         assert!(result.is_some());
         assert!(result.unwrap().is_array());
@@ -741,11 +725,7 @@ mod tests {
     fn test_json_value() {
         let data = json!({"name": "Alice", "age": 30});
 
-        let result = JsonValueFunction::execute(
-            &data,
-            "$.age",
-            JsonDataType::Integer,
-        ).unwrap();
+        let result = JsonValueFunction::execute(&data, "$.age", JsonDataType::Integer).unwrap();
 
         assert!(result.is_some());
         assert_eq!(result.unwrap(), json!(30));
@@ -780,11 +760,7 @@ mod tests {
 
     #[test]
     fn test_json_array() {
-        let arr = JsonGenerationFunctions::json_array(vec![
-            json!(1),
-            json!(2),
-            json!(3),
-        ]);
+        let arr = JsonGenerationFunctions::json_array(vec![json!(1), json!(2), json!(3)]);
 
         assert!(arr.is_array());
         assert_eq!(arr.as_array().unwrap().len(), 3);

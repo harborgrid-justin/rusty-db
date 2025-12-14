@@ -3,14 +3,17 @@
 use async_trait::async_trait;
 use std::time::{Duration, SystemTime};
 
-use crate::replication::ReplicaId;
 use super::errors::HealthMonitorError;
 use super::monitor::{HealthMonitor, ReplicationHealthMonitor};
 use super::types::*;
+use crate::replication::ReplicaId;
 
 #[async_trait]
 impl HealthMonitor for ReplicationHealthMonitor {
-    async fn check_replica_health(&self, replica_id: &ReplicaId) -> Result<HealthCheckResult, HealthMonitorError> {
+    async fn check_replica_health(
+        &self,
+        replica_id: &ReplicaId,
+    ) -> Result<HealthCheckResult, HealthMonitorError> {
         let metrics = self.collect_metrics(replica_id)?;
         let components = self.calculate_component_health(&metrics);
         let overall_score = self.calculate_overall_score(&components);
@@ -56,10 +59,12 @@ impl HealthMonitor for ReplicationHealthMonitor {
         duration: Duration,
     ) -> Result<Vec<HealthHistoryEntry>, HealthMonitorError> {
         let history = self.history.read();
-        let entries = history.get(replica_id)
-            .ok_or_else(|| HealthMonitorError::ReplicaNotFound {
-                replica_id: replica_id.to_string(),
-            })?;
+        let entries =
+            history
+                .get(replica_id)
+                .ok_or_else(|| HealthMonitorError::ReplicaNotFound {
+                    replica_id: replica_id.to_string(),
+                })?;
 
         let now = SystemTime::now();
         let cutoff = now - duration;
@@ -71,7 +76,10 @@ impl HealthMonitor for ReplicationHealthMonitor {
             .collect())
     }
 
-    async fn get_statistics(&self, replica_id: Option<&ReplicaId>) -> Result<HealthStatistics, HealthMonitorError> {
+    async fn get_statistics(
+        &self,
+        replica_id: Option<&ReplicaId>,
+    ) -> Result<HealthStatistics, HealthMonitorError> {
         let statistics = self.statistics.read();
 
         if let Some(replica_id) = replica_id {
@@ -100,7 +108,11 @@ impl HealthMonitor for ReplicationHealthMonitor {
             };
 
             let average_lag_bytes = if !statistics.is_empty() {
-                statistics.values().map(|s| s.average_lag_bytes).sum::<u64>() / statistics.len() as u64
+                statistics
+                    .values()
+                    .map(|s| s.average_lag_bytes)
+                    .sum::<u64>()
+                    / statistics.len() as u64
             } else {
                 0
             };
@@ -146,8 +158,13 @@ impl HealthMonitor for ReplicationHealthMonitor {
         }
     }
 
-    async fn get_health_trend(&self, replica_id: &ReplicaId) -> Result<HealthTrend, HealthMonitorError> {
-        let history = self.get_health_history(replica_id, self.config.trend_window).await?;
+    async fn get_health_trend(
+        &self,
+        replica_id: &ReplicaId,
+    ) -> Result<HealthTrend, HealthMonitorError> {
+        let history = self
+            .get_health_history(replica_id, self.config.trend_window)
+            .await?;
 
         if history.is_empty() {
             return Ok(HealthTrend {
@@ -175,8 +192,14 @@ impl HealthMonitor for ReplicationHealthMonitor {
         };
 
         // Calculate lag trend
-        let first_lag = history.first().map(|e| e.metrics.replication_lag_bytes).unwrap_or(0);
-        let last_lag = history.last().map(|e| e.metrics.replication_lag_bytes).unwrap_or(0);
+        let first_lag = history
+            .first()
+            .map(|e| e.metrics.replication_lag_bytes)
+            .unwrap_or(0);
+        let last_lag = history
+            .last()
+            .map(|e| e.metrics.replication_lag_bytes)
+            .unwrap_or(0);
 
         let lag_trend = if last_lag < first_lag && (first_lag - last_lag) > 10 * 1024 * 1024 {
             TrendDirection::Improving

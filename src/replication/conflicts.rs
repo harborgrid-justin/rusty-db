@@ -64,14 +64,14 @@
 // # }
 // ```
 
-use std::time::SystemTime;
 use crate::replication::types::*;
 use async_trait::async_trait;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use uuid::Uuid;
@@ -205,15 +205,21 @@ impl ConflictData {
     // Gets the time difference between local and remote changes
     pub fn time_delta(&self) -> Option<Duration> {
         if self.local_timestamp >= self.remote_timestamp {
-            self.local_timestamp.duration_since(self.remote_timestamp).ok()
+            self.local_timestamp
+                .duration_since(self.remote_timestamp)
+                .ok()
         } else {
-            self.remote_timestamp.duration_since(self.local_timestamp).ok()
+            self.remote_timestamp
+                .duration_since(self.local_timestamp)
+                .ok()
         }
     }
 
     // Checks if this is a recent conflict (within threshold)
     pub fn is_recent_conflict(&self, threshold: Duration) -> bool {
-        self.time_delta().map(|delta| delta <= threshold).unwrap_or(false)
+        self.time_delta()
+            .map(|delta| delta <= threshold)
+            .unwrap_or(false)
     }
 
     // Adds metadata to the conflict
@@ -293,7 +299,9 @@ impl ConflictResolution {
             required_manual_intervention: false,
         };
 
-        resolution.resolution_metadata.insert("failure_reason".to_string(), reason);
+        resolution
+            .resolution_metadata
+            .insert("failure_reason".to_string(), reason);
         resolution
     }
 }
@@ -488,17 +496,37 @@ pub struct ConflictResolver {
 #[derive(Debug, Clone)]
 pub enum ConflictEvent {
     // New conflict detected
-    ConflictDetected { conflict_id: Uuid, table_name: String, severity: ConflictSeverity },
+    ConflictDetected {
+        conflict_id: Uuid,
+        table_name: String,
+        severity: ConflictSeverity,
+    },
     // Conflict resolution started
-    ResolutionStarted { conflict_id: Uuid, strategy: ConflictResolutionStrategy },
+    ResolutionStarted {
+        conflict_id: Uuid,
+        strategy: ConflictResolutionStrategy,
+    },
     // Conflict successfully resolved
-    ConflictResolved { conflict_id: Uuid, strategy: ConflictResolutionStrategy, duration: Duration },
+    ConflictResolved {
+        conflict_id: Uuid,
+        strategy: ConflictResolutionStrategy,
+        duration: Duration,
+    },
     // Conflict resolution failed
-    ResolutionFailed { conflict_id: Uuid, reason: String },
+    ResolutionFailed {
+        conflict_id: Uuid,
+        reason: String,
+    },
     // Manual intervention required
-    ManualInterventionRequired { conflict_id: Uuid, table_name: String },
+    ManualInterventionRequired {
+        conflict_id: Uuid,
+        table_name: String,
+    },
     // Pattern analysis completed
-    PatternAnalysisCompleted { analysis_id: Uuid, patterns_found: usize },
+    PatternAnalysisCompleted {
+        analysis_id: Uuid,
+        patterns_found: usize,
+    },
 }
 
 impl ConflictResolver {
@@ -693,11 +721,12 @@ impl ConflictResolver {
         // Get conflict info
         let conflict_info = {
             let conflicts = self.conflicts.read();
-            conflicts.get(&conflict_id).cloned()
-                .ok_or_else(|| ConflictResolutionError::ResolutionFailed {
+            conflicts.get(&conflict_id).cloned().ok_or_else(|| {
+                ConflictResolutionError::ResolutionFailed {
                     conflict_id: conflict_id.to_string(),
                     reason: "Conflict not found".to_string(),
-                })?
+                }
+            })?
         };
 
         // Update status to resolving
@@ -795,7 +824,11 @@ impl ConflictResolver {
         conflict_data: &ConflictData,
     ) -> Result<(ConflictResolutionStrategy, Vec<u8>), ConflictResolutionError> {
         // Try table-specific custom resolver first
-        let table_resolver = self.custom_resolvers.read().get(&conflict_data.table_name).cloned();
+        let table_resolver = self
+            .custom_resolvers
+            .read()
+            .get(&conflict_data.table_name)
+            .cloned();
         if let Some(resolver) = table_resolver {
             if resolver.can_resolve(conflict_data).await {
                 let resolved_data = resolver.resolve(conflict_data).await?;
@@ -826,7 +859,10 @@ impl ConflictResolver {
             }
             ConflictResolutionStrategy::PrimaryWins => {
                 // Assume local is primary for this example
-                Ok((ConflictResolutionStrategy::PrimaryWins, conflict_data.local_version.clone()))
+                Ok((
+                    ConflictResolutionStrategy::PrimaryWins,
+                    conflict_data.local_version.clone(),
+                ))
             }
             ConflictResolutionStrategy::Custom => {
                 Err(ConflictResolutionError::CustomResolverNotFound {
@@ -838,7 +874,10 @@ impl ConflictResolver {
 
     // Internal conflict resolution method
     #[allow(dead_code)]
-    async fn resolve_conflict_internal(&self, conflict_id: Uuid) -> Result<(), ConflictResolutionError> {
+    async fn resolve_conflict_internal(
+        &self,
+        conflict_id: Uuid,
+    ) -> Result<(), ConflictResolutionError> {
         self.resolve_conflict_by_id(conflict_id).await.map(|_| ())
     }
 
@@ -848,9 +887,15 @@ impl ConflictResolver {
         let time_delta = conflict_data.time_delta().unwrap_or_default();
 
         match conflict_data.operation {
-            ReplicationOperation::Delete | ReplicationOperation::DropTable => ConflictSeverity::Critical,
-            ReplicationOperation::Update if time_delta < Duration::from_secs(1) => ConflictSeverity::High,
-            ReplicationOperation::Insert if time_delta < Duration::from_secs(1) => ConflictSeverity::Medium,
+            ReplicationOperation::Delete | ReplicationOperation::DropTable => {
+                ConflictSeverity::Critical
+            }
+            ReplicationOperation::Update if time_delta < Duration::from_secs(1) => {
+                ConflictSeverity::High
+            }
+            ReplicationOperation::Insert if time_delta < Duration::from_secs(1) => {
+                ConflictSeverity::Medium
+            }
             _ => ConflictSeverity::Low,
         }
     }
@@ -869,8 +914,7 @@ impl ConflictResolver {
         let cutoff = SystemTime::now() - Duration::from_secs(3600); // 1 hour
 
         conflicts.retain(|_, conflict| {
-            conflict.status != ConflictStatus::Resolved ||
-            conflict.detected_at > cutoff
+            conflict.status != ConflictStatus::Resolved || conflict.detected_at > cutoff
         });
     }
 
@@ -878,8 +922,11 @@ impl ConflictResolver {
     #[allow(dead_code)]
     pub fn get_active_conflicts(&self) -> Vec<ConflictInfo> {
         let conflicts = self.conflicts.read();
-        conflicts.values()
-            .filter(|c| c.status == ConflictStatus::Pending || c.status == ConflictStatus::Resolving)
+        conflicts
+            .values()
+            .filter(|c| {
+                c.status == ConflictStatus::Pending || c.status == ConflictStatus::Resolving
+            })
             .cloned()
             .collect()
     }
@@ -891,18 +938,18 @@ impl ConflictResolver {
         let history = self.resolution_history.read();
 
         let total_conflicts = conflicts.len();
-        let resolved_conflicts = conflicts.values()
+        let resolved_conflicts = conflicts
+            .values()
             .filter(|c| c.status == ConflictStatus::Resolved)
             .count();
 
-        let failed_conflicts = conflicts.values()
+        let failed_conflicts = conflicts
+            .values()
             .filter(|c| c.status == ConflictStatus::Failed)
             .count();
 
         let average_resolution_time = if !history.is_empty() {
-            let total_time: Duration = history.iter()
-                .map(|r| r.resolution_time)
-                .sum();
+            let total_time: Duration = history.iter().map(|r| r.resolution_time).sum();
             total_time / history.len() as u32
         } else {
             Duration::default()
@@ -920,7 +967,9 @@ impl ConflictResolver {
 
     // Performs conflict pattern analysis
     #[allow(dead_code)]
-    pub async fn analyze_conflict_patterns(&self) -> Result<ConflictPatternAnalysis, ConflictResolutionError> {
+    pub async fn analyze_conflict_patterns(
+        &self,
+    ) -> Result<ConflictPatternAnalysis, ConflictResolutionError> {
         let conflicts = self.conflicts.read();
         let history = self.resolution_history.read();
 
@@ -933,7 +982,9 @@ impl ConflictResolver {
             let table_name = conflict.data.table_name.as_str().to_string();
             *conflicts_by_table.entry(table_name).or_insert(0) += 1;
 
-            *conflicts_by_operation.entry(conflict.data.operation.clone()).or_insert(0) += 1;
+            *conflicts_by_operation
+                .entry(conflict.data.operation.clone())
+                .or_insert(0) += 1;
         }
 
         // Analyze resolution times by strategy
@@ -959,17 +1010,21 @@ impl ConflictResolver {
             conflicts_by_operation,
             avg_resolution_time_by_strategy,
             common_patterns: Vec::new(), // Would be computed from pattern detection
-            recommendations: vec!["Consider adding custom resolvers for high-conflict tables".to_string()],
+            recommendations: vec![
+                "Consider adding custom resolvers for high-conflict tables".to_string()
+            ],
         };
 
         // Cache analysis
         *self.pattern_analysis.write() = Some(analysis.clone());
 
         // Publish event
-        let _ = self.event_sender.send(ConflictEvent::PatternAnalysisCompleted {
-            analysis_id: Uuid::new_v4(),
-            patterns_found: analysis.common_patterns.len(),
-        });
+        let _ = self
+            .event_sender
+            .send(ConflictEvent::PatternAnalysisCompleted {
+                analysis_id: Uuid::new_v4(),
+                patterns_found: analysis.common_patterns.len(),
+            });
 
         Ok(analysis)
     }
@@ -994,9 +1049,12 @@ pub struct ConflictResolutionStatistics {
 
 #[cfg(test)]
 mod tests {
-    use std::time::{Duration, SystemTime};
-    use crate::replication::conflicts::{ConflictData, ConflictResolver, ConflictResolverConfig, ConflictSeverity, CustomConflictResolver, FirstWriteWinsResolver, LastWriteWinsResolver};
+    use crate::replication::conflicts::{
+        ConflictData, ConflictResolver, ConflictResolverConfig, ConflictSeverity,
+        CustomConflictResolver, FirstWriteWinsResolver, LastWriteWinsResolver,
+    };
     use crate::replication::types::{ReplicationOperation, TableName};
+    use std::time::{Duration, SystemTime};
 
     #[tokio::test]
     async fn test_conflict_resolver_creation() {

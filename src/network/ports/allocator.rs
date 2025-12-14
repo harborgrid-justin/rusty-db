@@ -8,13 +8,13 @@
 // - **Random**: Allocate random ports from the available range
 // - **HashBased**: Use consistent hashing based on node ID for predictable allocation
 
-use crate::error::{DbError, Result};
 use crate::common::NodeId;
-use std::collections::HashSet;
-use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
+use crate::error::{DbError, Result};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
+use std::collections::HashSet;
+use std::hash::{Hash, Hasher};
 
 /// Port allocation strategy
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -97,13 +97,17 @@ impl PortAllocator {
     /// `Ok(())` if the port was allocated, `Err` if already in use or out of range
     pub fn allocate_specific(&mut self, port: u16) -> Result<()> {
         if port < self.range_start || port > self.range_end {
-            return Err(DbError::InvalidInput(
-                format!("Port {} outside allowed range {}-{}", port, self.range_start, self.range_end)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Port {} outside allowed range {}-{}",
+                port, self.range_start, self.range_end
+            )));
         }
 
         if self.allocated.contains(&port) {
-            return Err(DbError::AlreadyExists(format!("Port {} already allocated", port)));
+            return Err(DbError::AlreadyExists(format!(
+                "Port {} already allocated",
+                port
+            )));
         }
 
         self.allocated.insert(port);
@@ -299,7 +303,8 @@ mod tests {
     #[test]
     fn test_hash_based_allocation() {
         let node_id = "node-1".to_string();
-        let mut allocator = PortAllocator::new(6000, 6100, AllocationStrategy::HashBased(node_id.clone()));
+        let mut allocator =
+            PortAllocator::new(6000, 6100, AllocationStrategy::HashBased(node_id.clone()));
 
         let port1 = allocator.allocate().unwrap();
         let port2 = allocator.allocate().unwrap();

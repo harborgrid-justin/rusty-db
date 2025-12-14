@@ -3,15 +3,13 @@
 // High-level coordinator that integrates Global Cache Service (GCS) and
 // Global Enqueue Service (GES) to provide a unified Cache Fusion interface.
 
-use crate::error::DbError;
-use crate::common::{NodeId, TransactionId};
-use std::sync::Arc;
 use super::global_cache::{
-    GlobalCacheService, GcsConfig, GcsStatistics, BlockGrant, BlockMode, ResourceId,
+    BlockGrant, BlockMode, GcsConfig, GcsStatistics, GlobalCacheService, ResourceId,
 };
-use super::lock_management::{
-    GlobalEnqueueService, GesStatistics, LockGrant, LockType,
-};
+use super::lock_management::{GesStatistics, GlobalEnqueueService, LockGrant, LockType};
+use crate::common::{NodeId, TransactionId};
+use crate::error::DbError;
+use std::sync::Arc;
 
 // ============================================================================
 // Cache Fusion Coordinator
@@ -53,15 +51,16 @@ impl CacheFusionCoordinator {
             _ => LockType::Null,
         };
 
-        let lock_grant = self.ges.acquire_lock(resource_id.clone(), lock_type).await?;
+        let lock_grant = self
+            .ges
+            .acquire_lock(resource_id.clone(), lock_type)
+            .await?;
 
         // Then request block
-        let block_grant = self.gcs.request_block(
-            resource_id,
-            mode,
-            transaction_id,
-            false,
-        ).await?;
+        let block_grant = self
+            .gcs
+            .request_block(resource_id, mode, transaction_id, false)
+            .await?;
 
         Ok((block_grant, lock_grant))
     }
@@ -93,8 +92,8 @@ pub struct CacheFusionStatistics {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::global_cache::ResourceClass;
+    use super::*;
 
     #[tokio::test]
     async fn test_block_mode_compatibility() {
@@ -113,12 +112,9 @@ mod tests {
             class: ResourceClass::Data,
         };
 
-        let grant = gcs.request_block(
-            resource_id,
-            BlockMode::Shared,
-            1,
-            false,
-        ).await;
+        let grant = gcs
+            .request_block(resource_id, BlockMode::Shared, 1, false)
+            .await;
 
         assert!(grant.is_ok());
     }
@@ -133,7 +129,9 @@ mod tests {
             class: ResourceClass::Data,
         };
 
-        let grant = ges.acquire_lock(resource_id, LockType::ConcurrentRead).await;
+        let grant = ges
+            .acquire_lock(resource_id, LockType::ConcurrentRead)
+            .await;
         assert!(grant.is_ok());
     }
 }

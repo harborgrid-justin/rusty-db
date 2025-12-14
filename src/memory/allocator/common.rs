@@ -8,9 +8,9 @@ pub use crate::error::{DbError, Result};
 // Re-export commonly used types
 pub use std::alloc::{GlobalAlloc, Layout, System};
 pub use std::cell::RefCell;
-pub use std::sync::atomic::{Ordering, AtomicBool, AtomicU64, AtomicUsize};
-pub use std::ptr::{self, NonNull};
 pub use std::collections::{HashMap, VecDeque};
+pub use std::ptr::{self, NonNull};
+pub use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 pub use std::sync::{Arc, Mutex, RwLock, Weak};
 pub use std::time::{Duration, Instant, SystemTime};
 

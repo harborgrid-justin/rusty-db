@@ -1,15 +1,14 @@
 // Active Session History (ASH)
 // Oracle-inspired periodic session sampling for historical query analysis
 
-use std::fmt;
-use std::collections::VecDeque;
-use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration};
-
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Session state at the time of sampling
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -247,7 +246,10 @@ impl SessionStatistics {
 
     pub fn add_sample(&mut self, sample: &AshSample) {
         self.total_samples += 1;
-        *self.state_breakdown.entry(sample.session_state).or_insert(0) += 1;
+        *self
+            .state_breakdown
+            .entry(sample.session_state)
+            .or_insert(0) += 1;
 
         if let Some(wait_class) = sample.wait_class {
             *self.wait_breakdown.entry(wait_class).or_insert(0) += sample.wait_time_us;
@@ -309,17 +311,17 @@ impl ActiveSessionHistory {
         // Update SQL statistics
         if let Some(sql_id) = sample.sql_id {
             let mut sql_stats = self.sql_statistics.write();
-            let stats = sql_stats
-                .entry(sql_id)
-                .or_insert_with(|| SqlStatistics::new(sql_id, sample.sql_text.clone().unwrap_or_default()));
+            let stats = sql_stats.entry(sql_id).or_insert_with(|| {
+                SqlStatistics::new(sql_id, sample.sql_text.clone().unwrap_or_default())
+            });
             stats.add_sample(&sample);
         }
 
         // Update session statistics
         let mut session_stats = self.session_statistics.write();
-        let stats = session_stats
-            .entry(sample.session_id)
-            .or_insert_with(|| SessionStatistics::new(sample.session_id, sample.user_id, sample.program.clone()));
+        let stats = session_stats.entry(sample.session_id).or_insert_with(|| {
+            SessionStatistics::new(sample.session_id, sample.user_id, sample.program.clone())
+        });
         stats.add_sample(&sample);
         drop(session_stats);
 
@@ -375,9 +377,7 @@ impl ActiveSessionHistory {
         samples
             .iter()
             .rev()
-            .filter(|s| {
-                s.sample_time >= threshold && s.session_state == SessionState::Active
-            })
+            .filter(|s| s.sample_time >= threshold && s.session_state == SessionState::Active)
             .cloned()
             .collect()
     }
@@ -489,7 +489,10 @@ impl<'a> AshReportGenerator<'a> {
 
         let sample_count = self.ash.get_sample_count();
         report.push_str(&format!("Total Samples: {}\n", sample_count));
-        report.push_str(&format!("Sample Interval: {:?}\n\n", self.ash.get_sample_interval()));
+        report.push_str(&format!(
+            "Sample Interval: {:?}\n\n",
+            self.ash.get_sample_interval()
+        ));
 
         // Session state summary
         report.push_str("Session State Breakdown:\n");

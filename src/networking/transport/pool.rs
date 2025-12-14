@@ -175,9 +175,15 @@ impl ConnectionPool {
     }
 
     /// Add a connection to the pool
-    pub async fn add_connection(&self, peer_id: NodeId, transport_type: TransportType) -> Result<Arc<Connection>> {
+    pub async fn add_connection(
+        &self,
+        peer_id: NodeId,
+        transport_type: TransportType,
+    ) -> Result<Arc<Connection>> {
         let mut pools = self.pools.write().await;
-        let pool = pools.entry(peer_id.clone()).or_insert_with(|| PeerPool::new(peer_id.clone()));
+        let pool = pools
+            .entry(peer_id.clone())
+            .or_insert_with(|| PeerPool::new(peer_id.clone()));
 
         // Check if we've reached max connections
         if pool.connection_count() >= self.config.max_connections {
@@ -210,14 +216,20 @@ impl ConnectionPool {
         pool.get_connection(self.selection_strategy)
             .await
             .ok_or_else(|| {
-                DbError::Unavailable(format!("No healthy connections available for peer {}", peer_id))
+                DbError::Unavailable(format!(
+                    "No healthy connections available for peer {}",
+                    peer_id
+                ))
             })
     }
 
     /// Get the number of connections to a peer
     pub async fn connection_count(&self, peer_id: &NodeId) -> usize {
         let pools = self.pools.read().await;
-        pools.get(peer_id).map(|p| p.connection_count()).unwrap_or(0)
+        pools
+            .get(peer_id)
+            .map(|p| p.connection_count())
+            .unwrap_or(0)
     }
 
     /// Remove all connections to a peer
@@ -312,8 +324,8 @@ pub struct PoolStatistics {
 
 #[cfg(test)]
 mod tests {
-    use crate::networking::ConnectionState;
     use super::*;
+    use crate::networking::ConnectionState;
 
     #[tokio::test]
     async fn test_connection_pool_creation() {
@@ -328,7 +340,9 @@ mod tests {
         let pool = ConnectionPool::new(config);
 
         let peer_id = "node1".to_string();
-        let result = pool.add_connection(peer_id.clone(), TransportType::Tcp).await;
+        let result = pool
+            .add_connection(peer_id.clone(), TransportType::Tcp)
+            .await;
         assert!(result.is_ok());
         assert_eq!(pool.connection_count(&peer_id).await, 1);
     }
@@ -342,11 +356,17 @@ mod tests {
         let peer_id = "node1".to_string();
 
         // Add up to max
-        pool.add_connection(peer_id.clone(), TransportType::Tcp).await.unwrap();
-        pool.add_connection(peer_id.clone(), TransportType::Tcp).await.unwrap();
+        pool.add_connection(peer_id.clone(), TransportType::Tcp)
+            .await
+            .unwrap();
+        pool.add_connection(peer_id.clone(), TransportType::Tcp)
+            .await
+            .unwrap();
 
         // This should fail
-        let result = pool.add_connection(peer_id.clone(), TransportType::Tcp).await;
+        let result = pool
+            .add_connection(peer_id.clone(), TransportType::Tcp)
+            .await;
         assert!(result.is_err());
     }
 
@@ -356,7 +376,10 @@ mod tests {
         let pool = ConnectionPool::new(config);
 
         let peer_id = "node1".to_string();
-        let conn = pool.add_connection(peer_id.clone(), TransportType::Tcp).await.unwrap();
+        let conn = pool
+            .add_connection(peer_id.clone(), TransportType::Tcp)
+            .await
+            .unwrap();
 
         // Set connection as active
         conn.set_state(ConnectionState::Active).await.unwrap();
@@ -371,7 +394,9 @@ mod tests {
         let pool = ConnectionPool::new(config);
 
         let peer_id = "node1".to_string();
-        pool.add_connection(peer_id.clone(), TransportType::Tcp).await.unwrap();
+        pool.add_connection(peer_id.clone(), TransportType::Tcp)
+            .await
+            .unwrap();
 
         assert_eq!(pool.connection_count(&peer_id).await, 1);
 
@@ -388,7 +413,8 @@ mod tests {
         assert_eq!(pool.selection_strategy, SelectionStrategy::RoundRobin);
 
         // Test least loaded
-        let pool = ConnectionPool::new(config.clone()).with_strategy(SelectionStrategy::LeastLoaded);
+        let pool =
+            ConnectionPool::new(config.clone()).with_strategy(SelectionStrategy::LeastLoaded);
         assert_eq!(pool.selection_strategy, SelectionStrategy::LeastLoaded);
 
         // Test first available

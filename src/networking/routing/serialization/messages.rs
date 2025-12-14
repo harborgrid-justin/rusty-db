@@ -426,7 +426,11 @@ pub struct ErrorResponse {
 
 impl ErrorResponse {
     /// Create a new error response
-    pub fn new(request_id: RequestId, error_code: impl Into<String>, message: impl Into<String>) -> Self {
+    pub fn new(
+        request_id: RequestId,
+        error_code: impl Into<String>,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             request_id,
             error_code: error_code.into(),

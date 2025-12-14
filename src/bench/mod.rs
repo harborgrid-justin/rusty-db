@@ -46,12 +46,12 @@
 // - **Aggregations**: SUM, AVG, MIN, MAX operations
 // - **String Operations**: Pattern matching and comparisons
 
-use std::sync::Arc;
-use std::time::{Instant, Duration};
-use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::collections::{BTreeMap, HashMap};
 use std::hint::black_box;
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::thread;
+use std::time::{Duration, Instant};
 
 // ============================================================================
 // Benchmark Configuration
@@ -153,7 +153,8 @@ impl BenchMetrics {
     pub fn record_op(&self, latency_ns: u64, bytes: u64) {
         self.total_ops.fetch_add(1, Ordering::Relaxed);
         self.total_bytes.fetch_add(bytes, Ordering::Relaxed);
-        self.total_latency_ns.fetch_add(latency_ns, Ordering::Relaxed);
+        self.total_latency_ns
+            .fetch_add(latency_ns, Ordering::Relaxed);
 
         // Update min latency
         let mut min = self.min_latency_ns.load(Ordering::Relaxed);
@@ -236,14 +237,26 @@ impl BenchMetrics {
     pub fn print_summary(&self, duration: Duration) {
         let duration_secs = duration.as_secs_f64();
         println!("\n=== Benchmark Metrics ===");
-        println!("Total Operations: {}", self.total_ops.load(Ordering::Relaxed));
-        println!("Total Bytes: {} MB", self.total_bytes.load(Ordering::Relaxed) / (1024 * 1024));
+        println!(
+            "Total Operations: {}",
+            self.total_ops.load(Ordering::Relaxed)
+        );
+        println!(
+            "Total Bytes: {} MB",
+            self.total_bytes.load(Ordering::Relaxed) / (1024 * 1024)
+        );
         println!("Duration: {:.2}s", duration_secs);
         println!("Throughput: {:.2} ops/sec", self.throughput(duration_secs));
         println!("Bandwidth: {:.2} MB/s", self.bandwidth_mbps(duration_secs));
         println!("Avg Latency: {:.2} µs", self.avg_latency_ns() / 1000.0);
-        println!("Min Latency: {:.2} µs", self.min_latency_ns.load(Ordering::Relaxed) as f64 / 1000.0);
-        println!("Max Latency: {:.2} µs", self.max_latency_ns.load(Ordering::Relaxed) as f64 / 1000.0);
+        println!(
+            "Min Latency: {:.2} µs",
+            self.min_latency_ns.load(Ordering::Relaxed) as f64 / 1000.0
+        );
+        println!(
+            "Max Latency: {:.2} µs",
+            self.max_latency_ns.load(Ordering::Relaxed) as f64 / 1000.0
+        );
         println!("Cache Hit Rate: {:.2}%", self.cache_hit_rate());
         println!("Errors: {}", self.errors.load(Ordering::Relaxed));
     }
@@ -336,7 +349,8 @@ impl MockBufferPool {
         };
 
         let latency = start.elapsed().as_nanos() as u64;
-        self.metrics.record_op(latency, self.config.page_size as u64);
+        self.metrics
+            .record_op(latency, self.config.page_size as u64);
 
         result
     }
@@ -391,9 +405,7 @@ impl<T> MockLockFreeQueue<T> {
 // Sequential page scan benchmark
 pub fn bench_sequential_page_scan(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
-    let pages: Vec<Page> = (0..config.num_pages)
-        .map(|i| Page::new(i as u32))
-        .collect();
+    let pages: Vec<Page> = (0..config.num_pages).map(|i| Page::new(i as u32)).collect();
 
     let start = Instant::now();
 
@@ -422,9 +434,7 @@ pub fn bench_random_page_scan(config: &BenchConfig) -> BenchMetrics {
     use rand::Rng;
 
     let metrics = BenchMetrics::default();
-    let pages: Vec<Page> = (0..config.num_pages)
-        .map(|i| Page::new(i as u32))
-        .collect();
+    let pages: Vec<Page> = (0..config.num_pages).map(|i| Page::new(i as u32)).collect();
 
     let mut rng = rand::rng();
     let start = Instant::now();
@@ -453,9 +463,7 @@ pub fn bench_random_page_scan(config: &BenchConfig) -> BenchMetrics {
 // Page scan with predicate filtering
 pub fn bench_filtered_page_scan(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
-    let pages: Vec<Page> = (0..config.num_pages)
-        .map(|i| Page::new(i as u32))
-        .collect();
+    let pages: Vec<Page> = (0..config.num_pages).map(|i| Page::new(i as u32)).collect();
 
     let start = Instant::now();
 
@@ -555,7 +563,6 @@ pub fn bench_hash_lookup(config: &BenchConfig) -> BenchMetrics {
 
 // Range scan benchmark (B-tree)
 pub fn bench_range_scan(config: &BenchConfig) -> BenchMetrics {
-
     let metrics = BenchMetrics::default();
     let mut btree = BTreeMap::new();
 
@@ -702,7 +709,6 @@ pub fn bench_queue_single_threaded(config: &BenchConfig) -> BenchMetrics {
 
 // Multi-threaded queue operations (producer-consumer)
 pub fn bench_queue_multi_threaded(config: &BenchConfig) -> BenchMetrics {
-
     let queue = Arc::new(MockLockFreeQueue::<u64>::new());
     let num_producers = config.num_threads / 2;
     let num_consumers = config.num_threads / 2;
@@ -832,9 +838,7 @@ pub fn bench_simd_filter_range(config: &BenchConfig) -> BenchMetrics {
 // SIMD aggregation (SUM)
 pub fn bench_simd_aggregate_sum(config: &BenchConfig) -> BenchMetrics {
     let metrics = BenchMetrics::default();
-    let data: Vec<i64> = (0..config.num_pages * 1024)
-        .map(|i| i as i64)
-        .collect();
+    let data: Vec<i64> = (0..config.num_pages * 1024).map(|i| i as i64).collect();
 
     let start = Instant::now();
 
@@ -1012,7 +1016,8 @@ pub fn bench_large_allocations(config: &BenchConfig) -> BenchMetrics {
 
     let start = Instant::now();
 
-    for _ in 0..(config.iterations / 100) { // Reduce iterations for large allocs
+    for _ in 0..(config.iterations / 100) {
+        // Reduce iterations for large allocs
         let alloc_start = Instant::now();
 
         let data = vec![0u8; alloc_size];
@@ -1042,7 +1047,14 @@ pub fn run_all_benchmarks() {
     println!("  Page Size: {} KB", config.page_size / 1024);
     println!("  Buffer Pool: {} pages", config.buffer_pool_size);
     println!("  Threads: {}", config.num_threads);
-    println!("  SIMD: {}", if config.enable_simd { "enabled" } else { "disabled" });
+    println!(
+        "  SIMD: {}",
+        if config.enable_simd {
+            "enabled"
+        } else {
+            "disabled"
+        }
+    );
 
     println!("\n[1/20] Sequential Page Scan...");
     bench_sequential_page_scan(&config);
@@ -1133,13 +1145,9 @@ mod criterion_benches {
     fn criterion_index_lookup(c: &mut Criterion) {
         let config = BenchConfig::default();
 
-        c.bench_function("btree_lookup", |b| {
-            b.iter(|| bench_btree_lookup(&config))
-        });
+        c.bench_function("btree_lookup", |b| b.iter(|| bench_btree_lookup(&config)));
 
-        c.bench_function("hash_lookup", |b| {
-            b.iter(|| bench_hash_lookup(&config))
-        });
+        c.bench_function("hash_lookup", |b| b.iter(|| bench_hash_lookup(&config)));
     }
 
     fn criterion_buffer_manager(c: &mut Criterion) {
@@ -1150,14 +1158,19 @@ mod criterion_benches {
         });
     }
 
-    criterion_group!(benches, criterion_page_scan, criterion_index_lookup, criterion_buffer_manager);
+    criterion_group!(
+        benches,
+        criterion_page_scan,
+        criterion_index_lookup,
+        criterion_buffer_manager
+    );
     criterion_main!(benches);
 }
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::Ordering;
     use crate::bench::{BenchConfig, BenchMetrics, Page};
+    use std::sync::atomic::Ordering;
 
     #[test]
     fn test_bench_config_default() {

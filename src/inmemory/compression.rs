@@ -8,9 +8,9 @@
 // - Frame-of-reference compression
 // - Hybrid compression with automatic selection
 
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 
 use crate::inmemory::column_store::{ColumnDataType, ColumnStats};
 
@@ -183,7 +183,8 @@ impl DictionaryEncoder {
                     if offset + 2 > data.len() {
                         break;
                     }
-                    let idx = u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap()) as u32;
+                    let idx =
+                        u16::from_le_bytes(data[offset..offset + 2].try_into().unwrap()) as u32;
                     offset += 2;
                     idx
                 }
@@ -214,14 +215,20 @@ impl CompressionAlgorithm for DictionaryEncoder {
     fn compress(&self, data: &[u8], data_type: ColumnDataType) -> Result<Vec<u8>, String> {
         match data_type {
             ColumnDataType::Int64 | ColumnDataType::UInt64 => self.compress_int64(data),
-            _ => Err(format!("Dictionary encoding not supported for {:?}", data_type)),
+            _ => Err(format!(
+                "Dictionary encoding not supported for {:?}",
+                data_type
+            )),
         }
     }
 
     fn decompress(&self, data: &[u8], data_type: ColumnDataType) -> Result<Vec<u8>, String> {
         match data_type {
             ColumnDataType::Int64 | ColumnDataType::UInt64 => self.decompress_int64(data),
-            _ => Err(format!("Dictionary encoding not supported for {:?}", data_type)),
+            _ => Err(format!(
+                "Dictionary encoding not supported for {:?}",
+                data_type
+            )),
         }
     }
 
@@ -312,7 +319,8 @@ impl RunLengthEncoder {
                 let value = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
                 offset += 8;
 
-                let run_length = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+                let run_length =
+                    u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
                 offset += 4;
 
                 for _ in 0..run_length {
@@ -630,7 +638,8 @@ impl FrameOfReferenceEncoder {
             }
 
             // Read frame header
-            let frame_size = u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
+            let frame_size =
+                u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap()) as usize;
             offset += 4;
 
             let reference = i64::from_le_bytes(data[offset..offset + 8].try_into().unwrap());
@@ -696,11 +705,26 @@ impl HybridCompressor {
         let mut best_ratio = 1.0;
 
         let algorithms: Vec<(CompressionType, &dyn CompressionAlgorithm)> = vec![
-            (CompressionType::Dictionary, &*self.dictionary as &dyn CompressionAlgorithm),
-            (CompressionType::RunLength, &*self.rle as &dyn CompressionAlgorithm),
-            (CompressionType::BitPacking, &*self.bitpacker as &dyn CompressionAlgorithm),
-            (CompressionType::Delta, &*self.delta as &dyn CompressionAlgorithm),
-            (CompressionType::FrameOfReference, &*self.for_encoder as &dyn CompressionAlgorithm),
+            (
+                CompressionType::Dictionary,
+                &*self.dictionary as &dyn CompressionAlgorithm,
+            ),
+            (
+                CompressionType::RunLength,
+                &*self.rle as &dyn CompressionAlgorithm,
+            ),
+            (
+                CompressionType::BitPacking,
+                &*self.bitpacker as &dyn CompressionAlgorithm,
+            ),
+            (
+                CompressionType::Delta,
+                &*self.delta as &dyn CompressionAlgorithm,
+            ),
+            (
+                CompressionType::FrameOfReference,
+                &*self.for_encoder as &dyn CompressionAlgorithm,
+            ),
         ];
 
         for (comp_type, algorithm) in algorithms {
@@ -778,7 +802,7 @@ impl Default for HybridCompressor {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Instant;
+    use std::time::Instant;
 
     #[test]
     fn test_dictionary_encoding() {
@@ -795,7 +819,9 @@ use std::time::Instant;
         let compressed = encoder.compress(&data, ColumnDataType::Int64).unwrap();
         assert!(compressed.len() < data.len());
 
-        let decompressed = encoder.decompress(&compressed, ColumnDataType::Int64).unwrap();
+        let decompressed = encoder
+            .decompress(&compressed, ColumnDataType::Int64)
+            .unwrap();
         assert_eq!(data, decompressed);
     }
 
@@ -811,7 +837,9 @@ use std::time::Instant;
         let compressed = encoder.compress(&data, ColumnDataType::Int64).unwrap();
         assert!(compressed.len() < data.len());
 
-        let decompressed = encoder.decompress(&compressed, ColumnDataType::Int64).unwrap();
+        let decompressed = encoder
+            .decompress(&compressed, ColumnDataType::Int64)
+            .unwrap();
         assert_eq!(data, decompressed);
     }
 
@@ -825,7 +853,9 @@ use std::time::Instant;
         }
 
         let compressed = packer.compress(&data, ColumnDataType::Int64).unwrap();
-        let decompressed = packer.decompress(&compressed, ColumnDataType::Int64).unwrap();
+        let decompressed = packer
+            .decompress(&compressed, ColumnDataType::Int64)
+            .unwrap();
         assert_eq!(data, decompressed);
     }
 
@@ -839,7 +869,9 @@ use std::time::Instant;
         }
 
         let compressed = encoder.compress(&data, ColumnDataType::Int64).unwrap();
-        let decompressed = encoder.decompress(&compressed, ColumnDataType::Int64).unwrap();
+        let decompressed = encoder
+            .decompress(&compressed, ColumnDataType::Int64)
+            .unwrap();
         assert_eq!(data, decompressed);
     }
 
@@ -853,7 +885,9 @@ use std::time::Instant;
         }
 
         let compressed = encoder.compress(&data, ColumnDataType::Int64).unwrap();
-        let decompressed = encoder.decompress(&compressed, ColumnDataType::Int64).unwrap();
+        let decompressed = encoder
+            .decompress(&compressed, ColumnDataType::Int64)
+            .unwrap();
         assert_eq!(data, decompressed);
     }
 }

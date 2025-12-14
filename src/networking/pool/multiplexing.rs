@@ -6,12 +6,12 @@
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, AtomicU64, AtomicBool, Ordering};
-use tokio::sync::{Mutex, mpsc, RwLock};
+use tokio::sync::{mpsc, Mutex, RwLock};
 // AsyncRead and AsyncWrite removed - unused in current implementation
-use std::time::Instant;
 use bytes::Bytes;
+use std::time::Instant;
 
 /// Stream identifier (unique within a connection)
 pub type StreamId = u32;
@@ -90,13 +90,10 @@ impl MultiplexedConnection {
     }
 
     /// Open a new stream with specified priority
-    pub async fn open_stream_with_priority(
-        &self,
-        priority: StreamPriority,
-    ) -> Result<Arc<Stream>> {
+    pub async fn open_stream_with_priority(&self, priority: StreamPriority) -> Result<Arc<Stream>> {
         if self.shutdown.load(Ordering::Relaxed) {
             return Err(DbError::InvalidState(
-                "Connection is shutting down".to_string()
+                "Connection is shutting down".to_string(),
             ));
         }
 
@@ -249,9 +246,10 @@ impl Stream {
     pub async fn send(&self, data: Bytes) -> Result<()> {
         let state = self.state.read().await;
         if *state != StreamState::Open {
-            return Err(DbError::InvalidState(
-                format!("Stream {} is not open", self.stream_id)
-            ));
+            return Err(DbError::InvalidState(format!(
+                "Stream {} is not open",
+                self.stream_id
+            )));
         }
         drop(state);
 
@@ -260,9 +258,9 @@ impl Stream {
 
         // Send data
         let len = data.len() as u64;
-        self.tx.send(data).map_err(|_| {
-            DbError::Network("Stream send channel closed".to_string())
-        })?;
+        self.tx
+            .send(data)
+            .map_err(|_| DbError::Network("Stream send channel closed".to_string()))?;
 
         self.bytes_sent.fetch_add(len, Ordering::Relaxed);
 
@@ -275,7 +273,8 @@ impl Stream {
         let data = rx.recv().await;
 
         if let Some(ref bytes) = data {
-            self.bytes_received.fetch_add(bytes.len() as u64, Ordering::Relaxed);
+            self.bytes_received
+                .fetch_add(bytes.len() as u64, Ordering::Relaxed);
         }
 
         Ok(data)
@@ -350,10 +349,10 @@ impl FlowControlManager {
             total_window,
             available: Arc::new(Mutex::new(total_window)),
             priority_quotas: [
-                total_window / 10,      // Low: 10%
-                total_window * 3 / 10,  // Normal: 30%
-                total_window * 4 / 10,  // High: 40%
-                total_window / 5,       // Critical: 20%
+                total_window / 10,     // Low: 10%
+                total_window * 3 / 10, // Normal: 30%
+                total_window * 4 / 10, // High: 40%
+                total_window / 5,      // Critical: 20%
             ],
             waiters: Arc::new(Mutex::new(Vec::new())),
         }
@@ -470,7 +469,10 @@ mod tests {
     async fn test_stream_priority() {
         let conn = MultiplexedConnection::new(1, 100);
 
-        let stream = conn.open_stream_with_priority(StreamPriority::High).await.unwrap();
+        let stream = conn
+            .open_stream_with_priority(StreamPriority::High)
+            .await
+            .unwrap();
         assert_eq!(stream.priority(), StreamPriority::High);
     }
 
@@ -492,7 +494,10 @@ mod tests {
         let flow_control = FlowControlManager::new(10); // Small window for testing
 
         // Should succeed - enough space
-        assert!(flow_control.acquire(1024, StreamPriority::Normal).await.is_ok());
+        assert!(flow_control
+            .acquire(1024, StreamPriority::Normal)
+            .await
+            .is_ok());
 
         // Release the window
         flow_control.release(1024).await;

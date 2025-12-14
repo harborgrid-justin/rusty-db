@@ -320,11 +320,7 @@ impl QueueManager {
     /// Get the size of a peer's queue
     pub fn queue_size(&self, node_id: &NodeId) -> usize {
         let inner = self.inner.read();
-        inner
-            .peer_queues
-            .get(node_id)
-            .map(|q| q.len())
-            .unwrap_or(0)
+        inner.peer_queues.get(node_id).map(|q| q.len()).unwrap_or(0)
     }
 
     /// Check if a peer's queue is full

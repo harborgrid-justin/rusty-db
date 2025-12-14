@@ -570,7 +570,12 @@ pub fn filter_i32_gt_scalar(data: &[i32], value: i32, selection: &mut SelectionV
 }
 
 /// Scalar fallback for i32 BETWEEN filter
-pub fn filter_i32_between_scalar(data: &[i32], low: i32, high: i32, selection: &mut SelectionVector) {
+pub fn filter_i32_between_scalar(
+    data: &[i32],
+    low: i32,
+    high: i32,
+    selection: &mut SelectionVector,
+) {
     for (i, &val) in data.iter().enumerate() {
         if val >= low && val <= high {
             selection.add(i);
@@ -610,12 +615,18 @@ impl SimdFilter {
         selection: &mut SelectionVector,
     ) -> Result<()> {
         if values.is_empty() {
-            return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
+            return Err(DbError::InvalidArgument(
+                "Filter requires at least one value".to_string(),
+            ));
         }
 
         let value = match &values[0] {
             Value::Integer(v) => *v as i32,
-            _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
+            _ => {
+                return Err(DbError::InvalidArgument(
+                    "Expected integer value".to_string(),
+                ))
+            }
         };
 
         if self.context.has_avx2() {
@@ -649,11 +660,17 @@ impl SimdFilter {
                 }
                 PredicateType::Between => {
                     if values.len() < 2 {
-                        return Err(DbError::InvalidArgument("BETWEEN requires two values".to_string()));
+                        return Err(DbError::InvalidArgument(
+                            "BETWEEN requires two values".to_string(),
+                        ));
                     }
                     let high = match &values[1] {
                         Value::Integer(v) => *v as i32,
-                        _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
+                        _ => {
+                            return Err(DbError::InvalidArgument(
+                                "Expected integer value".to_string(),
+                            ))
+                        }
                     };
                     filter_i32_between_avx2(data, value, high, &mut result);
                 }
@@ -701,18 +718,25 @@ impl SimdFilter {
             }
             PredicateType::Between => {
                 if values.len() < 2 {
-                    return Err(DbError::InvalidArgument("BETWEEN requires two values".to_string()));
+                    return Err(DbError::InvalidArgument(
+                        "BETWEEN requires two values".to_string(),
+                    ));
                 }
                 let high = match &values[1] {
                     Value::Integer(v) => *v as i32,
-                    _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
+                    _ => {
+                        return Err(DbError::InvalidArgument(
+                            "Expected integer value".to_string(),
+                        ))
+                    }
                 };
                 filter_i32_between_scalar(data, value, high, selection);
             }
             _ => {
-                return Err(DbError::InvalidArgument(
-                    format!("Unsupported predicate: {:?}", predicate)
-                ));
+                return Err(DbError::InvalidArgument(format!(
+                    "Unsupported predicate: {:?}",
+                    predicate
+                )));
             }
         }
 
@@ -721,7 +745,12 @@ impl SimdFilter {
     }
 
     /// Convert bitmask result to selection vector
-    fn bitmask_to_selection(&mut self, bitmask: &[u8], datalen: usize, selection: &mut SelectionVector) {
+    fn bitmask_to_selection(
+        &mut self,
+        bitmask: &[u8],
+        datalen: usize,
+        selection: &mut SelectionVector,
+    ) {
         for (chunk_idx, &mask) in bitmask.iter().enumerate() {
             if mask == 0 {
                 continue;
@@ -765,7 +794,12 @@ mod tests {
         let mut filter = SimdFilter::new();
 
         filter
-            .filter_i32(&data, PredicateType::Equal, &[Value::Integer(5)], &mut selection)
+            .filter_i32(
+                &data,
+                PredicateType::Equal,
+                &[Value::Integer(5)],
+                &mut selection,
+            )
             .unwrap();
 
         assert_eq!(selection.indices(), &[4]);
@@ -778,7 +812,12 @@ mod tests {
         let mut filter = SimdFilter::new();
 
         filter
-            .filter_i32(&data, PredicateType::LessThan, &[Value::Integer(5)], &mut selection)
+            .filter_i32(
+                &data,
+                PredicateType::LessThan,
+                &[Value::Integer(5)],
+                &mut selection,
+            )
             .unwrap();
 
         assert_eq!(selection.indices(), &[0, 1, 2, 3]);

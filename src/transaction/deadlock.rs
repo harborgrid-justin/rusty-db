@@ -21,12 +21,12 @@
 // }
 // ```
 
-use std::fmt;
+use std::collections::HashMap;
 use std::collections::HashSet;
-use std::time::SystemTime;
-use std::collections::{HashMap};
+use std::fmt;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 use parking_lot::{Mutex, RwLock};
 
@@ -144,10 +144,7 @@ impl DeadlockDetector {
             return; // Can't wait for yourself
         }
         let mut graph = self.wait_for_graph.write();
-        graph
-            .entry(waiting_txn)
-            .or_default()
-            .insert(holding_txn);
+        graph.entry(waiting_txn).or_default().insert(holding_txn);
     }
 
     /// Removes all wait edges for a transaction.
@@ -350,11 +347,7 @@ impl DeadlockDetector {
 
     /// Returns the total number of wait edges.
     pub fn edge_count(&self) -> usize {
-        self.wait_for_graph
-            .read()
-            .values()
-            .map(|s| s.len())
-            .sum()
+        self.wait_for_graph.read().values().map(|s| s.len()).sum()
     }
 
     /// Clears the wait-for graph.
@@ -396,7 +389,7 @@ impl fmt::Debug for DeadlockDetector {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_simple_cycle_detection() {
@@ -469,7 +462,7 @@ use std::time::UNIX_EPOCH;
         let cycle = vec![1, 2, 3];
         let mut work = HashMap::new();
         work.insert(1, 100);
-        work.insert(2, 10);  // Least work
+        work.insert(2, 10); // Least work
         work.insert(3, 50);
 
         let victim = detector.select_victim_by_work(&cycle, &work);

@@ -23,29 +23,29 @@
 // monitor.start().await?;
 // ```
 
+use crate::common::{Component, HealthStatus, NodeId};
 use crate::error::{DbError, Result};
-use crate::common::{NodeId, Component, HealthStatus};
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
 use std::collections::HashMap;
-use tokio::sync::RwLock;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tokio::sync::RwLock;
 
-pub mod heartbeat;
-pub mod detector;
-pub mod checker;
 pub mod aggregator;
-pub mod reporter;
-pub mod recovery;
+pub mod checker;
+pub mod detector;
+pub mod heartbeat;
 pub mod liveness;
+pub mod recovery;
+pub mod reporter;
 
-pub use heartbeat::HeartbeatManager;
-pub use detector::{PhiAccrualDetector, FailureDetector};
-pub use checker::HealthChecker;
 pub use aggregator::HealthAggregator;
-pub use reporter::{HealthReporter, HealthReport};
-pub use recovery::RecoveryManager;
+pub use checker::HealthChecker;
+pub use detector::{FailureDetector, PhiAccrualDetector};
+pub use heartbeat::HeartbeatManager;
 pub use liveness::{LivenessProbe, ReadinessProbe, StartupProbe};
+pub use recovery::RecoveryManager;
+pub use reporter::{HealthReport, HealthReporter};
 
 /// Health monitoring configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,22 +101,47 @@ pub enum HealthEvent {
     NodeHealthy { node_id: NodeId, timestamp: u64 },
 
     /// Node became unhealthy
-    NodeUnhealthy { node_id: NodeId, reason: String, timestamp: u64 },
+    NodeUnhealthy {
+        node_id: NodeId,
+        reason: String,
+        timestamp: u64,
+    },
 
     /// Node suspected of failure
-    NodeSuspected { node_id: NodeId, phi_value: f64, timestamp: u64 },
+    NodeSuspected {
+        node_id: NodeId,
+        phi_value: f64,
+        timestamp: u64,
+    },
 
     /// Node recovered
-    NodeRecovered { node_id: NodeId, attempts: u32, timestamp: u64 },
+    NodeRecovered {
+        node_id: NodeId,
+        attempts: u32,
+        timestamp: u64,
+    },
 
     /// Recovery failed
-    RecoveryFailed { node_id: NodeId, reason: String, timestamp: u64 },
+    RecoveryFailed {
+        node_id: NodeId,
+        reason: String,
+        timestamp: u64,
+    },
 
     /// Heartbeat missed
-    HeartbeatMissed { node_id: NodeId, consecutive_misses: u32, timestamp: u64 },
+    HeartbeatMissed {
+        node_id: NodeId,
+        consecutive_misses: u32,
+        timestamp: u64,
+    },
 
     /// Health check failed
-    HealthCheckFailed { node_id: NodeId, check_type: String, reason: String, timestamp: u64 },
+    HealthCheckFailed {
+        node_id: NodeId,
+        check_type: String,
+        reason: String,
+        timestamp: u64,
+    },
 }
 
 /// Health event listener trait
@@ -143,19 +168,22 @@ pub struct HealthMonitor {
 impl HealthMonitor {
     /// Create a new health monitor
     pub fn new(config: HealthConfig) -> Self {
-        let heartbeat_manager = Arc::new(RwLock::new(
-            HeartbeatManager::new(config.heartbeat_interval, config.heartbeat_timeout)
-        ));
+        let heartbeat_manager = Arc::new(RwLock::new(HeartbeatManager::new(
+            config.heartbeat_interval,
+            config.heartbeat_timeout,
+        )));
 
-        let failure_detector = Arc::new(RwLock::new(
-            PhiAccrualDetector::new(config.phi_threshold, 100)
-        ));
+        let failure_detector = Arc::new(RwLock::new(PhiAccrualDetector::new(
+            config.phi_threshold,
+            100,
+        )));
 
         let aggregator = Arc::new(RwLock::new(HealthAggregator::new()));
         let reporter = Arc::new(RwLock::new(HealthReporter::new()));
-        let recovery_manager = Arc::new(RwLock::new(
-            RecoveryManager::new(config.recovery_attempts, config.quarantine_duration)
-        ));
+        let recovery_manager = Arc::new(RwLock::new(RecoveryManager::new(
+            config.recovery_attempts,
+            config.quarantine_duration,
+        )));
 
         Self {
             config,
@@ -176,7 +204,9 @@ impl HealthMonitor {
     pub async fn start(&mut self) -> Result<()> {
         let mut running = self.running.write().await;
         if *running {
-            return Err(DbError::InvalidState("Health monitor already running".to_string()));
+            return Err(DbError::InvalidState(
+                "Health monitor already running".to_string(),
+            ));
         }
         *running = true;
         drop(running);
@@ -206,7 +236,7 @@ impl HealthMonitor {
     pub async fn add_health_check(
         &self,
         node_id: NodeId,
-        checker: Box<dyn HealthChecker + Send + Sync>
+        checker: Box<dyn HealthChecker + Send + Sync>,
     ) -> Result<()> {
         let mut checks = self.health_checks.write().await;
         checks.entry(node_id).or_insert_with(Vec::new).push(checker);
@@ -216,7 +246,7 @@ impl HealthMonitor {
     /// Add an event listener
     pub async fn add_event_listener(
         &self,
-        listener: Box<dyn HealthEventListener + Send + Sync>
+        listener: Box<dyn HealthEventListener + Send + Sync>,
     ) -> Result<()> {
         let mut listeners = self.event_listeners.write().await;
         listeners.push(listener);
@@ -338,9 +368,7 @@ impl Component for HealthMonitor {
         let handle = tokio::runtime::Handle::try_current()
             .map_err(|e| DbError::Runtime(format!("No tokio runtime: {}", e)))?;
 
-        handle.block_on(async {
-            self.stop().await
-        })
+        handle.block_on(async { self.stop().await })
     }
 
     fn health_check(&self) -> HealthStatus {
@@ -350,9 +378,7 @@ impl Component for HealthMonitor {
             Err(_) => return HealthStatus::Unknown,
         };
 
-        let running = handle.block_on(async {
-            *self.running.read().await
-        });
+        let running = handle.block_on(async { *self.running.read().await });
 
         if running {
             HealthStatus::Healthy

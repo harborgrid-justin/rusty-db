@@ -4,13 +4,13 @@
 
 use axum::{
     extract::{Path, Query, State},
-    response::{Json as AxumJson},
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use parking_lot::RwLock;
 
 use super::super::types::*;
 
@@ -66,7 +66,7 @@ impl PoolStatsInternal {
     fn new() -> Self {
         Self {
             active_connections: 0,
-            idle_connections: 10,  // Start with min_connections
+            idle_connections: 10, // Start with min_connections
             waiting_requests: 0,
             total_acquired: 0,
             total_created: 10,
@@ -91,7 +91,8 @@ pub async fn get_pool(
 ) -> ApiResult<AxumJson<PoolConfig>> {
     let pools = POOL_CONFIGS.read();
 
-    pools.get(&id)
+    pools
+        .get(&id)
         .cloned()
         .map(AxumJson)
         .ok_or_else(|| ApiError::new("NOT_FOUND", format!("Pool '{}' not found", id)))
@@ -114,24 +115,36 @@ pub async fn update_pool(
 ) -> ApiResult<StatusCode> {
     // Validate configuration
     if config.min_connections > config.max_connections {
-        return Err(ApiError::new("INVALID_INPUT", "min_connections cannot exceed max_connections"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "min_connections cannot exceed max_connections",
+        ));
     }
     if config.max_connections == 0 {
-        return Err(ApiError::new("INVALID_INPUT", "max_connections must be greater than 0"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "max_connections must be greater than 0",
+        ));
     }
     if config.connection_timeout_secs == 0 {
-        return Err(ApiError::new("INVALID_INPUT", "connection_timeout_secs must be greater than 0"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "connection_timeout_secs must be greater than 0",
+        ));
     }
 
     let mut pools = POOL_CONFIGS.write();
 
     if pools.contains_key(&id) {
         let mut updated_config = config;
-        updated_config.pool_id = id.clone();  // Ensure pool_id matches path
+        updated_config.pool_id = id.clone(); // Ensure pool_id matches path
         pools.insert(id, updated_config);
         Ok(StatusCode::OK)
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Pool '{}' not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Pool '{}' not found", id),
+        ))
     }
 }
 
@@ -177,7 +190,10 @@ pub async fn drain_pool(
 ) -> ApiResult<StatusCode> {
     // Check if pool exists
     if !POOL_CONFIGS.read().contains_key(&id) {
-        return Err(ApiError::new("NOT_FOUND", format!("Pool '{}' not found", id)));
+        return Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Pool '{}' not found", id),
+        ));
     }
 
     // Mark pool for draining - close idle connections
@@ -186,7 +202,11 @@ pub async fn drain_pool(
         let drained = internal.idle_connections;
         internal.total_destroyed += drained as u64;
         internal.idle_connections = 0;
-        log::info!("Pool '{}' draining started, {} idle connections marked for closure", id, drained);
+        log::info!(
+            "Pool '{}' draining started, {} idle connections marked for closure",
+            id,
+            drained
+        );
     }
 
     Ok(StatusCode::ACCEPTED)
@@ -207,21 +227,27 @@ pub async fn get_connections(
 ) -> ApiResult<AxumJson<PaginatedResponse<ConnectionInfo>>> {
     // Build connections list from active sessions
     let sessions = state.active_sessions.read().await;
-    let connections: Vec<ConnectionInfo> = sessions.values().map(|session| {
-        ConnectionInfo {
-            connection_id: session.session_id.0,
-            pool_id: "default".to_string(),
-            session_id: session.session_id.clone(),
-            client_address: session.client_address.clone().unwrap_or_else(|| "unknown".to_string()),
-            database: "rustydb".to_string(),
-            username: session.username.clone(),
-            state: session.state.clone(),
-            created_at: session.created_at,
-            last_activity: session.last_activity,
-            queries_executed: 0,  // Would need query tracking per session
-            idle_time_secs: 0,
-        }
-    }).collect();
+    let connections: Vec<ConnectionInfo> = sessions
+        .values()
+        .map(|session| {
+            ConnectionInfo {
+                connection_id: session.session_id.0,
+                pool_id: "default".to_string(),
+                session_id: session.session_id.clone(),
+                client_address: session
+                    .client_address
+                    .clone()
+                    .unwrap_or_else(|| "unknown".to_string()),
+                database: "rustydb".to_string(),
+                username: session.username.clone(),
+                state: session.state.clone(),
+                created_at: session.created_at,
+                last_activity: session.last_activity,
+                queries_executed: 0, // Would need query tracking per session
+                idle_time_secs: 0,
+            }
+        })
+        .collect();
 
     let total = connections.len();
     let page = params.page.max(1);
@@ -252,7 +278,10 @@ pub async fn get_connection(
             connection_id: session.session_id.0,
             pool_id: "default".to_string(),
             session_id: session.session_id.clone(),
-            client_address: session.client_address.clone().unwrap_or_else(|| "unknown".to_string()),
+            client_address: session
+                .client_address
+                .clone()
+                .unwrap_or_else(|| "unknown".to_string()),
             database: "rustydb".to_string(),
             username: session.username.clone(),
             state: session.state.clone(),
@@ -263,7 +292,10 @@ pub async fn get_connection(
         };
         Ok(AxumJson(conn))
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Connection {} not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Connection {} not found", id),
+        ))
     }
 }
 
@@ -295,7 +327,10 @@ pub async fn kill_connection(
         log::info!("Connection {} terminated", id);
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Connection {} not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Connection {} not found", id),
+        ))
     }
 }
 
@@ -315,12 +350,8 @@ pub async fn get_sessions(
     let sessions = state.active_sessions.read().await;
     let session_list: Vec<SessionInfo> = sessions.values().cloned().collect();
 
-    let response = PaginatedResponse::new(
-        session_list,
-        params.page,
-        params.page_size,
-        sessions.len(),
-    );
+    let response =
+        PaginatedResponse::new(session_list, params.page, params.page_size, sessions.len());
 
     Ok(AxumJson(response))
 }
@@ -332,7 +363,8 @@ pub async fn get_session(
 ) -> ApiResult<AxumJson<SessionInfo>> {
     let sessions = state.active_sessions.read().await;
 
-    sessions.get(&SessionId(id))
+    sessions
+        .get(&SessionId(id))
         .cloned()
         .map(AxumJson)
         .ok_or_else(|| ApiError::new("NOT_FOUND", "Session not found"))
@@ -349,7 +381,10 @@ pub async fn terminate_session(
         log::info!("Session {} terminated", id);
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Session {} not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Session {} not found", id),
+        ))
     }
 }
 

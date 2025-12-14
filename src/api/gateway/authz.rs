@@ -2,10 +2,10 @@
 //
 // Part of the API Gateway and Security system for RustyDB
 
+use parking_lot::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::SystemTime;
-use parking_lot::RwLock;
 
 use crate::api::Session;
 use crate::error::DbError;
@@ -146,9 +146,16 @@ impl AuthorizationEngine {
     }
 
     // Authorize session for permissions
-    pub fn authorize(&self, session: &Session, required_permissions: &[String]) -> Result<bool, DbError> {
+    pub fn authorize(
+        &self,
+        session: &Session,
+        required_permissions: &[String],
+    ) -> Result<bool, DbError> {
         // Check RBAC first
-        if self.rbac.has_permissions(&session.user_id, required_permissions) {
+        if self
+            .rbac
+            .has_permissions(&session.user_id, required_permissions)
+        {
             return Ok(true);
         }
 
@@ -168,8 +175,14 @@ impl AuthorizationEngine {
     }
 
     // Evaluate policy
-    pub fn evaluate_policy(&self, subject: &str, resource: &str, action: &str) -> Result<bool, DbError> {
-        self.policy_engine.evaluate(subject, resource, action, &self.abac)
+    pub fn evaluate_policy(
+        &self,
+        subject: &str,
+        resource: &str,
+        action: &str,
+    ) -> Result<bool, DbError> {
+        self.policy_engine
+            .evaluate(subject, resource, action, &self.abac)
     }
 }
 
@@ -190,7 +203,10 @@ impl RbacManager {
     // Assign role to user
     pub fn assign_role(&self, user_id: String, role_id: String) {
         let mut user_roles = self.user_roles.write();
-        user_roles.entry(user_id).or_insert_with(Vec::new).push(role_id);
+        user_roles
+            .entry(user_id)
+            .or_insert_with(Vec::new)
+            .push(role_id);
     }
 
     // Remove role from user
@@ -210,9 +226,11 @@ impl RbacManager {
         let user_roles = self.user_roles.read();
         let roles = self.roles.read();
 
-        user_roles.get(user_id)
+        user_roles
+            .get(user_id)
             .map(|role_ids| {
-                role_ids.iter()
+                role_ids
+                    .iter()
                     .filter_map(|id| roles.get(id).cloned())
                     .collect()
             })
@@ -259,7 +277,13 @@ impl AbacEvaluator {
     }
 
     // Evaluate ABAC policy
-    pub fn evaluate(&self, subject: &str, resource: &str, _action: &str, conditions: &[PolicyCondition]) -> bool {
+    pub fn evaluate(
+        &self,
+        subject: &str,
+        resource: &str,
+        _action: &str,
+        conditions: &[PolicyCondition],
+    ) -> bool {
         // Collect attributes
         let mut subject_attrs = HashMap::new();
         let mut resource_attrs = HashMap::new();
@@ -296,7 +320,12 @@ impl AbacEvaluator {
     }
 
     // Evaluate single condition
-    fn evaluate_condition(&self, actual: &AttributeValue, operator: &PolicyOperator, expected: &AttributeValue) -> bool {
+    fn evaluate_condition(
+        &self,
+        actual: &AttributeValue,
+        operator: &PolicyOperator,
+        expected: &AttributeValue,
+    ) -> bool {
         match operator {
             PolicyOperator::Equals => actual == expected,
             PolicyOperator::NotEquals => actual != expected,
@@ -330,7 +359,9 @@ impl AbacEvaluator {
                 _ => false,
             },
             PolicyOperator::StartsWith => match (actual, expected) {
-                (AttributeValue::String(s), AttributeValue::String(prefix)) => s.starts_with(prefix),
+                (AttributeValue::String(s), AttributeValue::String(prefix)) => {
+                    s.starts_with(prefix)
+                }
                 _ => false,
             },
             PolicyOperator::EndsWith => match (actual, expected) {
@@ -361,7 +392,13 @@ impl PolicyEngine {
     }
 
     // Evaluate policies
-    pub fn evaluate(&self, subject: &str, resource: &str, action: &str, abac: &AbacEvaluator) -> Result<bool, DbError> {
+    pub fn evaluate(
+        &self,
+        subject: &str,
+        resource: &str,
+        action: &str,
+        abac: &AbacEvaluator,
+    ) -> Result<bool, DbError> {
         let policies = self.policies.read();
 
         let mut allow = false;

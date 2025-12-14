@@ -4,16 +4,19 @@
 // authorization, audit logs, encryption, rate limiting, and threat detection.
 
 use axum::{
-    extract::{State, ws::{WebSocket, WebSocketUpgrade}},
+    extract::{
+        ws::{WebSocket, WebSocketUpgrade},
+        State,
+    },
     response::Response,
 };
+use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use serde_json::json;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde_json::json;
-use futures::{StreamExt, SinkExt};
 use tokio::time::{interval, Duration};
+use utoipa::ToSchema;
 
 use super::super::types::ApiState;
 
@@ -281,10 +284,7 @@ pub async fn ws_authentication_events(
     ),
     tag = "websocket-security"
 )]
-pub async fn ws_audit_stream(
-    ws: WebSocketUpgrade,
-    State(state): State<Arc<ApiState>>,
-) -> Response {
+pub async fn ws_audit_stream(ws: WebSocketUpgrade, State(state): State<Arc<ApiState>>) -> Response {
     ws.on_upgrade(|socket| handle_audit_stream_websocket(socket, state))
 }
 
@@ -368,7 +368,11 @@ async fn handle_security_events_websocket(mut socket: WebSocket, _state: Arc<Api
     });
 
     if let Ok(welcome_json) = serde_json::to_string(&welcome) {
-        if socket.send(Message::Text(welcome_json.into())).await.is_err() {
+        if socket
+            .send(Message::Text(welcome_json.into()))
+            .await
+            .is_err()
+        {
             return;
         }
     }

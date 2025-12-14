@@ -3,11 +3,11 @@
 // Hot/Warm/Cold tier management.
 
 use super::common::*;
-use serde::{Serialize, Deserialize};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, AtomicU64};
-use std::collections::{HashMap, VecDeque};
 use parking_lot::{Mutex, RwLock as PRwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, VecDeque};
+use std::sync::atomic::{AtomicBool, AtomicU64};
+use std::sync::Arc;
 
 // Note: BufferFrame, NumaNode, and BufferPoolConfig are now in common.rs
 
@@ -120,7 +120,9 @@ impl MultiTierBufferPool {
         }
 
         // No free frames, need to evict
-        self.stats.allocation_failures.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .allocation_failures
+            .fetch_add(1, Ordering::Relaxed);
         None
     }
 
@@ -135,12 +137,16 @@ impl MultiTierBufferPool {
                 match current_tier {
                     BufferTier::Cold => {
                         frame.set_tier(BufferTier::Warm);
-                        self.stats.promotions_cold_to_warm.fetch_add(1, Ordering::Relaxed);
+                        self.stats
+                            .promotions_cold_to_warm
+                            .fetch_add(1, Ordering::Relaxed);
                         return true;
                     }
                     BufferTier::Warm => {
                         frame.set_tier(BufferTier::Hot);
-                        self.stats.promotions_warm_to_hot.fetch_add(1, Ordering::Relaxed);
+                        self.stats
+                            .promotions_warm_to_hot
+                            .fetch_add(1, Ordering::Relaxed);
                         return true;
                     }
                     BufferTier::Hot => {
@@ -163,12 +169,16 @@ impl MultiTierBufferPool {
                 match current_tier {
                     BufferTier::Hot => {
                         frame.set_tier(BufferTier::Warm);
-                        self.stats.demotions_hot_to_warm.fetch_add(1, Ordering::Relaxed);
+                        self.stats
+                            .demotions_hot_to_warm
+                            .fetch_add(1, Ordering::Relaxed);
                         return true;
                     }
                     BufferTier::Warm => {
                         frame.set_tier(BufferTier::Cold);
-                        self.stats.demotions_warm_to_cold.fetch_add(1, Ordering::Relaxed);
+                        self.stats
+                            .demotions_warm_to_cold
+                            .fetch_add(1, Ordering::Relaxed);
                         return true;
                     }
                     BufferTier::Cold => {
@@ -249,7 +259,9 @@ impl MultiTierBufferPool {
         }
 
         // Create new tablespace pool
-        let pool_size = self.config.tablespace_pools
+        let pool_size = self
+            .config
+            .tablespace_pools
             .get(&tablespace_id)
             .copied()
             .unwrap_or(64 * 1024 * 1024); // Default 64MB

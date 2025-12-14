@@ -8,10 +8,10 @@
 // - Materialized view rewrite
 // - Common subexpression elimination
 
-use std::collections::HashSet;
 use crate::common::TableId;
 use crate::error::Result;
-use crate::optimizer_pro::{Expression, BinaryOperator, UnaryOperator, Query};
+use crate::optimizer_pro::{BinaryOperator, Expression, Query, UnaryOperator};
+use std::collections::HashSet;
 use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 
@@ -349,9 +349,7 @@ impl PredicateAnalyzer {
             Expression::BinaryOp { op, left, right } => {
                 self.analyze_binary_op_selectivity(*op, left, right)
             }
-            Expression::UnaryOp { op, expr } => {
-                self.analyze_unary_op_selectivity(*op, expr)
-            }
+            Expression::UnaryOp { op, expr } => self.analyze_unary_op_selectivity(*op, expr),
             Expression::In { expr: _, list } => {
                 // IN clause selectivity depends on list size
                 (list.len() as f64) / 100.0
@@ -404,7 +402,11 @@ impl PredicateAnalyzer {
         let mut predicates = Vec::new();
 
         match predicate {
-            Expression::BinaryOp { op: BinaryOperator::And, left, right } => {
+            Expression::BinaryOp {
+                op: BinaryOperator::And,
+                left,
+                right,
+            } => {
                 predicates.extend(self.extract_pushable_predicates(left));
                 predicates.extend(self.extract_pushable_predicates(right));
             }
@@ -494,12 +496,7 @@ impl JoinGraph {
     }
 
     #[allow(dead_code)]
-    fn add_join(
-        &mut self,
-        left: TableId,
-        right: TableId,
-        condition: Expression,
-    ) {
+    fn add_join(&mut self, left: TableId, right: TableId, condition: Expression) {
         self.edges
             .entry((left, right))
             .or_insert_with(Vec::new)
@@ -664,7 +661,11 @@ impl ExpressionUtils {
     // Normalize expression
     pub fn normalize(expr: &Expression) -> Expression {
         match expr {
-            Expression::BinaryOp { op: BinaryOperator::And, left, right } => {
+            Expression::BinaryOp {
+                op: BinaryOperator::And,
+                left,
+                right,
+            } => {
                 // Normalize AND expressions (commutative)
                 let normalized_left = Self::normalize(left);
                 let normalized_right = Self::normalize(right);
@@ -676,19 +677,15 @@ impl ExpressionUtils {
                     right: Box::new(normalized_right),
                 }
             }
-            Expression::BinaryOp { op, left, right } => {
-                Expression::BinaryOp {
-                    op: *op,
-                    left: Box::new(Self::normalize(left)),
-                    right: Box::new(Self::normalize(right)),
-                }
-            }
-            Expression::UnaryOp { op, expr } => {
-                Expression::UnaryOp {
-                    op: *op,
-                    expr: Box::new(Self::normalize(expr)),
-                }
-            }
+            Expression::BinaryOp { op, left, right } => Expression::BinaryOp {
+                op: *op,
+                left: Box::new(Self::normalize(left)),
+                right: Box::new(Self::normalize(right)),
+            },
+            Expression::UnaryOp { op, expr } => Expression::UnaryOp {
+                op: *op,
+                expr: Box::new(Self::normalize(expr)),
+            },
             _ => expr.clone(),
         }
     }
@@ -696,7 +693,11 @@ impl ExpressionUtils {
     // Simplify expression
     pub fn simplify(expr: &Expression) -> Expression {
         match expr {
-            Expression::BinaryOp { op: BinaryOperator::And, left, right } => {
+            Expression::BinaryOp {
+                op: BinaryOperator::And,
+                left,
+                right,
+            } => {
                 let simplified_left = Self::simplify(left);
                 let simplified_right = Self::simplify(right);
 
@@ -756,8 +757,8 @@ impl ExpressionUtils {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::SystemTime;
     use crate::Value;
+    use std::time::SystemTime;
 
     #[test]
     fn test_query_transformer() {

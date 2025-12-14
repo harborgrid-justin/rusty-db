@@ -23,9 +23,9 @@
 // let recommendations = analyzer.analyze(&tracker);
 // ```
 
-use std::collections::VecDeque;
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::Arc;
 
 // A single query execution record.
@@ -465,7 +465,8 @@ impl WorkloadAnalyzer {
                         table: stat.tables[0].clone(),
                         columns: self.extract_filter_columns(&stat.normalized_sql),
                         index_type: "btree".to_string(),
-                        estimated_improvement: (stat.avg_time_ms * 0.8).min(stat.avg_time_ms - 10.0),
+                        estimated_improvement: (stat.avg_time_ms * 0.8)
+                            .min(stat.avg_time_ms - 10.0),
                         reason: format!(
                             "Query executed {} times with avg {}ms, no index used",
                             stat.execution_count, stat.avg_time_ms
@@ -501,7 +502,11 @@ impl WorkloadAnalyzer {
                 let trimmed = part.trim();
                 if !trimmed.is_empty()
                     && !trimmed.starts_with('?')
-                    && !trimmed.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false)
+                    && !trimmed
+                        .chars()
+                        .next()
+                        .map(|c| c.is_ascii_digit())
+                        .unwrap_or(false)
                 {
                     if let Some(col) = trimmed.split_whitespace().last() {
                         if !col.eq_ignore_ascii_case("AND")
@@ -532,7 +537,10 @@ impl WorkloadAnalyzer {
             return 0.0;
         }
 
-        let total_time: f64 = stats.iter().map(|s| s.avg_time_ms * s.execution_count as f64).sum();
+        let total_time: f64 = stats
+            .iter()
+            .map(|s| s.avg_time_ms * s.execution_count as f64)
+            .sum();
         let total_count: u64 = stats.iter().map(|s| s.execution_count).sum();
 
         if total_count == 0 {
@@ -563,7 +571,8 @@ pub struct WorkloadAnalysisResult {
 impl WorkloadAnalysisResult {
     // Returns the hottest tables by access frequency.
     pub fn hot_tables(&self, n: usize) -> Vec<(String, u64)> {
-        let mut tables: Vec<(String, u64)> = self.table_access_frequency.clone().into_iter().collect();
+        let mut tables: Vec<(String, u64)> =
+            self.table_access_frequency.clone().into_iter().collect();
         tables.sort_by(|a, b| b.1.cmp(&a.1));
         tables.into_iter().take(n).collect()
     }
@@ -599,7 +608,7 @@ pub struct PerformanceReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Instant;
+    use std::time::Instant;
 
     #[test]
     fn test_query_execution() {

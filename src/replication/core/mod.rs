@@ -9,14 +9,14 @@
 // - Snapshot management
 // - Slot management
 
-pub mod types;
-pub mod manager;
-pub mod wal;
 pub mod conflicts;
 pub mod health;
-pub mod snapshots;
+pub mod manager;
 pub mod slots;
+pub mod snapshots;
+pub mod types;
+pub mod wal;
 
 // Re-export core types
-pub use types::*;
 pub use manager::ReplicationManager;
+pub use types::*;

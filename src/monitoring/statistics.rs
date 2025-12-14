@@ -1,11 +1,11 @@
 // System Statistics
 // V$-style system views, session statistics, system-wide counters, wait event categories
 
-use std::time::SystemTime;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
+use std::time::SystemTime;
 
 // V$SESSION - Session information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -387,7 +387,13 @@ impl StatisticsCollector {
     }
 
     // V$SYSTEM_EVENT operations
-    pub fn record_system_event(&self, event: impl Into<String>, wait_class: impl Into<String>, time_us: u64, timeout: bool) {
+    pub fn record_system_event(
+        &self,
+        event: impl Into<String>,
+        wait_class: impl Into<String>,
+        time_us: u64,
+        timeout: bool,
+    ) {
         let event_name = event.into();
         let mut events = self.system_events.write();
 
@@ -457,12 +463,19 @@ impl StatisticsCollector {
     }
 
     pub fn get_blocking_locks(&self) -> Vec<VLock> {
-        self.locks.read().values().filter(|l| l.block).cloned().collect()
+        self.locks
+            .read()
+            .values()
+            .filter(|l| l.block)
+            .cloned()
+            .collect()
     }
 
     // V$TRANSACTION operations
     pub fn register_transaction(&self, transaction: VTransaction) {
-        self.transactions.write().insert(transaction.transaction_id, transaction);
+        self.transactions
+            .write()
+            .insert(transaction.transaction_id, transaction);
     }
 
     pub fn update_transaction<F>(&self, transaction_id: u64, updater: F)
@@ -502,7 +515,9 @@ impl StatisticsCollector {
 
     // V$BGPROCESS operations
     pub fn register_bg_process(&self, process: VBgprocess) {
-        self.bg_processes.write().insert(process.process_name.clone(), process);
+        self.bg_processes
+            .write()
+            .insert(process.process_name.clone(), process);
     }
 
     pub fn get_bg_processes(&self) -> Vec<VBgprocess> {
@@ -646,7 +661,9 @@ mod tests {
         collector.record_system_event("db file sequential read", "User I/O", 1000, false);
         collector.record_system_event("db file sequential read", "User I/O", 1500, false);
 
-        let event = collector.get_system_event("db file sequential read").unwrap();
+        let event = collector
+            .get_system_event("db file sequential read")
+            .unwrap();
         assert_eq!(event.total_waits, 2);
         assert_eq!(event.time_waited_us, 2500);
     }

@@ -36,18 +36,18 @@
 // }
 // ```
 
-use std::time::Duration;
-use std::collections::HashSet;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::time::{SystemTime};
-use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use uuid::Uuid;
-use sha2::{Sha256, Digest};
 use futures::future::BoxFuture;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
+use tokio::sync::RwLock;
+use uuid::Uuid;
 
-use crate::{Result, DbError};
+use crate::{DbError, Result};
 
 // Feature flag state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -85,20 +85,16 @@ impl RolloutStrategy {
         match self {
             RolloutStrategy::All => true,
             RolloutStrategy::None => false,
-            RolloutStrategy::Percentage(pct) => {
-                Self::hash_percentage(&context.user_id) <= *pct
-            }
+            RolloutStrategy::Percentage(pct) => Self::hash_percentage(&context.user_id) <= *pct,
             RolloutStrategy::UserIds(ids) => ids.contains(&context.user_id),
-            RolloutStrategy::Groups(groups) => {
-                context.groups.iter().any(|g| groups.contains(g))
-            }
-            RolloutStrategy::Attributes(attrs) => {
-                attrs.iter().all(|(key, values)| {
-                    context.attributes.get(key)
-                        .map(|v| values.contains(v))
-                        .unwrap_or(false)
-                })
-            }
+            RolloutStrategy::Groups(groups) => context.groups.iter().any(|g| groups.contains(g)),
+            RolloutStrategy::Attributes(attrs) => attrs.iter().all(|(key, values)| {
+                context
+                    .attributes
+                    .get(key)
+                    .map(|v| values.contains(v))
+                    .unwrap_or(false)
+            }),
             RolloutStrategy::TimeBased(start, end) => {
                 let now = SystemTime::now();
                 now >= *start && now <= *end
@@ -384,7 +380,8 @@ impl FeatureFlagManager {
     // Unregister a feature
     pub async fn unregister(&self, name: &str) -> Result<()> {
         let mut features = self.features.write().await;
-        features.remove(name)
+        features
+            .remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
         Ok(())
@@ -392,11 +389,18 @@ impl FeatureFlagManager {
 
     // Check if a feature is enabled for the given context
     pub async fn is_enabled(&self, name: &str, context: &EvaluationContext) -> bool {
-        self.evaluate(name, context).await.map(|r| r.enabled).unwrap_or(false)
+        self.evaluate(name, context)
+            .await
+            .map(|r| r.enabled)
+            .unwrap_or(false)
     }
 
     // Evaluate a feature flag
-    pub fn evaluate<'a>(&'a self, name: &'a str, context: &'a EvaluationContext) -> BoxFuture<'a, Result<EvaluationResult>> {
+    pub fn evaluate<'a>(
+        &'a self,
+        name: &'a str,
+        context: &'a EvaluationContext,
+    ) -> BoxFuture<'a, Result<EvaluationResult>> {
         Box::pin(async move {
             // Check for overrides first (for testing)
             {
@@ -411,7 +415,8 @@ impl FeatureFlagManager {
             }
 
             let features = self.features.read().await;
-            let feature = features.get(name)
+            let feature = features
+                .get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
             // Check dependencies
@@ -448,7 +453,8 @@ impl FeatureFlagManager {
             // Check for A/B test
             let variant = {
                 let tests = self.ab_tests.read().await;
-                tests.values()
+                tests
+                    .values()
                     .find(|t| t.feature_id == name)
                     .and_then(|test| test.select_variant(&context.user_id))
                     .map(|v| v.name.clone())
@@ -467,7 +473,9 @@ impl FeatureFlagManager {
     // Record feature evaluation for statistics
     async fn record_evaluation(&self, name: &str, context: &EvaluationContext, enabled: bool) {
         let mut stats = self.stats.write().await;
-        let stat = stats.entry(name.to_string()).or_insert_with(FeatureStats::default);
+        let stat = stats
+            .entry(name.to_string())
+            .or_insert_with(FeatureStats::default);
 
         stat.total_evaluations += 1;
         if enabled {
@@ -482,7 +490,8 @@ impl FeatureFlagManager {
     // Update a feature
     pub async fn update(&self, name: &str, updater: impl FnOnce(&mut Feature)) -> Result<()> {
         let mut features = self.features.write().await;
-        let feature = features.get_mut(name)
+        let feature = features
+            .get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Feature not found: {}", name)))?;
 
         updater(feature);
@@ -498,19 +507,23 @@ impl FeatureFlagManager {
 
     // Disable a feature
     pub async fn disable(&self, name: &str) -> Result<()> {
-        self.update(name, |f| f.state = FeatureState::Disabled).await
+        self.update(name, |f| f.state = FeatureState::Disabled)
+            .await
     }
 
     // Set feature rollout percentage
     pub async fn set_rollout_percentage(&self, name: &str, percentage: u8) -> Result<()> {
         if percentage > 100 {
-            return Err(DbError::InvalidInput("Percentage must be 0-100".to_string()));
+            return Err(DbError::InvalidInput(
+                "Percentage must be 0-100".to_string(),
+            ));
         }
 
         self.update(name, |f| {
             f.rollout = RolloutStrategy::Percentage(percentage);
             f.state = FeatureState::Conditional;
-        }).await
+        })
+        .await
     }
 
     // Get feature by name
@@ -528,7 +541,8 @@ impl FeatureFlagManager {
     // Get features by tag
     pub async fn list_by_tag(&self, tag: &str) -> Vec<Feature> {
         let features = self.features.read().await;
-        features.values()
+        features
+            .values()
             .filter(|f| f.tags.contains(tag))
             .cloned()
             .collect()
@@ -547,7 +561,8 @@ impl FeatureFlagManager {
             let features = self.features.read().await;
             if !features.contains_key(&test.feature_id) {
                 return Err(DbError::NotFound(format!(
-                    "Feature not found: {}", test.feature_id
+                    "Feature not found: {}",
+                    test.feature_id
                 )));
             }
         }
@@ -596,8 +611,7 @@ mod tests {
     #[tokio::test]
     async fn test_basic_feature_toggle() {
         let manager = FeatureFlagManager::new();
-        let feature = Feature::new("test_feature")
-            .with_state(FeatureState::Enabled);
+        let feature = Feature::new("test_feature").with_state(FeatureState::Enabled);
 
         manager.register(feature).await.unwrap();
 
@@ -608,8 +622,7 @@ mod tests {
     #[tokio::test]
     async fn test_percentage_rollout() {
         let manager = FeatureFlagManager::new();
-        let feature = Feature::new("test_rollout")
-            .with_rollout(RolloutStrategy::Percentage(50));
+        let feature = Feature::new("test_rollout").with_rollout(RolloutStrategy::Percentage(50));
 
         manager.register(feature).await.unwrap();
 
@@ -630,8 +643,7 @@ mod tests {
     async fn test_dependencies() {
         let manager = FeatureFlagManager::new();
 
-        let base_feature = Feature::new("base")
-            .with_state(FeatureState::Disabled);
+        let base_feature = Feature::new("base").with_state(FeatureState::Disabled);
         let dependent_feature = Feature::new("dependent")
             .with_dependency("base")
             .with_state(FeatureState::Enabled);
@@ -655,8 +667,7 @@ mod tests {
     async fn test_ab_testing() {
         let manager = FeatureFlagManager::new();
 
-        let feature = Feature::new("test_ab")
-            .with_state(FeatureState::Enabled);
+        let feature = Feature::new("test_ab").with_state(FeatureState::Enabled);
         manager.register(feature).await.unwrap();
 
         let test = ABTest {

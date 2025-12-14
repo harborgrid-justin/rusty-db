@@ -3,11 +3,11 @@
 // Self-tuning cache balancing recency and frequency.
 
 use super::common::*;
-use serde::{Serialize, Deserialize};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize};
-use std::collections::{HashMap, VecDeque};
 use parking_lot::{Mutex, RwLock as PRwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, VecDeque};
+use std::sync::atomic::{AtomicU64, AtomicUsize};
+use std::sync::Arc;
 
 // ============================================================================
 // SECTION 2: PAGE CACHE MANAGEMENT (600+ lines)
@@ -221,11 +221,7 @@ impl AdaptiveReplacementCache {
         let b1_len = self.b1.lock().len();
         let b2_len = self.b2.lock().len();
 
-        let delta = if b1_len >= b2_len {
-            1
-        } else {
-            b2_len / b1_len
-        };
+        let delta = if b1_len >= b2_len { 1 } else { b2_len / b1_len };
 
         let current_p = self.p.load(Ordering::Relaxed);
         let new_p = std::cmp::min(current_p + delta, self.c);
@@ -237,11 +233,7 @@ impl AdaptiveReplacementCache {
         let b1_len = self.b1.lock().len();
         let b2_len = self.b2.lock().len();
 
-        let delta = if b2_len >= b1_len {
-            1
-        } else {
-            b1_len / b2_len
-        };
+        let delta = if b2_len >= b1_len { 1 } else { b1_len / b2_len };
 
         let current_p = self.p.load(Ordering::Relaxed);
         let new_p = current_p.saturating_sub(delta);

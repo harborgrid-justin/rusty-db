@@ -2,14 +2,17 @@
 //
 // Part of the comprehensive monitoring system for RustyDB
 
-use std::sync::{Arc, atomic::{AtomicU64, AtomicBool, Ordering}};
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::{
+    atomic::{AtomicBool, AtomicU64, Ordering},
+    Arc,
+};
+use std::time::{Duration, SystemTime};
 
-use crate::error::DbError;
 use super::metrics_core::*;
+use crate::error::DbError;
 
 // SECTION 3: HEALTH CHECK SYSTEM (500+ lines)
 // ============================================================================
@@ -29,7 +32,10 @@ impl HealthStatus {
     }
 
     pub fn worst(statuses: &[HealthStatus]) -> HealthStatus {
-        if statuses.iter().any(|s| matches!(s, HealthStatus::Unhealthy)) {
+        if statuses
+            .iter()
+            .any(|s| matches!(s, HealthStatus::Unhealthy))
+        {
             return HealthStatus::Unhealthy;
         }
         if statuses.iter().any(|s| matches!(s, HealthStatus::Degraded)) {
@@ -124,7 +130,8 @@ impl LivenessProbe {
     }
 
     pub fn uptime(&self) -> Option<Duration> {
-        self.startup_time.read()
+        self.startup_time
+            .read()
             .and_then(|start| SystemTime::now().duration_since(start).ok())
     }
 }
@@ -192,13 +199,9 @@ impl HealthChecker for ReadinessProbe {
                 .with_duration(Duration::from_micros(timer.elapsed_micros()));
         }
 
-        let results: Vec<_> = dependencies.iter()
-            .map(|dep| dep.check())
-            .collect();
+        let results: Vec<_> = dependencies.iter().map(|dep| dep.check()).collect();
 
-        let healthy_count = results.iter()
-            .filter(|r| r.status.is_healthy())
-            .count();
+        let healthy_count = results.iter().filter(|r| r.status.is_healthy()).count();
 
         let status = if healthy_count >= self.min_healthy_dependencies {
             HealthStatus::Healthy
@@ -211,7 +214,11 @@ impl HealthChecker for ReadinessProbe {
         let mut result = HealthCheckResult {
             status,
             component: "readiness".to_string(),
-            message: format!("{}/{} dependencies healthy", healthy_count, dependencies.len()),
+            message: format!(
+                "{}/{} dependencies healthy",
+                healthy_count,
+                dependencies.len()
+            ),
             timestamp: SystemTime::now(),
             duration: Duration::from_micros(timer.elapsed_micros()),
             details: HashMap::new(),
@@ -262,7 +269,8 @@ impl HealthChecker for StartupProbe {
         let checks = self.initialization_checks.read();
 
         let total = checks.len();
-        let completed = checks.iter()
+        let completed = checks
+            .iter()
             .filter(|(_, flag)| flag.load(Ordering::SeqCst))
             .count();
 
@@ -341,8 +349,14 @@ impl HealthChecker for DatabaseHealthCheck {
             details: HashMap::new(),
         }
         .with_detail("active_connections".to_string(), serde_json::json!(active))
-        .with_detail("max_connections".to_string(), serde_json::json!(self.max_connections))
-        .with_detail("usage_percent".to_string(), serde_json::json!(usage_pct * 100.0))
+        .with_detail(
+            "max_connections".to_string(),
+            serde_json::json!(self.max_connections),
+        )
+        .with_detail(
+            "usage_percent".to_string(),
+            serde_json::json!(usage_pct * 100.0),
+        )
     }
 }
 
@@ -390,7 +404,10 @@ impl HealthChecker for MemoryHealthCheck {
             details: HashMap::new(),
         }
         .with_detail("current_bytes".to_string(), serde_json::json!(current))
-        .with_detail("max_bytes".to_string(), serde_json::json!(self.max_memory_bytes))
+        .with_detail(
+            "max_bytes".to_string(),
+            serde_json::json!(self.max_memory_bytes),
+        )
     }
 }
 
@@ -426,8 +443,10 @@ impl SelfHealingTrigger {
             let failures = self.consecutive_failures.fetch_add(1, Ordering::SeqCst) + 1;
 
             if failures >= self.failure_threshold {
-                println!("Triggering self-healing for {}: {} consecutive failures",
-                    self.name, failures);
+                println!(
+                    "Triggering self-healing for {}: {} consecutive failures",
+                    self.name, failures
+                );
                 (self.healing_action)()?;
                 self.consecutive_failures.store(0, Ordering::SeqCst);
             }

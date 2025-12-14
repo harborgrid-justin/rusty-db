@@ -32,13 +32,13 @@
 // - Cache lines per operation: 1.2 average
 // - Throughput: 10-15x faster than std::HashMap
 
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
+use crate::simd::hash::xxhash3_avx2;
 #[cfg(target_arch = "x86")]
 use std::arch::x86::*;
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
 use std::mem::{self, MaybeUninit};
 use std::ptr;
-use crate::simd::hash::xxhash3_avx2;
 
 // Control byte indicating an empty slot
 const EMPTY: u8 = 0xFF;
@@ -157,10 +157,7 @@ where
                         // Update existing value
                         let old_value = slot.value.clone();
                         unsafe {
-                            ptr::write(
-                                self.slots[slot_idx].as_mut_ptr(),
-                                Slot { key, value },
-                            );
+                            ptr::write(self.slots[slot_idx].as_mut_ptr(), Slot { key, value });
                         }
                         return Some(old_value);
                     }
@@ -176,10 +173,7 @@ where
                 // Insert into empty slot
                 self.ctrl[slot_idx] = h2;
                 unsafe {
-                    ptr::write(
-                        self.slots[slot_idx].as_mut_ptr(),
-                        Slot { key, value },
-                    );
+                    ptr::write(self.slots[slot_idx].as_mut_ptr(), Slot { key, value });
                 }
                 self.len += 1;
                 self.occupied += 1;
@@ -195,10 +189,7 @@ where
                 // Reuse tombstone slot
                 self.ctrl[slot_idx] = h2;
                 unsafe {
-                    ptr::write(
-                        self.slots[slot_idx].as_mut_ptr(),
-                        Slot { key, value },
-                    );
+                    ptr::write(self.slots[slot_idx].as_mut_ptr(), Slot { key, value });
                 }
                 self.len += 1;
                 return None;
@@ -363,14 +354,11 @@ where
         K: AsRef<[u8]>,
     {
         let old_ctrl = mem::replace(&mut self.ctrl, vec![EMPTY; new_capacity]);
-        let old_slots = mem::replace(
-            &mut self.slots,
-            {
-                let mut v = Vec::with_capacity(new_capacity);
-                v.resize_with(new_capacity, || MaybeUninit::uninit());
-                v
-            },
-        );
+        let old_slots = mem::replace(&mut self.slots, {
+            let mut v = Vec::with_capacity(new_capacity);
+            v.resize_with(new_capacity, || MaybeUninit::uninit());
+            v
+        });
         let old_capacity = self.capacity;
 
         self.capacity = new_capacity;

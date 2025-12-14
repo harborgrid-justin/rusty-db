@@ -14,14 +14,14 @@
 // - Role delegation and proxy capabilities
 // - Fine-grained permission sets per role
 
-use std::collections::HashSet;
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
+use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
-use crate::error::DbError;
 
 // Role identifier type
 pub type RoleId = String;
@@ -263,19 +263,27 @@ impl RbacManager {
         let mut roles = self.roles.write();
 
         if roles.contains_key(&role.id) {
-            return Err(DbError::AlreadyExists(format!("Role {} already exists", role.id)));
+            return Err(DbError::AlreadyExists(format!(
+                "Role {} already exists",
+                role.id
+            )));
         }
 
         // Validate parent roles exist
         for parent_id in &role.parent_roles {
             if !roles.contains_key(parent_id) {
-                return Err(DbError::NotFound(format!("Parent role {} not found", parent_id)));
+                return Err(DbError::NotFound(format!(
+                    "Parent role {} not found",
+                    parent_id
+                )));
             }
         }
 
         // Check for circular dependencies
         if self.has_circular_dependency(&role, &roles) {
-            return Err(DbError::InvalidInput("Circular role dependency detected".to_string()));
+            return Err(DbError::InvalidInput(
+                "Circular role dependency detected".to_string(),
+            ));
         }
 
         roles.insert(role.id.clone(), role);
@@ -297,13 +305,18 @@ impl RbacManager {
         // Validate parent roles exist
         for parent_id in &role.parent_roles {
             if !roles.contains_key(parent_id) {
-                return Err(DbError::NotFound(format!("Parent role {} not found", parent_id)));
+                return Err(DbError::NotFound(format!(
+                    "Parent role {} not found",
+                    parent_id
+                )));
             }
         }
 
         // Check for circular dependencies
         if self.has_circular_dependency(&role, &roles) {
-            return Err(DbError::InvalidInput("Circular role dependency detected".to_string()));
+            return Err(DbError::InvalidInput(
+                "Circular role dependency detected".to_string(),
+            ));
         }
 
         roles.insert(role.id.clone(), role);
@@ -325,9 +338,10 @@ impl RbacManager {
         // Check if any role has this as a parent
         for role in roles.values() {
             if role.parent_roles.contains(role_id) {
-                return Err(DbError::InvalidOperation(
-                    format!("Cannot delete role {}; it is a parent of role {}", role_id, role.id)
-                ));
+                return Err(DbError::InvalidOperation(format!(
+                    "Cannot delete role {}; it is a parent of role {}",
+                    role_id, role.id
+                )));
             }
         }
 
@@ -347,7 +361,8 @@ impl RbacManager {
 
     // Get a role by ID
     pub fn get_role(&self, role_id: &RoleId) -> Result<Role> {
-        self.roles.read()
+        self.roles
+            .read()
             .get(role_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound(format!("Role {} not found", role_id)))
@@ -362,20 +377,29 @@ impl RbacManager {
     pub fn assign_role(&self, assignment: RoleAssignment) -> Result<()> {
         // Verify role exists
         if !self.roles.read().contains_key(&assignment.role_id) {
-            return Err(DbError::NotFound(format!("Role {} not found", assignment.role_id)));
+            return Err(DbError::NotFound(format!(
+                "Role {} not found",
+                assignment.role_id
+            )));
         }
 
         // Check SoD constraints
         self.check_sod_constraints(&assignment.user_id, &assignment.role_id)?;
 
         let mut assignments = self.assignments.write();
-        let user_assignments = assignments.entry(assignment.user_id.clone()).or_insert_with(Vec::new);
+        let user_assignments = assignments
+            .entry(assignment.user_id.clone())
+            .or_insert_with(Vec::new);
 
         // Check if already assigned
-        if user_assignments.iter().any(|a| a.role_id == assignment.role_id) {
-            return Err(DbError::AlreadyExists(
-                format!("Role {} already assigned to user {}", assignment.role_id, assignment.user_id)
-            ));
+        if user_assignments
+            .iter()
+            .any(|a| a.role_id == assignment.role_id)
+        {
+            return Err(DbError::AlreadyExists(format!(
+                "Role {} already assigned to user {}",
+                assignment.role_id, assignment.user_id
+            )));
         }
 
         user_assignments.push(assignment);
@@ -391,20 +415,25 @@ impl RbacManager {
             user_assignments.retain(|a| &a.role_id != role_id);
 
             if user_assignments.len() == original_len {
-                return Err(DbError::NotFound(
-                    format!("Role {} not assigned to user {}", role_id, user_id)
-                ));
+                return Err(DbError::NotFound(format!(
+                    "Role {} not assigned to user {}",
+                    role_id, user_id
+                )));
             }
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("No role assignments for user {}", user_id)))
+            Err(DbError::NotFound(format!(
+                "No role assignments for user {}",
+                user_id
+            )))
         }
     }
 
     // Get all role assignments for a user
     pub fn get_user_roles(&self, user_id: &UserId) -> Vec<RoleAssignment> {
-        self.assignments.read()
+        self.assignments
+            .read()
             .get(user_id)
             .cloned()
             .unwrap_or_default()
@@ -413,15 +442,18 @@ impl RbacManager {
     // Activate a role in a session
     pub fn activate_role(&self, session_id: &str, role_id: &RoleId) -> Result<()> {
         let mut sessions = self.sessions.write();
-        let session = sessions.get_mut(session_id)
+        let session = sessions
+            .get_mut(session_id)
             .ok_or_else(|| DbError::NotFound("Session not found".to_string()))?;
 
         // Check if user has this role assigned
         let assignments = self.assignments.read();
-        let user_assignments = assignments.get(&session.user_id)
+        let user_assignments = assignments
+            .get(&session.user_id)
             .ok_or_else(|| DbError::NotFound("No role assignments found".to_string()))?;
 
-        let assignment = user_assignments.iter()
+        let assignment = user_assignments
+            .iter()
             .find(|a| &a.role_id == role_id)
             .ok_or_else(|| DbError::NotFound(format!("Role {} not assigned to user", role_id)))?;
 
@@ -438,7 +470,8 @@ impl RbacManager {
     // Deactivate a role in a session
     pub fn deactivate_role(&self, session_id: &str, role_id: &RoleId) -> Result<()> {
         let mut sessions = self.sessions.write();
-        let session = sessions.get_mut(session_id)
+        let session = sessions
+            .get_mut(session_id)
             .ok_or_else(|| DbError::NotFound("Session not found".to_string()))?;
 
         session.activated_roles.remove(role_id);
@@ -491,7 +524,9 @@ impl RbacManager {
         self.collect_permissions_recursive(role_id, &mut permissions, &mut visited);
 
         // Update cache
-        self.permission_cache.write().insert(role_id.clone(), permissions.clone());
+        self.permission_cache
+            .write()
+            .insert(role_id.clone(), permissions.clone());
 
         permissions
     }
@@ -522,7 +557,10 @@ impl RbacManager {
         constraints.retain(|c| c.id != constraint_id);
 
         if constraints.len() == original_len {
-            return Err(DbError::NotFound(format!("SoD constraint {} not found", constraint_id)));
+            return Err(DbError::NotFound(format!(
+                "SoD constraint {} not found",
+                constraint_id
+            )));
         }
 
         Ok(())
@@ -537,12 +575,16 @@ impl RbacManager {
     pub fn create_delegation(&self, delegation: RoleDelegation) -> Result<()> {
         // Verify the delegator has the role
         let assignments = self.assignments.read();
-        let delegator_assignments = assignments.get(&delegation.delegator)
+        let delegator_assignments = assignments
+            .get(&delegation.delegator)
             .ok_or_else(|| DbError::NotFound("Delegator has no role assignments".to_string()))?;
 
-        if !delegator_assignments.iter().any(|a| a.role_id == delegation.role_id) {
+        if !delegator_assignments
+            .iter()
+            .any(|a| a.role_id == delegation.role_id)
+        {
             return Err(DbError::InvalidOperation(
-                "Delegator does not have the role being delegated".to_string()
+                "Delegator does not have the role being delegated".to_string(),
             ));
         }
 
@@ -560,7 +602,10 @@ impl RbacManager {
         delegations.retain(|d| d.id != delegation_id);
 
         if delegations.len() == original_len {
-            return Err(DbError::NotFound(format!("Delegation {} not found", delegation_id)));
+            return Err(DbError::NotFound(format!(
+                "Delegation {} not found",
+                delegation_id
+            )));
         }
 
         Ok(())
@@ -569,13 +614,14 @@ impl RbacManager {
     // Get active delegations for a user
     pub fn get_user_delegations(&self, user_id: &UserId) -> Vec<RoleDelegation> {
         let now = current_timestamp();
-        self.delegations.read()
+        self.delegations
+            .read()
             .iter()
             .filter(|d| {
-                (&d.delegate == user_id || &d.delegator == user_id) &&
-                d.is_active &&
-                d.valid_from <= now &&
-                d.valid_until > now
+                (&d.delegate == user_id || &d.delegator == user_id)
+                    && d.is_active
+                    && d.valid_from <= now
+                    && d.valid_until > now
             })
             .cloned()
             .collect()
@@ -647,7 +693,8 @@ impl RbacManager {
         let assignments = self.assignments.read();
 
         // Get user's current roles
-        let current_roles: HashSet<RoleId> = assignments.get(user_id)
+        let current_roles: HashSet<RoleId> = assignments
+            .get(user_id)
             .map(|assignments| assignments.iter().map(|a| a.role_id.clone()).collect())
             .unwrap_or_default();
 
@@ -663,9 +710,10 @@ impl RbacManager {
             // Check if user already has a conflicting role
             for role_id in &constraint.conflicting_roles {
                 if role_id != new_role_id && current_roles.contains(role_id) {
-                    return Err(DbError::InvalidOperation(
-                        format!("SoD constraint violated: {} conflicts with {}", new_role_id, role_id)
-                    ));
+                    return Err(DbError::InvalidOperation(format!(
+                        "SoD constraint violated: {} conflicts with {}",
+                        new_role_id, role_id
+                    )));
                 }
             }
         }
@@ -693,10 +741,10 @@ impl RbacManager {
             // Check if any conflicting role is already activated
             for role_id in &constraint.conflicting_roles {
                 if role_id != new_role_id && activated_roles.contains(role_id) {
-                    return Err(DbError::InvalidOperation(
-                        format!("Dynamic SoD constraint violated: cannot activate {} while {} is active",
-                                new_role_id, role_id)
-                    ));
+                    return Err(DbError::InvalidOperation(format!(
+                        "Dynamic SoD constraint violated: cannot activate {} while {} is active",
+                        new_role_id, role_id
+                    )));
                 }
             }
         }
@@ -713,13 +761,17 @@ impl RbacManager {
             match condition {
                 ActivationCondition::RequiresMfa => {
                     if !session.mfa_completed {
-                        return Err(DbError::InvalidOperation("MFA required for role activation".to_string()));
+                        return Err(DbError::InvalidOperation(
+                            "MFA required for role activation".to_string(),
+                        ));
                     }
                 }
                 ActivationCondition::IpAddress { allowed_ips } => {
                     if let Some(ip) = &session.ip_address {
                         if !allowed_ips.contains(ip) {
-                            return Err(DbError::InvalidOperation("IP address not allowed".to_string()));
+                            return Err(DbError::InvalidOperation(
+                                "IP address not allowed".to_string(),
+                            ));
                         }
                     } else {
                         return Err(DbError::InvalidOperation("IP address required".to_string()));
@@ -728,21 +780,26 @@ impl RbacManager {
                 ActivationCondition::Location { allowed_locations } => {
                     if let Some(location) = &session.location {
                         if !allowed_locations.contains(location) {
-                            return Err(DbError::InvalidOperation("Location not allowed".to_string()));
+                            return Err(DbError::InvalidOperation(
+                                "Location not allowed".to_string(),
+                            ));
                         }
                     } else {
                         return Err(DbError::InvalidOperation("Location required".to_string()));
                     }
                 }
-                ActivationCondition::TimeWindow { start_hour: _, end_hour: _ } => {
+                ActivationCondition::TimeWindow {
+                    start_hour: _,
+                    end_hour: _,
+                } => {
                     // This is simplified - would need actual time checking
                     let _current_hour = 12; // Placeholder
-                    // Check if current hour is within window
+                                            // Check if current hour is within window
                 }
                 ActivationCondition::DayOfWeek { allowed_days: _ } => {
                     // This is simplified - would need actual day checking
                     let _current_day = 3; // Placeholder
-                    // Check if current day is allowed
+                                          // Check if current day is allowed
                 }
                 ActivationCondition::Custom { expression: _ } => {
                     // Would need expression evaluator

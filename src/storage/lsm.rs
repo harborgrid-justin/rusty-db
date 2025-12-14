@@ -2,13 +2,13 @@
 // Optimized for write-heavy and time-series workloads
 // Features: Bloom filters, leveled compaction, concurrent memtable switching
 
-use std::collections::{BTreeMap, VecDeque};
-use std::sync::{Arc, Mutex};
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{SystemTime, UNIX_EPOCH};
+use crate::error::{DbError, Result};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::error::{DbError, Result};
+use std::collections::{BTreeMap, VecDeque};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // LSM key type
 pub type LsmKey = Vec<u8>;
@@ -190,7 +190,8 @@ impl SSTable {
         let max_key = entries.keys().next_back().cloned().unwrap_or_default();
         let num_entries = entries.len();
 
-        let size_bytes: usize = entries.iter()
+        let size_bytes: usize = entries
+            .iter()
             .map(|(k, v)| k.len() + v.data.len() + 24)
             .sum();
 
@@ -270,7 +271,8 @@ impl Level {
     }
 
     fn find_overlapping(&self, key: &LsmKey) -> Vec<Arc<SSTable>> {
-        self.sstables.iter()
+        self.sstables
+            .iter()
             .filter(|s| s.might_contain(key))
             .cloned()
             .collect()
@@ -280,9 +282,9 @@ impl Level {
 // Compaction strategy
 #[derive(Debug, Clone, Copy)]
 pub enum CompactionStrategy {
-    Leveled,      // Standard leveled compaction
-    SizeTiered,   // Size-tiered for write-heavy workloads
-    TimeWindow,   // For time-series data
+    Leveled,    // Standard leveled compaction
+    SizeTiered, // Size-tiered for write-heavy workloads
+    TimeWindow, // For time-series data
 }
 
 // Compaction task
@@ -404,7 +406,10 @@ impl LsmTree {
         let lsm_value = LsmValue::new(value);
 
         // Try to insert into active memtable
-        let inserted = self.active_memtable.write().put(key.clone(), lsm_value.clone());
+        let inserted = self
+            .active_memtable
+            .write()
+            .put(key.clone(), lsm_value.clone());
 
         if !inserted {
             // Memtable is full, switch to a new one
@@ -412,7 +417,9 @@ impl LsmTree {
 
             // Retry with new memtable
             if !self.active_memtable.write().put(key, lsm_value) {
-                return Err(DbError::Storage("Failed to insert into new memtable".to_string()));
+                return Err(DbError::Storage(
+                    "Failed to insert into new memtable".to_string(),
+                ));
             }
         }
 
@@ -530,7 +537,10 @@ impl LsmTree {
         };
 
         // Add to immutable queue
-        self.immutable_memtables.lock().unwrap().push_back(Arc::new(old_memtable));
+        self.immutable_memtables
+            .lock()
+            .unwrap()
+            .push_back(Arc::new(old_memtable));
 
         // Trigger flush
         self.trigger_flush()?;
@@ -579,12 +589,11 @@ impl LsmTree {
 
     // Process compaction queue
     pub fn run_compaction(&self, max_tasks: usize) -> Result<usize> {
-        if !self.compaction_running.compare_exchange(
-            false,
-            true,
-            Ordering::SeqCst,
-            Ordering::SeqCst,
-        ).is_ok() {
+        if !self
+            .compaction_running
+            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+            .is_ok()
+        {
             return Ok(0); // Already running
         }
 
@@ -603,9 +612,9 @@ impl LsmTree {
                 let mut levels = self.levels.write();
 
                 // Remove old SSTables from source level
-                levels[task.level].sstables.retain(|s| {
-                    !task.sstables.iter().any(|t| t.id == s.id)
-                });
+                levels[task.level]
+                    .sstables
+                    .retain(|s| !task.sstables.iter().any(|t| t.id == s.id));
 
                 // Add new SSTables to next level
                 let target_level = task.level + 1;

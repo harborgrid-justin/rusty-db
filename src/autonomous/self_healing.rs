@@ -3,17 +3,17 @@
 // Provides autonomous detection and repair of database issues including
 // corruption, deadlocks, memory leaks, and connection problems.
 
-use std::collections::VecDeque;
-use std::collections::HashSet;
-use std::time::SystemTime;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{Duration};
+use crate::error::DbError;
+use crate::Result;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 use tokio::time::sleep;
-use crate::Result;
-use crate::error::DbError;
 
 // Types of issues that can be auto-healed
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -165,7 +165,11 @@ impl CorruptionDetector {
 
     pub async fn repair_page(&self, page_id: u64, backup_data: &[u8]) -> Result<()> {
         // Write backup data to page
-        tracing::info!("Repairing page {} with {} bytes from backup", page_id, backup_data.len());
+        tracing::info!(
+            "Repairing page {} with {} bytes from backup",
+            page_id,
+            backup_data.len()
+        );
 
         // Remove from corrupted set
         self.corrupted_pages.write().remove(&page_id);
@@ -214,11 +218,17 @@ impl IndexHealthMonitor {
 
     async fn check_all_indexes(&self) -> Result<()> {
         // Get list of indexes (placeholder)
-        let indexes = vec!["idx_users_email", "idx_orders_date", "idx_products_category"];
+        let indexes = vec![
+            "idx_users_email",
+            "idx_orders_date",
+            "idx_products_category",
+        ];
 
         for index_name in indexes {
             if let Some(health) = self.check_index_health(index_name).await? {
-                self.index_stats.write().insert(index_name.to_string(), health);
+                self.index_stats
+                    .write()
+                    .insert(index_name.to_string(), health);
             }
         }
 
@@ -228,7 +238,7 @@ impl IndexHealthMonitor {
     async fn check_index_health(&self, index_name: &str) -> Result<Option<IndexHealth>> {
         // Simulate index statistics gathering
         let entry_count = 10000;
-        let expected_count = 10050;  // Slight mismatch
+        let expected_count = 10050; // Slight mismatch
         let fragmentation_ratio = 0.15;
 
         let health = IndexHealth {
@@ -237,8 +247,9 @@ impl IndexHealthMonitor {
             entry_count,
             expected_count,
             fragmentation_ratio,
-            last_rebuild: SystemTime::now() - Duration::from_secs(86400 * 7),  // 7 days ago
-            corruption_detected: (entry_count as f64 - expected_count as f64).abs() > expected_count as f64 * 0.1,
+            last_rebuild: SystemTime::now() - Duration::from_secs(86400 * 7), // 7 days ago
+            corruption_detected: (entry_count as f64 - expected_count as f64).abs()
+                > expected_count as f64 * 0.1,
         };
 
         Ok(Some(health))
@@ -344,7 +355,7 @@ impl ConnectionPoolManager {
 
 // Deadlock detector and resolver
 pub struct DeadlockResolver {
-    transaction_graph: Arc<RwLock<HashMap<u64, Vec<u64>>>>,  // txn_id -> waiting_for_txns
+    transaction_graph: Arc<RwLock<HashMap<u64, Vec<u64>>>>, // txn_id -> waiting_for_txns
     detection_interval: Duration,
 }
 
@@ -374,7 +385,10 @@ impl DeadlockResolver {
 
     pub fn add_wait_edge(&self, txn_id: u64, waiting_for: u64) {
         let mut graph = self.transaction_graph.write();
-        graph.entry(txn_id).or_insert_with(Vec::new).push(waiting_for);
+        graph
+            .entry(txn_id)
+            .or_insert_with(Vec::new)
+            .push(waiting_for);
     }
 
     pub fn remove_transaction(&self, txn_id: u64) {
@@ -550,7 +564,9 @@ impl FailoverOrchestrator {
     }
 
     pub fn update_node_health(&self, health: NodeHealth) {
-        self.node_health.write().insert(health.node_id.clone(), health);
+        self.node_health
+            .write()
+            .insert(health.node_id.clone(), health);
     }
 
     pub fn should_failover(&self) -> Option<String> {
@@ -574,7 +590,9 @@ impl FailoverOrchestrator {
     pub async fn perform_failover(&self, failed_node: &str) -> Result<String> {
         let mut in_progress = self.failover_in_progress.write();
         if *in_progress {
-            return Err(DbError::Internal("Failover already in progress".to_string()));
+            return Err(DbError::Internal(
+                "Failover already in progress".to_string(),
+            ));
         }
         *in_progress = true;
         drop(in_progress);
@@ -641,7 +659,7 @@ impl SelfHealingEngine {
             index_monitor: Arc::new(IndexHealthMonitor::new(Duration::from_secs(600))),
             pool_manager: Arc::new(ConnectionPoolManager::new(0.9)),
             deadlock_resolver: Arc::new(DeadlockResolver::new(Duration::from_secs(1))),
-            memory_detector: Arc::new(MemoryLeakDetector::new(10.0)),  // 10 MB/min threshold
+            memory_detector: Arc::new(MemoryLeakDetector::new(10.0)), // 10 MB/min threshold
             failover_orchestrator: Arc::new(FailoverOrchestrator::new()),
             issue_log: Arc::new(RwLock::new(Vec::new())),
             healing_log: Arc::new(RwLock::new(Vec::new())),
@@ -738,7 +756,8 @@ impl SelfHealingEngine {
                 "connection_pool".to_string(),
             );
 
-            self.execute_healing(issue.issue_id, HealingAction::RestartConnectionPool).await?;
+            self.execute_healing(issue.issue_id, HealingAction::RestartConnectionPool)
+                .await?;
         }
 
         // Check for memory leaks
@@ -750,7 +769,8 @@ impl SelfHealingEngine {
                 "memory".to_string(),
             );
 
-            self.execute_healing(issue.issue_id, HealingAction::ForceCheckpoint).await?;
+            self.execute_healing(issue.issue_id, HealingAction::ForceCheckpoint)
+                .await?;
         }
 
         // Check for failover needs
@@ -762,8 +782,14 @@ impl SelfHealingEngine {
                 failed_node.clone(),
             );
 
-            if let Ok(new_primary) = self.failover_orchestrator.perform_failover(&failed_node).await {
-                let action = HealingAction::PromoteReplica { node_id: new_primary };
+            if let Ok(new_primary) = self
+                .failover_orchestrator
+                .perform_failover(&failed_node)
+                .await
+            {
+                let action = HealingAction::PromoteReplica {
+                    node_id: new_primary,
+                };
                 self.execute_healing(issue.issue_id, action).await?;
             }
         }
@@ -809,12 +835,8 @@ impl SelfHealingEngine {
             HealingAction::RebuildIndex { index_name } => {
                 self.index_monitor.rebuild_index(index_name).await
             }
-            HealingAction::RestartConnectionPool => {
-                self.pool_manager.recover_pool().await
-            }
-            HealingAction::ForceCheckpoint => {
-                self.memory_detector.mitigate_leak().await
-            }
+            HealingAction::RestartConnectionPool => self.pool_manager.recover_pool().await,
+            HealingAction::ForceCheckpoint => self.memory_detector.mitigate_leak().await,
             _ => Ok(()),
         };
 
@@ -822,7 +844,11 @@ impl SelfHealingEngine {
             issue_id,
             action,
             success: result.is_ok(),
-            message: result.as_ref().err().map(|e| e.to_string()).unwrap_or_else(|| "Success".to_string()),
+            message: result
+                .as_ref()
+                .err()
+                .map(|e| e.to_string())
+                .unwrap_or_else(|| "Success".to_string()),
             healed_at: SystemTime::now(),
             retry_count: 0,
         };
@@ -837,7 +863,10 @@ impl SelfHealingEngine {
         let healings = self.healing_log.read();
 
         let total_issues = issues.len();
-        let critical_issues = issues.iter().filter(|i| i.severity == Severity::Critical).count();
+        let critical_issues = issues
+            .iter()
+            .filter(|i| i.severity == Severity::Critical)
+            .count();
         let successful_healings = healings.iter().filter(|h| h.success).count();
         let failed_healings = healings.iter().filter(|h| !h.success).count();
 
@@ -846,9 +875,14 @@ impl SelfHealingEngine {
             critical_issues,
             successful_healings,
             failed_healings,
-            active_issues: issues.iter().filter(|i| {
-                !healings.iter().any(|h| h.issue_id == i.issue_id && h.success)
-            }).count(),
+            active_issues: issues
+                .iter()
+                .filter(|i| {
+                    !healings
+                        .iter()
+                        .any(|h| h.issue_id == i.issue_id && h.success)
+                })
+                .count(),
         }
     }
 }

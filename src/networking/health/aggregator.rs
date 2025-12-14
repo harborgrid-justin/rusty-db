@@ -3,12 +3,12 @@
 // Aggregates multiple health check results into overall health scores
 // with weighted scoring, dependency health tracking, and cascading failure detection.
 
+use super::checker::HealthCheckResult;
+use crate::common::{HealthStatus, NodeId};
 use crate::error::{DbError, Result};
-use crate::common::{NodeId, HealthStatus};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use super::checker::HealthCheckResult;
 
 /// Health score (0.0 = unhealthy, 1.0 = perfectly healthy)
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -112,7 +112,10 @@ impl NodeHealthState {
     fn record_result(&mut self, result: HealthCheckResult) {
         let check_type = result.check_type.clone();
 
-        let results = self.check_results.entry(check_type).or_insert_with(Vec::new);
+        let results = self
+            .check_results
+            .entry(check_type)
+            .or_insert_with(Vec::new);
         results.push(result);
 
         // Trim history
@@ -140,13 +143,15 @@ impl NodeHealthState {
             }
 
             // Get weight for this check
-            let weight = self.weighted_checks
+            let weight = self
+                .weighted_checks
                 .get(check_type)
                 .map(|w| w.weight)
                 .unwrap_or(1.0);
 
             // Check if critical
-            let is_critical = self.weighted_checks
+            let is_critical = self
+                .weighted_checks
                 .get(check_type)
                 .map(|w| w.critical)
                 .unwrap_or(false);
@@ -160,7 +165,8 @@ impl NodeHealthState {
 
             // Calculate performance (based on response times)
             let avg_response_time = if !results.is_empty() {
-                let sum: Duration = results.iter()
+                let sum: Duration = results
+                    .iter()
                     .filter(|r| r.success)
                     .map(|r| r.response_time)
                     .sum();
@@ -269,9 +275,10 @@ impl HealthAggregator {
     pub async fn record_check_result(
         &mut self,
         node_id: NodeId,
-        result: HealthCheckResult
+        result: HealthCheckResult,
     ) -> Result<()> {
-        let state = self.nodes
+        let state = self
+            .nodes
             .entry(node_id.clone())
             .or_insert_with(|| NodeHealthState::new(self.max_history_size));
 
@@ -287,23 +294,23 @@ impl HealthAggregator {
     pub async fn add_weighted_check(
         &mut self,
         node_id: NodeId,
-        weighted_check: WeightedCheck
+        weighted_check: WeightedCheck,
     ) -> Result<()> {
-        let state = self.nodes
+        let state = self
+            .nodes
             .entry(node_id)
             .or_insert_with(|| NodeHealthState::new(self.max_history_size));
 
-        state.weighted_checks.insert(weighted_check.check_id.clone(), weighted_check);
+        state
+            .weighted_checks
+            .insert(weighted_check.check_id.clone(), weighted_check);
         Ok(())
     }
 
     /// Add a dependency between nodes
-    pub async fn add_dependency(
-        &mut self,
-        node_id: NodeId,
-        depends_on: NodeId
-    ) -> Result<()> {
-        let state = self.nodes
+    pub async fn add_dependency(&mut self, node_id: NodeId, depends_on: NodeId) -> Result<()> {
+        let state = self
+            .nodes
             .entry(node_id)
             .or_insert_with(|| NodeHealthState::new(self.max_history_size));
 
@@ -316,7 +323,9 @@ impl HealthAggregator {
 
     /// Get health score for a node
     pub async fn get_health_score(&self, node_id: &NodeId) -> Result<HealthScore> {
-        let state = self.nodes.get(node_id)
+        let state = self
+            .nodes
+            .get(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         let mut score = state.current_score;
@@ -354,17 +363,20 @@ impl HealthAggregator {
             return HealthScore::perfect();
         }
 
-        let total: HealthScore = self.nodes.values()
-            .map(|state| state.current_score)
-            .fold(
-                HealthScore { score: 0.0, availability: 0.0, performance: 0.0, reliability: 0.0 },
-                |acc, score| HealthScore {
-                    score: acc.score + score.score,
-                    availability: acc.availability + score.availability,
-                    performance: acc.performance + score.performance,
-                    reliability: acc.reliability + score.reliability,
-                }
-            );
+        let total: HealthScore = self.nodes.values().map(|state| state.current_score).fold(
+            HealthScore {
+                score: 0.0,
+                availability: 0.0,
+                performance: 0.0,
+                reliability: 0.0,
+            },
+            |acc, score| HealthScore {
+                score: acc.score + score.score,
+                availability: acc.availability + score.availability,
+                performance: acc.performance + score.performance,
+                reliability: acc.reliability + score.reliability,
+            },
+        );
 
         let count = self.nodes.len() as f64;
         HealthScore {
@@ -380,7 +392,9 @@ impl HealthAggregator {
         let mut cascades = Vec::new();
 
         // Find nodes that are failed
-        let failed_nodes: Vec<_> = self.nodes.iter()
+        let failed_nodes: Vec<_> = self
+            .nodes
+            .iter()
             .filter(|(_, state)| state.current_score.score < 0.3)
             .map(|(id, _)| id.clone())
             .collect();
@@ -407,9 +421,11 @@ impl HealthAggregator {
     async fn adjust_for_dependencies(
         &self,
         node_id: &NodeId,
-        mut score: HealthScore
+        mut score: HealthScore,
     ) -> Result<HealthScore> {
-        let state = self.nodes.get(node_id)
+        let state = self
+            .nodes
+            .get(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         if state.dependencies.is_empty() {
@@ -440,7 +456,8 @@ impl HealthAggregator {
 
     /// Remove a node from tracking
     pub async fn remove_node(&mut self, node_id: &NodeId) -> Result<()> {
-        self.nodes.remove(node_id)
+        self.nodes
+            .remove(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
         Ok(())
     }
@@ -472,12 +489,12 @@ mod tests {
         let mut agg = HealthAggregator::new();
         let node_id = "node1".to_string();
 
-        let result = HealthCheckResult::success(
-            "test".to_string(),
-            Duration::from_millis(10)
-        );
+        let result = HealthCheckResult::success("test".to_string(), Duration::from_millis(10));
 
-        assert!(agg.record_check_result(node_id.clone(), result).await.is_ok());
+        assert!(agg
+            .record_check_result(node_id.clone(), result)
+            .await
+            .is_ok());
         assert!(agg.get_health_score(&node_id).await.is_ok());
     }
 
@@ -502,10 +519,7 @@ mod tests {
         // Add results for multiple nodes
         for i in 0..3 {
             let node_id = format!("node{}", i);
-            let result = HealthCheckResult::success(
-                "test".to_string(),
-                Duration::from_millis(10)
-            );
+            let result = HealthCheckResult::success("test".to_string(), Duration::from_millis(10));
             agg.record_check_result(node_id, result).await.unwrap();
         }
 

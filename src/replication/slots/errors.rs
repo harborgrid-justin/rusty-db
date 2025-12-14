@@ -18,7 +18,10 @@ pub enum SlotError {
     SlotActive { slot_name: String },
 
     #[error("Slot lag exceeded threshold: {lag_bytes} bytes, threshold: {threshold_bytes} bytes")]
-    LagExceeded { lag_bytes: u64, threshold_bytes: u64 },
+    LagExceeded {
+        lag_bytes: u64,
+        threshold_bytes: u64,
+    },
 
     #[error("Slot consumption failed: {slot_name} - {reason}")]
     ConsumptionFailed { slot_name: String, reason: String },

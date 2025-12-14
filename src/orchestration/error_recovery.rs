@@ -18,8 +18,8 @@
 // Error → Classify → Retry → Fallback → Compensate → Report
 // ```
 
-use std::fmt;
 use std::collections::HashMap;
+use std::fmt;
 
 use std::future::Future;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -31,7 +31,7 @@ use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
 use tracing::{debug, error, info};
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 
 // Error severity level
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -305,8 +305,8 @@ impl Default for RetryConfig {
 impl RetryConfig {
     // Calculate delay for a given attempt
     pub fn delay_for_attempt(&self, attempt: usize) -> Duration {
-        let mut delay = self.initial_delay.as_millis() as f64
-            * self.multiplier.powi(attempt as i32);
+        let mut delay =
+            self.initial_delay.as_millis() as f64 * self.multiplier.powi(attempt as i32);
 
         // Cap at max delay
         delay = delay.min(self.max_delay.as_millis() as f64);
@@ -372,11 +372,7 @@ impl RetryExecutor {
                         if attempt > 0 {
                             self.failed_retries.fetch_add(1, Ordering::Relaxed);
                         }
-                        error!(
-                            "Operation failed after {} attempts: {}",
-                            attempt + 1,
-                            e
-                        );
+                        error!("Operation failed after {} attempts: {}", attempt + 1, e);
                         return Err(e);
                     }
 
@@ -469,11 +465,7 @@ impl RecoveryManager {
     }
 
     // Execute operation with recovery
-    pub async fn execute_with_recovery<F, Fut, T>(
-        &self,
-        operation_name: &str,
-        f: F,
-    ) -> Result<T>
+    pub async fn execute_with_recovery<F, Fut, T>(&self, operation_name: &str, f: F) -> Result<T>
     where
         F: Fn() -> Fut,
         Fut: Future<Output = Result<T>>,
@@ -494,7 +486,10 @@ impl RecoveryManager {
                 // Check if we have a fallback
                 let handlers = self.fallback_handlers.read();
                 if let Some(handler) = handlers.get(operation_name) {
-                    log::warn!("Primary operation failed, trying fallback for: {}", operation_name);
+                    log::warn!(
+                        "Primary operation failed, trying fallback for: {}",
+                        operation_name
+                    );
                     match handler.execute().await {
                         Ok(_) => {
                             self.notify_fallback_success(operation_name);
@@ -502,7 +497,10 @@ impl RecoveryManager {
                             Err(e)
                         }
                         Err(fallback_err) => {
-                            error!("Fallback also failed for {}: {}", operation_name, fallback_err);
+                            error!(
+                                "Fallback also failed for {}: {}",
+                                operation_name, fallback_err
+                            );
                             Err(e)
                         }
                     }

@@ -6,10 +6,10 @@
 // - **OLAP Operations**: Drill-down, roll-up, slice, dice
 // - **Aggregation Cubes**: Pre-computed aggregates
 
+use super::aggregates::AggregateFunction;
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::error::Result;
-use super::aggregates::AggregateFunction;
 
 // =============================================================================
 // OLAP Cube Builder
@@ -333,9 +333,10 @@ impl MultidimensionalAggregator {
                     AggregateFunction::Min => {
                         measure_values.iter().copied().fold(f64::INFINITY, f64::min)
                     }
-                    AggregateFunction::Max => {
-                        measure_values.iter().copied().fold(f64::NEG_INFINITY, f64::max)
-                    }
+                    AggregateFunction::Max => measure_values
+                        .iter()
+                        .copied()
+                        .fold(f64::NEG_INFINITY, f64::max),
                     _ => 0.0,
                 };
 
@@ -425,10 +426,7 @@ mod tests {
 
     #[test]
     fn test_olap_cube_query() {
-        let mut cube = OlapCube::new(
-            vec!["region".to_string()],
-            vec!["sales".to_string()],
-        );
+        let mut cube = OlapCube::new(vec!["region".to_string()], vec!["sales".to_string()]);
 
         cube.insert_cell(vec!["East".to_string()], vec![100.0]);
         cube.insert_cell(vec!["West".to_string()], vec![200.0]);

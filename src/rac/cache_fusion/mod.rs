@@ -22,39 +22,21 @@
 // by allowing direct transfer of cached blocks from one instance's memory to another's,
 // maintaining strict consistency guarantees through sophisticated locking protocols.
 
+pub mod cache_coherence;
 pub mod global_cache;
 pub mod lock_management;
-pub mod cache_coherence;
 
 // Re-export commonly used types from global_cache
 pub use global_cache::{
-    GlobalCacheService,
-    GcsConfig,
-    GcsStatistics,
-    BlockMode,
-    BlockGrant,
-    BlockState,
-    ResourceId,
-    ResourceClass,
-    LockValueBlock,
-    CacheFusionMessage,
-    MAX_BLOCK_SIZE,
-    MAX_CONCURRENT_TRANSFERS,
-    TRANSFER_TIMEOUT,
-    GCS_MESSAGE_TIMEOUT,
+    BlockGrant, BlockMode, BlockState, CacheFusionMessage, GcsConfig, GcsStatistics,
+    GlobalCacheService, LockValueBlock, ResourceClass, ResourceId, GCS_MESSAGE_TIMEOUT,
+    MAX_BLOCK_SIZE, MAX_CONCURRENT_TRANSFERS, TRANSFER_TIMEOUT,
 };
 
 // Re-export commonly used types from lock_management
 pub use lock_management::{
-    GlobalEnqueueService,
-    GesStatistics,
-    LockType,
-    LockGrant,
-    LOCK_CONVERSION_TIMEOUT,
+    GesStatistics, GlobalEnqueueService, LockGrant, LockType, LOCK_CONVERSION_TIMEOUT,
 };
 
 // Re-export commonly used types from cache_coherence
-pub use cache_coherence::{
-    CacheFusionCoordinator,
-    CacheFusionStatistics,
-};
+pub use cache_coherence::{CacheFusionCoordinator, CacheFusionStatistics};

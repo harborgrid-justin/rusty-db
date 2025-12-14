@@ -3,17 +3,17 @@
 // fuzzy checkpointing, media recovery, and point-in-time recovery
 
 use std::collections::BTreeMap;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 // Removed unused import: use std::io::{Write as IoWrite};
-use std::sync::Arc;
-use std::time::SystemTime;
+use super::wal::{LogRecord, PageId, WALEntry, WALManager, LSN};
+use super::TransactionId;
+use crate::error::{DbError, Result};
+use futures::future::BoxFuture;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use futures::future::BoxFuture;
-use crate::error::{Result, DbError};
-use super::TransactionId;
-use super::wal::{WALManager, WALEntry, LogRecord, LSN, PageId};
+use std::sync::Arc;
+use std::time::SystemTime;
 
 /// Recovery state
 #[repr(C)]
@@ -182,41 +182,70 @@ impl ARIESRecoveryManager {
 
             match &entry.record {
                 LogRecord::Begin { txn_id, .. } => {
-                    txn_table.insert(*txn_id, TransactionTableEntry {
-                        txn_id: *txn_id,
-                        state: RecoveryTxnState::Active,
-                        last_lsn: entry.lsn,
-                        undo_next_lsn: None,
-                    });
+                    txn_table.insert(
+                        *txn_id,
+                        TransactionTableEntry {
+                            txn_id: *txn_id,
+                            state: RecoveryTxnState::Active,
+                            last_lsn: entry.lsn,
+                            undo_next_lsn: None,
+                        },
+                    );
                 }
 
-                LogRecord::Update { txn_id, page_id, undo_next_lsn, .. } |
-                LogRecord::Insert { txn_id, page_id, undo_next_lsn, .. } |
-                LogRecord::Delete { txn_id, page_id, undo_next_lsn, .. } => {
+                LogRecord::Update {
+                    txn_id,
+                    page_id,
+                    undo_next_lsn,
+                    ..
+                }
+                | LogRecord::Insert {
+                    txn_id,
+                    page_id,
+                    undo_next_lsn,
+                    ..
+                }
+                | LogRecord::Delete {
+                    txn_id,
+                    page_id,
+                    undo_next_lsn,
+                    ..
+                } => {
                     // Update transaction table
                     if let Some(txn_entry) = txn_table.get_mut(txn_id) {
                         txn_entry.last_lsn = entry.lsn;
                         txn_entry.undo_next_lsn = *undo_next_lsn;
                     } else {
                         // Transaction started before checkpoint
-                        txn_table.insert(*txn_id, TransactionTableEntry {
-                            txn_id: *txn_id,
-                            state: RecoveryTxnState::Active,
-                            last_lsn: entry.lsn,
-                            undo_next_lsn: *undo_next_lsn,
-                        });
+                        txn_table.insert(
+                            *txn_id,
+                            TransactionTableEntry {
+                                txn_id: *txn_id,
+                                state: RecoveryTxnState::Active,
+                                last_lsn: entry.lsn,
+                                undo_next_lsn: *undo_next_lsn,
+                            },
+                        );
                     }
 
                     // Update dirty page table
                     if !dirty_pages.contains_key(page_id) {
-                        dirty_pages.insert(*page_id, DirtyPageEntry {
-                            page_id: *page_id,
-                            rec_lsn: entry.lsn,
-                        });
+                        dirty_pages.insert(
+                            *page_id,
+                            DirtyPageEntry {
+                                page_id: *page_id,
+                                rec_lsn: entry.lsn,
+                            },
+                        );
                     }
                 }
 
-                LogRecord::CLR { txn_id, page_id, undo_next_lsn, .. } => {
+                LogRecord::CLR {
+                    txn_id,
+                    page_id,
+                    undo_next_lsn,
+                    ..
+                } => {
                     // CLR is redo-only, update transaction table
                     if let Some(txn_entry) = txn_table.get_mut(txn_id) {
                         txn_entry.last_lsn = entry.lsn;
@@ -225,10 +254,13 @@ impl ARIESRecoveryManager {
 
                     // Update dirty page table
                     if !dirty_pages.contains_key(page_id) {
-                        dirty_pages.insert(*page_id, DirtyPageEntry {
-                            page_id: *page_id,
-                            rec_lsn: entry.lsn,
-                        });
+                        dirty_pages.insert(
+                            *page_id,
+                            DirtyPageEntry {
+                                page_id: *page_id,
+                                rec_lsn: entry.lsn,
+                            },
+                        );
                     }
                 }
 
@@ -246,25 +278,35 @@ impl ARIESRecoveryManager {
                     }
                 }
 
-                LogRecord::CheckpointEnd { active_txns, dirty_pages: checkpoint_dirty, .. } => {
+                LogRecord::CheckpointEnd {
+                    active_txns,
+                    dirty_pages: checkpoint_dirty,
+                    ..
+                } => {
                     // Use checkpoint information to initialize tables
                     for &txn_id in active_txns {
                         if !txn_table.contains_key(&txn_id) {
-                            txn_table.insert(txn_id, TransactionTableEntry {
+                            txn_table.insert(
                                 txn_id,
-                                state: RecoveryTxnState::Active,
-                                last_lsn: entry.lsn,
-                                undo_next_lsn: None,
-                            });
+                                TransactionTableEntry {
+                                    txn_id,
+                                    state: RecoveryTxnState::Active,
+                                    last_lsn: entry.lsn,
+                                    undo_next_lsn: None,
+                                },
+                            );
                         }
                     }
 
                     for &page_id in checkpoint_dirty {
                         if !dirty_pages.contains_key(&page_id) {
-                            dirty_pages.insert(page_id, DirtyPageEntry {
+                            dirty_pages.insert(
                                 page_id,
-                                rec_lsn: entry.lsn,
-                            });
+                                DirtyPageEntry {
+                                    page_id,
+                                    rec_lsn: entry.lsn,
+                                },
+                            );
                         }
                     }
                 }
@@ -314,10 +356,10 @@ impl ARIESRecoveryManager {
         // Redo each update/insert/delete/CLR
         for entry in log_entries {
             let should_redo = match &entry.record {
-                LogRecord::Update { page_id, .. } |
-                LogRecord::Insert { page_id, .. } |
-                LogRecord::Delete { page_id, .. } |
-                LogRecord::CLR { page_id, .. } => {
+                LogRecord::Update { page_id, .. }
+                | LogRecord::Insert { page_id, .. }
+                | LogRecord::Delete { page_id, .. }
+                | LogRecord::CLR { page_id, .. } => {
                     // Redo if page is in dirty page table and LSN >= rec_lsn
                     if let Some(dirty_entry) = dirty_pages.get(page_id) {
                         entry.lsn >= dirty_entry.rec_lsn
@@ -334,14 +376,20 @@ impl ARIESRecoveryManager {
             }
         }
 
-        println!("Redo complete: {} records redone", self.stats.read().records_redone);
+        println!(
+            "Redo complete: {} records redone",
+            self.stats.read().records_redone
+        );
 
         Ok(())
     }
 
     /// Phase 3: Undo - rollback active transactions
     async fn undo_phase(&self, undo_list: Vec<TransactionId>) -> Result<()> {
-        println!("Starting ARIES Undo phase for {} transactions...", undo_list.len());
+        println!(
+            "Starting ARIES Undo phase for {} transactions...",
+            undo_list.len()
+        );
 
         if undo_list.is_empty() {
             return Ok(());
@@ -375,10 +423,10 @@ impl ARIESRecoveryManager {
 
                 // Get next record to undo for this transaction
                 let next_lsn = match &entry.record {
-                    LogRecord::Update { undo_next_lsn, .. } |
-                    LogRecord::Insert { undo_next_lsn, .. } |
-                    LogRecord::Delete { undo_next_lsn, .. } |
-                    LogRecord::CLR { undo_next_lsn, .. } => *undo_next_lsn,
+                    LogRecord::Update { undo_next_lsn, .. }
+                    | LogRecord::Insert { undo_next_lsn, .. }
+                    | LogRecord::Delete { undo_next_lsn, .. }
+                    | LogRecord::CLR { undo_next_lsn, .. } => *undo_next_lsn,
                     _ => None,
                 };
 
@@ -391,7 +439,10 @@ impl ARIESRecoveryManager {
             }
         }
 
-        println!("Undo complete: {} transactions rolled back", self.stats.read().transactions_rolled_back);
+        println!(
+            "Undo complete: {} transactions rolled back",
+            self.stats.read().transactions_rolled_back
+        );
 
         Ok(())
     }
@@ -400,17 +451,32 @@ impl ARIESRecoveryManager {
     fn redo_record<'a>(&'a self, entry: &'a WALEntry) -> BoxFuture<'a, Result<()>> {
         Box::pin(async move {
             match &entry.record {
-                LogRecord::Update { page_id, offset, after_image, .. } => {
+                LogRecord::Update {
+                    page_id,
+                    offset,
+                    after_image,
+                    ..
+                } => {
                     // Apply after image to page
                     self.apply_to_page(*page_id, *offset, after_image).await?;
                 }
 
-                LogRecord::Insert { page_id, offset, data, .. } => {
+                LogRecord::Insert {
+                    page_id,
+                    offset,
+                    data,
+                    ..
+                } => {
                     // Insert data at offset
                     self.apply_to_page(*page_id, *offset, data).await?;
                 }
 
-                LogRecord::Delete { page_id: _page_id, offset: _offset, deleted_data: _deleted_data, .. } => {
+                LogRecord::Delete {
+                    page_id: _page_id,
+                    offset: _offset,
+                    deleted_data: _deleted_data,
+                    ..
+                } => {
                     // Mark as deleted (in production, this would update page)
                     // For now, simulate
                 }
@@ -423,7 +489,8 @@ impl ARIESRecoveryManager {
                         record: *redo_operation.clone(),
                         size: entry.size,
                         checksum: entry.checksum,
-                    }).await?;
+                    })
+                    .await?;
                 }
 
                 _ => {}
@@ -436,7 +503,14 @@ impl ARIESRecoveryManager {
     /// Undo a log record by writing a CLR
     async fn undo_record(&self, entry: &WALEntry) -> Result<()> {
         match &entry.record {
-            LogRecord::Update { txn_id, page_id, offset, before_image, undo_next_lsn, .. } => {
+            LogRecord::Update {
+                txn_id,
+                page_id,
+                offset,
+                before_image,
+                undo_next_lsn,
+                ..
+            } => {
                 // Create CLR with reverse operation
                 let clr = LogRecord::CLR {
                     txn_id: *txn_id,
@@ -459,7 +533,13 @@ impl ARIESRecoveryManager {
                 self.apply_to_page(*page_id, *offset, before_image).await?;
             }
 
-            LogRecord::Insert { txn_id, page_id, offset, data, undo_next_lsn } => {
+            LogRecord::Insert {
+                txn_id,
+                page_id,
+                offset,
+                data,
+                undo_next_lsn,
+            } => {
                 // Undo insert by deleting
                 let clr = LogRecord::CLR {
                     txn_id: *txn_id,
@@ -477,7 +557,13 @@ impl ARIESRecoveryManager {
                 self.wal.append(clr).await?;
             }
 
-            LogRecord::Delete { txn_id, page_id, offset, deleted_data, undo_next_lsn } => {
+            LogRecord::Delete {
+                txn_id,
+                page_id,
+                offset,
+                deleted_data,
+                undo_next_lsn,
+            } => {
                 // Undo delete by reinserting
                 let clr = LogRecord::CLR {
                     txn_id: *txn_id,
@@ -496,7 +582,9 @@ impl ARIESRecoveryManager {
                 self.apply_to_page(*page_id, *offset, deleted_data).await?;
             }
 
-            LogRecord::CLR { undo_next_lsn: _, .. } => {
+            LogRecord::CLR {
+                undo_next_lsn: _, ..
+            } => {
                 // CLRs are redo-only, skip to undo_next_lsn
             }
 
@@ -591,9 +679,12 @@ impl FuzzyCheckpointManager {
         let start = std::time::Instant::now();
 
         // Write checkpoint begin
-        let _begin_lsn = self.wal.append(LogRecord::CheckpointBegin {
-            timestamp: SystemTime::now(),
-        }).await?;
+        let _begin_lsn = self
+            .wal
+            .append(LogRecord::CheckpointBegin {
+                timestamp: SystemTime::now(),
+            })
+            .await?;
 
         // Get current transaction table and dirty page table
         // (fuzzy = we don't stop new transactions)
@@ -607,11 +698,14 @@ impl FuzzyCheckpointManager {
         drop(dirty_pages);
 
         // Write checkpoint end
-        let end_lsn = self.wal.append(LogRecord::CheckpointEnd {
-            active_txns,
-            dirty_pages: dirty_page_ids,
-            timestamp: SystemTime::now(),
-        }).await?;
+        let end_lsn = self
+            .wal
+            .append(LogRecord::CheckpointEnd {
+                active_txns,
+                dirty_pages: dirty_page_ids,
+                timestamp: SystemTime::now(),
+            })
+            .await?;
 
         // Update statistics
         let checkpoint_time = start.elapsed().as_millis() as f64;
@@ -621,7 +715,10 @@ impl FuzzyCheckpointManager {
             (stats.avg_checkpoint_time_ms * (stats.total_checkpoints - 1) as f64 + checkpoint_time)
                 / stats.total_checkpoints as f64;
 
-        println!("Fuzzy checkpoint completed at LSN {} in {}ms", end_lsn, checkpoint_time as u64);
+        println!(
+            "Fuzzy checkpoint completed at LSN {} in {}ms",
+            end_lsn, checkpoint_time as u64
+        );
 
         Ok(end_lsn)
     }
@@ -666,11 +763,11 @@ impl PointInTimeRecovery {
 
         for entry in entries {
             let record_time = match &entry.record {
-                LogRecord::Begin { timestamp, .. } |
-                LogRecord::Commit { timestamp, .. } |
-                LogRecord::Abort { timestamp, .. } |
-                LogRecord::CheckpointBegin { timestamp } |
-                LogRecord::CheckpointEnd { timestamp, .. } => Some(*timestamp),
+                LogRecord::Begin { timestamp, .. }
+                | LogRecord::Commit { timestamp, .. }
+                | LogRecord::Abort { timestamp, .. }
+                | LogRecord::CheckpointBegin { timestamp }
+                | LogRecord::CheckpointEnd { timestamp, .. } => Some(*timestamp),
                 _ => None,
             };
 
@@ -725,9 +822,9 @@ impl MediaRecoveryManager {
     /// Archive WAL segments
     pub fn archive_segment(&self, segment_path: &Path) -> Result<()> {
         // Copy WAL segment to archive directory
-        let filename = segment_path.file_name().ok_or_else(|| {
-            DbError::IOError("Invalid segment path".to_string())
-        })?;
+        let filename = segment_path
+            .file_name()
+            .ok_or_else(|| DbError::IOError("Invalid segment path".to_string()))?;
 
         let archive_path = self.archive_dir.join(filename);
 
@@ -740,10 +837,10 @@ impl MediaRecoveryManager {
 
 #[cfg(test)]
 mod tests {
+    use super::super::wal::WALConfig;
     use super::*;
+    use std::time::Instant;
     use tempfile::tempdir;
-use super::super::wal::{WALConfig};
-use std::time::Instant;
 
     #[tokio::test]
     async fn test_analysis_phase() {
@@ -763,7 +860,9 @@ use std::time::Instant;
         wal.append(LogRecord::Begin {
             txn_id: 1,
             timestamp: SystemTime::now(),
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
 
         wal.append(LogRecord::Update {
             txn_id: 1,
@@ -772,7 +871,9 @@ use std::time::Instant;
             before_image: vec![1, 2, 3],
             after_image: vec![4, 5, 6],
             undo_next_lsn: None,
-        }).await.unwrap();
+        })
+        .await
+        .unwrap();
 
         // Run analysis
         let (min_lsn, undo_list) = recovery.analysis_phase().await.unwrap();
@@ -780,5 +881,3 @@ use std::time::Instant;
         assert_eq!(undo_list[0], 1);
     }
 }
-
-

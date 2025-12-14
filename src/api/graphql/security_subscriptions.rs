@@ -3,15 +3,13 @@
 // Real-time subscriptions for security events including authentication,
 // authorization, audit, encryption, rate limiting, and threat detection.
 
-use async_graphql::{
-    Context, Enum, Object, SimpleObject, Subscription, ID,
-};
+use async_graphql::{Context, Enum, Object, SimpleObject, Subscription, ID};
 use futures_util::stream::Stream;
 use futures_util::StreamExt;
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
-use serde::{Serialize, Deserialize};
 
 use super::types::DateTime;
 
@@ -493,23 +491,23 @@ impl SecuritySubscriptionRoot {
             let filter_severity = filter_severity.clone();
             let filter_actions = filter_actions.clone();
             async move {
-            result.ok().and_then(|event| {
-                if let Some(ref username) = filter_username {
-                    if &event.username != username {
-                        return None;
+                result.ok().and_then(|event| {
+                    if let Some(ref username) = filter_username {
+                        if &event.username != username {
+                            return None;
+                        }
                     }
-                }
-                if let Some(severity) = filter_severity {
-                    if event.severity as u8 > severity as u8 {
-                        return None;
+                    if let Some(severity) = filter_severity {
+                        if event.severity as u8 > severity as u8 {
+                            return None;
+                        }
                     }
-                }
-                if let Some(ref actions) = filter_actions {
-                    if !actions.contains(&event.action) {
-                        return None;
+                    if let Some(ref actions) = filter_actions {
+                        if !actions.contains(&event.action) {
+                            return None;
+                        }
                     }
-                }
-                Some(event)
+                    Some(event)
                 })
             }
         })

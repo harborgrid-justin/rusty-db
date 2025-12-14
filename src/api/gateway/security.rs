@@ -2,15 +2,15 @@
 //
 // Part of the API Gateway and Security system for RustyDB
 
+use parking_lot::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
-use std::sync::{Arc};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
-use parking_lot::RwLock;
 use uuid::Uuid;
 
-use crate::error::DbError;
 use super::types::*;
+use crate::error::DbError;
 
 // ============================================================================
 // Security Features - Request Validation, Threat Detection
@@ -160,7 +160,9 @@ impl RequestValidator {
         if let Some(content_type) = request.headers.get("Content-Type") {
             let ct = content_type.split(';').next().unwrap_or("");
             if !self.allowed_content_types.contains(ct) {
-                return Err(DbError::InvalidOperation("Invalid content type".to_string()));
+                return Err(DbError::InvalidOperation(
+                    "Invalid content type".to_string(),
+                ));
             }
         }
 
@@ -171,7 +173,8 @@ impl RequestValidator {
 impl ThreatDetector {
     pub(crate) fn new() -> Self {
         let sql_injection_patterns = vec![
-            regex::Regex::new(r"(?i)(union|select|insert|update|delete|drop|create|alter)\s").unwrap(),
+            regex::Regex::new(r"(?i)(union|select|insert|update|delete|drop|create|alter)\s")
+                .unwrap(),
             regex::Regex::new(r"(?i)(--|\|{2}|/\*|\*/)").unwrap(),
             regex::Regex::new(r"(?i)(xp_|sp_)").unwrap(),
         ];
@@ -188,9 +191,7 @@ impl ThreatDetector {
             regex::Regex::new(r"\.\.\\").unwrap(),
         ];
 
-        let suspicious_patterns = vec![
-            regex::Regex::new(r"(?i)(cmd|exec|eval|system)").unwrap(),
-        ];
+        let suspicious_patterns = vec![regex::Regex::new(r"(?i)(cmd|exec|eval|system)").unwrap()];
 
         Self {
             sql_injection_patterns,
@@ -229,7 +230,9 @@ impl ThreatDetector {
     pub(crate) fn check_sql_injection(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.sql_injection_patterns {
             if pattern.is_match(input) {
-                return Err(DbError::InvalidOperation("Potential SQL injection detected".to_string()));
+                return Err(DbError::InvalidOperation(
+                    "Potential SQL injection detected".to_string(),
+                ));
             }
         }
         Ok(())
@@ -239,7 +242,9 @@ impl ThreatDetector {
     pub(crate) fn check_xss(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.xss_patterns {
             if pattern.is_match(input) {
-                return Err(DbError::InvalidOperation("Potential XSS attack detected".to_string()));
+                return Err(DbError::InvalidOperation(
+                    "Potential XSS attack detected".to_string(),
+                ));
             }
         }
         Ok(())
@@ -249,7 +254,9 @@ impl ThreatDetector {
     fn check_path_traversal(&self, input: &str) -> Result<(), DbError> {
         for pattern in &self.path_traversal_patterns {
             if pattern.is_match(input) {
-                return Err(DbError::InvalidOperation("Path traversal attempt detected".to_string()));
+                return Err(DbError::InvalidOperation(
+                    "Path traversal attempt detected".to_string(),
+                ));
             }
         }
         Ok(())
@@ -272,19 +279,23 @@ impl IpFilter {
             IpFilterMode::Blacklist => {
                 let blacklist = self.blacklist.read();
                 if blacklist.contains(&ip) {
-                    Err(DbError::InvalidOperation("IP address blacklisted".to_string()))
+                    Err(DbError::InvalidOperation(
+                        "IP address blacklisted".to_string(),
+                    ))
                 } else {
                     Ok(())
                 }
-            },
+            }
             IpFilterMode::Whitelist => {
                 let whitelist = self.whitelist.read();
                 if whitelist.contains(&ip) {
                     Ok(())
                 } else {
-                    Err(DbError::InvalidOperation("IP address not whitelisted".to_string()))
+                    Err(DbError::InvalidOperation(
+                        "IP address not whitelisted".to_string(),
+                    ))
                 }
-            },
+            }
         }
     }
 
@@ -369,8 +380,6 @@ impl CsrfManager {
         let mut tokens = self.tokens.write();
         let timeout = Duration::from_secs(self.token_timeout);
 
-        tokens.retain(|_, token| {
-            Instant::now().duration_since(token.created_at) < timeout
-        });
+        tokens.retain(|_, token| Instant::now().duration_since(token.created_at) < timeout);
     }
 }

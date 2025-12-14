@@ -685,12 +685,12 @@ pub mod ml_engine;
 // Re-exports for convenience
 // ============================================================================
 
-pub use error::{DbError, Result};
 pub use common::{
-    Component, Transactional, Recoverable, Monitorable, ReplicableState,
-    IsolationLevel, TransactionId, PageId, TableId, IndexId, Value, Tuple, Schema,
-    DatabaseConfig, HealthStatus, SystemEvent, ResourceLimits,
+    Component, DatabaseConfig, HealthStatus, IndexId, IsolationLevel, Monitorable, PageId,
+    Recoverable, ReplicableState, ResourceLimits, Schema, SystemEvent, TableId, TransactionId,
+    Transactional, Tuple, Value,
 };
+pub use error::{DbError, Result};
 
 // ============================================================================
 // Database Configuration (backward compatibility)

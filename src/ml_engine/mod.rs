@@ -51,10 +51,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
 pub mod algorithms;
+pub mod automl;
 pub mod features;
 pub mod model_store;
 pub mod scoring;
-pub mod automl;
 pub mod timeseries;
 pub mod training;
 
@@ -63,7 +63,18 @@ pub mod training;
 // ============================================================================
 
 // Unique identifier for a machine learning model
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    Deserialize,
+    bincode::Encode,
+    bincode::Decode,
+)]
 pub struct ModelId(pub u64);
 
 impl ModelId {
@@ -114,8 +125,11 @@ impl Algorithm {
         match self {
             Algorithm::LinearRegression => MLTask::Regression,
             Algorithm::LogisticRegression => MLTask::Classification,
-            Algorithm::DecisionTree | Algorithm::RandomForest |
-            Algorithm::GradientBoosting | Algorithm::NaiveBayes | Algorithm::SVM => MLTask::Classification,
+            Algorithm::DecisionTree
+            | Algorithm::RandomForest
+            | Algorithm::GradientBoosting
+            | Algorithm::NaiveBayes
+            | Algorithm::SVM => MLTask::Classification,
             Algorithm::KMeans | Algorithm::DBSCAN => MLTask::Clustering,
             Algorithm::NeuralNetwork => MLTask::Classification,
             Algorithm::ARIMA | Algorithm::ExponentialSmoothing => MLTask::TimeSeries,
@@ -145,26 +159,54 @@ impl Hyperparameters {
     }
 
     pub fn get_int(&self, key: &str, default: i64) -> i64 {
-        self.params.get(key)
-            .and_then(|v| if let HyperparamValue::Int(i) = v { Some(*i) } else { None })
+        self.params
+            .get(key)
+            .and_then(|v| {
+                if let HyperparamValue::Int(i) = v {
+                    Some(*i)
+                } else {
+                    None
+                }
+            })
             .unwrap_or(default)
     }
 
     pub fn get_float(&self, key: &str, default: f64) -> f64 {
-        self.params.get(key)
-            .and_then(|v| if let HyperparamValue::Float(f) = v { Some(*f) } else { None })
+        self.params
+            .get(key)
+            .and_then(|v| {
+                if let HyperparamValue::Float(f) = v {
+                    Some(*f)
+                } else {
+                    None
+                }
+            })
             .unwrap_or(default)
     }
 
     pub fn get_bool(&self, key: &str, default: bool) -> bool {
-        self.params.get(key)
-            .and_then(|v| if let HyperparamValue::Bool(b) = v { Some(*b) } else { None })
+        self.params
+            .get(key)
+            .and_then(|v| {
+                if let HyperparamValue::Bool(b) = v {
+                    Some(*b)
+                } else {
+                    None
+                }
+            })
             .unwrap_or(default)
     }
 
     pub fn get_string(&self, key: &str, default: &str) -> String {
-        self.params.get(key)
-            .and_then(|v| if let HyperparamValue::String(s) = v { Some(s.clone()) } else { None })
+        self.params
+            .get(key)
+            .and_then(|v| {
+                if let HyperparamValue::String(s) = v {
+                    Some(s.clone())
+                } else {
+                    None
+                }
+            })
             .unwrap_or_else(|| default.to_string())
     }
 }
@@ -505,12 +547,15 @@ impl MLEngine {
         dataset: Dataset,
         hyperparams: Hyperparameters,
     ) -> Result<ModelId> {
-        let training_engine = self.training_engine.read()
-            .map_err(|_| crate::DbError::Internal("Failed to acquire training engine lock".into()))?;
+        let training_engine = self.training_engine.read().map_err(|_| {
+            crate::DbError::Internal("Failed to acquire training engine lock".into())
+        })?;
 
         let model = training_engine.train(algorithm, dataset, hyperparams, &self.gpu_config)?;
 
-        let mut model_store = self.model_store.write()
+        let mut model_store = self
+            .model_store
+            .write()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
 
         model_store.register_model(model)
@@ -518,30 +563,32 @@ impl MLEngine {
 
     // Make predictions using a trained model
     pub fn predict(&self, model_id: ModelId, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
-        let model_store = self.model_store.read()
+        let model_store = self
+            .model_store
+            .read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
 
         let model = model_store.get_model(model_id)?;
 
-        let scoring_engine = self.scoring_engine.read()
-            .map_err(|_| crate::DbError::Internal("Failed to acquire scoring engine lock".into()))?;
+        let scoring_engine = self.scoring_engine.read().map_err(|_| {
+            crate::DbError::Internal("Failed to acquire scoring engine lock".into())
+        })?;
 
         scoring_engine.predict(model, features)
     }
 
     // Perform AutoML to find the best model
-    pub fn automl(
-        &self,
-        dataset: Dataset,
-        task: MLTask,
-        time_budget: u64,
-    ) -> Result<ModelId> {
-        let automl_engine = self.automl_engine.read()
+    pub fn automl(&self, dataset: Dataset, task: MLTask, time_budget: u64) -> Result<ModelId> {
+        let automl_engine = self
+            .automl_engine
+            .read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire AutoML engine lock".into()))?;
 
         let best_model = automl_engine.find_best_model(dataset, task, time_budget)?;
 
-        let mut model_store = self.model_store.write()
+        let mut model_store = self
+            .model_store
+            .write()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
 
         model_store.register_model(best_model)
@@ -554,15 +601,18 @@ impl MLEngine {
         horizon: usize,
         algorithm: Algorithm,
     ) -> Result<Vec<f64>> {
-        let timeseries_engine = self.timeseries_engine.read()
-            .map_err(|_| crate::DbError::Internal("Failed to acquire time series engine lock".into()))?;
+        let timeseries_engine = self.timeseries_engine.read().map_err(|_| {
+            crate::DbError::Internal("Failed to acquire time series engine lock".into())
+        })?;
 
         timeseries_engine.forecast(series, horizon, algorithm)
     }
 
     // Get model information
     pub fn get_model_info(&self, model_id: ModelId) -> Result<model_store::ModelMetadata> {
-        let model_store = self.model_store.read()
+        let model_store = self
+            .model_store
+            .read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
 
         model_store.get_metadata(model_id)
@@ -570,7 +620,9 @@ impl MLEngine {
 
     // List all models
     pub fn list_models(&self) -> Result<Vec<model_store::ModelMetadata>> {
-        let model_store = self.model_store.read()
+        let model_store = self
+            .model_store
+            .read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
 
         Ok(model_store.list_models())
@@ -578,7 +630,9 @@ impl MLEngine {
 
     // Delete a model
     pub fn delete_model(&self, model_id: ModelId) -> Result<()> {
-        let mut model_store = self.model_store.write()
+        let mut model_store = self
+            .model_store
+            .write()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
 
         model_store.delete_model(model_id)
@@ -586,10 +640,13 @@ impl MLEngine {
 
     // Export model to PMML
     pub fn export_pmml(&self, model_id: ModelId) -> Result<String> {
-        let scoring_engine = self.scoring_engine.read()
-            .map_err(|_| crate::DbError::Internal("Failed to acquire scoring engine lock".into()))?;
+        let scoring_engine = self.scoring_engine.read().map_err(|_| {
+            crate::DbError::Internal("Failed to acquire scoring engine lock".into())
+        })?;
 
-        let model_store = self.model_store.read()
+        let model_store = self
+            .model_store
+            .read()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
 
         let model = model_store.get_model(model_id)?;
@@ -599,12 +656,15 @@ impl MLEngine {
 
     // Import model from PMML
     pub fn import_pmml(&self, pmml: &str) -> Result<ModelId> {
-        let scoring_engine = self.scoring_engine.read()
-            .map_err(|_| crate::DbError::Internal("Failed to acquire scoring engine lock".into()))?;
+        let scoring_engine = self.scoring_engine.read().map_err(|_| {
+            crate::DbError::Internal("Failed to acquire scoring engine lock".into())
+        })?;
 
         let model = scoring_engine.import_pmml(pmml)?;
 
-        let mut model_store = self.model_store.write()
+        let mut model_store = self
+            .model_store
+            .write()
             .map_err(|_| crate::DbError::Internal("Failed to acquire model store lock".into()))?;
 
         model_store.register_model(model)
@@ -645,15 +705,12 @@ mod tests {
 
     #[test]
     fn test_dataset() {
-        let features = vec![
-            vec![1.0, 2.0, 3.0],
-            vec![4.0, 5.0, 6.0],
-        ];
+        let features = vec![vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]];
         let feature_names = vec!["f1".to_string(), "f2".to_string(), "f3".to_string()];
         let targets = vec![0.0, 1.0];
 
-        let dataset = Dataset::new(features, feature_names)
-            .with_targets(targets, "target".to_string());
+        let dataset =
+            Dataset::new(features, feature_names).with_targets(targets, "target".to_string());
 
         assert_eq!(dataset.num_samples(), 2);
         assert_eq!(dataset.num_features(), 3);

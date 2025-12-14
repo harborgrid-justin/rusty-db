@@ -3,9 +3,9 @@
 // Real-time and batch prediction capabilities with PMML import/export,
 // model explanations (SHAP-like), and confidence intervals.
 
+use super::model_store::{ActivationType, Model, ModelParameters};
+use super::{Algorithm, Prediction};
 use crate::error::Result;
-use super::{Prediction, Algorithm};
-use super::model_store::{Model, ModelParameters, ActivationType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -51,24 +51,14 @@ impl ScoringEngine {
             Algorithm::LinearRegression | Algorithm::LogisticRegression => {
                 self.predict_linear(model, features)
             }
-            Algorithm::DecisionTree => {
-                self.predict_tree(model, features)
-            }
+            Algorithm::DecisionTree => self.predict_tree(model, features),
             Algorithm::RandomForest | Algorithm::GradientBoosting => {
                 self.predict_ensemble(model, features)
             }
-            Algorithm::KMeans | Algorithm::DBSCAN => {
-                self.predict_clustering(model, features)
-            }
-            Algorithm::NaiveBayes => {
-                self.predict_naive_bayes(model, features)
-            }
-            Algorithm::SVM => {
-                self.predict_svm(model, features)
-            }
-            Algorithm::NeuralNetwork => {
-                self.predict_neural_network(model, features)
-            }
+            Algorithm::KMeans | Algorithm::DBSCAN => self.predict_clustering(model, features),
+            Algorithm::NaiveBayes => self.predict_naive_bayes(model, features),
+            Algorithm::SVM => self.predict_svm(model, features),
+            Algorithm::NeuralNetwork => self.predict_neural_network(model, features),
             Algorithm::ARIMA | Algorithm::ExponentialSmoothing => {
                 self.predict_timeseries(model, features)
             }
@@ -130,18 +120,22 @@ impl ScoringEngine {
     fn predict_linear(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let (weights, intercept) = match &model.parameters {
             ModelParameters::LinearModel { weights, intercept } => (weights, intercept),
-            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
+            _ => {
+                return Err(crate::DbError::InvalidInput(
+                    "Invalid model parameters".into(),
+                ))
+            }
         };
 
-        let predictions = features.iter()
+        let predictions = features
+            .iter()
             .map(|sample| {
-                let value: f64 = sample.iter()
-                    .zip(weights)
-                    .map(|(x, w)| x * w)
-                    .sum::<f64>() + intercept;
+                let value: f64 =
+                    sample.iter().zip(weights).map(|(x, w)| x * w).sum::<f64>() + intercept;
 
                 // For logistic regression, apply sigmoid
-                let (final_value, confidence) = if model.algorithm == Algorithm::LogisticRegression {
+                let (final_value, confidence) = if model.algorithm == Algorithm::LogisticRegression
+                {
                     let prob = 1.0 / (1.0 + (-value).exp());
                     (if prob >= 0.5 { 1.0 } else { 0.0 }, prob.max(1.0 - prob))
                 } else {
@@ -158,7 +152,8 @@ impl ScoringEngine {
     fn predict_tree(&self, _model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         // Simplified tree prediction
         // In production, this would traverse the actual tree structure
-        let predictions = features.iter()
+        let predictions = features
+            .iter()
             .map(|_sample| {
                 // Placeholder: actual implementation would traverse tree
                 Prediction::new(0.0).with_confidence(1.0)
@@ -171,7 +166,11 @@ impl ScoringEngine {
     fn predict_ensemble(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         let models = match &model.parameters {
             ModelParameters::EnsembleModel { models } => models,
-            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
+            _ => {
+                return Err(crate::DbError::InvalidInput(
+                    "Invalid model parameters".into(),
+                ))
+            }
         };
 
         let n_samples = features.len();
@@ -189,7 +188,8 @@ impl ScoringEngine {
             }
         }
 
-        let predictions = aggregated_predictions.iter()
+        let predictions = aggregated_predictions
+            .iter()
             .zip(&prediction_counts)
             .map(|(&sum, &count)| {
                 let avg = sum / count as f64;
@@ -200,16 +200,26 @@ impl ScoringEngine {
         Ok(predictions)
     }
 
-    fn predict_clustering(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
+    fn predict_clustering(
+        &self,
+        model: &Model,
+        features: Vec<Vec<f64>>,
+    ) -> Result<Vec<Prediction>> {
         let centroids = match &model.parameters {
             ModelParameters::ClusteringModel { centroids } => centroids,
-            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
+            _ => {
+                return Err(crate::DbError::InvalidInput(
+                    "Invalid model parameters".into(),
+                ))
+            }
         };
 
-        let predictions = features.iter()
+        let predictions = features
+            .iter()
             .map(|sample| {
                 // Find nearest centroid
-                let (cluster, distance) = centroids.iter()
+                let (cluster, distance) = centroids
+                    .iter()
                     .enumerate()
                     .map(|(i, centroid)| {
                         let dist = self.euclidean_distance(sample, centroid);
@@ -227,12 +237,15 @@ impl ScoringEngine {
         Ok(predictions)
     }
 
-    fn predict_naive_bayes(&self, _model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
+    fn predict_naive_bayes(
+        &self,
+        _model: &Model,
+        features: Vec<Vec<f64>>,
+    ) -> Result<Vec<Prediction>> {
         // Simplified Naive Bayes prediction
-        let predictions = features.iter()
-            .map(|_sample| {
-                Prediction::new(0.0).with_confidence(0.8)
-            })
+        let predictions = features
+            .iter()
+            .map(|_sample| Prediction::new(0.0).with_confidence(0.8))
             .collect();
 
         Ok(predictions)
@@ -240,22 +253,30 @@ impl ScoringEngine {
 
     fn predict_svm(&self, _model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
         // Simplified SVM prediction
-        let predictions = features.iter()
-            .map(|_sample| {
-                Prediction::new(0.0).with_confidence(0.85)
-            })
+        let predictions = features
+            .iter()
+            .map(|_sample| Prediction::new(0.0).with_confidence(0.85))
             .collect();
 
         Ok(predictions)
     }
 
-    fn predict_neural_network(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
+    fn predict_neural_network(
+        &self,
+        model: &Model,
+        features: Vec<Vec<f64>>,
+    ) -> Result<Vec<Prediction>> {
         let layers = match &model.parameters {
             ModelParameters::NeuralNetwork { layers } => layers,
-            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
+            _ => {
+                return Err(crate::DbError::InvalidInput(
+                    "Invalid model parameters".into(),
+                ))
+            }
         };
 
-        let predictions = features.iter()
+        let predictions = features
+            .iter()
             .map(|sample| {
                 let output = self.forward_pass(sample, layers);
                 Prediction::new(output[0]).with_confidence(0.9)
@@ -265,18 +286,24 @@ impl ScoringEngine {
         Ok(predictions)
     }
 
-    fn predict_timeseries(&self, model: &Model, features: Vec<Vec<f64>>) -> Result<Vec<Prediction>> {
+    fn predict_timeseries(
+        &self,
+        model: &Model,
+        features: Vec<Vec<f64>>,
+    ) -> Result<Vec<Prediction>> {
         let coefficients = match &model.parameters {
             ModelParameters::TimeSeriesModel { coefficients, .. } => coefficients,
-            _ => return Err(crate::DbError::InvalidInput("Invalid model parameters".into())),
+            _ => {
+                return Err(crate::DbError::InvalidInput(
+                    "Invalid model parameters".into(),
+                ))
+            }
         };
 
-        let predictions = features.iter()
+        let predictions = features
+            .iter()
             .map(|sample| {
-                let value: f64 = sample.iter()
-                    .zip(coefficients)
-                    .map(|(x, c)| x * c)
-                    .sum();
+                let value: f64 = sample.iter().zip(coefficients).map(|(x, c)| x * c).sum();
 
                 Prediction::new(value).with_confidence(0.85)
             })
@@ -304,10 +331,12 @@ impl ScoringEngine {
             let mut next_activation = Vec::with_capacity(layer.biases.len());
 
             for (neuron_weights, &bias) in layer.weights.iter().zip(&layer.biases) {
-                let z: f64 = activation.iter()
+                let z: f64 = activation
+                    .iter()
                     .zip(neuron_weights)
                     .map(|(a, w)| a * w)
-                    .sum::<f64>() + bias;
+                    .sum::<f64>()
+                    + bias;
 
                 let a = match layer.activation {
                     ActivationType::ReLU => z.max(0.0),
@@ -322,9 +351,12 @@ impl ScoringEngine {
 
             // Apply softmax if needed
             if layer.activation == ActivationType::Softmax {
-                let max = next_activation.iter().fold(f64::NEG_INFINITY, |a, &b| a.max(b));
+                let max = next_activation
+                    .iter()
+                    .fold(f64::NEG_INFINITY, |a, &b| a.max(b));
                 let exp_sum: f64 = next_activation.iter().map(|&x| (x - max).exp()).sum();
-                next_activation = next_activation.iter()
+                next_activation = next_activation
+                    .iter()
                     .map(|&x| (x - max).exp() / exp_sum)
                     .collect();
             }
@@ -392,12 +424,17 @@ impl ScoringEngine {
         pmml.push_str("<PMML version=\"4.4\" xmlns=\"http://www.dmg.org/PMML-4_4\">\n");
         pmml.push_str("  <Header>\n");
         pmml.push_str(&"    <Application name=\"RustyDB\" version=\"1.0\"/>\n".to_string());
-        pmml.push_str(&format!("    <Timestamp>{}</Timestamp>\n", model.created_at));
+        pmml.push_str(&format!(
+            "    <Timestamp>{}</Timestamp>\n",
+            model.created_at
+        ));
         pmml.push_str("  </Header>\n");
 
         // Data dictionary
         pmml.push_str("  <DataDictionary>\n");
-        pmml.push_str("    <DataField name=\"target\" optype=\"continuous\" dataType=\"double\"/>\n");
+        pmml.push_str(
+            "    <DataField name=\"target\" optype=\"continuous\" dataType=\"double\"/>\n",
+        );
         pmml.push_str("  </DataDictionary>\n");
 
         // Model-specific export
@@ -424,7 +461,9 @@ impl ScoringEngine {
                 }
             }
             _ => {
-                return Err(crate::DbError::InvalidInput("PMML export not supported for this algorithm".into()));
+                return Err(crate::DbError::InvalidInput(
+                    "PMML export not supported for this algorithm".into(),
+                ));
             }
         }
 
@@ -439,7 +478,9 @@ impl ScoringEngine {
         // In production, use a proper XML parser
 
         if !pmml.contains("RegressionModel") {
-            return Err(crate::DbError::InvalidInput("Only regression models supported".into()));
+            return Err(crate::DbError::InvalidInput(
+                "Only regression models supported".into(),
+            ));
         }
 
         // Parse intercept
@@ -468,12 +509,15 @@ impl ScoringEngine {
             let value_start = start + search.len();
             if let Some(end) = pmml[value_start..].find('\"') {
                 let value_str = &pmml[value_start..value_start + end];
-                return value_str.parse()
+                return value_str
+                    .parse()
                     .map_err(|_| crate::DbError::InvalidInput("Invalid PMML value".into()));
             }
         }
 
-        Err(crate::DbError::InvalidInput("PMML attribute not found".into()))
+        Err(crate::DbError::InvalidInput(
+            "PMML attribute not found".into(),
+        ))
     }
 }
 
@@ -600,7 +644,7 @@ impl BatchScoringJob {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Instant;
+    use std::time::Instant;
 
     #[test]
     fn test_linear_prediction() {

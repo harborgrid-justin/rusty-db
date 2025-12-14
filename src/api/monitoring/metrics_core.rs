@@ -37,11 +37,14 @@
 // let health = monitoring.check_health();
 // ```
 
-use std::time::{Duration, Instant, SystemTime};
-use std::collections::{BTreeMap, HashMap};
-use std::sync::{Arc, atomic::{AtomicU64, Ordering}};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc,
+};
+use std::time::{Duration, Instant, SystemTime};
 
 // ============================================================================
 // SECTION 1: METRICS COLLECTION ENGINE (700+ lines)
@@ -64,7 +67,8 @@ impl MetricId {
     pub fn new(name: impl Into<String>, labels: &[(&str, &str)]) -> Self {
         Self {
             name: name.into(),
-            labels: labels.iter()
+            labels: labels
+                .iter()
                 .map(|(k, v)| (k.to_string(), v.to_string()))
                 .collect(),
         }
@@ -182,7 +186,8 @@ impl HistogramMetric {
         }
 
         Self {
-            buckets: sorted_buckets.into_iter()
+            buckets: sorted_buckets
+                .into_iter()
                 .map(|b| (b, AtomicU64::new(0)))
                 .collect(),
             sum: Arc::new(RwLock::new(0.0)),
@@ -206,7 +211,8 @@ impl HistogramMetric {
     }
 
     pub fn get_buckets(&self) -> Vec<HistogramBucketData> {
-        self.buckets.iter()
+        self.buckets
+            .iter()
             .map(|(upper_bound, count)| HistogramBucketData {
                 upper_bound: *upper_bound,
                 count: count.load(Ordering::Relaxed),

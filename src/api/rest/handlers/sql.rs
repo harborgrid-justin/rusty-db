@@ -5,8 +5,8 @@
 
 use axum::{
     extract::{Path, State},
-    response::Json as AxumJson,
     http::StatusCode,
+    response::Json as AxumJson,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -14,11 +14,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use super::{CATALOG, SQL_PARSER, TXN_MANAGER};
 use crate::api::rest::types::*;
-use crate::parser::{SqlStatement, AlterAction, ConstraintType};
 use crate::catalog::{Column, DataType};
 use crate::execution::Executor;
-use super::{CATALOG, TXN_MANAGER, SQL_PARSER};
+use crate::parser::{AlterAction, ConstraintType, SqlStatement};
 
 // ============================================================================
 // Request/Response Types
@@ -26,7 +26,7 @@ use super::{CATALOG, TXN_MANAGER, SQL_PARSER};
 
 #[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct AlterTableRequest {
-    pub operation: String,  // "add_column", "drop_column", "alter_column", etc.
+    pub operation: String, // "add_column", "drop_column", "alter_column", etc.
     pub column_name: Option<String>,
     pub column_definition: Option<ColumnDefinition>,
     pub constraint: Option<ConstraintDefinition>,
@@ -42,7 +42,7 @@ pub struct ColumnDefinition {
 
 #[derive(Debug, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct ConstraintDefinition {
-    pub constraint_type: String,  // "primary_key", "foreign_key", "unique", "check"
+    pub constraint_type: String, // "primary_key", "foreign_key", "unique", "check"
     pub columns: Vec<String>,
     pub ref_table: Option<String>,
     pub ref_columns: Option<Vec<String>>,
@@ -108,7 +108,8 @@ pub async fn create_database(
     State(_state): State<Arc<ApiState>>,
     AxumJson(request): AxumJson<serde_json::Value>,
 ) -> ApiResult<StatusCode> {
-    let name = request.get("name")
+    let name = request
+        .get("name")
         .and_then(|v| v.as_str())
         .ok_or_else(|| ApiError::new("INVALID_INPUT", "Database name is required"))?;
 
@@ -121,7 +122,8 @@ pub async fn create_database(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::CREATED)
@@ -148,7 +150,8 @@ pub async fn drop_database(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::NO_CONTENT)
@@ -179,7 +182,8 @@ pub async fn backup_database(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(AxumJson(json!({
@@ -206,7 +210,8 @@ pub async fn alter_table(
 ) -> ApiResult<StatusCode> {
     let action = match request.operation.as_str() {
         "add_column" => {
-            let col_def = request.column_definition
+            let col_def = request
+                .column_definition
                 .ok_or_else(|| ApiError::new("INVALID_INPUT", "Column definition is required"))?;
 
             let column = Column {
@@ -219,15 +224,18 @@ pub async fn alter_table(
             AlterAction::AddColumn(column)
         }
         "drop_column" => {
-            let col_name = request.column_name
+            let col_name = request
+                .column_name
                 .ok_or_else(|| ApiError::new("INVALID_INPUT", "Column name is required"))?;
 
             AlterAction::DropColumn(col_name)
         }
         "alter_column" => {
-            let col_name = request.column_name
+            let col_name = request
+                .column_name
                 .ok_or_else(|| ApiError::new("INVALID_INPUT", "Column name is required"))?;
-            let col_def = request.column_definition
+            let col_def = request
+                .column_definition
                 .ok_or_else(|| ApiError::new("INVALID_INPUT", "Column definition is required"))?;
 
             AlterAction::AlterColumn {
@@ -236,9 +244,11 @@ pub async fn alter_table(
             }
         }
         "modify_column" => {
-            let col_name = request.column_name
+            let col_name = request
+                .column_name
                 .ok_or_else(|| ApiError::new("INVALID_INPUT", "Column name is required"))?;
-            let col_def = request.column_definition
+            let col_def = request
+                .column_definition
                 .ok_or_else(|| ApiError::new("INVALID_INPUT", "Column definition is required"))?;
 
             AlterAction::ModifyColumn {
@@ -248,8 +258,9 @@ pub async fn alter_table(
             }
         }
         "add_constraint" => {
-            let constraint = request.constraint
-                .ok_or_else(|| ApiError::new("INVALID_INPUT", "Constraint definition is required"))?;
+            let constraint = request.constraint.ok_or_else(|| {
+                ApiError::new("INVALID_INPUT", "Constraint definition is required")
+            })?;
 
             let constraint_type = match constraint.constraint_type.as_str() {
                 "primary_key" => ConstraintType::PrimaryKey(constraint.columns),
@@ -266,13 +277,15 @@ pub async fn alter_table(
             AlterAction::AddConstraint(constraint_type)
         }
         "drop_constraint" => {
-            let constraint_name = request.column_name
+            let constraint_name = request
+                .column_name
                 .ok_or_else(|| ApiError::new("INVALID_INPUT", "Constraint name is required"))?;
 
             AlterAction::DropConstraint(constraint_name)
         }
         "drop_default" => {
-            let col_name = request.column_name
+            let col_name = request
+                .column_name
                 .ok_or_else(|| ApiError::new("INVALID_INPUT", "Column name is required"))?;
 
             AlterAction::DropDefault(col_name)
@@ -280,17 +293,15 @@ pub async fn alter_table(
         _ => return Err(ApiError::new("INVALID_INPUT", "Unknown alter operation")),
     };
 
-    let stmt = SqlStatement::AlterTable {
-        name,
-        action,
-    };
+    let stmt = SqlStatement::AlterTable { name, action };
 
     let catalog_guard = CATALOG.read();
     let catalog_snapshot = (*catalog_guard).clone();
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::OK)
@@ -326,7 +337,8 @@ pub async fn create_view(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::CREATED)
@@ -353,7 +365,8 @@ pub async fn drop_view(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::NO_CONTENT)
@@ -378,20 +391,28 @@ pub async fn create_index(
     State(_state): State<Arc<ApiState>>,
     AxumJson(request): AxumJson<serde_json::Value>,
 ) -> ApiResult<StatusCode> {
-    let name = request.get("name")
+    let name = request
+        .get("name")
         .and_then(|v| v.as_str())
         .ok_or_else(|| ApiError::new("INVALID_INPUT", "Index name is required"))?;
 
-    let table = request.get("table")
+    let table = request
+        .get("table")
         .and_then(|v| v.as_str())
         .ok_or_else(|| ApiError::new("INVALID_INPUT", "Table name is required"))?;
 
-    let columns: Vec<String> = request.get("columns")
+    let columns: Vec<String> = request
+        .get("columns")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .ok_or_else(|| ApiError::new("INVALID_INPUT", "Columns are required"))?;
 
-    let unique = request.get("unique")
+    let unique = request
+        .get("unique")
         .and_then(|v| v.as_bool())
         .unwrap_or(false);
 
@@ -407,7 +428,8 @@ pub async fn create_index(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::CREATED)
@@ -434,7 +456,8 @@ pub async fn drop_index(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::NO_CONTENT)
@@ -459,7 +482,8 @@ pub async fn create_procedure(
     State(_state): State<Arc<ApiState>>,
     AxumJson(request): AxumJson<ProcedureRequest>,
 ) -> ApiResult<StatusCode> {
-    let parameters: Vec<(String, DataType)> = request.parameters
+    let parameters: Vec<(String, DataType)> = request
+        .parameters
         .iter()
         .map(|p| (p.name.clone(), parse_data_type(&p.data_type)))
         .collect();
@@ -475,7 +499,8 @@ pub async fn create_procedure(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::CREATED)
@@ -497,22 +522,17 @@ pub async fn execute_procedure(
     Path(name): Path<String>,
     AxumJson(request): AxumJson<ExecProcedureRequest>,
 ) -> ApiResult<AxumJson<QueryResponse>> {
-    let arguments: Vec<String> = request.arguments
-        .iter()
-        .map(|v| v.to_string())
-        .collect();
+    let arguments: Vec<String> = request.arguments.iter().map(|v| v.to_string()).collect();
 
-    let stmt = SqlStatement::ExecProcedure {
-        name,
-        arguments,
-    };
+    let stmt = SqlStatement::ExecProcedure { name, arguments };
 
     let catalog_guard = CATALOG.read();
     let catalog_snapshot = (*catalog_guard).clone();
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    let result = executor.execute(stmt)
+    let result = executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     let response = QueryResponse {
@@ -550,14 +570,20 @@ pub async fn execute_union(
     AxumJson(request): AxumJson<UnionRequest>,
 ) -> ApiResult<AxumJson<QueryResponse>> {
     // Parse both queries
-    let left_stmts = SQL_PARSER.parse(&request.left_query)
+    let left_stmts = SQL_PARSER
+        .parse(&request.left_query)
         .map_err(|e| ApiError::new("SQL_PARSE_ERROR", &e.to_string()))?;
-    let right_stmts = SQL_PARSER.parse(&request.right_query)
+    let right_stmts = SQL_PARSER
+        .parse(&request.right_query)
         .map_err(|e| ApiError::new("SQL_PARSE_ERROR", &e.to_string()))?;
 
-    let left_stmt = left_stmts.into_iter().next()
+    let left_stmt = left_stmts
+        .into_iter()
+        .next()
         .ok_or_else(|| ApiError::new("SQL_PARSE_ERROR", "No valid left SQL statement"))?;
-    let right_stmt = right_stmts.into_iter().next()
+    let right_stmt = right_stmts
+        .into_iter()
+        .next()
         .ok_or_else(|| ApiError::new("SQL_PARSE_ERROR", "No valid right SQL statement"))?;
 
     let stmt = SqlStatement::Union {
@@ -571,30 +597,39 @@ pub async fn execute_union(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    let result = executor.execute(stmt)
+    let result = executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
-    let rows: Vec<HashMap<String, serde_json::Value>> = result.rows.iter().map(|row| {
-        let mut map = HashMap::new();
-        for (i, val) in row.iter().enumerate() {
-            if let Some(col_name) = result.columns.get(i) {
-                map.insert(col_name.clone(), serde_json::Value::String(val.clone()));
+    let rows: Vec<HashMap<String, serde_json::Value>> = result
+        .rows
+        .iter()
+        .map(|row| {
+            let mut map = HashMap::new();
+            for (i, val) in row.iter().enumerate() {
+                if let Some(col_name) = result.columns.get(i) {
+                    map.insert(col_name.clone(), serde_json::Value::String(val.clone()));
+                }
             }
-        }
-        map
-    }).collect();
+            map
+        })
+        .collect();
 
     let response = QueryResponse {
         query_id: Uuid::new_v4().to_string(),
         row_count: rows.len(),
         rows,
-        columns: result.columns.iter().map(|name| ColumnMetadata {
-            name: name.clone(),
-            data_type: "TEXT".to_string(),
-            nullable: true,
-            precision: None,
-            scale: None,
-        }).collect(),
+        columns: result
+            .columns
+            .iter()
+            .map(|name| ColumnMetadata {
+                name: name.clone(),
+                data_type: "TEXT".to_string(),
+                nullable: true,
+                precision: None,
+                scale: None,
+            })
+            .collect(),
         affected_rows: None,
         execution_time_ms: 0,
         plan: None,
@@ -626,7 +661,8 @@ pub async fn truncate_table(
     drop(catalog_guard);
     let executor = Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone());
 
-    executor.execute(stmt)
+    executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     Ok(StatusCode::OK)

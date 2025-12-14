@@ -380,10 +380,8 @@ pub struct WebSocketSecurityManager {
 impl WebSocketSecurityManager {
     /// Create a new WebSocket security manager
     pub fn new(config: WebSocketSecurityConfig) -> Self {
-        let rate_limiter = ConnectionRateLimiter::new(
-            Duration::from_secs(60),
-            config.connection_rate_limit,
-        );
+        let rate_limiter =
+            ConnectionRateLimiter::new(Duration::from_secs(60), config.connection_rate_limit);
 
         Self {
             config: Arc::new(RwLock::new(config)),
@@ -454,10 +452,7 @@ impl WebSocketSecurityManager {
 
         // Check blacklist first
         if config.enable_ip_blacklist && config.ip_blacklist.contains(&ip) {
-            return Err(DbError::Security(format!(
-                "IP address blacklisted: {}",
-                ip
-            )));
+            return Err(DbError::Security(format!("IP address blacklisted: {}", ip)));
         }
 
         // Check whitelist if enabled

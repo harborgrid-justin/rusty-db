@@ -76,23 +76,24 @@ pub struct BeaconProtocol {
 
 impl BeaconProtocol {
     /// Create a new beacon protocol instance
-    pub fn new(
-        config: DiscoveryConfig,
-        event_tx: mpsc::Sender<DiscoveryEvent>,
-    ) -> Result<Self> {
+    pub fn new(config: DiscoveryConfig, event_tx: mpsc::Sender<DiscoveryEvent>) -> Result<Self> {
         // Create UDP socket
         let socket = std::net::UdpSocket::bind(config.bind_addr)
             .map_err(|e| DbError::Network(format!("Failed to bind socket: {}", e)))?;
 
-        socket.set_nonblocking(true)
+        socket
+            .set_nonblocking(true)
             .map_err(|e| DbError::Network(format!("Failed to set nonblocking: {}", e)))?;
 
         // Enable broadcast for subnet-wide beacons
-        socket.set_broadcast(true)
+        socket
+            .set_broadcast(true)
             .map_err(|e| DbError::Network(format!("Failed to enable broadcast: {}", e)))?;
 
-        let socket = Arc::new(UdpSocket::from_std(socket)
-            .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?);
+        let socket = Arc::new(
+            UdpSocket::from_std(socket)
+                .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?,
+        );
 
         Ok(Self {
             config,
@@ -179,9 +180,10 @@ impl BeaconProtocol {
                 // Check if node recovered from failure
                 if state.info.status != NodeStatus::Alive {
                     state.info.status = NodeStatus::Alive;
-                    let _ = self.event_tx.send(
-                        DiscoveryEvent::NodeRecovered(state.info.clone())
-                    ).await;
+                    let _ = self
+                        .event_tx
+                        .send(DiscoveryEvent::NodeRecovered(state.info.clone()))
+                        .await;
                 }
             }
         } else {
@@ -199,7 +201,10 @@ impl BeaconProtocol {
 
             drop(states);
 
-            let _ = self.event_tx.send(DiscoveryEvent::NodeJoined(beacon.node)).await;
+            let _ = self
+                .event_tx
+                .send(DiscoveryEvent::NodeJoined(beacon.node))
+                .await;
         }
 
         Ok(())
@@ -346,7 +351,8 @@ impl DiscoveryProtocol for BeaconProtocol {
 
     async fn members(&self) -> Result<Vec<NodeInfo>> {
         let states = self.states.read().await;
-        Ok(states.values()
+        Ok(states
+            .values()
             .filter(|s| s.info.status == NodeStatus::Alive)
             .map(|s| s.info.clone())
             .collect())
@@ -379,10 +385,7 @@ mod tests {
 
     #[test]
     fn test_beacon_serialization() {
-        let node = NodeInfo::new(
-            "test-node".to_string(),
-            "127.0.0.1:7946".parse().unwrap(),
-        );
+        let node = NodeInfo::new("test-node".to_string(), "127.0.0.1:7946".parse().unwrap());
 
         let beacon = Beacon {
             node,
@@ -394,7 +397,8 @@ mod tests {
         };
 
         let bytes = bincode::encode_to_vec(&beacon, bincode::config::standard()).unwrap();
-        let (deserialized, _): (Beacon, _) = bincode::decode_from_slice(&bytes, bincode::config::standard()).unwrap();
+        let (deserialized, _): (Beacon, _) =
+            bincode::decode_from_slice(&bytes, bincode::config::standard()).unwrap();
 
         assert_eq!(deserialized.sequence, 42);
         assert_eq!(deserialized.cluster_size, 5);

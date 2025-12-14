@@ -40,15 +40,15 @@
 // # }
 // ```
 
-use std::collections::HashSet;
-use crate::{Result, DbError};
+use crate::{DbError, Result};
+use lazy_static::lazy_static;
+use parking_lot::RwLock;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use unicode_normalization::{UnicodeNormalization, is_nfc, is_nfd, is_nfkc, is_nfkd};
-use lazy_static::lazy_static;
+use unicode_normalization::{is_nfc, is_nfd, is_nfkc, is_nfkd, UnicodeNormalization};
 
 // ============================================================================
 // PART 1: INPUT SANITIZER (Multi-layer input cleaning)
@@ -404,10 +404,15 @@ impl DangerousPatternDetector {
     }
 
     // Helper function to check keywords and add threats
-    fn check_keywords<'a, I>(&self, upper_input: &str, keywords: I,
-                             threat_type: ThreatType, severity: Severity,
-                             description_prefix: &str, threats: &mut Vec<ThreatDetection>)
-    where
+    fn check_keywords<'a, I>(
+        &self,
+        upper_input: &str,
+        keywords: I,
+        threat_type: ThreatType,
+        severity: Severity,
+        description_prefix: &str,
+        threats: &mut Vec<ThreatDetection>,
+    ) where
         I: Iterator<Item = &'a String>,
     {
         for keyword in keywords {
@@ -433,14 +438,24 @@ impl DangerousPatternDetector {
         let mut threats = Vec::new();
 
         // Check for dangerous SQL keywords
-        self.check_keywords(&upper_input, DANGEROUS_SQL_KEYWORDS.iter(),
-                           ThreatType::DangerousKeyword, Severity::Critical,
-                           "Dangerous keyword detected", &mut threats);
+        self.check_keywords(
+            &upper_input,
+            DANGEROUS_SQL_KEYWORDS.iter(),
+            ThreatType::DangerousKeyword,
+            Severity::Critical,
+            "Dangerous keyword detected",
+            &mut threats,
+        );
 
         // Check custom blacklist
-        self.check_keywords(&upper_input, self.custom_blacklist.iter(),
-                           ThreatType::DangerousKeyword, Severity::High,
-                           "Blacklisted keyword detected", &mut threats);
+        self.check_keywords(
+            &upper_input,
+            self.custom_blacklist.iter(),
+            ThreatType::DangerousKeyword,
+            Severity::High,
+            "Blacklisted keyword detected",
+            &mut threats,
+        );
 
         // Check regex patterns
         for (idx, pattern) in INJECTION_PATTERNS.iter().enumerate() {
@@ -485,22 +500,21 @@ impl DangerousPatternDetector {
     // Check for stacked queries
     pub fn contains_stacked_query(&self, input: &str) -> bool {
         let upper = input.to_uppercase();
-        upper.contains(";") && (
-            upper.contains("DROP") ||
-            upper.contains("DELETE") ||
-            upper.contains("UPDATE") ||
-            upper.contains("INSERT")
-        )
+        upper.contains(";")
+            && (upper.contains("DROP")
+                || upper.contains("DELETE")
+                || upper.contains("UPDATE")
+                || upper.contains("INSERT"))
     }
 
     // Check for tautology (always true conditions)
     pub fn detect_tautology(&self, input: &str) -> bool {
         let upper = input.to_uppercase();
-        upper.contains("1=1") ||
-        upper.contains("'1'='1") ||
-        upper.contains("'A'='A") ||
-        upper.contains("OR 1=1") ||
-        upper.contains("OR '1'='1")
+        upper.contains("1=1")
+            || upper.contains("'1'='1")
+            || upper.contains("'A'='A")
+            || upper.contains("OR 1=1")
+            || upper.contains("OR '1'='1")
     }
 
     // Get detector statistics
@@ -646,7 +660,10 @@ impl SQLValidator {
         if self.allowed_functions.contains(&upper_func) {
             Ok(())
         } else {
-            Err(DbError::Security(format!("Function '{}' is not allowed", func_name)))
+            Err(DbError::Security(format!(
+                "Function '{}' is not allowed",
+                func_name
+            )))
         }
     }
 
@@ -838,7 +855,8 @@ impl UnicodeNormalizer {
     // Detect bidirectional text (potential security issue)
     pub fn has_bidi_chars(&self, input: &str) -> bool {
         input.chars().any(|c| {
-            matches!(c,
+            matches!(
+                c,
                 '\u{202A}' | // Left-to-Right Embedding
                 '\u{202B}' | // Right-to-Left Embedding
                 '\u{202C}' | // Pop Directional Formatting
@@ -847,7 +865,7 @@ impl UnicodeNormalizer {
                 '\u{2066}' | // Left-to-Right Isolate
                 '\u{2067}' | // Right-to-Left Isolate
                 '\u{2068}' | // First Strong Isolate
-                '\u{2069}'   // Pop Directional Isolate
+                '\u{2069}' // Pop Directional Isolate
             )
         })
     }
@@ -1035,7 +1053,9 @@ impl QueryWhitelister {
         } else if upper_sql.starts_with("CREATE VIEW") {
             SqlOperation::CreateView
         } else {
-            return Err(DbError::Security("Unknown or disallowed SQL operation".to_string()));
+            return Err(DbError::Security(
+                "Unknown or disallowed SQL operation".to_string(),
+            ));
         };
 
         if !self.is_operation_allowed(&operation) {
@@ -1091,7 +1111,9 @@ impl InjectionPreventionGuard {
         self.detector.scan(&sanitized)?;
 
         // Layer 3: Unicode normalization
-        let normalized = self.normalizer.normalize(&sanitized, NormalizationForm::NFC);
+        let normalized = self
+            .normalizer
+            .normalize(&sanitized, NormalizationForm::NFC);
 
         // Layer 4: Escape validation
         self.escape_validator.validate_escapes(&normalized)?;
@@ -1180,29 +1202,37 @@ mod tests {
         assert!(!result.contains('\u{200B}'));
     }
 
-#[test]
-        fn test_parameterized_query() {
-            let mut builder = ParameterizedQueryBuilder::new();
-            builder.template("SELECT * FROM users WHERE id = ?");
-            let param_id = builder.add_parameter("id", ParameterValue::Integer(123)).unwrap();
-            assert_eq!(param_id, "$1");
+    #[test]
+    fn test_parameterized_query() {
+        let mut builder = ParameterizedQueryBuilder::new();
+        builder.template("SELECT * FROM users WHERE id = ?");
+        let param_id = builder
+            .add_parameter("id", ParameterValue::Integer(123))
+            .unwrap();
+        assert_eq!(param_id, "$1");
 
-            let stmt = builder.build().unwrap();
-            assert_eq!(stmt.parameters.len(), 1);
-        }
+        let stmt = builder.build().unwrap();
+        assert_eq!(stmt.parameters.len(), 1);
+    }
 
     #[test]
     fn test_dangerous_keyword_detection() {
         let detector = DangerousPatternDetector::new();
-        assert!(detector.scan("SELECT * FROM users; EXEC xp_cmdshell 'dir'").is_err());
+        assert!(detector
+            .scan("SELECT * FROM users; EXEC xp_cmdshell 'dir'")
+            .is_err());
         assert!(detector.scan("SELECT SLEEP(5)").is_err());
     }
 
     #[test]
     fn test_quote_validation() {
         let validator = SQLValidator::new();
-        assert!(validator.validate_quotes("SELECT * FROM users WHERE name = 'John'").is_ok());
-        assert!(validator.validate_quotes("SELECT * FROM users WHERE name = 'John").is_err());
+        assert!(validator
+            .validate_quotes("SELECT * FROM users WHERE name = 'John'")
+            .is_ok());
+        assert!(validator
+            .validate_quotes("SELECT * FROM users WHERE name = 'John")
+            .is_err());
     }
 
     #[test]
@@ -1213,7 +1243,9 @@ mod tests {
         assert!(guard.validate_and_sanitize("SELECT * FROM users").is_ok());
 
         // Injection attempt should fail
-        assert!(guard.validate_and_sanitize("SELECT * FROM users; DROP TABLE users").is_err());
+        assert!(guard
+            .validate_and_sanitize("SELECT * FROM users; DROP TABLE users")
+            .is_err());
         assert!(guard.validate_and_sanitize("' OR '1'='1").is_err());
     }
 
@@ -1221,7 +1253,9 @@ mod tests {
     fn test_whitelist_validation() {
         let whitelister = QueryWhitelister::new();
         assert!(whitelister.validate("SELECT * FROM users").is_ok());
-        assert!(whitelister.validate("INSERT INTO users VALUES (1, 'John')").is_ok());
+        assert!(whitelister
+            .validate("INSERT INTO users VALUES (1, 'John')")
+            .is_ok());
         assert!(whitelister.validate("DROP TABLE users").is_err());
     }
 }

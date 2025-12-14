@@ -102,15 +102,18 @@ impl QueryCache {
             }
         }
 
-        cache.insert(query.clone(), CachedResult {
-            query: query.clone(),
-            result,
-            timestamp: SystemTime::now(),
-            ttl_seconds,
-            size_bytes,
-            access_count: 0,
-            last_access: SystemTime::now(),
-        });
+        cache.insert(
+            query.clone(),
+            CachedResult {
+                query: query.clone(),
+                result,
+                timestamp: SystemTime::now(),
+                ttl_seconds,
+                size_bytes,
+                access_count: 0,
+                last_access: SystemTime::now(),
+            },
+        );
 
         lru.push_back(query);
         *self.current_memory_bytes.write() += size_bytes;
@@ -119,10 +122,10 @@ impl QueryCache {
     fn evict_if_needed(&self, incoming_size: usize) {
         let mut current_memory = *self.current_memory_bytes.read();
 
-        while (current_memory + incoming_size > self.max_memory_bytes ||
-               self.cache.read().len() >= self.max_size) &&
-              !self.lru_queue.read().is_empty() {
-
+        while (current_memory + incoming_size > self.max_memory_bytes
+            || self.cache.read().len() >= self.max_size)
+            && !self.lru_queue.read().is_empty()
+        {
             let query_to_evict = {
                 let mut lru = self.lru_queue.write();
                 lru.pop_front()
@@ -163,7 +166,9 @@ impl QueryCache {
     }
 
     pub fn invalidate_pattern(&self, pattern: &str) {
-        let keys_to_remove: Vec<String> = self.cache.read()
+        let keys_to_remove: Vec<String> = self
+            .cache
+            .read()
             .keys()
             .filter(|k| k.contains(pattern))
             .cloned()
@@ -194,7 +199,11 @@ impl QueryCache {
             max_memory_bytes: self.max_memory_bytes,
             hit_count: hits,
             miss_count: misses,
-            hit_rate: if total > 0 { hits as f64 / total as f64 } else { 0.0 },
+            hit_rate: if total > 0 {
+                hits as f64 / total as f64
+            } else {
+                0.0
+            },
         }
     }
 }

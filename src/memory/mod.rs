@@ -64,83 +64,76 @@
 // let stats = manager.get_comprehensive_stats();
 // ```
 
-pub mod buffer_pool;
 pub mod allocator;
+pub mod buffer_pool;
 pub mod types;
 
 // Re-export commonly used types from buffer pool
 pub use buffer_pool::{
-    BufferPoolManager,
-    BufferPoolConfig,
-    BufferPoolStatsSnapshot,
-    PageId,
-    BufferTier,
-    PoolType,
-    ComprehensiveBufferStats,
-    MemoryPressureSnapshot,
-    CheckpointResult,
+    BufferPoolConfig, BufferPoolManager, BufferPoolStatsSnapshot, BufferTier, CheckpointResult,
+    ComprehensiveBufferStats, MemoryPressureSnapshot, PageId, PoolType,
 };
 
 // Re-export commonly used types from allocator
 pub use allocator::{
-    // Main manager
-    MemoryManager,
-
-    // Allocators
-    SlabAllocator,
-    ArenaAllocator,
-    LargeObjectAllocator,
-    MemoryPressureManager,
-    MemoryDebugger,
-
-    // Advanced allocators
-    MemoryPool,
-    MemoryZone,
-    BuddyAllocator,
-
-    // Memory contexts
-    MemoryContext,
-    ContextType,
-
-    // Statistics and reports
-    MemoryStats,
-    SlabAllocatorStats,
-    ArenaAllocatorStats,
-    MemoryContextStats,
-    LargeObjectAllocatorStats,
-    MemoryPressureStats,
-    MemoryDebuggerStats,
-    ComprehensiveMemoryStats,
-    MemoryReport,
-    ComponentBreakdown,
-    MemoryPoolStats,
-    MemoryZoneStats,
-    UsageSummary,
-
-    // Performance monitoring
-    PerformanceCounter,
-    PerformanceStats,
-    AccessPatternAnalyzer,
-    AccessPatternStats,
-    BandwidthMonitor,
-    BandwidthStats,
-
-    // Types
-    MemoryPressureLevel,
-    AllocationSource,
-    MemoryUsage,
-    MemoryPressureEvent,
-    LeakReport,
-    PressureCallback,
-    ZoneType,
-    AllocatorType,
-
-    // Web API
-    MemoryApi,
-
+    calculate_optimal_slab_size,
+    classify_allocation_size,
     // Utility functions
     format_memory_size,
     parse_memory_size,
-    calculate_optimal_slab_size,
-    classify_allocation_size,
+    AccessPatternAnalyzer,
+    AccessPatternStats,
+    AllocationSource,
+    AllocatorType,
+
+    ArenaAllocator,
+    ArenaAllocatorStats,
+    BandwidthMonitor,
+    BandwidthStats,
+
+    BuddyAllocator,
+
+    ComponentBreakdown,
+    ComprehensiveMemoryStats,
+    ContextType,
+
+    LargeObjectAllocator,
+    LargeObjectAllocatorStats,
+    LeakReport,
+    // Web API
+    MemoryApi,
+
+    // Memory contexts
+    MemoryContext,
+    MemoryContextStats,
+    MemoryDebugger,
+
+    MemoryDebuggerStats,
+    // Main manager
+    MemoryManager,
+
+    // Advanced allocators
+    MemoryPool,
+    MemoryPoolStats,
+    MemoryPressureEvent,
+    // Types
+    MemoryPressureLevel,
+    MemoryPressureManager,
+    MemoryPressureStats,
+    MemoryReport,
+    // Statistics and reports
+    MemoryStats,
+    MemoryUsage,
+    MemoryZone,
+    MemoryZoneStats,
+    // Performance monitoring
+    PerformanceCounter,
+    PerformanceStats,
+    PressureCallback,
+    // Allocators
+    SlabAllocator,
+    SlabAllocatorStats,
+    UsageSummary,
+
+    ZoneType,
 };

@@ -62,11 +62,7 @@ impl RpcClient {
     }
 
     /// Make an RPC call to a specific node
-    pub async fn call<R: Request>(
-        &self,
-        node: NodeId,
-        request: R,
-    ) -> Result<R::Response> {
+    pub async fn call<R: Request>(&self, node: NodeId, request: R) -> Result<R::Response> {
         self.call_with_options(node, request, None, None).await
     }
 
@@ -77,7 +73,8 @@ impl RpcClient {
         request: R,
         timeout: Duration,
     ) -> Result<R::Response> {
-        self.call_with_options(node, request, Some(timeout), None).await
+        self.call_with_options(node, request, Some(timeout), None)
+            .await
     }
 
     /// Make an RPC call with custom priority
@@ -87,7 +84,8 @@ impl RpcClient {
         request: R,
         priority: MessagePriority,
     ) -> Result<R::Response> {
-        self.call_with_options(node, request, None, Some(priority)).await
+        self.call_with_options(node, request, None, Some(priority))
+            .await
     }
 
     /// Make an RPC call with full options
@@ -210,11 +208,13 @@ impl Request for PingRequest {
     type Response = PingResponse;
 
     fn to_cluster_message(self) -> ClusterMessage {
-        ClusterMessage::Heartbeat(crate::networking::routing::serialization::HeartbeatMessage {
-            node_id: NodeId::new("ping"),
-            timestamp: self.timestamp,
-            sequence: 0,
-        })
+        ClusterMessage::Heartbeat(
+            crate::networking::routing::serialization::HeartbeatMessage {
+                node_id: NodeId::new("ping"),
+                timestamp: self.timestamp,
+                sequence: 0,
+            },
+        )
     }
 
     fn from_cluster_message(message: ClusterMessage) -> Result<Self::Response> {

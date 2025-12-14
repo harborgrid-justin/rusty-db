@@ -3,42 +3,108 @@
 // Server setup, routing, and core functionality for the REST API.
 // Uses dependency injection and proper error handling.
 
+use super::cors::build_cors_layer;
+use super::handlers::admin::{
+    create_backup, create_role, create_user, delete_role, delete_user, get_config, get_health,
+    get_role, get_roles, get_user, get_users, run_maintenance, update_config, update_role,
+    update_user,
+};
+use super::handlers::auth::{login, logout, refresh, validate};
+use super::handlers::cluster::{
+    add_cluster_node, get_cluster_config, get_cluster_node, get_cluster_nodes,
+    get_cluster_topology, get_replication_status, migrate_node, remove_cluster_node,
+    trigger_failover, update_cluster_config,
+};
+use super::handlers::db::{
+    begin_transaction, commit_transaction, create_table, delete_table, execute_batch,
+    execute_query, get_schema, get_table, rollback_transaction, update_table,
+};
+use super::handlers::monitoring::{
+    acknowledge_alert, get_alerts, get_logs, get_metrics, get_performance_data,
+    get_prometheus_metrics, get_query_stats, get_session_stats,
+};
+use super::handlers::pool::{
+    drain_pool, get_connection, get_connections, get_pool, get_pool_stats, get_pools, get_session,
+    get_sessions, kill_connection, terminate_session, update_pool,
+};
+use super::handlers::system::{
+    get_clustering_status, get_replication_status_info, get_security_features, get_server_config,
+    get_server_info,
+};
+use super::handlers::{CATALOG, SQL_PARSER, TXN_MANAGER};
+use super::middleware::{auth_middleware, rate_limit_middleware, request_logger_middleware};
+use super::types::{ApiMetrics, ApiState, QueryRequest, RateLimiter};
+use crate::api::graphql::{
+    AuthorizationContext, GraphQLEngine, MutationRoot, QueryRoot, SubscriptionRoot,
+};
+use crate::api::ApiConfig;
+use crate::error::DbError;
+use crate::execution::Executor;
+use crate::networking::{
+    create_api_router, create_default_manager, NetworkConfig, NodeAddress, NodeId, NodeInfo,
+};
+use async_graphql::{http::GraphQLPlaygroundConfig, Schema};
+use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
-    Router,
-    routing::{get, post, put, delete},
-    extract::{State, WebSocketUpgrade, ws::WebSocket},
-    response::{Response, IntoResponse, Html},
-    http::Method,
+    extract::{ws::WebSocket, State, WebSocketUpgrade},
     middleware,
+    response::{Html, IntoResponse, Response},
+    routing::{delete, get, post, put},
+    Router,
 };
 use futures::SinkExt;
-use tower_http::{
-    cors::{CorsLayer, Any},
-    trace::TraceLayer,
-    timeout::TimeoutLayer,
-    limit::RequestBodyLimitLayer,
-};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
 use tokio::sync::{RwLock, Semaphore};
-use async_graphql::{Schema, http::GraphQLPlaygroundConfig};
-use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use crate::api::ApiConfig;
-use crate::api::graphql::{QueryRoot, MutationRoot, SubscriptionRoot, GraphQLEngine, AuthorizationContext};
-use crate::error::DbError;
-use super::types::{ApiState, ApiMetrics, RateLimiter, QueryRequest};
-use super::handlers::db::{execute_query, execute_batch, get_table, create_table, update_table, delete_table, get_schema, begin_transaction, commit_transaction, rollback_transaction};
-use super::handlers::admin::{get_config, update_config, create_backup, get_health, run_maintenance, get_users, create_user, get_user, update_user, delete_user, get_roles, create_role, get_role, update_role, delete_role};
-use super::handlers::monitoring::{get_metrics, get_prometheus_metrics, get_session_stats, get_query_stats, get_performance_data, get_logs, get_alerts, acknowledge_alert};
-use super::handlers::pool::{get_pools, get_pool, update_pool, get_pool_stats, drain_pool, get_connections, get_connection, kill_connection, get_sessions, get_session, terminate_session};
-use super::handlers::cluster::{get_cluster_nodes, add_cluster_node, get_cluster_node, remove_cluster_node, get_cluster_topology, trigger_failover, get_replication_status, get_cluster_config, update_cluster_config};
-use super::handlers::system::{get_server_config, get_clustering_status, get_replication_status_info, get_security_features, get_server_info};
-use super::middleware::{request_logger_middleware, rate_limit_middleware};
-use super::handlers::{CATALOG, TXN_MANAGER, SQL_PARSER};
-use crate::execution::Executor;
+use tower_http::{limit::RequestBodyLimitLayer, timeout::TimeoutLayer, trace::TraceLayer};
 
+// Enterprise Integration Handlers
+use super::handlers::advanced_replication_handlers;
+use super::handlers::audit_handlers;
+use super::handlers::backup_handlers;
+use super::handlers::enterprise_auth_handlers;
+use super::handlers::rac_handlers;
+use super::handlers::replication_handlers;
+
+// Security Handlers
+use super::handlers::encryption_handlers;
+use super::handlers::labels_handlers;
+use super::handlers::masking_handlers;
+use super::handlers::privileges_handlers;
+use super::handlers::security_handlers;
+use super::handlers::vpd_handlers;
+
+// Advanced Business Logic Handlers
+use super::handlers::analytics_handlers;
+use super::handlers::document_handlers;
+use super::handlers::graph_handlers;
+use super::handlers::inmemory_handlers;
+use super::handlers::ml_handlers;
+use super::handlers::spatial_handlers;
+
+// Enterprise Features Handlers
+use super::handlers::autonomous_handlers;
+use super::handlers::blockchain_handlers;
+use super::handlers::event_processing_handlers;
+use super::handlers::flashback_handlers;
+use super::handlers::multitenant_handlers;
+use super::handlers::streams_handlers;
+
+// WebSocket Handlers
+use super::handlers::websocket_handlers;
+use super::handlers::ml_websocket_handlers;
+use super::handlers::analytics_websocket_handlers;
+
+// Health Probe Handlers
+use super::handlers::health_handlers;
+
+// Diagnostics Handlers
+use super::handlers::diagnostics_handlers;
+
+// Dashboard Handlers
+use super::handlers::dashboard_handlers;
 
 // Type alias for the GraphQL schema
 type GraphQLSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
@@ -53,16 +119,22 @@ pub struct RestApiServer {
 impl RestApiServer {
     // Create a new REST API server with injected dependencies
     pub async fn new(config: ApiConfig) -> Result<Self, DbError> {
+        // Create NetworkManager for networking API
+        let network_config = NetworkConfig::default();
+        let local_node = NodeInfo::new(
+            NodeId::new("rest-api-server"),
+            NodeAddress::new("localhost", config.port),
+        );
+        let network_manager = Arc::new(create_default_manager(network_config, local_node));
+
         let state = Arc::new(ApiState {
             config: config.clone(),
             connection_semaphore: Arc::new(Semaphore::new(config.max_connections)),
             active_queries: Arc::new(RwLock::new(HashMap::new())),
             active_sessions: Arc::new(RwLock::new(HashMap::new())),
             metrics: Arc::new(RwLock::new(ApiMetrics::default())),
-            rate_limiter: Arc::new(RwLock::new(RateLimiter::new(
-                config.rate_limit_rps,
-                1,
-            ))),
+            rate_limiter: Arc::new(RwLock::new(RateLimiter::new(config.rate_limit_rps, 1))),
+            network_manager: Some(network_manager),
         });
 
         // Build GraphQL schema with engine and authorization context
@@ -80,40 +152,28 @@ impl RestApiServer {
             .data(auth_context)
             .finish();
 
-        Ok(Self { config, state, graphql_schema })
+        Ok(Self {
+            config,
+            state,
+            graphql_schema,
+        })
     }
 
     // Build the router with all endpoints and middleware
     fn build_router(&self) -> Router {
-        // Create GraphQL router with its own state
-        let graphql_schema = self.graphql_schema.clone();
-        let graphql_router = Router::new()
-            .route("/graphql", post(graphql_handler).get(graphql_playground))
-            .route("/graphql/ws", get(graphql_subscription))
-            .with_state(graphql_schema);
+        // Public auth routes (no authentication required)
+        let auth_routes = Router::new()
+            .route("/api/v1/auth/login", post(login))
+            .route("/api/v1/auth/logout", post(logout))
+            .route("/api/v1/auth/refresh", post(refresh))
+            .route("/api/v1/auth/validate", get(validate))
+            .with_state(self.state.clone());
 
-        let mut router = Router::new()
-            // Merge GraphQL router
-            .merge(graphql_router)
-
-            // Core Database Operations API
-            .route("/api/v1/query", post(execute_query))
-            .route("/api/v1/batch", post(execute_batch))
-            .route("/api/v1/tables/{name}", get(get_table))
-            .route("/api/v1/tables/{name}", post(create_table))
-            .route("/api/v1/tables/{name}", put(update_table))
-            .route("/api/v1/tables/{name}", delete(delete_table))
-            .route("/api/v1/schema", get(get_schema))
-            .route("/api/v1/transactions", post(begin_transaction))
-            .route("/api/v1/transactions/{id}/commit", post(commit_transaction))
-            .route("/api/v1/transactions/{id}/rollback", post(rollback_transaction))
-            .route("/api/v1/stream", get(websocket_stream))
-
-            // Administration API
+        // Protected admin routes (require authentication)
+        let protected_admin_routes = Router::new()
             .route("/api/v1/admin/config", get(get_config))
             .route("/api/v1/admin/config", put(update_config))
             .route("/api/v1/admin/backup", post(create_backup))
-            .route("/api/v1/admin/health", get(get_health))
             .route("/api/v1/admin/maintenance", post(run_maintenance))
             .route("/api/v1/admin/users", get(get_users))
             .route("/api/v1/admin/users", post(create_user))
@@ -125,7 +185,173 @@ impl RestApiServer {
             .route("/api/v1/admin/roles/{id}", get(get_role))
             .route("/api/v1/admin/roles/{id}", put(update_role))
             .route("/api/v1/admin/roles/{id}", delete(delete_role))
+            .route_layer(middleware::from_fn_with_state(
+                self.state.clone(),
+                auth_middleware,
+            ))
+            .with_state(self.state.clone());
 
+        // Protected cluster routes (require authentication)
+        let protected_cluster_routes = Router::new()
+            .route("/api/v1/cluster/nodes", get(get_cluster_nodes))
+            .route("/api/v1/cluster/nodes", post(add_cluster_node))
+            .route("/api/v1/cluster/nodes/{id}", get(get_cluster_node))
+            .route("/api/v1/cluster/nodes/{id}", delete(remove_cluster_node))
+            .route("/api/v1/cluster/topology", get(get_cluster_topology))
+            .route("/api/v1/cluster/failover", post(trigger_failover))
+            .route("/api/v1/cluster/replication", get(get_replication_status))
+            .route("/api/v1/cluster/config", get(get_cluster_config))
+            .route("/api/v1/cluster/config", put(update_cluster_config))
+            .route_layer(middleware::from_fn_with_state(
+                self.state.clone(),
+                auth_middleware,
+            ))
+            .with_state(self.state.clone());
+
+        // Create GraphQL router with its own state
+        let graphql_schema = self.graphql_schema.clone();
+        let graphql_router = Router::new()
+            .route("/graphql", post(graphql_handler).get(graphql_playground))
+            .route("/graphql/ws", get(graphql_subscription))
+            .with_state(graphql_schema);
+
+        // Create networking router if NetworkManager is available
+        let networking_router = self
+            .state
+            .network_manager
+            .as_ref()
+            .map(|nm| create_api_router(nm.clone()));
+
+        let mut router = Router::new()
+            // Merge GraphQL router
+            .merge(graphql_router)
+            // Merge auth routes
+            .merge(auth_routes)
+            // Merge protected routes
+            .merge(protected_admin_routes)
+            .merge(protected_cluster_routes)
+            // Core Database Operations API
+            .route("/api/v1/query", post(execute_query))
+            .route("/api/v1/batch", post(execute_batch))
+            .route("/api/v1/tables/{name}", get(get_table))
+            .route("/api/v1/tables/{name}", post(create_table))
+            .route("/api/v1/tables/{name}", put(update_table))
+            .route("/api/v1/tables/{name}", delete(delete_table))
+            .route("/api/v1/schema", get(get_schema))
+            .route("/api/v1/transactions", post(begin_transaction))
+            .route("/api/v1/transactions/{id}/commit", post(commit_transaction))
+            .route(
+                "/api/v1/transactions/{id}/rollback",
+                post(rollback_transaction),
+            )
+            // Transaction Management API - Extended
+            .route("/api/v1/transactions/active", get(get_active_transactions))
+            .route("/api/v1/transactions/{id}", get(get_transaction))
+            // Savepoint Operations
+            .route("/api/v1/transactions/{id}/savepoint", post(create_savepoint))
+            .route("/api/v1/transactions/{id}/release-savepoint", post(release_savepoint))
+            .route("/api/v1/transactions/{id}/rollback-to-savepoint", post(rollback_to_savepoint))
+            // Isolation Level Control
+            .route("/api/v1/transactions/{id}/isolation-level", put(update_isolation_level))
+            // Lock Management
+            .route("/api/v1/transactions/locks", get(get_locks))
+            .route("/api/v1/transactions/locks/waiters", get(get_lock_waiters))
+            .route("/api/v1/transactions/locks/graph", get(get_lock_graph))
+            .route("/api/v1/transactions/locks/{id}/release", post(release_lock))
+            .route("/api/v1/transactions/locks/release-all", post(release_all_locks))
+            // Deadlock Detection
+            .route("/api/v1/transactions/deadlocks", get(get_deadlocks))
+            .route("/api/v1/transactions/deadlocks/detect", post(detect_deadlocks))
+            // MVCC Operations
+            .route("/api/v1/transactions/mvcc/status", get(get_mvcc_status))
+            .route("/api/v1/transactions/mvcc/snapshots", get(get_mvcc_snapshots))
+            .route("/api/v1/transactions/mvcc/versions/{table}/{row}", get(get_row_versions))
+            .route("/api/v1/transactions/mvcc/vacuum", post(trigger_vacuum))
+            .route("/api/v1/transactions/mvcc/vacuum/full", post(trigger_full_vacuum))
+            // WAL Operations
+            .route("/api/v1/transactions/wal/status", get(get_wal_status))
+            .route("/api/v1/transactions/wal/segments", get(get_wal_segments))
+            .route("/api/v1/transactions/wal/checkpoint", post(force_checkpoint))
+            .route("/api/v1/transactions/wal/archive", post(archive_wal))
+            .route("/api/v1/transactions/wal/replay-status", get(get_wal_replay_status))
+            .route("/api/v1/transactions/wal/switch", post(switch_wal_segment))
+.route("/api/v1/stream", get(websocket_stream))
+            // WebSocket API - Real-time Streaming
+            .route("/api/v1/ws", get(websocket_handlers::ws_upgrade_handler))
+            .route("/api/v1/ws/query", get(websocket_handlers::ws_query_stream))
+            .route(
+                "/api/v1/ws/metrics",
+                get(websocket_handlers::ws_metrics_stream),
+            )
+            .route(
+                "/api/v1/ws/events",
+                get(websocket_handlers::ws_events_stream),
+            )
+            .route(
+                "/api/v1/ws/replication",
+                get(websocket_handlers::ws_replication_stream),
+            )
+            .route(
+                "/api/v1/ws/dashboard",
+                get(dashboard_handlers::ws_dashboard_stream),
+            )
+            // WebSocket API - ML Real-time Streams
+            .route(
+                "/api/v1/ws/ml/training",
+                get(ml_websocket_handlers::ws_ml_training_progress),
+            )
+            .route(
+                "/api/v1/ws/ml/predictions",
+                get(ml_websocket_handlers::ws_ml_predictions),
+            )
+            .route(
+                "/api/v1/ws/ml/automl",
+                get(ml_websocket_handlers::ws_ml_automl_progress),
+            )
+            .route(
+                "/api/v1/ws/ml/lifecycle",
+                get(ml_websocket_handlers::ws_ml_lifecycle_events),
+            )
+            // WebSocket API - Analytics Real-time Streams
+            .route(
+                "/api/v1/ws/analytics/olap",
+                get(analytics_websocket_handlers::ws_analytics_olap),
+            )
+            .route(
+                "/api/v1/ws/analytics/timeseries",
+                get(analytics_websocket_handlers::ws_analytics_timeseries),
+            )
+            .route(
+                "/api/v1/ws/analytics/profiling",
+                get(analytics_websocket_handlers::ws_analytics_profiling),
+            )
+            .route(
+                "/api/v1/ws/analytics/workload",
+                get(analytics_websocket_handlers::ws_analytics_workload),
+            )
+            .route(
+                "/api/v1/ws/analytics/cache",
+                get(analytics_websocket_handlers::ws_analytics_cache_events),
+            )
+            // Health endpoint (public, no auth required)
+            .route("/api/v1/admin/health", get(get_health))
+            // Health Probe API (Kubernetes-compatible, public)
+            .route(
+                "/api/v1/health/liveness",
+                get(health_handlers::liveness_probe),
+            )
+            .route(
+                "/api/v1/health/readiness",
+                get(health_handlers::readiness_probe),
+            )
+            .route(
+                "/api/v1/health/startup",
+                get(health_handlers::startup_probe),
+            )
+            .route(
+                "/api/v1/health/full",
+                get(health_handlers::full_health_check),
+            )
             // Monitoring & Metrics API
             .route("/api/v1/metrics", get(get_metrics))
             .route("/api/v1/metrics/prometheus", get(get_prometheus_metrics))
@@ -135,7 +361,31 @@ impl RestApiServer {
             .route("/api/v1/logs", get(get_logs))
             .route("/api/v1/alerts", get(get_alerts))
             .route("/api/v1/alerts/{id}/acknowledge", post(acknowledge_alert))
-
+            // Diagnostics & Profiling API
+            .route(
+                "/api/v1/diagnostics/incidents",
+                get(diagnostics_handlers::get_incidents),
+            )
+            .route(
+                "/api/v1/diagnostics/dump",
+                post(diagnostics_handlers::create_dump),
+            )
+            .route(
+                "/api/v1/diagnostics/dump/{id}",
+                get(diagnostics_handlers::get_dump_status),
+            )
+            .route(
+                "/api/v1/diagnostics/dump/{id}/download",
+                get(diagnostics_handlers::download_dump),
+            )
+            .route(
+                "/api/v1/profiling/queries",
+                get(diagnostics_handlers::get_query_profiling),
+            )
+            .route(
+                "/api/v1/monitoring/ash",
+                get(diagnostics_handlers::get_active_session_history),
+            )
             // Pool & Connection Management API
             .route("/api/v1/pools", get(get_pools))
             .route("/api/v1/pools/{id}", get(get_pool))
@@ -148,32 +398,639 @@ impl RestApiServer {
             .route("/api/v1/sessions", get(get_sessions))
             .route("/api/v1/sessions/{id}", get(get_session))
             .route("/api/v1/sessions/{id}", delete(terminate_session))
-
-            // Cluster Management API
-            .route("/api/v1/cluster/nodes", get(get_cluster_nodes))
-            .route("/api/v1/cluster/nodes", post(add_cluster_node))
-            .route("/api/v1/cluster/nodes/{id}", get(get_cluster_node))
-            .route("/api/v1/cluster/nodes/{id}", delete(remove_cluster_node))
-            .route("/api/v1/cluster/topology", get(get_cluster_topology))
-            .route("/api/v1/cluster/failover", post(trigger_failover))
-            .route("/api/v1/cluster/replication", get(get_replication_status))
-            .route("/api/v1/cluster/config", get(get_cluster_config))
-            .route("/api/v1/cluster/config", put(update_cluster_config))
-
             // System Information API
             .route("/api/v1/config", get(get_server_config))
             .route("/api/v1/clustering/status", get(get_clustering_status))
-            .route("/api/v1/replication/status", get(get_replication_status_info))
+            .route(
+                "/api/v1/replication/status",
+                get(get_replication_status_info),
+            )
             .route("/api/v1/security/features", get(get_security_features))
             .route("/api/v1/server/info", get(get_server_info))
-
+            // Enterprise Authentication API
+            .route(
+                "/api/v1/auth/ldap/configure",
+                post(enterprise_auth_handlers::configure_ldap),
+            )
+            .route(
+                "/api/v1/auth/ldap/config",
+                get(enterprise_auth_handlers::get_ldap_config),
+            )
+            .route(
+                "/api/v1/auth/ldap/test",
+                post(enterprise_auth_handlers::test_ldap_connection),
+            )
+            .route(
+                "/api/v1/auth/oauth/configure",
+                post(enterprise_auth_handlers::configure_oauth),
+            )
+            .route(
+                "/api/v1/auth/oauth/providers",
+                get(enterprise_auth_handlers::get_oauth_providers),
+            )
+            .route(
+                "/api/v1/auth/sso/configure",
+                post(enterprise_auth_handlers::configure_sso),
+            )
+            .route(
+                "/api/v1/auth/sso/metadata",
+                get(enterprise_auth_handlers::get_saml_metadata),
+            )
+            // Backup & Disaster Recovery API
+            .route(
+                "/api/v1/backup/full",
+                post(backup_handlers::create_full_backup),
+            )
+            .route(
+                "/api/v1/backup/incremental",
+                post(backup_handlers::create_incremental_backup),
+            )
+            .route("/api/v1/backup/list", get(backup_handlers::list_backups))
+            .route("/api/v1/backup/{id}", get(backup_handlers::get_backup))
+            .route(
+                "/api/v1/backup/{id}",
+                delete(backup_handlers::delete_backup),
+            )
+            .route(
+                "/api/v1/backup/{id}/restore",
+                post(backup_handlers::restore_backup),
+            )
+            .route(
+                "/api/v1/backup/schedule",
+                get(backup_handlers::get_backup_schedule),
+            )
+            .route(
+                "/api/v1/backup/schedule",
+                put(backup_handlers::update_backup_schedule),
+            )
+            // Replication Management API
+            .route(
+                "/api/v1/replication/configure",
+                post(replication_handlers::configure_replication),
+            )
+            .route(
+                "/api/v1/replication/config",
+                get(replication_handlers::get_replication_config),
+            )
+            .route(
+                "/api/v1/replication/slots",
+                get(replication_handlers::list_replication_slots),
+            )
+            .route(
+                "/api/v1/replication/slots",
+                post(replication_handlers::create_replication_slot),
+            )
+            .route(
+                "/api/v1/replication/slots/{name}",
+                get(replication_handlers::get_replication_slot),
+            )
+            .route(
+                "/api/v1/replication/slots/{name}",
+                delete(replication_handlers::delete_replication_slot),
+            )
+            .route(
+                "/api/v1/replication/conflicts",
+                get(replication_handlers::get_replication_conflicts),
+            )
+            .route(
+                "/api/v1/replication/resolve-conflict",
+                post(replication_handlers::resolve_replication_conflict),
+            )
+            .route(
+                "/api/v1/replication/conflicts/simulate",
+                post(replication_handlers::simulate_replication_conflict),
+            )
+            // Audit Logging API
+            .route(
+                "/api/v1/security/audit/logs",
+                get(audit_handlers::query_audit_logs),
+            )
+            .route(
+                "/api/v1/security/audit/export",
+                post(audit_handlers::export_audit_logs),
+            )
+            .route(
+                "/api/v1/security/audit/compliance",
+                get(audit_handlers::compliance_report),
+            )
+            .route(
+                "/api/v1/security/audit/stats",
+                get(audit_handlers::get_audit_stats),
+            )
+            .route(
+                "/api/v1/security/audit/verify",
+                post(audit_handlers::verify_audit_integrity),
+            )
+            // RBAC (Role-Based Access Control) API
+            .route("/api/v1/security/roles", get(security_handlers::list_roles))
+            .route(
+                "/api/v1/security/roles",
+                post(security_handlers::create_role),
+            )
+            .route(
+                "/api/v1/security/roles/{id}",
+                get(security_handlers::get_role),
+            )
+            .route(
+                "/api/v1/security/roles/{id}",
+                put(security_handlers::update_role),
+            )
+            .route(
+                "/api/v1/security/roles/{id}",
+                delete(security_handlers::delete_role),
+            )
+            .route(
+                "/api/v1/security/permissions",
+                get(security_handlers::list_permissions),
+            )
+            .route(
+                "/api/v1/security/roles/{id}/permissions",
+                post(security_handlers::assign_permissions),
+            )
+            // Threat Detection API
+            .route(
+                "/api/v1/security/threats",
+                get(security_handlers::get_threat_status),
+            )
+            .route(
+                "/api/v1/security/threats/history",
+                get(security_handlers::get_threat_history),
+            )
+            .route(
+                "/api/v1/security/insider-threats",
+                get(security_handlers::get_insider_threat_status),
+            )
+            // Encryption Management API
+            .route(
+                "/api/v1/security/encryption/status",
+                get(encryption_handlers::get_encryption_status),
+            )
+            .route(
+                "/api/v1/security/encryption/enable",
+                post(encryption_handlers::enable_encryption),
+            )
+            .route(
+                "/api/v1/security/encryption/column",
+                post(encryption_handlers::enable_column_encryption),
+            )
+            .route("/api/v1/security/keys", get(encryption_handlers::list_keys))
+            .route(
+                "/api/v1/security/keys/generate",
+                post(encryption_handlers::generate_key),
+            )
+            .route(
+                "/api/v1/security/keys/{id}/rotate",
+                post(encryption_handlers::rotate_key),
+            )
+            // Data Masking API
+            .route(
+                "/api/v1/security/masking/policies",
+                get(masking_handlers::list_masking_policies),
+            )
+            .route(
+                "/api/v1/security/masking/policies",
+                post(masking_handlers::create_masking_policy),
+            )
+            .route(
+                "/api/v1/security/masking/policies/{name}",
+                get(masking_handlers::get_masking_policy),
+            )
+            .route(
+                "/api/v1/security/masking/policies/{name}",
+                put(masking_handlers::update_masking_policy),
+            )
+            .route(
+                "/api/v1/security/masking/policies/{name}",
+                delete(masking_handlers::delete_masking_policy),
+            )
+            .route(
+                "/api/v1/security/masking/policies/{name}/enable",
+                post(masking_handlers::enable_masking_policy),
+            )
+            .route(
+                "/api/v1/security/masking/policies/{name}/disable",
+                post(masking_handlers::disable_masking_policy),
+            )
+            .route(
+                "/api/v1/security/masking/test",
+                post(masking_handlers::test_masking),
+            )
+            // Virtual Private Database (VPD) API
+            .route(
+                "/api/v1/security/vpd/policies",
+                get(vpd_handlers::list_vpd_policies),
+            )
+            .route(
+                "/api/v1/security/vpd/policies",
+                post(vpd_handlers::create_vpd_policy),
+            )
+            .route(
+                "/api/v1/security/vpd/policies/{name}",
+                get(vpd_handlers::get_vpd_policy),
+            )
+            .route(
+                "/api/v1/security/vpd/policies/{name}",
+                put(vpd_handlers::update_vpd_policy),
+            )
+            .route(
+                "/api/v1/security/vpd/policies/{name}",
+                delete(vpd_handlers::delete_vpd_policy),
+            )
+            .route(
+                "/api/v1/security/vpd/policies/{name}/enable",
+                post(vpd_handlers::enable_vpd_policy),
+            )
+            .route(
+                "/api/v1/security/vpd/policies/{name}/disable",
+                post(vpd_handlers::disable_vpd_policy),
+            )
+            .route(
+                "/api/v1/security/vpd/test-predicate",
+                post(vpd_handlers::test_vpd_predicate),
+            )
+            .route(
+                "/api/v1/security/vpd/policies/table/{table_name}",
+                get(vpd_handlers::get_table_policies),
+            )
+            // Privilege Management API
+            .route(
+                "/api/v1/security/privileges/grant",
+                post(privileges_handlers::grant_privilege),
+            )
+            .route(
+                "/api/v1/security/privileges/revoke",
+                post(privileges_handlers::revoke_privilege),
+            )
+            .route(
+                "/api/v1/security/privileges/user/{user_id}",
+                get(privileges_handlers::get_user_privileges),
+            )
+            .route(
+                "/api/v1/security/privileges/analyze/{user_id}",
+                get(privileges_handlers::analyze_user_privileges),
+            )
+            .route(
+                "/api/v1/security/privileges/role/{role_name}",
+                get(privileges_handlers::get_role_privileges),
+            )
+            .route(
+                "/api/v1/security/privileges/object/{object_name}",
+                get(privileges_handlers::get_object_privileges),
+            )
+            .route(
+                "/api/v1/security/privileges/validate",
+                post(privileges_handlers::validate_privilege),
+            )
+            // Security Labels & MAC API
+            .route(
+                "/api/v1/security/labels/compartments",
+                get(labels_handlers::list_compartments),
+            )
+            .route(
+                "/api/v1/security/labels/compartments",
+                post(labels_handlers::create_compartment),
+            )
+            .route(
+                "/api/v1/security/labels/compartments/{id}",
+                get(labels_handlers::get_compartment),
+            )
+            .route(
+                "/api/v1/security/labels/compartments/{id}",
+                delete(labels_handlers::delete_compartment),
+            )
+            .route(
+                "/api/v1/security/labels/clearances/{user_id}",
+                get(labels_handlers::get_user_clearance),
+            )
+            .route(
+                "/api/v1/security/labels/clearances",
+                post(labels_handlers::set_user_clearance),
+            )
+            .route(
+                "/api/v1/security/labels/check-dominance",
+                post(labels_handlers::check_label_dominance),
+            )
+            .route(
+                "/api/v1/security/labels/validate-access",
+                post(labels_handlers::validate_label_access),
+            )
+            .route(
+                "/api/v1/security/labels/classifications",
+                get(labels_handlers::list_classifications),
+            )
+            // Machine Learning API
+            .route("/api/v1/ml/models", get(ml_handlers::list_models))
+            .route("/api/v1/ml/models", post(ml_handlers::create_model))
+            .route("/api/v1/ml/models/{id}", get(ml_handlers::get_model))
+            .route("/api/v1/ml/models/{id}", delete(ml_handlers::delete_model))
+            .route(
+                "/api/v1/ml/models/{id}/train",
+                post(ml_handlers::train_model),
+            )
+            .route("/api/v1/ml/models/{id}/predict", post(ml_handlers::predict))
+            .route(
+                "/api/v1/ml/models/{id}/metrics",
+                get(ml_handlers::get_model_metrics),
+            )
+            .route(
+                "/api/v1/ml/models/{id}/evaluate",
+                post(ml_handlers::evaluate_model),
+            )
+            .route(
+                "/api/v1/ml/models/{id}/export",
+                get(ml_handlers::export_model),
+            )
+            // Graph Database API
+            .route(
+                "/api/v1/graph/query",
+                post(graph_handlers::execute_graph_query),
+            )
+            .route("/api/v1/graph/vertices", post(graph_handlers::add_vertex))
+            .route(
+                "/api/v1/graph/vertices/{id}",
+                get(graph_handlers::get_vertex),
+            )
+            .route("/api/v1/graph/edges", post(graph_handlers::add_edge))
+            .route("/api/v1/graph/pagerank", post(graph_handlers::run_pagerank))
+            .route(
+                "/api/v1/graph/shortest-path",
+                post(graph_handlers::shortest_path),
+            )
+            .route(
+                "/api/v1/graph/communities",
+                post(graph_handlers::detect_communities),
+            )
+            .route("/api/v1/graph/stats", get(graph_handlers::get_graph_stats))
+            // Document Store API
+            .route(
+                "/api/v1/documents/collections",
+                get(document_handlers::list_collections),
+            )
+            .route(
+                "/api/v1/documents/collections",
+                post(document_handlers::create_collection),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}",
+                get(document_handlers::get_collection),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}",
+                delete(document_handlers::drop_collection),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}/documents",
+                get(document_handlers::find_documents),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}/documents",
+                post(document_handlers::insert_document),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}/documents/bulk",
+                post(document_handlers::bulk_insert_documents),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}/documents/update",
+                put(document_handlers::update_documents),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}/documents/delete",
+                delete(document_handlers::delete_documents),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}/aggregate",
+                post(document_handlers::aggregate_documents),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}/count",
+                get(document_handlers::count_documents),
+            )
+            .route(
+                "/api/v1/documents/collections/{name}/watch",
+                get(document_handlers::watch_collection),
+            )
+            // Spatial Database API (15 endpoints - 100% coverage)
+            .route(
+                "/api/v1/spatial/query",
+                post(spatial_handlers::spatial_query),
+            )
+            .route(
+                "/api/v1/spatial/nearest",
+                post(spatial_handlers::find_nearest),
+            )
+            .route(
+                "/api/v1/spatial/route",
+                post(spatial_handlers::calculate_route),
+            )
+            .route(
+                "/api/v1/spatial/buffer",
+                post(spatial_handlers::create_buffer),
+            )
+            .route(
+                "/api/v1/spatial/transform",
+                post(spatial_handlers::transform_geometry),
+            )
+            .route(
+                "/api/v1/spatial/within",
+                post(spatial_handlers::find_within),
+            )
+            .route(
+                "/api/v1/spatial/intersects",
+                post(spatial_handlers::check_intersects),
+            )
+            .route(
+                "/api/v1/spatial/distance",
+                get(spatial_handlers::calculate_distance),
+            )
+            .route(
+                "/api/v1/spatial/create",
+                post(spatial_handlers::create_spatial_table),
+            )
+            .route(
+                "/api/v1/spatial/index",
+                post(spatial_handlers::create_spatial_index),
+            )
+            .route("/api/v1/spatial/srid", get(spatial_handlers::list_srids))
+            .route(
+                "/api/v1/spatial/union",
+                post(spatial_handlers::union_geometries),
+            )
+            .route(
+                "/api/v1/spatial/intersection",
+                post(spatial_handlers::intersection_geometries),
+            )
+            .route(
+                "/api/v1/spatial/network/nodes",
+                post(spatial_handlers::add_network_node),
+            )
+            .route(
+                "/api/v1/spatial/network/edges",
+                post(spatial_handlers::add_network_edge),
+            )
+            // Analytics API - OLAP Operations (14 endpoints - 100% coverage)
+            .route(
+                "/api/v1/analytics/olap/cubes",
+                post(analytics_handlers::create_olap_cube),
+            )
+            .route(
+                "/api/v1/analytics/olap/cubes",
+                get(analytics_handlers::list_olap_cubes),
+            )
+            .route(
+                "/api/v1/analytics/olap/cubes/{cube_id}/query",
+                post(analytics_handlers::query_olap_cube),
+            )
+            .route(
+                "/api/v1/analytics/olap/cubes/{cube_id}",
+                delete(analytics_handlers::delete_olap_cube),
+            )
+            // Analytics API - Query Analytics
+            .route(
+                "/api/v1/analytics/query-stats",
+                get(analytics_handlers::get_query_statistics),
+            )
+            .route(
+                "/api/v1/analytics/workload",
+                get(analytics_handlers::analyze_workload),
+            )
+            .route(
+                "/api/v1/analytics/recommendations",
+                get(analytics_handlers::get_recommendations),
+            )
+            // Analytics API - Data Quality
+            .route(
+                "/api/v1/analytics/profile/{table_name}",
+                post(analytics_handlers::profile_table),
+            )
+            .route(
+                "/api/v1/analytics/quality/{table_name}",
+                get(analytics_handlers::get_quality_metrics),
+            )
+            .route(
+                "/api/v1/analytics/quality/{table_name}/issues",
+                get(analytics_handlers::get_quality_issues),
+            )
+            // Analytics API - Materialized Views
+            .route(
+                "/api/v1/analytics/materialized-views",
+                post(analytics_handlers::create_materialized_view),
+            )
+            .route(
+                "/api/v1/analytics/materialized-views",
+                get(analytics_handlers::list_materialized_views),
+            )
+            .route(
+                "/api/v1/analytics/materialized-views/{view_id}/refresh",
+                post(analytics_handlers::refresh_materialized_view),
+            )
+            // In-Memory Column Store API (12 endpoints - 100% coverage)
+            .route(
+                "/api/v1/inmemory/enable",
+                post(inmemory_handlers::enable_inmemory),
+            )
+            .route(
+                "/api/v1/inmemory/disable",
+                post(inmemory_handlers::disable_inmemory),
+            )
+            .route(
+                "/api/v1/inmemory/status",
+                get(inmemory_handlers::inmemory_status),
+            )
+            .route(
+                "/api/v1/inmemory/stats",
+                get(inmemory_handlers::inmemory_stats),
+            )
+            .route(
+                "/api/v1/inmemory/populate",
+                post(inmemory_handlers::populate_table),
+            )
+            .route(
+                "/api/v1/inmemory/tables/{table}/status",
+                get(inmemory_handlers::get_table_status),
+            )
+            .route(
+                "/api/v1/inmemory/evict",
+                post(inmemory_handlers::evict_tables),
+            )
+            .route(
+                "/api/v1/inmemory/compact",
+                post(inmemory_handlers::compact_memory),
+            )
+            .route(
+                "/api/v1/inmemory/config",
+                get(inmemory_handlers::get_inmemory_config),
+            )
+            .route(
+                "/api/v1/inmemory/config",
+                put(inmemory_handlers::update_inmemory_config),
+            )
+            // Query Optimizer API
+            // Optimizer Hints
+            .route("/api/v1/optimizer/hints", get(list_hints))
+            .route("/api/v1/optimizer/hints/active", get(get_active_hints))
+            .route("/api/v1/optimizer/hints", post(apply_hints))
+            .route("/api/v1/optimizer/hints/recommendations", post(get_hint_recommendations))
+            .route("/api/v1/optimizer/hints/{id}", delete(remove_hint))
+            // Plan Baselines
+            .route("/api/v1/optimizer/baselines", get(list_baselines))
+            .route("/api/v1/optimizer/baselines", post(create_baseline))
+            .route("/api/v1/optimizer/baselines/load", post(load_baselines))
+            .route("/api/v1/optimizer/baselines/{id}", get(get_baseline))
+            .route("/api/v1/optimizer/baselines/{id}", put(update_baseline))
+            .route("/api/v1/optimizer/baselines/{id}", delete(delete_baseline))
+            .route("/api/v1/optimizer/baselines/{id}/evolve", post(evolve_baseline))
+            // EXPLAIN endpoints
+            .route("/api/v1/query/explain", post(explain_query))
+            .route("/api/v1/query/explain/analyze", post(explain_analyze_query))
+            .route("/api/v1/query/explain/visualize", post(explain_query_with_visualization))
+            // Adaptive Execution
+            .route("/api/v1/optimizer/adaptive/status", get(get_adaptive_status))
+            .route("/api/v1/optimizer/adaptive/enable", post(enable_adaptive_execution))
+            .route("/api/v1/optimizer/adaptive/statistics", get(get_adaptive_statistics))
+            // Parallel Query Configuration
+            .route("/api/v1/optimizer/parallel/config", get(get_parallel_config))
+            .route("/api/v1/optimizer/parallel/config", put(update_parallel_config))
+            .route("/api/v1/optimizer/parallel/statistics", get(get_parallel_statistics))
+            // Query Execution API
+            .route("/api/v1/query/execute", post(execute_query_with_monitoring))
+            .route("/api/v1/query/{query_id}/cancel", post(cancel_query))
+            .route("/api/v1/query/{query_id}/status", get(get_query_status))
+            .route("/api/v1/query/plan", post(get_query_plan))
+            .route("/api/v1/query/parallel", post(execute_parallel_query))
+            .route("/api/v1/query/cte", post(execute_cte_query))
+            .route("/api/v1/query/adaptive", post(execute_adaptive_query))
+            .route("/api/v1/query/vectorized", post(execute_vectorized_query))
+            .route("/api/v1/query/active", get(list_active_queries))
+            // Query WebSocket endpoints
+            .route("/api/v1/ws/query/execution", get(ws_query_execution))
+            .route("/api/v1/ws/query/results", get(ws_result_streaming))
+            .route("/api/v1/ws/query/cte", get(ws_cte_monitoring))
+            .route("/api/v1/ws/query/parallel", get(ws_parallel_execution))
+            .route("/api/v1/ws/query/adaptive", get(ws_adaptive_optimization))
+            // Dashboard Management API
+            .route("/api/v1/dashboards", post(dashboard_handlers::create_dashboard))
+            .route("/api/v1/dashboards", get(dashboard_handlers::list_dashboards))
+            .route("/api/v1/dashboards/{id}", get(dashboard_handlers::get_dashboard))
+            .route("/api/v1/dashboards/{id}", put(dashboard_handlers::update_dashboard))
+            .route("/api/v1/dashboards/{id}", delete(dashboard_handlers::delete_dashboard))
             .with_state(self.state.clone());
+
+        // Merge networking router if available
+        if let Some(net_router) = networking_router {
+            router = router.merge(net_router);
+        }
 
         // Add middleware layers
         router = router
             .layer(TraceLayer::new_for_http())
-            .layer(TimeoutLayer::new(Duration::from_secs(self.config.request_timeout_secs)))
-            .layer(RequestBodyLimitLayer::new(self.config.max_body_size as u64 as usize))
+            .layer(TimeoutLayer::with_status_code(
+                axum::http::StatusCode::REQUEST_TIMEOUT,
+                Duration::from_secs(self.config.request_timeout_secs),
+            ))
+            .layer(RequestBodyLimitLayer::new(
+                self.config.max_body_size as u64 as usize,
+            ))
             .layer(middleware::from_fn_with_state(
                 self.state.clone(),
                 request_logger_middleware,
@@ -183,25 +1040,17 @@ impl RestApiServer {
                 rate_limit_middleware,
             ));
 
-        // Add CORS if enabled
+        // Add CORS if enabled - uses secure origin validation
+        // SECURITY: NEVER use allow_origin(Any) in production!
+        // This configuration uses a trie-based origin matcher for efficient validation
         if self.config.enable_cors {
-            router = router.layer(
-                CorsLayer::new()
-                    .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
-                    .allow_headers(Any)
-                    .allow_origin(Any)
-            );
+            router = router.layer(build_cors_layer(&self.config.cors_origins));
         }
 
         // Add Swagger UI if enabled
-        // FIXME: SwaggerUi integration disabled - needs proper Router conversion
-        // See: https://docs.rs/utoipa-swagger-ui/latest/utoipa_swagger_ui/
-        // if self.config.enable_swagger {
-        //     router = router.merge(
-        //         SwaggerUi::new("/swagger-ui")
-        //             .url("/api-docs/openapi.json", ApiDoc::openapi())
-        //     );
-        // }
+        if self.config.enable_swagger {
+            router = router.merge(super::swagger::create_api_docs_router());
+        }
 
         router
     }
@@ -227,17 +1076,12 @@ impl RestApiServer {
 impl Default for RestApiServer {
     fn default() -> Self {
         // This would normally inject dependencies, but for default we create them
-        futures::executor::block_on(async {
-            Self::new(ApiConfig::default()).await.unwrap()
-        })
+        futures::executor::block_on(async { Self::new(ApiConfig::default()).await.unwrap() })
     }
 }
 
 // WebSocket handler for streaming query results
-async fn websocket_stream(
-    ws: WebSocketUpgrade,
-    State(state): State<Arc<ApiState>>,
-) -> Response {
+async fn websocket_stream(ws: WebSocketUpgrade, State(state): State<Arc<ApiState>>) -> Response {
     ws.on_upgrade(|socket| handle_websocket(socket, state))
 }
 
@@ -268,9 +1112,17 @@ async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
                                 };
                                 match executor.execute(stmt) {
                                     Ok(result) => {
-                                        let rows: Vec<Vec<serde_json::Value>> = result.rows.iter().map(|row| {
-                                            row.iter().map(|val| serde_json::Value::String(val.clone())).collect()
-                                        }).collect();
+                                        let rows: Vec<Vec<serde_json::Value>> = result
+                                            .rows
+                                            .iter()
+                                            .map(|row| {
+                                                row.iter()
+                                                    .map(|val| {
+                                                        serde_json::Value::String(val.clone())
+                                                    })
+                                                    .collect()
+                                            })
+                                            .collect();
 
                                         json!({
                                             "status": "success",
@@ -278,20 +1130,24 @@ async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
                                             "columns": result.columns,
                                             "rows_affected": result.rows_affected
                                         })
-                                    },
+                                    }
                                     Err(e) => json!({
                                         "status": "error",
                                         "message": e.to_string()
-                                    })
+                                    }),
                                 }
-                            },
+                            }
                             Err(e) => json!({
                                 "status": "error",
                                 "message": e.to_string()
-                            })
+                            }),
                         };
 
-                        if socket.send(Message::Text(response.to_string().into())).await.is_err() {
+                        if socket
+                            .send(Message::Text(response.to_string().into()))
+                            .await
+                            .is_err()
+                        {
                             break;
                         }
                     }
@@ -318,7 +1174,7 @@ async fn graphql_handler(
 // GraphQL Playground UI
 async fn graphql_playground() -> impl IntoResponse {
     Html(async_graphql::http::playground_source(
-        GraphQLPlaygroundConfig::new("/graphql").subscription_endpoint("/graphql/ws")
+        GraphQLPlaygroundConfig::new("/graphql").subscription_endpoint("/graphql/ws"),
     ))
 }
 
@@ -327,8 +1183,8 @@ async fn graphql_subscription(
     ws: WebSocketUpgrade,
     State(schema): State<GraphQLSchema>,
 ) -> impl IntoResponse {
-    use futures_util::StreamExt;
     use axum::extract::ws::{Message, Utf8Bytes};
+    use futures_util::StreamExt;
 
     ws.on_upgrade(move |socket| async move {
         let (mut sink, mut stream) = socket.split();
@@ -352,8 +1208,8 @@ async fn graphql_subscription(
 
 #[cfg(test)]
 mod tests {
-    use crate::api::{ApiConfig, ApiError, RestApiServer};
     use crate::api::rest_api::{PaginatedResponse, PaginationParams, RateLimiter};
+    use crate::api::{ApiConfig, ApiError, RestApiServer};
 
     #[test]
     fn test_api_config_default() {

@@ -19,9 +19,9 @@
 
 use crate::Result;
 use parking_lot::RwLock;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering as AtomicOrdering};
 use std::fmt::Debug;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering as AtomicOrdering};
+use std::sync::Arc;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
@@ -46,7 +46,7 @@ const SIMD_WIDTH: usize = 8; // AVX2 can compare 8 i32s or 4 i64s at once
 // B+ Tree Index with Adaptive Optimization
 pub struct BPlusTree<K: Ord + Clone + Debug, V: Clone + Debug> {
     root: Arc<RwLock<Option<NodeRef<K, V>>>>,
-    order: Arc<AtomicUsize>,  // Adaptive branching factor
+    order: Arc<AtomicUsize>, // Adaptive branching factor
     height: Arc<RwLock<usize>>,
     stats: Arc<AdaptiveStats>,
     config: BTreeConfig,
@@ -169,7 +169,10 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
             else if splits < total_ops / 1000 && current_order > MIN_ORDER {
                 let new_order = (current_order * 4 / 5).max(MIN_ORDER);
                 self.order.store(new_order, AtomicOrdering::Relaxed);
-                tracing::debug!("Adaptive B+Tree: Decreased order to {} for cache locality", new_order);
+                tracing::debug!(
+                    "Adaptive B+Tree: Decreased order to {} for cache locality",
+                    new_order
+                );
             }
         }
     }
@@ -269,7 +272,9 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
     // Search for a key with SIMD acceleration
     pub fn search(&self, key: &K) -> Result<Option<V>> {
         // Track statistics
-        self.stats.point_queries.fetch_add(1, AtomicOrdering::Relaxed);
+        self.stats
+            .point_queries
+            .fetch_add(1, AtomicOrdering::Relaxed);
 
         let root_lock = self.root.read();
 
@@ -299,7 +304,9 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
     // Range scan from start to end (inclusive) with prefetching
     pub fn range_scan(&self, start: &K, end: &K) -> Result<Vec<(K, V)>> {
         // Track statistics
-        self.stats.range_queries.fetch_add(1, AtomicOrdering::Relaxed);
+        self.stats
+            .range_queries
+            .fetch_add(1, AtomicOrdering::Relaxed);
 
         let root_lock = self.root.read();
 
@@ -617,7 +624,9 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
             self.keys.len()
         } else {
             // Binary search for larger key sets
-            self.keys.binary_search_by(|k| k.cmp(key)).unwrap_or_else(|idx| idx)
+            self.keys
+                .binary_search_by(|k| k.cmp(key))
+                .unwrap_or_else(|idx| idx)
         }
     }
 
@@ -668,7 +677,9 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
 
     // Insert in leaf node
     fn insert_in_leaf(&mut self, key: K, value: V) -> Result<()> {
-        let pos = self.entries.binary_search_by(|(k, _)| k.cmp(&key))
+        let pos = self
+            .entries
+            .binary_search_by(|(k, _)| k.cmp(&key))
             .unwrap_or_else(|e| e);
 
         self.entries.insert(pos, (key.clone(), value));
@@ -678,12 +689,7 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> Node<K, V> {
     }
 
     // Insert in internal node
-    fn insert_in_internal(
-        &mut self,
-        key: K,
-        child: NodeRef<K, V>,
-        child_idx: usize,
-    ) -> Result<()> {
+    fn insert_in_internal(&mut self, key: K, child: NodeRef<K, V>, child_idx: usize) -> Result<()> {
         self.keys.insert(child_idx, key);
         self.children.insert(child_idx + 1, child);
         Ok(())
@@ -752,7 +758,7 @@ pub struct BTreeStats {
     pub total_keys: usize,
     pub leaf_nodes: usize,
     pub internal_nodes: usize,
-    pub average_fill_factor: ()
+    pub average_fill_factor: (),
 }
 
 #[cfg(test)]
@@ -793,9 +799,7 @@ mod tests {
     fn test_btree_bulk_load() {
         let tree: BPlusTree<i32, String> = BPlusTree::new();
 
-        let data: Vec<_> = (1..=100)
-            .map(|i| (i, format!("value_{}", i)))
-            .collect();
+        let data: Vec<_> = (1..=100).map(|i| (i, format!("value_{}", i))).collect();
 
         tree.bulk_load(data).unwrap();
 

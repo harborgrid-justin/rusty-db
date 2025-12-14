@@ -54,8 +54,8 @@
 // # }
 // ```
 
+use crate::{error::DbError, Result};
 use std::fmt;
-use crate::{Result, error::DbError};
 
 use std::marker::PhantomData;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -87,8 +87,7 @@ impl StackCanary {
     pub fn new() -> Self {
         // Use atomic counter + thread ID for entropy
         static CANARY_COUNTER: AtomicU64 = AtomicU64::new(0xDEADBEEFCAFEBABE);
-        let value = CANARY_COUNTER.fetch_add(1, Ordering::SeqCst)
-            ^ fastrand::u64(..);
+        let value = CANARY_COUNTER.fetch_add(1, Ordering::SeqCst) ^ fastrand::u64(..);
 
         Self {
             value,
@@ -184,9 +183,10 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         // Validate capacity doesn't overflow
         let byte_size = OverflowGuard::checked_mul(capacity, size_of::<T>())?;
         if byte_size > isize::MAX as usize {
-            return Err(DbError::Storage(
-                format!("Buffer capacity {} exceeds maximum allowed size", capacity)
-            ));
+            return Err(DbError::Storage(format!(
+                "Buffer capacity {} exceeds maximum allowed size",
+                capacity
+            )));
         }
 
         let mut data = Vec::with_capacity(capacity);
@@ -337,7 +337,7 @@ impl<T: Copy + Default> BoundsCheckedBuffer<T> {
         self.canary.validate()?;
         if self.size > self.capacity {
             return Err(DbError::Security(
-                "Buffer corruption detected: size > capacity".to_string()
+                "Buffer corruption detected: size > capacity".to_string(),
             ));
         }
         Ok(())
@@ -348,7 +348,10 @@ impl<T: Copy + Default> Drop for BoundsCheckedBuffer<T> {
     fn drop(&mut self) {
         // Validate integrity on drop
         if let Err(e) = self.validate() {
-            eprintln!("SECURITY WARNING: Buffer corruption detected during cleanup: {}", e);
+            eprintln!(
+                "SECURITY WARNING: Buffer corruption detected during cleanup: {}",
+                e
+            );
         }
     }
 }
@@ -413,7 +416,7 @@ impl<'a, T> SafeSlice<'a, T> {
         let current_canary = self.data.as_ptr() as u64 ^ 0xDEADBEEFCAFEBABE;
         if current_canary != self.base_canary {
             return Err(DbError::Security(
-                "Slice base pointer corruption detected!".to_string()
+                "Slice base pointer corruption detected!".to_string(),
             ));
         }
         Ok(())
@@ -493,7 +496,7 @@ impl<'a, T> SafeSliceMut<'a, T> {
         let current_canary = self.data.as_ptr() as u64 ^ 0xDEADBEEFCAFEBABE;
         if current_canary != self.base_canary {
             return Err(DbError::Security(
-                "Mutable slice base pointer corruption detected!".to_string()
+                "Mutable slice base pointer corruption detected!".to_string(),
             ));
         }
         Ok(())
@@ -844,9 +847,8 @@ impl SafeString {
     // Get substring with bounds checking
     pub fn substring(&self, start: usize, len: usize) -> Result<&str> {
         let bytes = self.buffer.read_slice(start, len)?;
-        std::str::from_utf8(bytes).map_err(|_| {
-            DbError::Security("Invalid UTF-8 in substring".to_string())
-        })
+        std::str::from_utf8(bytes)
+            .map_err(|_| DbError::Security("Invalid UTF-8 in substring".to_string()))
     }
 
     // Get full string
@@ -1003,7 +1005,10 @@ impl<T: Copy + Default, const N: usize> Drop for ArrayBoundsChecker<T, N> {
     fn drop(&mut self) {
         // Validate sentinels on drop
         if let Err(e) = self.validate() {
-            eprintln!("CRITICAL SECURITY: Array corruption detected during cleanup: {}", e);
+            eprintln!(
+                "CRITICAL SECURITY: Array corruption detected during cleanup: {}",
+                e
+            );
         }
     }
 }
@@ -1013,11 +1018,7 @@ impl<T: Copy + Default, const N: usize> Drop for ArrayBoundsChecker<T, N> {
 // ============================================================================
 
 // Validate that a pointer offset is safe
-pub fn validate_pointer_offset<T>(
-    _base: *const T,
-    offset: isize,
-    buffer_len: usize,
-) -> Result<()> {
+pub fn validate_pointer_offset<T>(_base: *const T, offset: isize, buffer_len: usize) -> Result<()> {
     // Check offset doesn't overflow
     if offset < 0 && (-offset) as usize > buffer_len {
         return Err(DbError::Security(

@@ -16,14 +16,14 @@
 // - Low overhead failure detection
 // - Eventually consistent membership view
 
-use std::time::SystemTime;
 use crate::error::DbError;
+use rand::prelude::IndexedRandom;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
-use rand::prelude::IndexedRandom;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Member identifier
 pub type MemberId = String;
@@ -332,7 +332,10 @@ impl SwimMembership {
             sent_at: SystemTime::now(),
             indirect: false,
         };
-        self.pending_pings.write().unwrap().insert(sequence, pending);
+        self.pending_pings
+            .write()
+            .unwrap()
+            .insert(sequence, pending);
 
         (msg, sequence)
     }
@@ -372,7 +375,10 @@ impl SwimMembership {
                 sent_at: SystemTime::now(),
                 indirect: true,
             };
-            self.pending_pings.write().unwrap().insert(sequence, pending);
+            self.pending_pings
+                .write()
+                .unwrap()
+                .insert(sequence, pending);
         }
 
         messages
@@ -409,7 +415,10 @@ impl SwimMembership {
     }
 
     // Handle timeout for ping
-    pub fn handle_ping_timeout(&self, sequence: u64) -> Result<Vec<(MemberId, SwimMessage)>, DbError> {
+    pub fn handle_ping_timeout(
+        &self,
+        sequence: u64,
+    ) -> Result<Vec<(MemberId, SwimMessage)>, DbError> {
         let pending = {
             let pings = self.pending_pings.read().unwrap();
             pings.get(&sequence).cloned()

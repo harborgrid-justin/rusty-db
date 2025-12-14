@@ -37,17 +37,17 @@
 // }
 // ```
 
-use std::collections::HashSet;
-use std::sync::Mutex;
-use std::time::SystemTime;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::time::{Duration};
-use tokio::sync::{RwLock, Semaphore};
-use serde::{Serialize, Deserialize};
 use async_trait::async_trait;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::SystemTime;
+use tokio::sync::{RwLock, Semaphore};
 
-use crate::{Result, DbError};
+use crate::{DbError, Result};
 
 // Component lifecycle state
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -207,21 +207,37 @@ pub struct SystemSnapshot {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum LifecycleEvent {
     // Component registered
-    ComponentRegistered { name: String, metadata: ComponentMetadata },
+    ComponentRegistered {
+        name: String,
+        metadata: ComponentMetadata,
+    },
     // Component state changed
-    StateChanged { component: String, old_state: ComponentState, new_state: ComponentState },
+    StateChanged {
+        component: String,
+        old_state: ComponentState,
+        new_state: ComponentState,
+    },
     // Startup initiated
     StartupInitiated,
     // Startup completed
-    StartupCompleted { duration_ms: u64 },
+    StartupCompleted {
+        duration_ms: u64,
+    },
     // Shutdown initiated
     ShutdownInitiated,
     // Shutdown completed
-    ShutdownCompleted { duration_ms: u64 },
+    ShutdownCompleted {
+        duration_ms: u64,
+    },
     // Health check performed
-    HealthCheckPerformed { component: String, status: HealthStatus },
+    HealthCheckPerformed {
+        component: String,
+        status: HealthStatus,
+    },
     // Hot reload performed
-    HotReloadPerformed { component: String },
+    HotReloadPerformed {
+        component: String,
+    },
 }
 
 // Lifecycle event listener
@@ -246,7 +262,10 @@ impl ConnectionManager {
     /// Reserved for connection management
     #[allow(dead_code)]
     async fn acquire_connection(&self) -> Result<()> {
-        let _permit = self.accept_connections.acquire().await
+        let _permit = self
+            .accept_connections
+            .acquire()
+            .await
             .map_err(|e| DbError::Internal(format!("Connection acquire failed: {}", e)))?;
 
         let mut count = self.active_connections.lock().unwrap();
@@ -340,10 +359,8 @@ impl LifecycleManager {
         let mut components = self.components.write().await;
         components.insert(name.clone(), registered);
 
-        self.emit_event(LifecycleEvent::ComponentRegistered {
-            name,
-            metadata,
-        }).await;
+        self.emit_event(LifecycleEvent::ComponentRegistered { name, metadata })
+            .await;
 
         Ok(())
     }
@@ -375,10 +392,13 @@ impl LifecycleManager {
 
         // Phase 4: Validate health
         let health_checks = self.health_check_all().await;
-        let all_healthy = health_checks.iter().all(|h| h.status == HealthStatus::Healthy);
+        let all_healthy = health_checks
+            .iter()
+            .all(|h| h.status == HealthStatus::Healthy);
 
         if !all_healthy {
-            let unhealthy: Vec<_> = health_checks.iter()
+            let unhealthy: Vec<_> = health_checks
+                .iter()
                 .filter(|h| h.status != HealthStatus::Healthy)
                 .map(|h| h.component.clone())
                 .collect();
@@ -395,11 +415,13 @@ impl LifecycleManager {
             *state = ComponentState::Running;
         }
 
-        let duration_ms = start_time.elapsed()
+        let duration_ms = start_time
+            .elapsed()
             .map(|d| d.as_millis() as u64)
             .unwrap_or(0);
 
-        self.emit_event(LifecycleEvent::StartupCompleted { duration_ms }).await;
+        self.emit_event(LifecycleEvent::StartupCompleted { duration_ms })
+            .await;
 
         Ok(())
     }
@@ -435,7 +457,10 @@ impl LifecycleManager {
             }
 
             if visiting.contains(node) {
-                return Err(DbError::Internal(format!("Circular dependency detected: {}", node)));
+                return Err(DbError::Internal(format!(
+                    "Circular dependency detected: {}",
+                    node
+                )));
             }
 
             visiting.insert(node.to_string());
@@ -468,14 +493,17 @@ impl LifecycleManager {
     async fn initialize_component(&self, name: &str) -> Result<()> {
         let component = {
             let components = self.components.read().await;
-            components.get(name)
+            components
+                .get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", name)))?
-                .component.clone()
+                .component
+                .clone()
         };
 
         component.initialize().await?;
 
-        self.update_component_state(name, ComponentState::Uninitialized, ComponentState::Stopped).await;
+        self.update_component_state(name, ComponentState::Uninitialized, ComponentState::Stopped)
+            .await;
 
         Ok(())
     }
@@ -484,16 +512,20 @@ impl LifecycleManager {
     async fn start_component(&self, name: &str) -> Result<()> {
         let component = {
             let components = self.components.read().await;
-            components.get(name)
+            components
+                .get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", name)))?
-                .component.clone()
+                .component
+                .clone()
         };
 
-        self.update_component_state(name, ComponentState::Stopped, ComponentState::Starting).await;
+        self.update_component_state(name, ComponentState::Stopped, ComponentState::Starting)
+            .await;
 
         component.start().await?;
 
-        self.update_component_state(name, ComponentState::Starting, ComponentState::Running).await;
+        self.update_component_state(name, ComponentState::Starting, ComponentState::Running)
+            .await;
 
         Ok(())
     }
@@ -502,22 +534,31 @@ impl LifecycleManager {
     async fn stop_component(&self, name: &str) -> Result<()> {
         let component = {
             let components = self.components.read().await;
-            components.get(name)
+            components
+                .get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", name)))?
-                .component.clone()
+                .component
+                .clone()
         };
 
-        self.update_component_state(name, ComponentState::Running, ComponentState::Stopping).await;
+        self.update_component_state(name, ComponentState::Running, ComponentState::Stopping)
+            .await;
 
         component.stop().await?;
 
-        self.update_component_state(name, ComponentState::Stopping, ComponentState::Stopped).await;
+        self.update_component_state(name, ComponentState::Stopping, ComponentState::Stopped)
+            .await;
 
         Ok(())
     }
 
     // Update component state
-    async fn update_component_state(&self, name: &str, old_state: ComponentState, new_state: ComponentState) {
+    async fn update_component_state(
+        &self,
+        name: &str,
+        old_state: ComponentState,
+        new_state: ComponentState,
+    ) {
         let mut components = self.components.write().await;
         if let Some(reg) = components.get_mut(name) {
             reg.state = new_state;
@@ -526,7 +567,8 @@ impl LifecycleManager {
                 component: name.to_string(),
                 old_state,
                 new_state,
-            }).await;
+            })
+            .await;
         }
     }
 
@@ -548,7 +590,8 @@ impl LifecycleManager {
             self.emit_event(LifecycleEvent::HealthCheckPerformed {
                 component: name.clone(),
                 status: check.status,
-            }).await;
+            })
+            .await;
         }
 
         // Update last health checks
@@ -602,11 +645,13 @@ impl LifecycleManager {
         // Notify shutdown complete
         self.shutdown_signal.notify_waiters();
 
-        let duration_ms = start_time.elapsed()
+        let duration_ms = start_time
+            .elapsed()
             .map(|d| d.as_millis() as u64)
             .unwrap_or(0);
 
-        self.emit_event(LifecycleEvent::ShutdownCompleted { duration_ms }).await;
+        self.emit_event(LifecycleEvent::ShutdownCompleted { duration_ms })
+            .await;
 
         Ok(())
     }
@@ -615,9 +660,11 @@ impl LifecycleManager {
     pub async fn reload_component(&self, name: &str) -> Result<()> {
         let component = {
             let components = self.components.read().await;
-            components.get(name)
+            components
+                .get(name)
                 .ok_or_else(|| DbError::NotFound(format!("Component not found: {}", name)))?
-                .component.clone()
+                .component
+                .clone()
         };
 
         let metadata = component.metadata();
@@ -632,7 +679,8 @@ impl LifecycleManager {
 
         self.emit_event(LifecycleEvent::HotReloadPerformed {
             component: name.to_string(),
-        }).await;
+        })
+        .await;
 
         Ok(())
     }

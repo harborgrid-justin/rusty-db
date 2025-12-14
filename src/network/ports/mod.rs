@@ -33,27 +33,27 @@
 // ```
 
 pub mod allocator;
-pub mod listener;
-pub mod nat;
 pub mod firewall;
-pub mod resolver;
-pub mod mapping;
 pub mod health;
+pub mod listener;
+pub mod mapping;
+pub mod nat;
+pub mod resolver;
 
 use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::net::{SocketAddr, IpAddr};
+use std::net::{IpAddr, SocketAddr};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 
-pub use allocator::{PortAllocator, AllocationStrategy};
-pub use listener::{ListenerManager, Listener, ListenerConfig};
-pub use nat::{NatTraversal, StunClient, UpnpClient, NatMapping};
-pub use firewall::{FirewallManager, PortProbe, FirewallConfig};
-pub use resolver::{AddressResolver, ResolverConfig, ResolvedEndpoint};
-pub use mapping::{PortMappingService, ServiceRegistry, PortMapping};
-pub use health::{PortHealthChecker, HealthStatus, HealthCheckConfig};
+pub use allocator::{AllocationStrategy, PortAllocator};
+pub use firewall::{FirewallConfig, FirewallManager, PortProbe};
+pub use health::{HealthCheckConfig, HealthStatus, PortHealthChecker};
+pub use listener::{Listener, ListenerConfig, ListenerManager};
+pub use mapping::{PortMapping, PortMappingService, ServiceRegistry};
+pub use nat::{NatMapping, NatTraversal, StunClient, UpnpClient};
+pub use resolver::{AddressResolver, ResolvedEndpoint, ResolverConfig};
 
 /// Port configuration for the port manager
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -98,9 +98,7 @@ impl Default for PortConfig {
             enable_unix_sockets: true,
             enable_nat_traversal: false,
             enable_firewall_friendly: true,
-            bind_addresses: vec![
-                "0.0.0.0:5432".to_string(),
-            ],
+            bind_addresses: vec!["0.0.0.0:5432".to_string()],
             reuse_port: true,
             reuse_addr: true,
             health_check_interval: 60,
@@ -197,12 +195,19 @@ impl PortManager {
 
     /// Allocate a port for a specific service type
     pub async fn allocate_port(&self, service_type: ServiceType) -> Result<u16> {
-        let port = self.allocator.write().await.allocate()
+        let port = self
+            .allocator
+            .write()
+            .await
+            .allocate()
             .ok_or_else(|| DbError::ResourceExhausted("No ports available".to_string()))?;
 
         // Register the port
         let mut allocated = self.allocated_ports.write().await;
-        allocated.entry(service_type).or_insert_with(Vec::new).push(port);
+        allocated
+            .entry(service_type)
+            .or_insert_with(Vec::new)
+            .push(port);
 
         // Register with mapping service
         self.mapping_service.write().await.register_port(
@@ -230,7 +235,9 @@ impl PortManager {
 
     /// Start a listener on the specified port
     pub async fn start_listener(&self, port: u16) -> Result<()> {
-        let addrs: Vec<SocketAddr> = self.config.bind_addresses
+        let addrs: Vec<SocketAddr> = self
+            .config
+            .bind_addresses
             .iter()
             .filter_map(|s| s.parse().ok())
             .map(|mut addr: SocketAddr| {
@@ -240,10 +247,16 @@ impl PortManager {
             .collect();
 
         if addrs.is_empty() {
-            return Err(DbError::Configuration("No valid bind addresses".to_string()));
+            return Err(DbError::Configuration(
+                "No valid bind addresses".to_string(),
+            ));
         }
 
-        self.listener_manager.write().await.start_listeners(&addrs).await?;
+        self.listener_manager
+            .write()
+            .await
+            .start_listeners(&addrs)
+            .await?;
 
         // Set up NAT traversal if enabled
         if let Some(nat) = &self.nat_traversal {
@@ -256,7 +269,11 @@ impl PortManager {
 
     /// Stop listener on the specified port
     pub async fn stop_listener(&self, port: u16) -> Result<()> {
-        self.listener_manager.write().await.stop_listeners(port).await?;
+        self.listener_manager
+            .write()
+            .await
+            .stop_listeners(port)
+            .await?;
 
         // Clean up NAT mappings
         if let Some(nat) = &self.nat_traversal {
@@ -275,11 +292,13 @@ impl PortManager {
     /// Check health of all allocated ports
     pub async fn check_health(&self) -> Result<HashMap<u16, HealthStatus>> {
         let allocated = self.allocated_ports.read().await;
-        let all_ports: Vec<u16> = allocated.values()
-            .flat_map(|v| v.iter().copied())
-            .collect();
+        let all_ports: Vec<u16> = allocated.values().flat_map(|v| v.iter().copied()).collect();
 
-        self.health_checker.write().await.check_ports(&all_ports).await
+        self.health_checker
+            .write()
+            .await
+            .check_ports(&all_ports)
+            .await
     }
 
     /// Get all allocated ports by service type
@@ -303,7 +322,9 @@ impl PortManager {
         if let Some(nat) = &self.nat_traversal {
             nat.write().await.get_external_ip().await
         } else {
-            Err(DbError::Configuration("NAT traversal not enabled".to_string()))
+            Err(DbError::Configuration(
+                "NAT traversal not enabled".to_string(),
+            ))
         }
     }
 
@@ -311,9 +332,7 @@ impl PortManager {
     pub async fn shutdown(&self) -> Result<()> {
         // Stop all listeners
         let allocated = self.allocated_ports.read().await;
-        let all_ports: Vec<u16> = allocated.values()
-            .flat_map(|v| v.iter().copied())
-            .collect();
+        let all_ports: Vec<u16> = allocated.values().flat_map(|v| v.iter().copied()).collect();
 
         for port in all_ports {
             let _ = self.stop_listener(port).await;
@@ -335,7 +354,10 @@ mod tests {
         let port = manager.allocate_port(ServiceType::Database).await.unwrap();
         assert!(port >= 6000 && port <= 7000);
 
-        manager.release_port(ServiceType::Database, port).await.unwrap();
+        manager
+            .release_port(ServiceType::Database, port)
+            .await
+            .unwrap();
     }
 
     #[tokio::test]

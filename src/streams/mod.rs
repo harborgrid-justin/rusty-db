@@ -237,42 +237,37 @@
 // - **Monitoring Module**: Stream metrics and lag monitoring
 
 pub mod cdc;
-pub mod publisher;
-pub mod subscriber;
-pub mod replication;
 pub mod integration;
+pub mod publisher;
+pub mod replication;
+pub mod subscriber;
 
 // Re-export commonly used types
 pub use cdc::{
-    CDCEngine, CDCConfig, ChangeEvent, ChangeType, ChangeEventBatch,
-    CaptureFilter, CaptureState, CaptureStatistics, ColumnChange,
+    CDCConfig, CDCEngine, CaptureFilter, CaptureState, CaptureStatistics, ChangeEvent,
+    ChangeEventBatch, ChangeType, ColumnChange,
 };
 
 pub use publisher::{
-    EventPublisher, PublisherConfig, PublishedEvent, TopicConfig,
-    SerializationFormat, OrderingGuarantee, AckMode, PublishAck,
-    PublisherStats, Partitioner, RoundRobinPartitioner, HashPartitioner,
-    EventSerializer, DefaultSerializer,
+    AckMode, DefaultSerializer, EventPublisher, EventSerializer, HashPartitioner,
+    OrderingGuarantee, Partitioner, PublishAck, PublishedEvent, PublisherConfig, PublisherStats,
+    RoundRobinPartitioner, SerializationFormat, TopicConfig,
 };
 
 pub use subscriber::{
-    EventSubscriber, SubscriptionConfig, ConsumedEvent, SubscriptionFilter,
-    DeliverySemantics, OffsetCommitStrategy, ConsumerPosition, PartitionOffset,
-    SubscriptionStats,
+    ConsumedEvent, ConsumerPosition, DeliverySemantics, EventSubscriber, OffsetCommitStrategy,
+    PartitionOffset, SubscriptionConfig, SubscriptionFilter, SubscriptionStats,
 };
 
 pub use replication::{
-    LogicalReplication, ReplicationConfig, ReplicationRule, ReplicationSlot,
-    ReplicationMode, ConflictResolution, ReplicationConflict, ReplicationLag,
-    ReplicationStats,
+    ConflictResolution, LogicalReplication, ReplicationConfig, ReplicationConflict, ReplicationLag,
+    ReplicationMode, ReplicationRule, ReplicationSlot, ReplicationStats,
 };
 
 pub use integration::{
-    OutboxProcessor, OutboxConfig, OutboxEntry,
-    EventStore, DomainEvent, AggregateSnapshot,
-    CQRSCoordinator, Command, Query,
-    ExternalConnector, WebhookConnector, KafkaConnector,
-    SchemaRegistry, EventSchema, SchemaCompatibility,
+    AggregateSnapshot, CQRSCoordinator, Command, DomainEvent, EventSchema, EventStore,
+    ExternalConnector, KafkaConnector, OutboxConfig, OutboxEntry, OutboxProcessor, Query,
+    SchemaCompatibility, SchemaRegistry, WebhookConnector,
 };
 
 #[cfg(test)]

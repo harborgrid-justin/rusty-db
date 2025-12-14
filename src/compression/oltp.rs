@@ -1,13 +1,13 @@
 // OLTP Compression - Optimized for transactional workloads
 // Focuses on update-friendly compression with minimal overhead
 
-use super::*;
 use super::algorithms::LZ4Compressor;
+use super::*;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
-use std::time::UNIX_EPOCH;
 use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 // Block-level compression for OLTP tables
 // Smaller compression units for better update performance
@@ -72,7 +72,7 @@ impl OLTPCompressor {
             stats: Arc::new(RwLock::new(CompressionStats::new())),
             block_cache: Arc::new(RwLock::new(HashMap::new())),
             lz4_compressor: LZ4Compressor::new(level),
-            block_size: 8192, // 8KB blocks
+            block_size: 8192,           // 8KB blocks
             compression_threshold: 1.2, // Compress only if ratio > 1.2
             enable_row_chaining: true,
         }
@@ -89,9 +89,12 @@ impl OLTPCompressor {
     }
 
     // Compress a table block
-    pub fn compress_block(&self, block_id: u64, table_id: u64, rows: Vec<Vec<u8>>)
-        -> CompressionResult<OLTPBlock> {
-
+    pub fn compress_block(
+        &self,
+        block_id: u64,
+        table_id: u64,
+        rows: Vec<Vec<u8>>,
+    ) -> CompressionResult<OLTPBlock> {
         let start = Instant::now();
 
         if rows.is_empty() {
@@ -110,15 +113,25 @@ impl OLTPCompressor {
         };
 
         // Compress the block
-        let mut compressed_data = vec![0u8; self.lz4_compressor.max_compressed_size(uncompressed_data.len())];
-        let compressed_size = self.lz4_compressor.compress(&uncompressed_data, &mut compressed_data)?;
+        let mut compressed_data = vec![
+            0u8;
+            self.lz4_compressor
+                .max_compressed_size(uncompressed_data.len())
+        ];
+        let compressed_size = self
+            .lz4_compressor
+            .compress(&uncompressed_data, &mut compressed_data)?;
         compressed_data.truncate(compressed_size);
 
         // Only use compression if it actually saves space
         let (final_data, final_format, final_size) = if compressed_size < uncompressed_data.len() {
             (compressed_data, block_format, compressed_size)
         } else {
-            (uncompressed_data.clone(), BlockFormat::Uncompressed, uncompressed_data.len())
+            (
+                uncompressed_data.clone(),
+                BlockFormat::Uncompressed,
+                uncompressed_data.len(),
+            )
         };
 
         let metadata = BlockCompressionMetadata {
@@ -155,7 +168,10 @@ impl OLTPCompressor {
         stats.blocks_compressed += 1;
 
         // Cache the block
-        self.block_cache.write().unwrap().insert(block_id, block.clone());
+        self.block_cache
+            .write()
+            .unwrap()
+            .insert(block_id, block.clone());
 
         Ok(block)
     }
@@ -165,27 +181,29 @@ impl OLTPCompressor {
         let start = Instant::now();
 
         let uncompressed_data = match block.compression_metadata.block_format {
-            BlockFormat::Uncompressed => {
-                block.compressed_data.clone()
-            }
+            BlockFormat::Uncompressed => block.compressed_data.clone(),
             BlockFormat::BasicCompression | BlockFormat::AdvancedCompression => {
                 let mut decompressed = vec![0u8; block.compression_metadata.uncompressed_size];
-                let size = self.lz4_compressor.decompress(&block.compressed_data, &mut decompressed)?;
+                let size = self
+                    .lz4_compressor
+                    .decompress(&block.compressed_data, &mut decompressed)?;
                 decompressed.truncate(size);
 
                 // Verify checksum
                 let checksum = utils::crc32(&decompressed);
                 if checksum != block.compression_metadata.checksum {
-                    return Err(CompressionError::CorruptedData(
-                        format!("Block {} checksum mismatch", block.block_id)
-                    ).into());
+                    return Err(CompressionError::CorruptedData(format!(
+                        "Block {} checksum mismatch",
+                        block.block_id
+                    ))
+                    .into());
                 }
 
                 decompressed
             }
             BlockFormat::OnlineConversion => {
                 return Err(CompressionError::InvalidInput(
-                    "Block is being converted".to_string()
+                    "Block is being converted".to_string(),
                 ));
             }
         };
@@ -200,18 +218,21 @@ impl OLTPCompressor {
     }
 
     // Update a single row in a compressed block
-    pub fn update_row(&self, block: &mut OLTPBlock, row_id: u64, new_row: Vec<u8>)
-        -> CompressionResult<()> {
-
+    pub fn update_row(
+        &self,
+        block: &mut OLTPBlock,
+        row_id: u64,
+        new_row: Vec<u8>,
+    ) -> CompressionResult<()> {
         // Decompress the entire block
         let mut rows = self.decompress_block(block)?;
 
         // Find and update the row
-        let row_index = block.row_directory.iter()
+        let row_index = block
+            .row_directory
+            .iter()
             .position(|loc| loc.row_id == row_id)
-            .ok_or_else(|| CompressionError::InvalidInput(
-                format!("Row {} not found", row_id)
-            ))?;
+            .ok_or_else(|| CompressionError::InvalidInput(format!("Row {} not found", row_id)))?;
 
         // Check if new row fits in place
         if new_row.len() <= rows[row_index].len() && !self.enable_row_chaining {
@@ -226,7 +247,7 @@ impl OLTPCompressor {
                 rows[row_index] = new_row;
             } else {
                 return Err(CompressionError::ResourceExhausted(
-                    "Insufficient space for row update".to_string()
+                    "Insufficient space for row update".to_string(),
                 ));
             }
         }
@@ -234,8 +255,14 @@ impl OLTPCompressor {
         // Recompress the block
         let (uncompressed_data, row_directory) = self.serialize_rows(&rows, block.block_id)?;
 
-        let mut compressed_data = vec![0u8; self.lz4_compressor.max_compressed_size(uncompressed_data.len())];
-        let compressed_size = self.lz4_compressor.compress(&uncompressed_data, &mut compressed_data)?;
+        let mut compressed_data = vec![
+            0u8;
+            self.lz4_compressor
+                .max_compressed_size(uncompressed_data.len())
+        ];
+        let compressed_size = self
+            .lz4_compressor
+            .compress(&uncompressed_data, &mut compressed_data)?;
         compressed_data.truncate(compressed_size);
 
         let (final_data, final_size) = if compressed_size < uncompressed_data.len() {
@@ -257,13 +284,16 @@ impl OLTPCompressor {
     }
 
     // Insert a new row into a compressed block
-    pub fn insert_row(&self, block: &mut OLTPBlock, _row_id: u64, row: Vec<u8>)
-        -> CompressionResult<()> {
-
+    pub fn insert_row(
+        &self,
+        block: &mut OLTPBlock,
+        _row_id: u64,
+        row: Vec<u8>,
+    ) -> CompressionResult<()> {
         // Check if there's enough free space
         if row.len() > block.free_space && block.free_space < self.block_size / 4 {
             return Err(CompressionError::ResourceExhausted(
-                "Block is full".to_string()
+                "Block is full".to_string(),
             ));
         }
 
@@ -272,8 +302,14 @@ impl OLTPCompressor {
 
         let (uncompressed_data, row_directory) = self.serialize_rows(&rows, block.block_id)?;
 
-        let mut compressed_data = vec![0u8; self.lz4_compressor.max_compressed_size(uncompressed_data.len())];
-        let compressed_size = self.lz4_compressor.compress(&uncompressed_data, &mut compressed_data)?;
+        let mut compressed_data = vec![
+            0u8;
+            self.lz4_compressor
+                .max_compressed_size(uncompressed_data.len())
+        ];
+        let compressed_size = self
+            .lz4_compressor
+            .compress(&uncompressed_data, &mut compressed_data)?;
         compressed_data.truncate(compressed_size);
 
         let (final_data, final_size) = if compressed_size < uncompressed_data.len() {
@@ -298,18 +334,24 @@ impl OLTPCompressor {
     pub fn delete_row(&self, block: &mut OLTPBlock, row_id: u64) -> CompressionResult<()> {
         let mut rows = self.decompress_block(block)?;
 
-        let row_index = block.row_directory.iter()
+        let row_index = block
+            .row_directory
+            .iter()
             .position(|loc| loc.row_id == row_id)
-            .ok_or_else(|| CompressionError::InvalidInput(
-                format!("Row {} not found", row_id)
-            ))?;
+            .ok_or_else(|| CompressionError::InvalidInput(format!("Row {} not found", row_id)))?;
 
         rows.remove(row_index);
 
         let (uncompressed_data, row_directory) = self.serialize_rows(&rows, block.block_id)?;
 
-        let mut compressed_data = vec![0u8; self.lz4_compressor.max_compressed_size(uncompressed_data.len())];
-        let compressed_size = self.lz4_compressor.compress(&uncompressed_data, &mut compressed_data)?;
+        let mut compressed_data = vec![
+            0u8;
+            self.lz4_compressor
+                .max_compressed_size(uncompressed_data.len())
+        ];
+        let compressed_size = self
+            .lz4_compressor
+            .compress(&uncompressed_data, &mut compressed_data)?;
         compressed_data.truncate(compressed_size);
 
         let (final_data, final_size) = if compressed_size < uncompressed_data.len() {
@@ -331,7 +373,11 @@ impl OLTPCompressor {
     }
 
     // Bulk load compression - optimized for initial data load
-    pub fn bulk_load(&self, table_id: u64, rows: Vec<Vec<u8>>) -> CompressionResult<Vec<OLTPBlock>> {
+    pub fn bulk_load(
+        &self,
+        table_id: u64,
+        rows: Vec<Vec<u8>>,
+    ) -> CompressionResult<Vec<OLTPBlock>> {
         let rows_per_block = self.calculate_optimal_rows_per_block(&rows);
         let mut blocks = Vec::new();
         let mut block_id = 0u64;
@@ -346,9 +392,10 @@ impl OLTPCompressor {
     }
 
     // Online compression conversion - convert uncompressed table to compressed
-    pub fn convert_to_compressed(&self, uncompressed_blocks: Vec<OLTPBlock>)
-        -> CompressionResult<Vec<OLTPBlock>> {
-
+    pub fn convert_to_compressed(
+        &self,
+        uncompressed_blocks: Vec<OLTPBlock>,
+    ) -> CompressionResult<Vec<OLTPBlock>> {
         let mut compressed_blocks = Vec::new();
 
         for block in uncompressed_blocks {
@@ -369,8 +416,7 @@ impl OLTPCompressor {
     // Check if block needs recompression
     pub fn needs_recompression(&self, block: &OLTPBlock) -> bool {
         // Recompress if too many modifications or fragmentation
-        block.modification_count > 100 ||
-        block.free_space > self.block_size / 2
+        block.modification_count > 100 || block.free_space > self.block_size / 2
     }
 
     // Recompress a block to reclaim space
@@ -384,8 +430,11 @@ impl OLTPCompressor {
         Ok(())
     }
 
-    fn serialize_rows(&self, rows: &[Vec<u8>], base_row_id: u64)        -> CompressionResult<(Vec<u8>, Vec<RowLocation>)> {
-
+    fn serialize_rows(
+        &self,
+        rows: &[Vec<u8>],
+        base_row_id: u64,
+    ) -> CompressionResult<(Vec<u8>, Vec<RowLocation>)> {
         let mut data = Vec::new();
         let mut row_directory = Vec::new();
 
@@ -411,15 +460,17 @@ impl OLTPCompressor {
         Ok((data, row_directory))
     }
 
-    fn deserialize_rows(&self, data: &[u8], row_directory: &[RowLocation])
-        -> CompressionResult<Vec<Vec<u8>>> {
-
+    fn deserialize_rows(
+        &self,
+        data: &[u8],
+        row_directory: &[RowLocation],
+    ) -> CompressionResult<Vec<Vec<u8>>> {
         let mut rows = Vec::new();
 
         for loc in row_directory {
             if loc.offset + 4 > data.len() {
                 return Err(CompressionError::DecompressionFailed(
-                    "Invalid row offset".to_string()
+                    "Invalid row offset".to_string(),
                 ));
             }
 
@@ -432,7 +483,7 @@ impl OLTPCompressor {
 
             if loc.offset + 4 + length > data.len() {
                 return Err(CompressionError::DecompressionFailed(
-                    "Invalid row length".to_string()
+                    "Invalid row length".to_string(),
                 ));
             }
 
@@ -501,8 +552,8 @@ impl OLTPCompressionAdvisor {
 
     // Analyze table and recommend compression strategy
     pub fn recommend_compression(&self, table_stats: &TableStats) -> CompressionRecommendation {
-        let update_ratio = table_stats.updates_per_second as f64 /
-            (table_stats.reads_per_second as f64 + 1.0);
+        let update_ratio =
+            table_stats.updates_per_second as f64 / (table_stats.reads_per_second as f64 + 1.0);
 
         if update_ratio > self.update_frequency_threshold {
             // High update rate - use minimal compression
@@ -536,8 +587,8 @@ impl OLTPCompressionAdvisor {
 
     // Estimate space savings from compression
     pub fn estimate_space_savings(&self, table_stats: &TableStats) -> f64 {
-        let compressed_size = table_stats.total_size as f64 /
-            table_stats.estimated_compression_ratio;
+        let compressed_size =
+            table_stats.total_size as f64 / table_stats.estimated_compression_ratio;
         table_stats.total_size as f64 - compressed_size
     }
 }
@@ -570,8 +621,8 @@ pub struct CompressionRecommendation {
 
 #[cfg(test)]
 mod tests {
-    use crate::compression::CompressionLevel;
     use crate::compression::oltp::{OLTPCompressionAdvisor, OLTPCompressor, TableStats};
+    use crate::compression::CompressionLevel;
 
     #[test]
     fn test_oltp_block_compression() {
@@ -594,15 +645,14 @@ mod tests {
     fn test_row_update() {
         let compressor = OLTPCompressor::new(CompressionLevel::Default);
 
-        let rows = vec![
-            vec![1, 2, 3],
-            vec![4, 5, 6],
-        ];
+        let rows = vec![vec![1, 2, 3], vec![4, 5, 6]];
 
         let mut block = compressor.compress_block(1, 100, rows).unwrap();
         let new_row = vec![7, 8, 9];
 
-        compressor.update_row(&mut block, block.row_directory[0].row_id, new_row.clone()).unwrap();
+        compressor
+            .update_row(&mut block, block.row_directory[0].row_id, new_row.clone())
+            .unwrap();
 
         let decompressed = compressor.decompress_block(&block).unwrap();
         assert_eq!(decompressed[0], new_row);

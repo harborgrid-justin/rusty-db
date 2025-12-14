@@ -9,9 +9,9 @@
 
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
+use rand::random;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use rand::random;
 
 /// Protocol version supported by this node
 pub const SUPPORTED_PROTOCOL_VERSION: u16 = 1;
@@ -247,15 +247,14 @@ impl NodeCapabilities {
     /// Check if capabilities are compatible with another node
     pub fn is_compatible_with(&self, other: &NodeCapabilities) -> bool {
         // Check if there's at least one common compression algorithm
-        let has_common_compression = if self.compression_algorithms.is_empty()
-            || other.compression_algorithms.is_empty()
-        {
-            true // No compression required
-        } else {
-            self.compression_algorithms
-                .iter()
-                .any(|algo| other.compression_algorithms.contains(algo))
-        };
+        let has_common_compression =
+            if self.compression_algorithms.is_empty() || other.compression_algorithms.is_empty() {
+                true // No compression required
+            } else {
+                self.compression_algorithms
+                    .iter()
+                    .any(|algo| other.compression_algorithms.contains(algo))
+            };
 
         has_common_compression
     }
@@ -316,10 +315,8 @@ impl Handshake {
         }
 
         // Check protocol version compatibility
-        let negotiated_version = std::cmp::min(
-            SUPPORTED_PROTOCOL_VERSION,
-            request.protocol_version,
-        );
+        let negotiated_version =
+            std::cmp::min(SUPPORTED_PROTOCOL_VERSION, request.protocol_version);
 
         if negotiated_version < MIN_PROTOCOL_VERSION {
             return Ok(HandshakeResponse::rejected(format!(
@@ -349,7 +346,10 @@ impl Handshake {
         if !response.accepted {
             return Err(DbError::Network(format!(
                 "Handshake rejected: {}",
-                response.error_message.as_deref().unwrap_or("unknown reason")
+                response
+                    .error_message
+                    .as_deref()
+                    .unwrap_or("unknown reason")
             )));
         }
 
@@ -404,11 +404,8 @@ mod tests {
 
     #[test]
     fn test_handshake_response_accepted() {
-        let response = HandshakeResponse::accepted(
-            "node2".to_string(),
-            1,
-            NodeCapabilities::default(),
-        );
+        let response =
+            HandshakeResponse::accepted("node2".to_string(), 1, NodeCapabilities::default());
 
         assert!(response.accepted);
         assert_eq!(response.node_id, "node2");

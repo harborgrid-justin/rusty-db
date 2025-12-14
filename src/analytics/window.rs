@@ -8,7 +8,7 @@
 // - Value functions (LEAD, LAG, FIRST_VALUE, LAST_VALUE, NTH_VALUE)
 // - Distribution functions (PERCENT_RANK, CUME_DIST, NTILE)
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
@@ -22,23 +22,52 @@ pub enum WindowFunction {
     DenseRank,
     PercentRank,
     CumeDist,
-    Ntile { buckets: usize },
+    Ntile {
+        buckets: usize,
+    },
 
     // Value functions
-    Lead { offset: usize, default: Option<String> },
-    Lag { offset: usize, default: Option<String> },
-    FirstValue { column: String },
-    LastValue { column: String },
-    NthValue { column: String, n: usize },
+    Lead {
+        offset: usize,
+        default: Option<String>,
+    },
+    Lag {
+        offset: usize,
+        default: Option<String>,
+    },
+    FirstValue {
+        column: String,
+    },
+    LastValue {
+        column: String,
+    },
+    NthValue {
+        column: String,
+        n: usize,
+    },
 
     // Aggregate functions
-    Sum { column: String },
-    Avg { column: String },
-    Count { column: Option<String> },
-    Min { column: String },
-    Max { column: String },
-    StdDev { column: String },
-    Variance { column: String },
+    Sum {
+        column: String,
+    },
+    Avg {
+        column: String,
+    },
+    Count {
+        column: Option<String>,
+    },
+    Min {
+        column: String,
+    },
+    Max {
+        column: String,
+    },
+    StdDev {
+        column: String,
+    },
+    Variance {
+        column: String,
+    },
 }
 
 // Window specification (OVER clause)
@@ -143,11 +172,7 @@ impl WindowExecutor {
     }
 
     // Execute window function
-    pub fn execute(
-        &self,
-        function: &WindowFunction,
-        spec: &WindowSpec,
-    ) -> Result<Vec<String>> {
+    pub fn execute(&self, function: &WindowFunction, spec: &WindowSpec) -> Result<Vec<String>> {
         // Partition rows
         let partitions = self.partition_rows(spec)?;
 
@@ -155,11 +180,7 @@ impl WindowExecutor {
         let mut results = vec![String::new(); self.rows.len()];
 
         for partition in partitions {
-            let partition_results = self.execute_on_partition(
-                function,
-                spec,
-                &partition,
-            )?;
+            let partition_results = self.execute_on_partition(function, spec, &partition)?;
 
             for (row_idx, result) in partition_results {
                 results[row_idx] = result;
@@ -181,16 +202,17 @@ impl WindowExecutor {
         let mut partitions: HashMap<Vec<String>, Vec<usize>> = HashMap::new();
 
         for (idx, row) in self.rows.iter().enumerate() {
-            let key: Vec<String> = spec.partition_by.iter()
+            let key: Vec<String> = spec
+                .partition_by
+                .iter()
                 .map(|col| row.get_value(col).unwrap_or_default())
                 .collect();
 
-            partitions.entry(key)
-                .or_insert_with(Vec::new)
-                .push(idx);
+            partitions.entry(key).or_insert_with(Vec::new).push(idx);
         }
 
-        Ok(partitions.into_values()
+        Ok(partitions
+            .into_values()
             .map(|rows| Partition { rows })
             .collect())
     }
@@ -212,39 +234,35 @@ impl WindowExecutor {
             WindowFunction::PercentRank => self.percent_rank(spec, &sorted_indices),
             WindowFunction::CumeDist => self.cume_dist(spec, &sorted_indices),
             WindowFunction::Ntile { buckets } => self.ntile(*buckets, &sorted_indices),
-            WindowFunction::Lead { offset, default } =>
-                self.lead(spec, &sorted_indices, *offset, default),
-            WindowFunction::Lag { offset, default } =>
-                self.lag(spec, &sorted_indices, *offset, default),
-            WindowFunction::FirstValue { column } =>
-                self.first_value(spec, &sorted_indices, column),
-            WindowFunction::LastValue { column } =>
-                self.last_value(spec, &sorted_indices, column),
-            WindowFunction::NthValue { column, n } =>
-                self.nth_value(spec, &sorted_indices, column, *n),
-            WindowFunction::Sum { column } =>
-                self.windowed_sum(spec, &sorted_indices, column),
-            WindowFunction::Avg { column } =>
-                self.windowed_avg(spec, &sorted_indices, column),
-            WindowFunction::Count { column } =>
-                self.windowed_count(spec, &sorted_indices, column),
-            WindowFunction::Min { column } =>
-                self.windowed_min(spec, &sorted_indices, column),
-            WindowFunction::Max { column } =>
-                self.windowed_max(spec, &sorted_indices, column),
-            WindowFunction::StdDev { column } =>
-                self.windowed_stddev(spec, &sorted_indices, column),
-            WindowFunction::Variance { column } =>
-                self.windowed_variance(spec, &sorted_indices, column),
+            WindowFunction::Lead { offset, default } => {
+                self.lead(spec, &sorted_indices, *offset, default)
+            }
+            WindowFunction::Lag { offset, default } => {
+                self.lag(spec, &sorted_indices, *offset, default)
+            }
+            WindowFunction::FirstValue { column } => {
+                self.first_value(spec, &sorted_indices, column)
+            }
+            WindowFunction::LastValue { column } => self.last_value(spec, &sorted_indices, column),
+            WindowFunction::NthValue { column, n } => {
+                self.nth_value(spec, &sorted_indices, column, *n)
+            }
+            WindowFunction::Sum { column } => self.windowed_sum(spec, &sorted_indices, column),
+            WindowFunction::Avg { column } => self.windowed_avg(spec, &sorted_indices, column),
+            WindowFunction::Count { column } => self.windowed_count(spec, &sorted_indices, column),
+            WindowFunction::Min { column } => self.windowed_min(spec, &sorted_indices, column),
+            WindowFunction::Max { column } => self.windowed_max(spec, &sorted_indices, column),
+            WindowFunction::StdDev { column } => {
+                self.windowed_stddev(spec, &sorted_indices, column)
+            }
+            WindowFunction::Variance { column } => {
+                self.windowed_variance(spec, &sorted_indices, column)
+            }
         }
     }
 
     // Sort partition by ORDER BY
-    fn sort_partition(
-        &self,
-        spec: &WindowSpec,
-        partition: &Partition,
-    ) -> Result<Vec<usize>> {
+    fn sort_partition(&self, spec: &WindowSpec, partition: &Partition) -> Result<Vec<usize>> {
         let mut indices = partition.rows.clone();
 
         if spec.order_by.is_empty() {
@@ -253,8 +271,12 @@ impl WindowExecutor {
 
         indices.sort_by(|&a, &b| {
             for order_col in &spec.order_by {
-                let val_a = self.rows[a].get_value(&order_col.column).unwrap_or_default();
-                let val_b = self.rows[b].get_value(&order_col.column).unwrap_or_default();
+                let val_a = self.rows[a]
+                    .get_value(&order_col.column)
+                    .unwrap_or_default();
+                let val_b = self.rows[b]
+                    .get_value(&order_col.column)
+                    .unwrap_or_default();
 
                 let cmp = val_a.cmp(&val_b);
                 let cmp = match order_col.direction {
@@ -279,9 +301,10 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         current_pos: usize,
     ) -> Result<(usize, usize)> {
-        let frame = spec.frame.as_ref().ok_or_else(|| {
-            DbError::InvalidInput("Frame specification required".to_string())
-        })?;
+        let frame = spec
+            .frame
+            .as_ref()
+            .ok_or_else(|| DbError::InvalidInput("Frame specification required".to_string()))?;
 
         let start = match frame.start_bound {
             FrameBound::UnboundedPreceding => 0,
@@ -305,7 +328,8 @@ impl WindowExecutor {
     // Ranking functions
 
     fn row_number(&self, sorted_indices: &[usize]) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| (idx, (i + 1).to_string()))
             .collect())
@@ -321,11 +345,7 @@ impl WindowExecutor {
 
             // Check if next row has different ORDER BY values
             let is_last_in_group = i + 1 >= sorted_indices.len()
-                || !self.rows_equal_on_order_by(
-                    spec,
-                    sorted_indices[i],
-                    sorted_indices[i + 1],
-                );
+                || !self.rows_equal_on_order_by(spec, sorted_indices[i], sorted_indices[i + 1]);
 
             results.push((sorted_indices[i], current_rank.to_string()));
 
@@ -338,7 +358,11 @@ impl WindowExecutor {
         Ok(results)
     }
 
-    fn dense_rank(&self, spec: &WindowSpec, sorted_indices: &[usize]) -> Result<Vec<(usize, String)>> {
+    fn dense_rank(
+        &self,
+        spec: &WindowSpec,
+        sorted_indices: &[usize],
+    ) -> Result<Vec<(usize, String)>> {
         let mut results = Vec::new();
         let mut current_rank = 1;
 
@@ -347,11 +371,8 @@ impl WindowExecutor {
 
             // Check if next row has different ORDER BY values
             if i + 1 < sorted_indices.len()
-                && !self.rows_equal_on_order_by(
-                    spec,
-                    sorted_indices[i],
-                    sorted_indices[i + 1],
-                ) {
+                && !self.rows_equal_on_order_by(spec, sorted_indices[i], sorted_indices[i + 1])
+            {
                 current_rank += 1;
             }
         }
@@ -359,17 +380,23 @@ impl WindowExecutor {
         Ok(results)
     }
 
-    fn percent_rank(&self, spec: &WindowSpec, sorted_indices: &[usize]) -> Result<Vec<(usize, String)>> {
+    fn percent_rank(
+        &self,
+        spec: &WindowSpec,
+        sorted_indices: &[usize],
+    ) -> Result<Vec<(usize, String)>> {
         let n = sorted_indices.len();
         if n <= 1 {
-            return Ok(sorted_indices.iter()
+            return Ok(sorted_indices
+                .iter()
                 .map(|&idx| (idx, "0".to_string()))
                 .collect());
         }
 
         let rank_results = self.rank(spec, sorted_indices)?;
 
-        Ok(rank_results.into_iter()
+        Ok(rank_results
+            .into_iter()
             .map(|(idx, rank_str)| {
                 let rank: usize = rank_str.parse().unwrap_or(1);
                 let percent = (rank - 1) as f64 / (n - 1) as f64;
@@ -378,7 +405,11 @@ impl WindowExecutor {
             .collect())
     }
 
-    fn cume_dist(&self, spec: &WindowSpec, sorted_indices: &[usize]) -> Result<Vec<(usize, String)>> {
+    fn cume_dist(
+        &self,
+        spec: &WindowSpec,
+        sorted_indices: &[usize],
+    ) -> Result<Vec<(usize, String)>> {
         let n = sorted_indices.len();
         let mut results = Vec::new();
 
@@ -387,11 +418,9 @@ impl WindowExecutor {
             let mut count = i + 1;
 
             // Include all rows with same ORDER BY values
-            while count < n && self.rows_equal_on_order_by(
-                spec,
-                sorted_indices[i],
-                sorted_indices[count],
-            ) {
+            while count < n
+                && self.rows_equal_on_order_by(spec, sorted_indices[i], sorted_indices[count])
+            {
                 count += 1;
             }
 
@@ -410,7 +439,8 @@ impl WindowExecutor {
         let n = sorted_indices.len();
         let bucket_size = (n + buckets - 1) / buckets;
 
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let bucket = (i / bucket_size).min(buckets - 1) + 1;
@@ -428,14 +458,16 @@ impl WindowExecutor {
         offset: usize,
         default: &Option<String>,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let target_pos = i + offset;
                 let value = if target_pos < sorted_indices.len() {
                     // Get value from future row
                     let target_idx = sorted_indices[target_pos];
-                    spec.order_by.first()
+                    spec.order_by
+                        .first()
                         .and_then(|col| self.rows[target_idx].get_value(&col.column))
                         .unwrap_or_else(|| default.clone().unwrap_or_default())
                 } else {
@@ -453,13 +485,15 @@ impl WindowExecutor {
         offset: usize,
         default: &Option<String>,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let value = if i >= offset {
                     // Get value from previous row
                     let target_idx = sorted_indices[i - offset];
-                    spec.order_by.first()
+                    spec.order_by
+                        .first()
                         .and_then(|col| self.rows[target_idx].get_value(&col.column))
                         .unwrap_or_else(|| default.clone().unwrap_or_default())
                 } else {
@@ -476,11 +510,13 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {
-        let first_idx = sorted_indices.first()
+        let first_idx = sorted_indices
+            .first()
             .ok_or_else(|| DbError::Internal("Empty partition".to_string()))?;
         let first_value = self.rows[*first_idx].get_value(column).unwrap_or_default();
 
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .map(|&idx| (idx, first_value.clone()))
             .collect())
     }
@@ -491,7 +527,8 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (_, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
@@ -509,7 +546,8 @@ impl WindowExecutor {
         column: &str,
         n: usize,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
@@ -533,14 +571,16 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
                 let sum: f64 = (frame_start..frame_end)
                     .map(|pos| {
                         let row_idx = sorted_indices[pos];
-                        self.rows[row_idx].get_value(column)
+                        self.rows[row_idx]
+                            .get_value(column)
                             .and_then(|v| v.parse::<f64>().ok())
                             .unwrap_or(0.0)
                     })
@@ -556,14 +596,16 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
                 let values: Vec<f64> = (frame_start..frame_end)
                     .filter_map(|pos| {
                         let row_idx = sorted_indices[pos];
-                        self.rows[row_idx].get_value(column)
+                        self.rows[row_idx]
+                            .get_value(column)
                             .and_then(|v| v.parse::<f64>().ok())
                     })
                     .collect();
@@ -584,7 +626,8 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &Option<String>,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
@@ -609,7 +652,8 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
@@ -631,7 +675,8 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
@@ -653,14 +698,16 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
                 let values: Vec<f64> = (frame_start..frame_end)
                     .filter_map(|pos| {
                         let row_idx = sorted_indices[pos];
-                        self.rows[row_idx].get_value(column)
+                        self.rows[row_idx]
+                            .get_value(column)
                             .and_then(|v| v.parse::<f64>().ok())
                     })
                     .collect();
@@ -677,14 +724,16 @@ impl WindowExecutor {
         sorted_indices: &[usize],
         column: &str,
     ) -> Result<Vec<(usize, String)>> {
-        Ok(sorted_indices.iter()
+        Ok(sorted_indices
+            .iter()
             .enumerate()
             .map(|(i, &idx)| {
                 let (frame_start, frame_end) = self.get_frame(spec, sorted_indices, i).unwrap();
                 let values: Vec<f64> = (frame_start..frame_end)
                     .filter_map(|pos| {
                         let row_idx = sorted_indices[pos];
-                        self.rows[row_idx].get_value(column)
+                        self.rows[row_idx]
+                            .get_value(column)
                             .and_then(|v| v.parse::<f64>().ok())
                     })
                     .collect();
@@ -695,12 +744,7 @@ impl WindowExecutor {
             .collect())
     }
 
-    fn rows_equal_on_order_by(
-        &self,
-        spec: &WindowSpec,
-        idx1: usize,
-        idx2: usize,
-    ) -> bool {
+    fn rows_equal_on_order_by(&self, spec: &WindowSpec, idx1: usize, idx2: usize) -> bool {
         for order_col in &spec.order_by {
             let val1 = self.rows[idx1].get_value(&order_col.column);
             let val2 = self.rows[idx2].get_value(&order_col.column);
@@ -756,9 +800,7 @@ fn calculate_variance(values: &[f64]) -> f64 {
     }
 
     let mean = values.iter().sum::<f64>() / values.len() as f64;
-    let variance = values.iter()
-        .map(|v| (v - mean).powi(2))
-        .sum::<f64>() / values.len() as f64;
+    let variance = values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
 
     variance
 }

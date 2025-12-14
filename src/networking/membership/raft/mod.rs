@@ -9,23 +9,23 @@
 //
 // Reference: https://raft.github.io/raft.pdf
 
-use crate::error::{DbError, Result};
 use crate::common::NodeId;
-use crate::networking::membership::{NodeInfo, RaftConfig, MembershipEvent};
+use crate::error::{DbError, Result};
+use crate::networking::membership::{MembershipEvent, NodeInfo, RaftConfig};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 use tokio::time;
 
-pub mod log;
 pub mod election;
+pub mod log;
 pub mod replication;
 
-pub use log::{RaftLog, LogEntry, LogIndex};
 pub use election::{ElectionManager, VoteRequest, VoteResponse};
-pub use replication::{ReplicationManager, AppendEntriesRequest, AppendEntriesResponse};
+pub use log::{LogEntry, LogIndex, RaftLog};
+pub use replication::{AppendEntriesRequest, AppendEntriesResponse, ReplicationManager};
 
 /// Raft term number (logical clock)
 pub type Term = u64;
@@ -256,11 +256,7 @@ impl RaftMembership {
         let mut log = self.log.write().await;
         let state = self.state.write().await;
 
-        let entry = LogEntry::new(
-            state.current_term,
-            log.last_index() + 1,
-            command_bytes,
-        );
+        let entry = LogEntry::new(state.current_term, log.last_index() + 1, command_bytes);
 
         log.append(entry)?;
 
@@ -287,11 +283,7 @@ impl RaftMembership {
         let mut log = self.log.write().await;
         let state = self.state.write().await;
 
-        let entry = LogEntry::new(
-            state.current_term,
-            log.last_index() + 1,
-            command_bytes,
-        );
+        let entry = LogEntry::new(state.current_term, log.last_index() + 1, command_bytes);
 
         log.append(entry)?;
 
@@ -311,21 +303,26 @@ impl RaftMembership {
             state.last_applied += 1;
             if let Some(entry) = log.get(state.last_applied) {
                 // Deserialize and apply command
-                if let Ok((command, _)) = bincode::decode_from_slice(&entry.data, bincode::config::standard()) {
+                if let Ok((command, _)) =
+                    bincode::decode_from_slice(&entry.data, bincode::config::standard())
+                {
                     match command {
                         MembershipCommand::AddNode { node_id, node_info } => {
                             state.members.insert(node_id.clone());
-                            let _ = self.event_tx.send(MembershipEvent::NodeJoined {
-                                node_id,
-                                node_info,
-                            }).await;
+                            let _ = self
+                                .event_tx
+                                .send(MembershipEvent::NodeJoined { node_id, node_info })
+                                .await;
                         }
                         MembershipCommand::RemoveNode { node_id } => {
                             state.members.remove(&node_id);
-                            let _ = self.event_tx.send(MembershipEvent::NodeLeft {
-                                node_id,
-                                graceful: true,
-                            }).await;
+                            let _ = self
+                                .event_tx
+                                .send(MembershipEvent::NodeLeft {
+                                    node_id,
+                                    graceful: true,
+                                })
+                                .await;
                         }
                     }
                 }
@@ -347,7 +344,10 @@ impl RaftMembership {
     }
 
     /// Handle append entries request from leader
-    pub async fn handle_append_entries(&self, request: AppendEntriesRequest) -> Result<AppendEntriesResponse> {
+    pub async fn handle_append_entries(
+        &self,
+        request: AppendEntriesRequest,
+    ) -> Result<AppendEntriesResponse> {
         self.replication.handle_append_entries(request).await
     }
 }
@@ -362,9 +362,7 @@ pub enum MembershipCommand {
     },
 
     /// Remove a node from the cluster
-    RemoveNode {
-        node_id: NodeId,
-    },
+    RemoveNode { node_id: NodeId },
 }
 
 #[cfg(test)]

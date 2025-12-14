@@ -3,11 +3,11 @@
 // This example demonstrates how to connect to RustyDB using WebSocket
 // for real-time query execution and streaming results.
 
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
-use futures_util::{StreamExt, SinkExt};
+use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::time::Duration;
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 
 // WebSocket message structure
 #[derive(Debug, Serialize, Deserialize)]
@@ -160,7 +160,10 @@ async fn query_execution_example() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 } else if response.message_type == "error" {
                     let query_response: QueryResponse = serde_json::from_value(response.payload)?;
-                    println!("✗ Query error: {}", query_response.message.unwrap_or_default());
+                    println!(
+                        "✗ Query error: {}",
+                        query_response.message.unwrap_or_default()
+                    );
                 }
             }
             _ => println!("  Received non-text message"),
@@ -196,21 +199,19 @@ async fn heartbeat_example() -> Result<(), Box<dyn std::error::Error>> {
 
     // Wait for pong response with timeout
     match tokio::time::timeout(Duration::from_secs(5), read.next()).await {
-        Ok(Some(msg)) => {
-            match msg? {
-                Message::Text(text) => {
-                    let response: WebSocketMessage = serde_json::from_str(&text)?;
-                    if response.message_type == "pong" {
-                        println!("✓ Received pong");
-                        println!("  Server timestamp: {}", response.timestamp);
-                    } else {
-                        println!("  Received: {}", response.message_type);
-                    }
+        Ok(Some(msg)) => match msg? {
+            Message::Text(text) => {
+                let response: WebSocketMessage = serde_json::from_str(&text)?;
+                if response.message_type == "pong" {
+                    println!("✓ Received pong");
+                    println!("  Server timestamp: {}", response.timestamp);
+                } else {
+                    println!("  Received: {}", response.message_type);
                 }
-                Message::Pong(_) => println!("✓ Received WebSocket pong"),
-                _ => println!("  Received other message type"),
             }
-        }
+            Message::Pong(_) => println!("✓ Received WebSocket pong"),
+            _ => println!("  Received other message type"),
+        },
         Ok(None) => println!("✗ Connection closed"),
         Err(_) => println!("✗ Timeout waiting for pong"),
     }
@@ -329,10 +330,7 @@ async fn advanced_reconnection_example() -> Result<(), Box<dyn std::error::Error
                 tokio::time::sleep(retry_delay).await;
 
                 // Exponential backoff
-                retry_delay = std::cmp::min(
-                    retry_delay * 2,
-                    Duration::from_secs(60)
-                );
+                retry_delay = std::cmp::min(retry_delay * 2, Duration::from_secs(60));
             }
         }
     }

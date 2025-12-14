@@ -19,8 +19,8 @@
 // NORMAL → DEGRADED_L1 → DEGRADED_L2 → DEGRADED_L3 → CRITICAL
 // ```
 
-use std::fmt;
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -30,8 +30,7 @@ use serde::{Deserialize, Serialize};
 use tracing::{debug, info, warn};
 
 // Degradation level
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-#[derive(Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Hash)]
 pub enum DegradationLevel {
     // Normal operation
     Normal = 0,
@@ -104,10 +103,7 @@ impl Feature {
 
     // Check if this is a critical feature
     pub fn is_critical(&self) -> bool {
-        matches!(
-            self,
-            Feature::TransactionLogging | Feature::WriteOperations
-        )
+        matches!(self, Feature::TransactionLogging | Feature::WriteOperations)
     }
 }
 
@@ -269,10 +265,7 @@ impl DegradationStrategy {
     pub fn set_level(&self, level: DegradationLevel) {
         let mut current = self.current_level.write();
         if *current != level {
-            info!(
-                "Degradation level changed: {:?} -> {:?}",
-                *current, level
-            );
+            info!("Degradation level changed: {:?} -> {:?}", *current, level);
             *current = level;
             self.level_changes.fetch_add(1, Ordering::Relaxed);
             *self.last_change.write() = Some(Instant::now());
@@ -315,10 +308,7 @@ impl DegradationStrategy {
     // Register a trigger for a degradation level
     pub fn register_trigger(&self, level: DegradationLevel, trigger: DegradationTrigger) {
         let mut triggers = self.triggers.write();
-        triggers
-            .entry(level)
-            .or_insert_with(Vec::new)
-            .push(trigger);
+        triggers.entry(level).or_insert_with(Vec::new).push(trigger);
     }
 
     // Update system metrics
@@ -364,10 +354,7 @@ impl DegradationStrategy {
         let current = self.current_level();
         if current > DegradationLevel::Normal {
             // Check if we should recover (basic heuristic)
-            if metrics.cpu_usage < 0.5
-                && metrics.memory_usage < 0.7
-                && metrics.error_rate < 0.01
-            {
+            if metrics.cpu_usage < 0.5 && metrics.memory_usage < 0.7 && metrics.error_rate < 0.01 {
                 // Recover one level
                 let new_level = match current {
                     DegradationLevel::Critical => DegradationLevel::DegradedL3,

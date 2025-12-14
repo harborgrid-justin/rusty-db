@@ -4,9 +4,7 @@
 // using the RustyDB P2P protocol format.
 
 use crate::error::{DbError, Result};
-use crate::networking::protocol::{
-    CompressionType, Message, MessageHeader, MAX_MESSAGE_SIZE,
-};
+use crate::networking::protocol::{CompressionType, Message, MessageHeader, MAX_MESSAGE_SIZE};
 use bytes::{Buf, BufMut, BytesMut};
 use crc32fast::Hasher;
 
@@ -127,8 +125,7 @@ impl MessageCodec {
         buf.advance(MessageHeader::SIZE);
 
         // Calculate payload size
-        let payload_size =
-            header.length as usize - if header.flags.has_checksum { 4 } else { 0 };
+        let payload_size = header.length as usize - if header.flags.has_checksum { 4 } else { 0 };
 
         // Extract payload
         let payload = buf.split_to(payload_size);
@@ -156,9 +153,12 @@ impl MessageCodec {
         };
 
         // Deserialize message
-        let message: Message = bincode::decode_from_slice(&final_payload, bincode::config::standard())
-            .map(|(msg, _)| msg)
-            .map_err(|e| DbError::Serialization(format!("Failed to deserialize message: {}", e)))?;
+        let message: Message =
+            bincode::decode_from_slice(&final_payload, bincode::config::standard())
+                .map(|(msg, _)| msg)
+                .map_err(|e| {
+                    DbError::Serialization(format!("Failed to deserialize message: {}", e))
+                })?;
 
         Ok((header.message_id, message))
     }
@@ -306,7 +306,10 @@ mod tests {
 
         assert_eq!(message_id, 3);
         match decoded {
-            Message::Error { error_code, message } => {
+            Message::Error {
+                error_code,
+                message,
+            } => {
                 assert_eq!(error_code, 404);
                 assert_eq!(message, "Not found");
             }

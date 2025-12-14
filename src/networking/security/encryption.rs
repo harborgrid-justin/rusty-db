@@ -240,15 +240,17 @@ impl<'de> serde::Deserialize<'de> for EncryptedEnvelope {
                     }
                 }
 
-                let algorithm = match algorithm.ok_or_else(|| de::Error::missing_field("algorithm"))? {
-                    0 => EncryptionAlgorithm::Aes256Gcm,
-                    1 => EncryptionAlgorithm::ChaCha20Poly1305,
-                    2 => EncryptionAlgorithm::Aes128Gcm,
-                    _ => return Err(de::Error::custom("invalid algorithm")),
-                };
+                let algorithm =
+                    match algorithm.ok_or_else(|| de::Error::missing_field("algorithm"))? {
+                        0 => EncryptionAlgorithm::Aes256Gcm,
+                        1 => EncryptionAlgorithm::ChaCha20Poly1305,
+                        2 => EncryptionAlgorithm::Aes128Gcm,
+                        _ => return Err(de::Error::custom("invalid algorithm")),
+                    };
 
                 Ok(EncryptedEnvelope {
-                    encrypted_dek: encrypted_dek.ok_or_else(|| de::Error::missing_field("encrypted_dek"))?,
+                    encrypted_dek: encrypted_dek
+                        .ok_or_else(|| de::Error::missing_field("encrypted_dek"))?,
                     nonce: nonce.ok_or_else(|| de::Error::missing_field("nonce"))?,
                     ciphertext: ciphertext.ok_or_else(|| de::Error::missing_field("ciphertext"))?,
                     tag: tag.ok_or_else(|| de::Error::missing_field("tag"))?,
@@ -261,7 +263,15 @@ impl<'de> serde::Deserialize<'de> for EncryptedEnvelope {
 
         deserializer.deserialize_struct(
             "EncryptedEnvelope",
-            &["encrypted_dek", "nonce", "ciphertext", "tag", "algorithm", "key_id", "aad"],
+            &[
+                "encrypted_dek",
+                "nonce",
+                "ciphertext",
+                "tag",
+                "algorithm",
+                "key_id",
+                "aad",
+            ],
             EnvelopeVisitor,
         )
     }
@@ -504,8 +514,8 @@ mod tests {
 
     #[test]
     fn test_encryption_key() {
-        let key = EncryptionKey::generate("test".to_string(), EncryptionAlgorithm::Aes256Gcm)
-            .unwrap();
+        let key =
+            EncryptionKey::generate("test".to_string(), EncryptionAlgorithm::Aes256Gcm).unwrap();
 
         assert_eq!(key.key_material().len(), 32);
         assert!(!key.is_expired());

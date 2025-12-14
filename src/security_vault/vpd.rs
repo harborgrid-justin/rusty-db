@@ -26,12 +26,12 @@
 // Result: User only sees their managed employees unless they're admin
 // ```
 
-use crate::{DbError, Result};
 use crate::security::injection_prevention::{DangerousPatternDetector, SQLValidator};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use crate::{DbError, Result};
 use parking_lot::RwLock;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // Security predicate type
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -67,7 +67,10 @@ impl SecurityPredicate {
         match self {
             Self::Static(sql) => Ok(sql.clone()),
 
-            Self::Dynamic { template, variables } => {
+            Self::Dynamic {
+                template,
+                variables,
+            } => {
                 let mut result = template.clone();
                 for var in variables {
                     let placeholder = format!("${{{}}}", var);
@@ -75,7 +78,8 @@ impl SecurityPredicate {
                         result = result.replace(&placeholder, value);
                     } else {
                         return Err(DbError::InvalidInput(format!(
-                            "Context variable not found: {}", var
+                            "Context variable not found: {}",
+                            var
                         )));
                     }
                 }
@@ -88,10 +92,12 @@ impl SecurityPredicate {
                 Ok(format!("{}({})", name, args_str))
             }
 
-            Self::Composite { operator, predicates } => {
-                let evaluated: Result<Vec<String>> = predicates.iter()
-                    .map(|p| p.evaluate(context))
-                    .collect();
+            Self::Composite {
+                operator,
+                predicates,
+            } => {
+                let evaluated: Result<Vec<String>> =
+                    predicates.iter().map(|p| p.evaluate(context)).collect();
                 let evaluated = evaluated?;
 
                 if evaluated.is_empty() {
@@ -111,7 +117,8 @@ impl SecurityPredicate {
             let var_regex = Regex::new(r"\$\{([^}]+)\}")
                 .map_err(|e| DbError::InvalidInput(format!("Invalid regex: {}", e)))?;
 
-            let variables: Vec<String> = var_regex.captures_iter(s)
+            let variables: Vec<String> = var_regex
+                .captures_iter(s)
                 .map(|cap| cap[1].to_string())
                 .collect();
 
@@ -304,11 +311,7 @@ impl VpdEngine {
         let policy_name = format!("vpd_{}", table_name);
         let pred = SecurityPredicate::parse(predicate)?;
 
-        let policy = VpdPolicy::new(
-            policy_name.clone(),
-            table_name.to_string(),
-            pred,
-        );
+        let policy = VpdPolicy::new(policy_name.clone(), table_name.to_string(), pred);
 
         self.row_policies.write().insert(policy_name, policy);
         Ok(())
@@ -316,13 +319,17 @@ impl VpdEngine {
 
     // Create a policy with custom configuration
     pub fn create_policy_custom(&mut self, policy: VpdPolicy) -> Result<()> {
-        self.row_policies.write().insert(policy.name.clone(), policy);
+        self.row_policies
+            .write()
+            .insert(policy.name.clone(), policy);
         Ok(())
     }
 
     // Drop a policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
-        self.row_policies.write().remove(name)
+        self.row_policies
+            .write()
+            .remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
@@ -330,7 +337,8 @@ impl VpdEngine {
     // Enable a policy
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
-        let policy = policies.get_mut(name)
+        let policy = policies
+            .get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = true;
         Ok(())
@@ -339,7 +347,8 @@ impl VpdEngine {
     // Disable a policy
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
-        let policy = policies.get_mut(name)
+        let policy = policies
+            .get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = false;
         Ok(())
@@ -380,10 +389,11 @@ impl VpdEngine {
 
         // Find applicable policies
         let policies = self.row_policies.read();
-        let mut applicable: Vec<&VpdPolicy> = policies.values()
+        let mut applicable: Vec<&VpdPolicy> = policies
+            .values()
             .filter(|p| {
-                p.table_name == table_name &&
-                p.applies_to(user_id, user_roles, &PolicyScope::Select)
+                p.table_name == table_name
+                    && p.applies_to(user_id, user_roles, &PolicyScope::Select)
             })
             .collect();
 
@@ -401,12 +411,8 @@ impl VpdEngine {
         }
 
         // Apply column-level policies
-        let hidden_columns = self.apply_column_policies(
-            &mut rewritten,
-            &table_name,
-            user_id,
-            user_roles,
-        )?;
+        let hidden_columns =
+            self.apply_column_policies(&mut rewritten, &table_name, user_id, user_roles)?;
 
         // Update statistics
         let mut stats = self.stats.write();
@@ -431,7 +437,9 @@ impl VpdEngine {
         if let Some(cap) = from_regex.captures(query) {
             Ok(cap[1].to_string())
         } else {
-            Err(DbError::InvalidInput("Could not extract table name".to_string()))
+            Err(DbError::InvalidInput(
+                "Could not extract table name".to_string(),
+            ))
         }
     }
 
@@ -451,12 +459,14 @@ impl VpdEngine {
         })?;
 
         // Validate SQL syntax of the predicate
-        validator.validate_sql(&format!("SELECT 1 WHERE {}", predicate)).map_err(|e| {
-            DbError::Security(format!(
-                "VPD predicate syntax validation failed: {}. Predicate: '{}'",
-                e, predicate
-            ))
-        })?;
+        validator
+            .validate_sql(&format!("SELECT 1 WHERE {}", predicate))
+            .map_err(|e| {
+                DbError::Security(format!(
+                    "VPD predicate syntax validation failed: {}. Predicate: '{}'",
+                    e, predicate
+                ))
+            })?;
 
         // Block dangerous patterns that could allow SQL injection
         let predicate_upper = predicate.to_uppercase();
@@ -600,7 +610,12 @@ impl VpdEngine {
     // Get VPD statistics
     pub fn get_stats(&self) -> (u64, u64, u64, u64) {
         let stats = self.stats.read();
-        (stats.total_rewrites, stats.policies_applied, stats.columns_hidden, stats.policy_violations)
+        (
+            stats.total_rewrites,
+            stats.policies_applied,
+            stats.columns_hidden,
+            stats.policy_violations,
+        )
     }
 }
 
@@ -659,7 +674,9 @@ mod tests {
     #[test]
     fn test_create_policy() {
         let mut engine = VpdEngine::new().unwrap();
-        engine.create_policy("employees", "department_id = ${DEPT_ID}").unwrap();
+        engine
+            .create_policy("employees", "department_id = ${DEPT_ID}")
+            .unwrap();
 
         let policies = engine.list_policies();
         assert_eq!(policies.len(), 1);
@@ -690,12 +707,14 @@ mod tests {
     fn test_column_policy() {
         let mut engine = VpdEngine::new().unwrap();
 
-        engine.create_column_policy(
-            "hide_salary".to_string(),
-            "employees".to_string(),
-            "salary".to_string(),
-            ColumnAction::Nullify,
-        ).unwrap();
+        engine
+            .create_column_policy(
+                "hide_salary".to_string(),
+                "employees".to_string(),
+                "salary".to_string(),
+                ColumnAction::Nullify,
+            )
+            .unwrap();
 
         let column_policies = engine.list_column_policies();
         assert_eq!(column_policies.len(), 1);

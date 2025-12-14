@@ -4,93 +4,54 @@
 // replacement policies, and dirty page management for high-performance database operations.
 
 // Internal modules
-pub(crate) mod common;
-mod multi_tier;
 mod arc;
-mod two_q;
-mod prefetcher;
-mod eviction_policies;
 mod checkpoint;
-mod writer;
-mod statistics;
+pub(crate) mod common;
+mod eviction_policies;
 mod manager;
+mod multi_tier;
+mod prefetcher;
+mod statistics;
+mod two_q;
+mod writer;
 
 // Re-export common types
-pub use common::{
-    PageId,
-    BufferTier,
-    PoolType,
-    BufferFrame,
-    BufferFrameGuard,
-    BufferPoolConfig,
-};
+pub use common::{BufferFrame, BufferFrameGuard, BufferPoolConfig, BufferTier, PageId, PoolType};
 
 // Re-export from multi_tier
-pub use multi_tier::{
-    MultiTierBufferPool,
-    BufferPoolStatsSnapshot,
-};
+pub use multi_tier::{BufferPoolStatsSnapshot, MultiTierBufferPool};
 
 // Re-export from arc
-pub use arc::{
-    AdaptiveReplacementCache,
-    ArcStatsSnapshot,
-};
+pub use arc::{AdaptiveReplacementCache, ArcStatsSnapshot};
 
 // Re-export from two_q
-pub use two_q::{
-    TwoQCache,
-    TwoQStatsSnapshot,
-};
+pub use two_q::{TwoQCache, TwoQStatsSnapshot};
 
 // Re-export from prefetcher
-pub use prefetcher::{
-    PagePrefetcher,
-    PrefetchStatsSnapshot,
-};
+pub use prefetcher::{PagePrefetcher, PrefetchStatsSnapshot};
 
 // Re-export from eviction_policies
 pub use eviction_policies::{
-    ClockSweepPolicy,
-    LruKPolicy,
-    TouchCountOptimizer,
-    CostAwareReplacement,
-    ClockStatsSnapshot,
-    LruKStatsSnapshot,
-    TouchOptimizerStatsSnapshot,
-    CostAwareStatsSnapshot,
+    ClockStatsSnapshot, ClockSweepPolicy, CostAwareReplacement, CostAwareStatsSnapshot, LruKPolicy,
+    LruKStatsSnapshot, TouchCountOptimizer, TouchOptimizerStatsSnapshot,
 };
 
 // Re-export from checkpoint
 pub use checkpoint::{
-    CheckpointQueue,
-    CheckpointResult,
-    CheckpointStatsSnapshot,
+    CheckpointQueue, CheckpointResult, CheckpointStatsSnapshot, IncrementalCheckpointStatsSnapshot,
     IncrementalCheckpointer,
-    IncrementalCheckpointStatsSnapshot,
 };
 
 // Re-export from writer
 pub use writer::{
-    BackgroundWriter,
-    BackgroundWriterStatsSnapshot,
-    WriteCoalescingBuffer,
-    CoalescingStatsSnapshot,
-    DoubleWriteBuffer,
-    DoubleWriteStatsSnapshot,
-    FlushListManager,
-    FlushListStatsSnapshot,
+    BackgroundWriter, BackgroundWriterStatsSnapshot, CoalescingStatsSnapshot, DoubleWriteBuffer,
+    DoubleWriteStatsSnapshot, FlushListManager, FlushListStatsSnapshot, WriteCoalescingBuffer,
 };
 
 // Re-export from statistics
 pub use statistics::{
-    BufferPoolStatisticsTracker,
-    PageType,
-    ComprehensiveBufferStats,
-    MemoryPressureSnapshot,
+    BufferPoolStatisticsTracker, ComprehensiveBufferStats, MemoryPressureSnapshot, PageType,
 };
 
 // Re-export from manager
-pub use manager::{
-    BufferPoolManager,
-};
+pub use manager::BufferPoolManager;

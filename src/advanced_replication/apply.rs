@@ -6,16 +6,16 @@
 
 #![allow(dead_code)]
 
-use std::collections::HashSet;
-use std::collections::VecDeque;
+use crate::error::DbError;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use parking_lot::RwLock;
-use tokio::sync::mpsc;
+use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use crate::error::DbError;
+use tokio::sync::mpsc;
 
 type Result<T> = std::result::Result<T, DbError>;
 
@@ -311,7 +311,8 @@ impl ApplyEngine {
         }
 
         // Queue the change
-        self.change_tx.send(change)
+        self.change_tx
+            .send(change)
             .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?;
 
         let mut stats = self.stats.write();
@@ -347,9 +348,7 @@ impl ApplyEngine {
         for group in groups {
             let group_id = group.id.clone();
             let engine = self.clone_for_worker();
-            let handle = tokio::spawn(async move {
-                engine.apply_group(group).await
-            });
+            let handle = tokio::spawn(async move { engine.apply_group(group).await });
             handles.push((group_id, handle));
         }
 
@@ -403,7 +402,10 @@ impl ApplyEngine {
         let mut txn_map: HashMap<u64, Vec<ApplyChange>> = HashMap::new();
 
         for change in changes {
-            txn_map.entry(change.txn_id).or_insert_with(Vec::new).push(change);
+            txn_map
+                .entry(change.txn_id)
+                .or_insert_with(Vec::new)
+                .push(change);
         }
 
         let mut groups = Vec::new();
@@ -442,9 +444,10 @@ impl ApplyEngine {
             for change in &group.changes {
                 if !self.dependencies_satisfied(&change.dependencies)? {
                     // Dependencies not satisfied, requeue for later
-                    return Err(DbError::Replication(
-                        format!("Dependencies not satisfied for change {}", change.id)
-                    ));
+                    return Err(DbError::Replication(format!(
+                        "Dependencies not satisfied for change {}",
+                        change.id
+                    )));
                 }
             }
         }
@@ -466,9 +469,10 @@ impl ApplyEngine {
                     let mut groups = self.groups.write();
                     groups.insert(group.id.clone(), group);
 
-                    return Err(DbError::Replication(
-                        format!("Failed to apply change {}", change.id)
-                    ));
+                    return Err(DbError::Replication(format!(
+                        "Failed to apply change {}",
+                        change.id
+                    )));
                 }
             }
         }
@@ -487,8 +491,9 @@ impl ApplyEngine {
             stats.transactions_applied += group.txn_ids.len() as u64;
 
             let elapsed = Self::current_timestamp() - start;
-            stats.avg_apply_time_ms = (stats.avg_apply_time_ms * (stats.groups_processed - 1) as f64
-                + elapsed as f64) / stats.groups_processed as f64;
+            stats.avg_apply_time_ms =
+                (stats.avg_apply_time_ms * (stats.groups_processed - 1) as f64 + elapsed as f64)
+                    / stats.groups_processed as f64;
         }
 
         Ok(())
@@ -524,11 +529,15 @@ impl ApplyEngine {
             let op_key = format!("{:?}", change.operation);
             *stats.changes_by_operation.entry(op_key).or_insert(0) += 1;
 
-            *stats.changes_by_table.entry(change.table.clone()).or_insert(0) += 1;
+            *stats
+                .changes_by_table
+                .entry(change.table.clone())
+                .or_insert(0) += 1;
 
             let elapsed = Self::current_timestamp() - start;
-            stats.avg_apply_time_ms = (stats.avg_apply_time_ms * (stats.changes_applied - 1) as f64
-                + elapsed as f64) / stats.changes_applied as f64;
+            stats.avg_apply_time_ms =
+                (stats.avg_apply_time_ms * (stats.changes_applied - 1) as f64 + elapsed as f64)
+                    / stats.changes_applied as f64;
         }
 
         Ok(())
@@ -552,13 +561,14 @@ impl ApplyEngine {
             let mut stats = self.stats.write();
             stats.changes_failed += 1;
 
-            Err(DbError::Replication(
-                format!("Max retries exceeded for change {}", change.id)
-            ))
+            Err(DbError::Replication(format!(
+                "Max retries exceeded for change {}",
+                change.id
+            )))
         } else {
             // Schedule retry
-            error_entry.next_retry = Self::current_timestamp() +
-                (self.config.retry_delay_ms * error_entry.retry_count as u64);
+            error_entry.next_retry = Self::current_timestamp()
+                + (self.config.retry_delay_ms * error_entry.retry_count as u64);
 
             let mut stats = self.stats.write();
             stats.changes_retried += 1;
@@ -623,12 +633,11 @@ impl ApplyEngine {
     pub fn restore_from_checkpoint(&self, checkpoint_id: &str) -> Result<ApplyCheckpoint> {
         let checkpoints = self.checkpoints.read();
 
-        checkpoints.iter()
+        checkpoints
+            .iter()
             .find(|c| c.id == checkpoint_id)
             .cloned()
-            .ok_or_else(|| DbError::Replication(
-                format!("Checkpoint {} not found", checkpoint_id)
-            ))
+            .ok_or_else(|| DbError::Replication(format!("Checkpoint {} not found", checkpoint_id)))
     }
 
     /// Get latest checkpoint

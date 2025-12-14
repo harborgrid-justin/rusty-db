@@ -37,35 +37,116 @@ pub struct StringFunctionResponse {
 #[derive(Debug, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum StringFunctionType {
-    Ascii { value: String },
-    Char { code: i64 },
-    CharIndex { substring: String, string: String, start_position: Option<i64> },
-    Concat { values: Vec<String> },
-    ConcatWs { separator: String, values: Vec<String> },
-    DataLength { value: String },
-    Difference { string1: String, string2: String },
-    Format { value: String, format: String, culture: Option<String> },
-    Left { string: String, length: i64 },
-    Len { value: String },
-    Lower { value: String },
-    LTrim { value: String },
-    NChar { code: i64 },
-    PatIndex { pattern: String, string: String },
-    QuoteName { string: String, quote_char: Option<String> },
-    Replace { string: String, old_substring: String, new_substring: String },
-    Replicate { string: String, count: i64 },
-    Reverse { value: String },
-    Right { string: String, length: i64 },
-    RTrim { value: String },
-    Soundex { value: String },
-    Space { count: i64 },
-    Str { number: f64, length: Option<i64>, decimals: Option<i64> },
-    Stuff { string: String, start: i64, length: i64, new_string: String },
-    Substring { string: String, start: i64, length: i64 },
-    Translate { string: String, characters: String, translations: String },
-    Trim { value: String, characters: Option<String> },
-    Unicode { value: String },
-    Upper { value: String },
+    Ascii {
+        value: String,
+    },
+    Char {
+        code: i64,
+    },
+    CharIndex {
+        substring: String,
+        string: String,
+        start_position: Option<i64>,
+    },
+    Concat {
+        values: Vec<String>,
+    },
+    ConcatWs {
+        separator: String,
+        values: Vec<String>,
+    },
+    DataLength {
+        value: String,
+    },
+    Difference {
+        string1: String,
+        string2: String,
+    },
+    Format {
+        value: String,
+        format: String,
+        culture: Option<String>,
+    },
+    Left {
+        string: String,
+        length: i64,
+    },
+    Len {
+        value: String,
+    },
+    Lower {
+        value: String,
+    },
+    LTrim {
+        value: String,
+    },
+    NChar {
+        code: i64,
+    },
+    PatIndex {
+        pattern: String,
+        string: String,
+    },
+    QuoteName {
+        string: String,
+        quote_char: Option<String>,
+    },
+    Replace {
+        string: String,
+        old_substring: String,
+        new_substring: String,
+    },
+    Replicate {
+        string: String,
+        count: i64,
+    },
+    Reverse {
+        value: String,
+    },
+    Right {
+        string: String,
+        length: i64,
+    },
+    RTrim {
+        value: String,
+    },
+    Soundex {
+        value: String,
+    },
+    Space {
+        count: i64,
+    },
+    Str {
+        number: f64,
+        length: Option<i64>,
+        decimals: Option<i64>,
+    },
+    Stuff {
+        string: String,
+        start: i64,
+        length: i64,
+        new_string: String,
+    },
+    Substring {
+        string: String,
+        start: i64,
+        length: i64,
+    },
+    Translate {
+        string: String,
+        characters: String,
+        translations: String,
+    },
+    Trim {
+        value: String,
+        characters: Option<String>,
+    },
+    Unicode {
+        value: String,
+    },
+    Upper {
+        value: String,
+    },
 }
 
 // ============================================================================
@@ -81,46 +162,50 @@ impl StringFunctionType {
             StringFunctionType::Char { code } => {
                 StringFunction::Char(Box::new(StringExpr::Integer(*code)))
             }
-            StringFunctionType::CharIndex { substring, string, start_position } => {
-                StringFunction::CharIndex {
-                    substring: Box::new(StringExpr::Literal(substring.clone())),
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    start_position: start_position.map(|sp| Box::new(StringExpr::Integer(sp))),
-                }
-            }
-            StringFunctionType::Concat { values } => {
-                StringFunction::Concat(
-                    values.iter().map(|v| StringExpr::Literal(v.clone())).collect()
-                )
-            }
-            StringFunctionType::ConcatWs { separator, values } => {
-                StringFunction::ConcatWs {
-                    separator: Box::new(StringExpr::Literal(separator.clone())),
-                    strings: values.iter().map(|v| StringExpr::Literal(v.clone())).collect(),
-                }
-            }
+            StringFunctionType::CharIndex {
+                substring,
+                string,
+                start_position,
+            } => StringFunction::CharIndex {
+                substring: Box::new(StringExpr::Literal(substring.clone())),
+                string: Box::new(StringExpr::Literal(string.clone())),
+                start_position: start_position.map(|sp| Box::new(StringExpr::Integer(sp))),
+            },
+            StringFunctionType::Concat { values } => StringFunction::Concat(
+                values
+                    .iter()
+                    .map(|v| StringExpr::Literal(v.clone()))
+                    .collect(),
+            ),
+            StringFunctionType::ConcatWs { separator, values } => StringFunction::ConcatWs {
+                separator: Box::new(StringExpr::Literal(separator.clone())),
+                strings: values
+                    .iter()
+                    .map(|v| StringExpr::Literal(v.clone()))
+                    .collect(),
+            },
             StringFunctionType::DataLength { value } => {
                 StringFunction::DataLength(Box::new(StringExpr::Literal(value.clone())))
             }
-            StringFunctionType::Difference { string1, string2 } => {
-                StringFunction::Difference {
-                    string1: Box::new(StringExpr::Literal(string1.clone())),
-                    string2: Box::new(StringExpr::Literal(string2.clone())),
-                }
-            }
-            StringFunctionType::Format { value, format, culture } => {
-                StringFunction::Format {
-                    value: Box::new(StringExpr::Literal(value.clone())),
-                    format: Box::new(StringExpr::Literal(format.clone())),
-                    culture: culture.as_ref().map(|c| Box::new(StringExpr::Literal(c.clone()))),
-                }
-            }
-            StringFunctionType::Left { string, length } => {
-                StringFunction::Left {
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    length: Box::new(StringExpr::Integer(*length)),
-                }
-            }
+            StringFunctionType::Difference { string1, string2 } => StringFunction::Difference {
+                string1: Box::new(StringExpr::Literal(string1.clone())),
+                string2: Box::new(StringExpr::Literal(string2.clone())),
+            },
+            StringFunctionType::Format {
+                value,
+                format,
+                culture,
+            } => StringFunction::Format {
+                value: Box::new(StringExpr::Literal(value.clone())),
+                format: Box::new(StringExpr::Literal(format.clone())),
+                culture: culture
+                    .as_ref()
+                    .map(|c| Box::new(StringExpr::Literal(c.clone()))),
+            },
+            StringFunctionType::Left { string, length } => StringFunction::Left {
+                string: Box::new(StringExpr::Literal(string.clone())),
+                length: Box::new(StringExpr::Integer(*length)),
+            },
             StringFunctionType::Len { value } => {
                 StringFunction::Len(Box::new(StringExpr::Literal(value.clone())))
             }
@@ -133,40 +218,36 @@ impl StringFunctionType {
             StringFunctionType::NChar { code } => {
                 StringFunction::NChar(Box::new(StringExpr::Integer(*code)))
             }
-            StringFunctionType::PatIndex { pattern, string } => {
-                StringFunction::PatIndex {
-                    pattern: Box::new(StringExpr::Literal(pattern.clone())),
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                }
-            }
-            StringFunctionType::QuoteName { string, quote_char } => {
-                StringFunction::QuoteName {
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    quote_char: quote_char.as_ref().map(|qc| Box::new(StringExpr::Literal(qc.clone()))),
-                }
-            }
-            StringFunctionType::Replace { string, old_substring, new_substring } => {
-                StringFunction::Replace {
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    old_substring: Box::new(StringExpr::Literal(old_substring.clone())),
-                    new_substring: Box::new(StringExpr::Literal(new_substring.clone())),
-                }
-            }
-            StringFunctionType::Replicate { string, count } => {
-                StringFunction::Replicate {
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    count: Box::new(StringExpr::Integer(*count)),
-                }
-            }
+            StringFunctionType::PatIndex { pattern, string } => StringFunction::PatIndex {
+                pattern: Box::new(StringExpr::Literal(pattern.clone())),
+                string: Box::new(StringExpr::Literal(string.clone())),
+            },
+            StringFunctionType::QuoteName { string, quote_char } => StringFunction::QuoteName {
+                string: Box::new(StringExpr::Literal(string.clone())),
+                quote_char: quote_char
+                    .as_ref()
+                    .map(|qc| Box::new(StringExpr::Literal(qc.clone()))),
+            },
+            StringFunctionType::Replace {
+                string,
+                old_substring,
+                new_substring,
+            } => StringFunction::Replace {
+                string: Box::new(StringExpr::Literal(string.clone())),
+                old_substring: Box::new(StringExpr::Literal(old_substring.clone())),
+                new_substring: Box::new(StringExpr::Literal(new_substring.clone())),
+            },
+            StringFunctionType::Replicate { string, count } => StringFunction::Replicate {
+                string: Box::new(StringExpr::Literal(string.clone())),
+                count: Box::new(StringExpr::Integer(*count)),
+            },
             StringFunctionType::Reverse { value } => {
                 StringFunction::Reverse(Box::new(StringExpr::Literal(value.clone())))
             }
-            StringFunctionType::Right { string, length } => {
-                StringFunction::Right {
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    length: Box::new(StringExpr::Integer(*length)),
-                }
-            }
+            StringFunctionType::Right { string, length } => StringFunction::Right {
+                string: Box::new(StringExpr::Literal(string.clone())),
+                length: Box::new(StringExpr::Integer(*length)),
+            },
             StringFunctionType::RTrim { value } => {
                 StringFunction::RTrim(Box::new(StringExpr::Literal(value.clone())))
             }
@@ -176,41 +257,50 @@ impl StringFunctionType {
             StringFunctionType::Space { count } => {
                 StringFunction::Space(Box::new(StringExpr::Integer(*count)))
             }
-            StringFunctionType::Str { number, length, decimals } => {
-                StringFunction::Str {
-                    number: Box::new(StringExpr::Float(*number)),
-                    length: length.map(|l| Box::new(StringExpr::Integer(l))),
-                    decimals: decimals.map(|d| Box::new(StringExpr::Integer(d))),
-                }
-            }
-            StringFunctionType::Stuff { string, start, length, new_string } => {
-                StringFunction::Stuff {
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    start: Box::new(StringExpr::Integer(*start)),
-                    length: Box::new(StringExpr::Integer(*length)),
-                    new_string: Box::new(StringExpr::Literal(new_string.clone())),
-                }
-            }
-            StringFunctionType::Substring { string, start, length } => {
-                StringFunction::Substring {
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    start: Box::new(StringExpr::Integer(*start)),
-                    length: Box::new(StringExpr::Integer(*length)),
-                }
-            }
-            StringFunctionType::Translate { string, characters, translations } => {
-                StringFunction::Translate {
-                    string: Box::new(StringExpr::Literal(string.clone())),
-                    characters: Box::new(StringExpr::Literal(characters.clone())),
-                    translations: Box::new(StringExpr::Literal(translations.clone())),
-                }
-            }
-            StringFunctionType::Trim { value, characters } => {
-                StringFunction::Trim {
-                    string: Box::new(StringExpr::Literal(value.clone())),
-                    characters: characters.as_ref().map(|c| Box::new(StringExpr::Literal(c.clone()))),
-                }
-            }
+            StringFunctionType::Str {
+                number,
+                length,
+                decimals,
+            } => StringFunction::Str {
+                number: Box::new(StringExpr::Float(*number)),
+                length: length.map(|l| Box::new(StringExpr::Integer(l))),
+                decimals: decimals.map(|d| Box::new(StringExpr::Integer(d))),
+            },
+            StringFunctionType::Stuff {
+                string,
+                start,
+                length,
+                new_string,
+            } => StringFunction::Stuff {
+                string: Box::new(StringExpr::Literal(string.clone())),
+                start: Box::new(StringExpr::Integer(*start)),
+                length: Box::new(StringExpr::Integer(*length)),
+                new_string: Box::new(StringExpr::Literal(new_string.clone())),
+            },
+            StringFunctionType::Substring {
+                string,
+                start,
+                length,
+            } => StringFunction::Substring {
+                string: Box::new(StringExpr::Literal(string.clone())),
+                start: Box::new(StringExpr::Integer(*start)),
+                length: Box::new(StringExpr::Integer(*length)),
+            },
+            StringFunctionType::Translate {
+                string,
+                characters,
+                translations,
+            } => StringFunction::Translate {
+                string: Box::new(StringExpr::Literal(string.clone())),
+                characters: Box::new(StringExpr::Literal(characters.clone())),
+                translations: Box::new(StringExpr::Literal(translations.clone())),
+            },
+            StringFunctionType::Trim { value, characters } => StringFunction::Trim {
+                string: Box::new(StringExpr::Literal(value.clone())),
+                characters: characters
+                    .as_ref()
+                    .map(|c| Box::new(StringExpr::Literal(c.clone()))),
+            },
             StringFunctionType::Unicode { value } => {
                 StringFunction::Unicode(Box::new(StringExpr::Literal(value.clone())))
             }
@@ -247,7 +337,8 @@ pub async fn execute_string_function(
 
     // Execute function
     let mut executor = StringFunctionExecutor::new();
-    let result = executor.execute(&function, &request.context)
+    let result = executor
+        .execute(&function, &request.context)
         .map_err(|e| ApiError::BadRequest(e.to_string()))?;
 
     let execution_time_ms = start.elapsed().as_secs_f64() * 1000.0;
@@ -293,7 +384,8 @@ pub async fn batch_execute_string_functions(
 
     for func_type in &request.functions {
         let function = func_type.to_ast();
-        let result = executor.execute(&function, &request.context)
+        let result = executor
+            .execute(&function, &request.context)
             .map_err(|e| ApiError::BadRequest(e.to_string()))?;
         results.push(result);
     }

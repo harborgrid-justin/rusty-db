@@ -9,16 +9,16 @@
 // - Inline hints for hot paths
 // - Cold attributes for error paths
 
-use std::sync::Mutex;
-use std::time::Instant;
-use std::collections::{HashMap, BinaryHeap, VecDeque, HashSet};
-use std::sync::{Arc, RwLock};
-use std::sync::atomic::{AtomicU64, AtomicU32, AtomicUsize, Ordering as AtomicOrdering};
-use std::cmp::Ordering;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::sync::atomic::{AtomicU32, AtomicU64, AtomicUsize, Ordering as AtomicOrdering};
+use std::sync::Mutex;
+use std::sync::{Arc, RwLock};
+use std::time::Instant;
 
-use crate::error::{Result, DbError};
 use super::consumer_groups::{ConsumerGroupId, PriorityLevel};
+use crate::error::{DbError, Result};
 
 // Per-core resource tracker - avoids global lock contention
 // Cache line aligned to prevent false sharing (64 bytes on most platforms)
@@ -52,7 +52,8 @@ impl PerCoreResourceTracker {
     // Record CPU time usage (lock-free)
     #[inline]
     pub fn add_cpu_time(&self, nanoseconds: u64) {
-        self.cpu_used.fetch_add(nanoseconds, AtomicOrdering::Relaxed);
+        self.cpu_used
+            .fetch_add(nanoseconds, AtomicOrdering::Relaxed);
     }
 
     // Record memory usage (lock-free)
@@ -224,7 +225,9 @@ impl ScheduledTask {
 impl Ord for ScheduledTask {
     fn cmp(&self, other: &Self) -> Ordering {
         // Lower vruntime = higher priority
-        other.vruntime.cmp(&self.vruntime)
+        other
+            .vruntime
+            .cmp(&self.vruntime)
             .then_with(|| self.priority.cmp(&other.priority))
             .then_with(|| self.task_id.cmp(&other.task_id))
     }
@@ -285,7 +288,8 @@ impl GroupAllocation {
 
     #[inline]
     pub fn add_cpu_time(&self, nanoseconds: u64) {
-        self.cpu_time_used.fetch_add(nanoseconds, AtomicOrdering::Relaxed);
+        self.cpu_time_used
+            .fetch_add(nanoseconds, AtomicOrdering::Relaxed);
     }
 
     #[inline]
@@ -368,7 +372,8 @@ impl SchedulerStats {
 
     #[inline]
     pub fn inc_runaway(&self) {
-        self.runaway_queries_detected.fetch_add(1, AtomicOrdering::Relaxed);
+        self.runaway_queries_detected
+            .fetch_add(1, AtomicOrdering::Relaxed);
     }
 
     #[inline]
@@ -433,7 +438,9 @@ impl CpuScheduler {
         // In production, use core_affinity crate for accurate core binding
         let thread_id = std::thread::current().id();
         // Simple hash of thread ID to get a core number
-        let id_hash = format!("{:?}", thread_id).bytes().fold(0usize, |acc, b| acc.wrapping_add(b as usize));
+        let id_hash = format!("{:?}", thread_id)
+            .bytes()
+            .fold(0usize, |acc, b| acc.wrapping_add(b as usize));
         id_hash % self.num_cores
     }
 
@@ -488,9 +495,10 @@ impl CpuScheduler {
     #[cold]
     #[inline(never)]
     fn group_exists_error(&self, group_id: ConsumerGroupId) -> Result<()> {
-        Err(DbError::AlreadyExists(
-            format!("Group {} already registered", group_id)
-        ))
+        Err(DbError::AlreadyExists(format!(
+            "Group {} already registered",
+            group_id
+        )))
     }
 
     // Add a new task to the scheduler
@@ -708,7 +716,8 @@ impl CpuScheduler {
     #[inline]
     pub fn update_task(&self, task_id: TaskId, cpu_time_ns: u64) -> Result<()> {
         let mut tasks = self.tasks.write().unwrap();
-        let task = tasks.get_mut(&task_id)
+        let task = tasks
+            .get_mut(&task_id)
             .ok_or_else(|| self.task_not_found_error(task_id))?;
 
         // Apply throttle if runaway
@@ -778,7 +787,8 @@ impl CpuScheduler {
         running.remove(&task_id);
 
         let mut tasks = self.tasks.write().unwrap();
-        let task = tasks.get_mut(&task_id)
+        let task = tasks
+            .get_mut(&task_id)
             .ok_or_else(|| DbError::NotFound(format!("Task {} not found", task_id)))?;
 
         task.state = TaskState::Ready;
@@ -807,7 +817,8 @@ impl CpuScheduler {
         running.remove(&task_id);
 
         let mut tasks = self.tasks.write().unwrap();
-        let task = tasks.get_mut(&task_id)
+        let task = tasks
+            .get_mut(&task_id)
             .ok_or_else(|| self.task_not_found_error(task_id))?;
 
         task.state = TaskState::Completed;
@@ -861,7 +872,10 @@ impl CpuScheduler {
     }
 
     // Get group statistics (clone needed due to Atomics not being Clone)
-    pub fn get_group_stats(&self, group_id: ConsumerGroupId) -> Option<(ConsumerGroupId, u32, Option<u8>, u64, usize)> {
+    pub fn get_group_stats(
+        &self,
+        group_id: ConsumerGroupId,
+    ) -> Option<(ConsumerGroupId, u32, Option<u8>, u64, usize)> {
         let allocations = self.group_allocations.read().unwrap();
         allocations.get(&group_id).map(|alloc| {
             (
@@ -921,7 +935,9 @@ impl CpuScheduler {
             if total_shares > 0 {
                 let share_ratio = alloc.shares as f64 / total_shares as f64;
                 let target_vruntime = (alloc.cpu_time() as f64 / share_ratio) as u64;
-                alloc.target_vruntime.store(target_vruntime, AtomicOrdering::Relaxed);
+                alloc
+                    .target_vruntime
+                    .store(target_vruntime, AtomicOrdering::Relaxed);
             }
         }
 
@@ -969,7 +985,9 @@ mod tests {
         let task_id = scheduler.add_task(1, 1, PriorityLevel::medium()).unwrap();
 
         // Simulate lots of CPU time
-        scheduler.update_task(task_id, RUNAWAY_THRESHOLD_SECS * 1_000_000_000 + 1).unwrap();
+        scheduler
+            .update_task(task_id, RUNAWAY_THRESHOLD_SECS * 1_000_000_000 + 1)
+            .unwrap();
 
         let runaway = scheduler.detect_runaway_queries();
         assert!(!runaway.is_empty());

@@ -1,6 +1,9 @@
 // Dictionary-Based Compression
 
-use crate::compression::{Compressor, CompressionLevel, CompressionAlgorithm, CompressionResult, CompressionStats, CompressionError};
+use crate::compression::{
+    CompressionAlgorithm, CompressionError, CompressionLevel, CompressionResult, CompressionStats,
+    Compressor,
+};
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -71,7 +74,7 @@ impl DictionaryCompressor {
     fn decompress_lzw(&self, input: &[u8]) -> CompressionResult<Vec<u8>> {
         if input.len() % 2 != 0 {
             return Err(CompressionError::DecompressionFailed(
-                "Invalid compressed data length".to_string()
+                "Invalid compressed data length".to_string(),
             ));
         }
 
@@ -90,9 +93,10 @@ impl DictionaryCompressor {
                 temp.push(previous[0]);
                 temp
             } else {
-                return Err(CompressionError::DecompressionFailed(
-                    format!("Invalid code: {}", code)
-                ));
+                return Err(CompressionError::DecompressionFailed(format!(
+                    "Invalid code: {}",
+                    code
+                )));
             };
 
             result.extend_from_slice(&entry);
@@ -122,7 +126,10 @@ impl Compressor for DictionaryCompressor {
         let compressed = self.compress_lzw(input);
 
         if compressed.len() > output.len() {
-            return Err(CompressionError::BufferTooSmall(compressed.len(), output.len()));
+            return Err(CompressionError::BufferTooSmall(
+                compressed.len(),
+                output.len(),
+            ));
         }
 
         output[..compressed.len()].copy_from_slice(&compressed);
@@ -141,7 +148,10 @@ impl Compressor for DictionaryCompressor {
         let decoded = self.decompress_lzw(input)?;
 
         if decoded.len() > output.len() {
-            return Err(CompressionError::BufferTooSmall(decoded.len(), output.len()));
+            return Err(CompressionError::BufferTooSmall(
+                decoded.len(),
+                output.len(),
+            ));
         }
 
         output[..decoded.len()].copy_from_slice(&decoded);

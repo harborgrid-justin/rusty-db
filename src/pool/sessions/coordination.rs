@@ -1,5 +1,5 @@
 // Session pool coordination module
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
 pub struct SessionPool;

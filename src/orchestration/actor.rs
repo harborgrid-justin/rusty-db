@@ -33,20 +33,20 @@
 //                                     └───────┘ └───────┘
 // ```
 
-use tokio::sync::oneshot;
-use std::fmt;
 use parking_lot::Mutex;
 use std::any::Any;
 use std::collections::HashMap;
+use std::fmt;
+use tokio::sync::oneshot;
 
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::error::Result;
+use crate::DbError;
 use tokio::sync::{mpsc, RwLock};
 use tokio::time::timeout;
 use tracing::{debug, error, info};
-use crate::DbError;
-use crate::error::Result;
 
 // Unique identifier for an actor
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -486,10 +486,7 @@ impl ActorSystem {
     // List all active actors
     pub async fn list_actors(&self) -> Vec<(ActorId, Option<String>)> {
         let actors = self.actors.read().await;
-        actors
-            .values()
-            .map(|h| (h.id, h.name.clone()))
-            .collect()
+        actors.values().map(|h| (h.id, h.name.clone())).collect()
     }
 
     // Broadcast a message to all actors
@@ -525,11 +522,7 @@ impl ActorSystem {
             SupervisionStrategy::Restart => {
                 info!("Restarting failed actor: {}", id);
                 if let Some(actor_ref) = self.get_actor(id).await {
-                    if let Err(e) = actor_ref
-                        .tx
-                        .send(ActorMessage::Restart)
-                        .await
-                    {
+                    if let Err(e) = actor_ref.tx.send(ActorMessage::Restart).await {
                         error!("Failed to send restart message to actor {}: {}", id, e);
                     }
                 }
@@ -578,10 +571,7 @@ impl ActorSystem {
         // Wait for all actors to stop
         let handles: Vec<_> = {
             let mut actors = self.actors.write().await;
-            actors
-                .drain()
-                .map(|(_, h)| h.join_handle)
-                .collect()
+            actors.drain().map(|(_, h)| h.join_handle).collect()
         };
 
         for handle in handles {
@@ -633,8 +623,8 @@ pub struct ActorSystemStats {
 
 #[cfg(test)]
 mod tests {
-    use std::thread::sleep;
     use super::*;
+    use std::thread::sleep;
 
     struct TestActor {
         counter: usize,

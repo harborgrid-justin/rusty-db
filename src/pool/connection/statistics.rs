@@ -6,12 +6,12 @@
 // - Leak detection
 // - Export formats (JSON, Prometheus, CSV)
 
-use std::collections::{BTreeMap, HashMap};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use parking_lot::RwLock;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashMap};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 // Comprehensive pool statistics
 pub struct PoolStatistics {
@@ -122,7 +122,9 @@ impl PoolStatistics {
             connections_destroyed: self.connections_destroyed.load(Ordering::SeqCst),
             connections_acquired: self.connections_acquired.load(Ordering::SeqCst),
             connections_released: self.connections_released.load(Ordering::SeqCst),
-            active_connections: self.connections_acquired.load(Ordering::SeqCst)
+            active_connections: self
+                .connections_acquired
+                .load(Ordering::SeqCst)
                 .saturating_sub(self.connections_released.load(Ordering::SeqCst)),
             acquire_attempts,
             acquire_successes,
@@ -268,7 +270,9 @@ impl UsagePatterns {
     }
 
     fn update_peak_hour(&mut self) {
-        if let Some((hour, _)) = self.acquisitions_by_hour.iter()
+        if let Some((hour, _)) = self
+            .acquisitions_by_hour
+            .iter()
             .enumerate()
             .max_by_key(|(_, &count)| count)
         {

@@ -1,115 +1,117 @@
 // Protocol Error Types
 
-    use std::io;
-    use thiserror::Error;
-    use crate::network::ConnectionState;
+use crate::network::ConnectionState;
+use std::io;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
-    pub enum ProtocolError {
-        #[error("IO error: {0}")]
-        Io(#[from] io::Error),
+pub enum ProtocolError {
+    #[error("IO error: {0}")]
+    Io(#[from] io::Error),
 
-        #[error("Insufficient data in buffer")]
-        InsufficientData,
+    #[error("Insufficient data in buffer")]
+    InsufficientData,
 
-        #[error("Invalid magic number")]
-        InvalidMagic,
+    #[error("Invalid magic number")]
+    InvalidMagic,
 
-        #[error("Invalid protocol version")]
-        InvalidVersion,
+    #[error("Invalid protocol version")]
+    InvalidVersion,
 
-        #[error("Invalid message type")]
-        InvalidMessageType,
+    #[error("Invalid message type")]
+    InvalidMessageType,
 
-        #[error("Invalid compression type")]
-        InvalidCompression,
+    #[error("Invalid compression type")]
+    InvalidCompression,
 
-        #[error("Checksum mismatch")]
-        ChecksumMismatch,
+    #[error("Checksum mismatch")]
+    ChecksumMismatch,
 
-        #[error("Serialization error: {0}")]
-        SerializationError(String),
+    #[error("Serialization error: {0}")]
+    SerializationError(String),
 
-        #[error("Deserialization error: {0}")]
-        DeserializationError(String),
+    #[error("Deserialization error: {0}")]
+    DeserializationError(String),
 
-        #[error("Incompatible protocol version")]
-        IncompatibleVersion,
+    #[error("Incompatible protocol version")]
+    IncompatibleVersion,
 
-        #[error("Unexpected message")]
-        UnexpectedMessage,
+    #[error("Unexpected message")]
+    UnexpectedMessage,
 
-        #[error("Invalid state transition from {from:?} to {to:?}")]
-        InvalidStateTransition {
-            from: ConnectionState,
-            to: ConnectionState,
-        },
+    #[error("Invalid state transition from {from:?} to {to:?}")]
+    InvalidStateTransition {
+        from: ConnectionState,
+        to: ConnectionState,
+    },
 
-        #[error("Connection not found")]
-        ConnectionNotFound,
+    #[error("Connection not found")]
+    ConnectionNotFound,
 
-        #[error("Request timeout")]
-        RequestTimeout,
+    #[error("Request timeout")]
+    RequestTimeout,
 
-        #[error("Request cancelled")]
-        RequestCancelled,
+    #[error("Request cancelled")]
+    RequestCancelled,
 
-        #[error("Unknown request")]
-        UnknownRequest,
+    #[error("Unknown request")]
+    UnknownRequest,
 
-        #[error("Pipeline shutdown")]
-        PipelineShutdown,
+    #[error("Pipeline shutdown")]
+    PipelineShutdown,
 
-        #[error("Channel closed")]
-        ChannelClosed,
+    #[error("Channel closed")]
+    ChannelClosed,
 
-        #[error("Stream closed")]
-        StreamClosed,
+    #[error("Stream closed")]
+    StreamClosed,
 
-        #[error("Extension already registered")]
-        ExtensionAlreadyRegistered,
+    #[error("Extension already registered")]
+    ExtensionAlreadyRegistered,
 
-        #[error("Extension not found")]
-        ExtensionNotFound,
+    #[error("Extension not found")]
+    ExtensionNotFound,
 
-        #[error("No custom message slots available")]
-        NoCustomMessageSlotsAvailable,
+    #[error("No custom message slots available")]
+    NoCustomMessageSlotsAvailable,
 
-        #[error("Flow control timeout")]
-        FlowControlTimeout,
+    #[error("Flow control timeout")]
+    FlowControlTimeout,
 
-        #[error("Rate limit timeout")]
-        RateLimitTimeout,
+    #[error("Rate limit timeout")]
+    RateLimitTimeout,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::network::advanced_protocol::{
+        ConnectionState, MessageType, Packet, ProtocolVersion,
+    };
+
+    #[test]
+    fn test_protocol_version_compatibility() {
+        let v1_0 = ProtocolVersion::V1_0_0;
+        let v1_1 = ProtocolVersion::V1_1_0;
+        let v2_0 = ProtocolVersion::V2_0_0;
+
+        assert!(v1_1.is_compatible_with(&v1_0));
+        assert!(!v1_0.is_compatible_with(&v1_1));
+        assert!(!v2_0.is_compatible_with(&v1_0));
     }
 
-    #[cfg(test)]
-    mod tests {
-        use crate::network::advanced_protocol::{Packet, ProtocolVersion, MessageType, ConnectionState};
-
-        #[test]
-        fn test_protocol_version_compatibility() {
-            let v1_0 = ProtocolVersion::V1_0_0;
-            let v1_1 = ProtocolVersion::V1_1_0;
-            let v2_0 = ProtocolVersion::V2_0_0;
-
-            assert!(v1_1.is_compatible_with(&v1_0));
-            assert!(!v1_0.is_compatible_with(&v1_1));
-            assert!(!v2_0.is_compatible_with(&v1_0));
-        }
-
-        #[test]
-        fn test_packet_checksum() {
-            // Note: This test is currently a placeholder as Packet::new and verify_checksum
-            // are not fully implemented yet. To be completed in future refactoring.
-            // let payload = vec![116, 101, 115, 116, 32, 100, 97, 116, 97]; // "test data"
-            // let packet = Packet::new(&MessageType::Query, payload);
-            // assert!(packet.verify_checksum());
-        }
-
-        #[test]
-        fn test_connection_state_transitions() {
-            assert!(ConnectionState::Connecting.can_transition_to(ConnectionState::Authenticating));
-            assert!(ConnectionState::Authenticating.can_transition_to(ConnectionState::Ready));
-            assert!(!ConnectionState::Closed.can_transition_to(ConnectionState::Ready));
-        }
+    #[test]
+    fn test_packet_checksum() {
+        // Note: This test is currently a placeholder as Packet::new and verify_checksum
+        // are not fully implemented yet. To be completed in future refactoring.
+        // let payload = vec![116, 101, 115, 116, 32, 100, 97, 116, 97]; // "test data"
+        // let packet = Packet::new(&MessageType::Query, payload);
+        // assert!(packet.verify_checksum());
     }
+
+    #[test]
+    fn test_connection_state_transitions() {
+        assert!(ConnectionState::Connecting.can_transition_to(ConnectionState::Authenticating));
+        assert!(ConnectionState::Authenticating.can_transition_to(ConnectionState::Ready));
+        assert!(!ConnectionState::Closed.can_transition_to(ConnectionState::Ready));
+    }
+}

@@ -12,7 +12,6 @@ use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hash, Hasher};
 use std::sync::atomic::{AtomicU64, AtomicU8, AtomicUsize, Ordering};
 
-
 /// Entry in the hash map
 struct Entry<K, V> {
     key: K,
@@ -157,7 +156,6 @@ where
     fn hash(&self, key: &K) -> u64 {
         // Try to use fast path for common types
 
-
         // For types that can be converted to bytes, use SIMD hash
         // Otherwise fall back to standard hasher
         let mut hasher = self.hasher.build_hasher();
@@ -219,7 +217,11 @@ where
         // Link to front of list
         let old_head = bucket.head.load(Ordering::Acquire, &guard);
         // Safety: We own new_ptr and bucket is locked
-        new_ptr.as_ref().unwrap().next.store(old_head, Ordering::Release);
+        new_ptr
+            .as_ref()
+            .unwrap()
+            .next
+            .store(old_head, Ordering::Release);
         bucket.head.store(new_ptr, Ordering::Release);
 
         bucket.count.fetch_add(1, Ordering::Relaxed);
@@ -298,7 +300,11 @@ where
                 if let Some(prev_ptr) = prev {
                     // Remove from middle/end of list
                     // Safety: Protected by bucket lock
-                    prev_ptr.as_ref().unwrap().next.store(next, Ordering::Release);
+                    prev_ptr
+                        .as_ref()
+                        .unwrap()
+                        .next
+                        .store(next, Ordering::Release);
                 } else {
                     // Remove from head of list
                     bucket.head.store(next, Ordering::Release);
@@ -464,7 +470,11 @@ where
                     // Remove entry
                     let next = entry.next.load(Ordering::Acquire, &guard);
                     if let Some(prev_ptr) = prev {
-                        prev_ptr.as_ref().unwrap().next.store(next, Ordering::Release);
+                        prev_ptr
+                            .as_ref()
+                            .unwrap()
+                            .next
+                            .store(next, Ordering::Release);
                     } else {
                         bucket.head.store(next, Ordering::Release);
                     }
@@ -474,7 +484,7 @@ where
                     Epoch::defer(current.as_ptr());
                     bucket.unlock();
                     None
-                }
+                };
             }
 
             prev = Some(current);
@@ -749,5 +759,3 @@ mod tests {
         assert_eq!(items.len(), 3);
     }
 }
-
-

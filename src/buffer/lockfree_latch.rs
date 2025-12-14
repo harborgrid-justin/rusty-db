@@ -27,8 +27,8 @@
 // - **Scalability**: Linear up to 100+ cores
 // - **Contention**: Minimal (no spinning on locks)
 
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::hint::spin_loop;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
 // ============================================================================
@@ -384,8 +384,7 @@ impl HybridLatch {
         // Decay contention counter
         let current = self.contention_count.load(Ordering::Relaxed);
         if current > 0 {
-            self.contention_count
-                .store(current - 1, Ordering::Relaxed);
+            self.contention_count.store(current - 1, Ordering::Relaxed);
         }
     }
 

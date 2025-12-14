@@ -93,39 +93,43 @@ pub struct MdnsDiscovery {
 
 impl MdnsDiscovery {
     /// Create a new mDNS discovery instance
-    pub fn new(
-        config: DiscoveryConfig,
-        event_tx: mpsc::Sender<DiscoveryEvent>,
-    ) -> Result<Self> {
+    pub fn new(config: DiscoveryConfig, event_tx: mpsc::Sender<DiscoveryEvent>) -> Result<Self> {
         // Create UDP socket for multicast using socket2
         let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))
             .map_err(|e| DbError::Network(format!("Failed to create socket: {}", e)))?;
 
         // Set socket options for multicast
-        socket.set_reuse_address(true)
+        socket
+            .set_reuse_address(true)
             .map_err(|e| DbError::Network(format!("Failed to set reuse address: {}", e)))?;
 
         // On Unix systems, also set SO_REUSEPORT for better multicast support
         #[cfg(unix)]
-        socket.set_reuse_port(true)
+        socket
+            .set_reuse_port(true)
             .map_err(|e| DbError::Network(format!("Failed to set reuse port: {}", e)))?;
 
-        socket.set_nonblocking(true)
+        socket
+            .set_nonblocking(true)
             .map_err(|e| DbError::Network(format!("Failed to set nonblocking: {}", e)))?;
 
         // Bind to mDNS port
         let bind_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), MDNS_PORT);
-        socket.bind(&bind_addr.into())
+        socket
+            .bind(&bind_addr.into())
             .map_err(|e| DbError::Network(format!("Failed to bind mDNS socket: {}", e)))?;
 
         // Join multicast group
-        socket.join_multicast_v4(&MDNS_ADDR, &Ipv4Addr::UNSPECIFIED)
+        socket
+            .join_multicast_v4(&MDNS_ADDR, &Ipv4Addr::UNSPECIFIED)
             .map_err(|e| DbError::Network(format!("Failed to join multicast group: {}", e)))?;
 
         // Convert socket2::Socket to std::net::UdpSocket, then to tokio::net::UdpSocket
         let std_socket: std::net::UdpSocket = socket.into();
-        let socket = Arc::new(UdpSocket::from_std(std_socket)
-            .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?);
+        let socket = Arc::new(
+            UdpSocket::from_std(std_socket)
+                .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?,
+        );
 
         Ok(Self {
             config,
@@ -141,8 +145,14 @@ impl MdnsDiscovery {
         let mut records = self.config.local_node.metadata.clone();
 
         records.insert("node_id".to_string(), self.config.local_node.id.clone());
-        records.insert("version".to_string(), self.config.local_node.protocol_version.to_string());
-        records.insert("port".to_string(), self.config.local_node.addr.port().to_string());
+        records.insert(
+            "version".to_string(),
+            self.config.local_node.protocol_version.to_string(),
+        );
+        records.insert(
+            "port".to_string(),
+            self.config.local_node.addr.port().to_string(),
+        );
 
         records
     }
@@ -155,7 +165,9 @@ impl MdnsDiscovery {
         let message = self.build_mdns_response(&self.config.local_node.id, txt_records)?;
 
         let addr = SocketAddr::new(IpAddr::V4(MDNS_ADDR), MDNS_PORT);
-        self.socket.send_to(&message, addr).await
+        self.socket
+            .send_to(&message, addr)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to send announcement: {}", e)))?;
 
         Ok(())
@@ -167,7 +179,9 @@ impl MdnsDiscovery {
         let message = self.build_mdns_query(SERVICE_TYPE)?;
 
         let addr = SocketAddr::new(IpAddr::V4(MDNS_ADDR), MDNS_PORT);
-        self.socket.send_to(&message, addr).await
+        self.socket
+            .send_to(&message, addr)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to send query: {}", e)))?;
 
         Ok(())
@@ -302,7 +316,8 @@ impl MdnsDiscovery {
 
         // Update RDATA length
         let txt_rdata_len = (packet.len() - txt_rdata_start) as u16;
-        packet[txt_rdata_len_pos..txt_rdata_len_pos + 2].copy_from_slice(&txt_rdata_len.to_be_bytes());
+        packet[txt_rdata_len_pos..txt_rdata_len_pos + 2]
+            .copy_from_slice(&txt_rdata_len.to_be_bytes());
 
         Ok(packet)
     }
@@ -333,7 +348,10 @@ impl MdnsDiscovery {
                 drop(services);
 
                 if is_new {
-                    let _ = self.event_tx.send(DiscoveryEvent::NodeJoined(node_info)).await;
+                    let _ = self
+                        .event_tx
+                        .send(DiscoveryEvent::NodeJoined(node_info))
+                        .await;
                 }
             }
         }
@@ -424,9 +442,7 @@ impl DiscoveryProtocol for MdnsDiscovery {
 
     async fn members(&self) -> Result<Vec<NodeInfo>> {
         let services = self.services.read().await;
-        Ok(services.values()
-            .filter_map(|s| s.to_node_info())
-            .collect())
+        Ok(services.values().filter_map(|s| s.to_node_info()).collect())
     }
 
     async fn announce(&self) -> Result<()> {

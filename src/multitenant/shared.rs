@@ -19,14 +19,14 @@
 // - Local users: Regular naming
 // - Lockdown profiles: Restrict PDB capabilities
 
+use super::pdb::PdbId;
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::HashSet;
-use std::collections::{HashMap};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
-use super::pdb::PdbId;
 
 /// Shared services coordinator
 pub struct SharedServices {
@@ -77,7 +77,7 @@ impl SharedServices {
         // Common users must start with C##
         if !user.username.starts_with("C##") {
             return Err(DbError::InvalidInput(
-                "Common user names must start with C##".to_string()
+                "Common user names must start with C##".to_string(),
             ));
         }
 
@@ -103,7 +103,7 @@ impl SharedServices {
         // Common roles must start with C##
         if !role.name.starts_with("C##") {
             return Err(DbError::InvalidInput(
-                "Common role names must start with C##".to_string()
+                "Common role names must start with C##".to_string(),
             ));
         }
 
@@ -147,7 +147,9 @@ impl SharedServices {
         let _profile = self
             .get_lockdown_profile(profile_name)
             .await
-            .ok_or_else(|| DbError::NotFound(format!("Lockdown profile {} not found", profile_name)))?;
+            .ok_or_else(|| {
+                DbError::NotFound(format!("Lockdown profile {} not found", profile_name))
+            })?;
 
         // Apply restrictions (in real implementation)
         println!(
@@ -211,7 +213,7 @@ impl UndoTablespace {
 
         if usage.used_bytes + size_bytes > self.size_bytes {
             return Err(DbError::ResourceExhausted(
-                "Insufficient undo space".to_string()
+                "Insufficient undo space".to_string(),
             ));
         }
 
@@ -232,10 +234,7 @@ impl UndoTablespace {
             transaction_count: 0,
         };
 
-        self.segments
-            .write()
-            .await
-            .insert(segment_id, segment);
+        self.segments.write().await.insert(segment_id, segment);
 
         Ok(segment_id)
     }
@@ -250,7 +249,10 @@ impl UndoTablespace {
             usage.free_bytes += segment.size_bytes;
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Undo segment {} not found", segment_id)))
+            Err(DbError::NotFound(format!(
+                "Undo segment {} not found",
+                segment_id
+            )))
         }
     }
 
@@ -326,12 +328,17 @@ impl TempTablespace {
     }
 
     /// Allocate temp space
-    pub async fn allocate(&self, pdb_id: PdbId, size_bytes: u64, purpose: TempFilePurpose) -> Result<u64> {
+    pub async fn allocate(
+        &self,
+        pdb_id: PdbId,
+        size_bytes: u64,
+        purpose: TempFilePurpose,
+    ) -> Result<u64> {
         let mut usage = self.usage.write().await;
 
         if usage.used_bytes + size_bytes > self.size_bytes {
             return Err(DbError::ResourceExhausted(
-                "Insufficient temp space".to_string()
+                "Insufficient temp space".to_string(),
             ));
         }
 
@@ -359,10 +366,7 @@ impl TempTablespace {
             purpose,
         };
 
-        self.temp_files
-            .write()
-            .await
-            .insert(file_id, temp_file);
+        self.temp_files.write().await.insert(file_id, temp_file);
 
         Ok(file_id)
     }
@@ -384,7 +388,10 @@ impl TempTablespace {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Temp file {} not found", file_id)))
+            Err(DbError::NotFound(format!(
+                "Temp file {} not found",
+                file_id
+            )))
         }
     }
 
@@ -594,7 +601,7 @@ impl LockdownProfile {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_shared_services() {
@@ -622,7 +629,10 @@ use std::time::UNIX_EPOCH;
         let undo = UndoTablespace::new(1024 * 1024 * 1024);
         let pdb_id = PdbId::new(1);
 
-        let segment_id = undo.allocate_segment(pdb_id, 10 * 1024 * 1024).await.unwrap();
+        let segment_id = undo
+            .allocate_segment(pdb_id, 10 * 1024 * 1024)
+            .await
+            .unwrap();
         assert!(segment_id > 0);
 
         let (used, free) = undo.get_usage().await;

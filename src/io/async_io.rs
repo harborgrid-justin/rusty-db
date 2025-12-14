@@ -3,15 +3,15 @@
 // Core asynchronous I/O engine providing completion-based I/O abstraction
 // across Windows IOCP and Unix io_uring.
 
-use tokio::sync::oneshot;
-use std::time::Instant;
-use crate::error::{Result, DbError};
-use std::sync::atomic::{AtomicU8, AtomicU64, AtomicUsize, Ordering};
-use std::sync::Arc;
+use crate::error::{DbError, Result};
 use parking_lot::{Mutex, RwLock};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, AtomicU8, AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{Notify};
+use std::time::Instant;
+use tokio::sync::oneshot;
+use tokio::sync::Notify;
 
 // ============================================================================
 // I/O Operation Types
@@ -385,13 +385,17 @@ impl IoCompletionPort {
         self.pending.fetch_add(1, Ordering::Relaxed);
 
         #[cfg(windows)]
-        unsafe { self.backend.submit(request)?; }
+        unsafe {
+            self.backend.submit(request)?;
+        }
 
         #[cfg(unix)]
         self.backend.submit(request)?;
 
         #[cfg(not(any(windows, unix)))]
-        return Err(DbError::Internal("I/O not supported on this platform".to_string()));
+        return Err(DbError::Internal(
+            "I/O not supported on this platform".to_string(),
+        ));
 
         Ok(())
     }
@@ -411,7 +415,8 @@ impl IoCompletionPort {
         let submitted = 0;
 
         if submitted < count {
-            self.pending.fetch_sub((count - submitted) as u64, Ordering::Relaxed);
+            self.pending
+                .fetch_sub((count - submitted) as u64, Ordering::Relaxed);
         }
 
         Ok(submitted)
@@ -437,19 +442,19 @@ impl IoCompletionPort {
         self.completed.fetch_add(count as u64, Ordering::Relaxed);
 
         // Process completions
-for completion in completions {
-                 // Check if someone is waiting for this specific completion
-                 let mut waiters = self.waiters.write();
-                 if let Some(sender) = waiters.remove(&completion.id) {
-                     let _ = sender.send(completion);
-                 } else {
-                     // Add to completion queue
-                     if self.completions.push(completion).is_err() {
-                         // Queue is full, record error
-                         self.stats.lock().queue_overflows += 1;
-                     }
-                 }
-             }
+        for completion in completions {
+            // Check if someone is waiting for this specific completion
+            let mut waiters = self.waiters.write();
+            if let Some(sender) = waiters.remove(&completion.id) {
+                let _ = sender.send(completion);
+            } else {
+                // Add to completion queue
+                if self.completions.push(completion).is_err() {
+                    // Queue is full, record error
+                    self.stats.lock().queue_overflows += 1;
+                }
+            }
+        }
 
         if count > 0 {
             self.notify.notify_waiters();
@@ -485,7 +490,8 @@ for completion in completions {
         self.waiters.write().insert(request_id, tx);
 
         // Wait for completion
-        rx.await.map_err(|_| DbError::Internal("I/O completion channel closed".to_string()))
+        rx.await
+            .map_err(|_| DbError::Internal("I/O completion channel closed".to_string()))
     }
 
     /// Get number of pending operations
@@ -501,9 +507,9 @@ for completion in completions {
     }
 
     /// Get statistics
-pub fn stats(&self) -> CompletionPortStats {
-       self.stats.lock().clone()
-   }
+    pub fn stats(&self) -> CompletionPortStats {
+        self.stats.lock().clone()
+    }
 }
 
 // ============================================================================
@@ -569,9 +575,7 @@ impl AsyncIoEngine {
 
             let handle = std::thread::Builder::new()
                 .name(format!("io-worker-{}", i))
-                .spawn(move || {
-                    Self::worker_loop(cp, sd)
-                })
+                .spawn(move || Self::worker_loop(cp, sd))
                 .map_err(|e| DbError::Internal(format!("Failed to spawn I/O worker: {}", e)))?;
 
             workers.push(handle);

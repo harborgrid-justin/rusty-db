@@ -2,9 +2,9 @@
 //
 // This module provides the main parser for PL/SQL blocks, statements, and expressions.
 
-use crate::{Result, DbError};
 use super::ast_nodes::*;
 use super::lexer::Token;
+use crate::{DbError, Result};
 
 // PL/SQL Parser
 pub struct PlSqlParser {
@@ -43,7 +43,8 @@ impl PlSqlParser {
         // BEGIN section
         self.consume(&Token::Begin, "Expected BEGIN")?;
 
-        while !self.check(&Token::Exception) && !self.check(&Token::End) && !self.check(&Token::Eof) {
+        while !self.check(&Token::Exception) && !self.check(&Token::End) && !self.check(&Token::Eof)
+        {
             statements.push(self.parse_statement()?);
         }
 
@@ -79,7 +80,8 @@ impl PlSqlParser {
             false
         };
 
-        let initial_value = if self.match_token(&Token::Assign) || self.match_token(&Token::Default) {
+        let initial_value = if self.match_token(&Token::Assign) || self.match_token(&Token::Default)
+        {
             Some(self.parse_expression()?)
         } else {
             None
@@ -192,7 +194,10 @@ impl PlSqlParser {
         } else if let Token::Identifier(_) = self.peek() {
             self.parse_assignment_or_call()
         } else {
-            Err(DbError::SqlParse(format!("Unexpected token: {:?}", self.peek())))
+            Err(DbError::SqlParse(format!(
+                "Unexpected token: {:?}",
+                self.peek()
+            )))
         }
     }
 
@@ -212,7 +217,10 @@ impl PlSqlParser {
             let elsif_cond = self.parse_expression()?;
             self.consume(&Token::Then, "Expected THEN")?;
             let mut elsif_stmts = Vec::new();
-            while !self.check(&Token::Elsif) && !self.check(&Token::Else) && !self.check(&Token::End) {
+            while !self.check(&Token::Elsif)
+                && !self.check(&Token::Else)
+                && !self.check(&Token::End)
+            {
                 elsif_stmts.push(self.parse_statement()?);
             }
             elsif_blocks.push((elsif_cond, elsif_stmts));
@@ -607,7 +615,8 @@ impl PlSqlParser {
             self.consume(&Token::Then, "Expected THEN")?;
 
             let mut statements = Vec::new();
-            while !self.check(&Token::When) && !self.check(&Token::Else) && !self.check(&Token::End) {
+            while !self.check(&Token::When) && !self.check(&Token::Else) && !self.check(&Token::End)
+            {
                 statements.push(self.parse_statement()?);
             }
 
@@ -663,7 +672,10 @@ impl PlSqlParser {
 
             Ok(Statement::Call { name, arguments })
         } else {
-            Err(DbError::SqlParse(format!("Expected := or ( after {}", name)))
+            Err(DbError::SqlParse(format!(
+                "Expected := or ( after {}",
+                name
+            )))
         }
     }
 
@@ -734,11 +746,14 @@ impl PlSqlParser {
     fn parse_comparison_expression(&mut self) -> Result<Expression> {
         let mut left = self.parse_additive_expression()?;
 
-        if self.check(&Token::Equal) || self.check(&Token::NotEqual) ||
-           self.check(&Token::LessThan) || self.check(&Token::LessThanOrEqual) ||
-           self.check(&Token::GreaterThan) || self.check(&Token::GreaterThanOrEqual) ||
-           self.check(&Token::Like) {
-
+        if self.check(&Token::Equal)
+            || self.check(&Token::NotEqual)
+            || self.check(&Token::LessThan)
+            || self.check(&Token::LessThanOrEqual)
+            || self.check(&Token::GreaterThan)
+            || self.check(&Token::GreaterThanOrEqual)
+            || self.check(&Token::Like)
+        {
             let op = match self.advance() {
                 Token::Equal => BinaryOperator::Equal,
                 Token::NotEqual => BinaryOperator::NotEqual,
@@ -890,7 +905,10 @@ impl PlSqlParser {
                 self.consume(&Token::RightParen, "Expected ')'")?;
                 Ok(expr)
             }
-            _ => Err(DbError::SqlParse(format!("Unexpected token in expression: {:?}", self.peek()))),
+            _ => Err(DbError::SqlParse(format!(
+                "Unexpected token in expression: {:?}",
+                self.peek()
+            ))),
         }
     }
 
@@ -931,7 +949,11 @@ impl PlSqlParser {
             self.advance();
             Ok(())
         } else {
-            Err(DbError::SqlParse(format!("{}, got {:?}", message, self.peek())))
+            Err(DbError::SqlParse(format!(
+                "{}, got {:?}",
+                message,
+                self.peek()
+            )))
         }
     }
 
@@ -941,7 +963,11 @@ impl PlSqlParser {
             self.advance();
             Ok(result)
         } else {
-            Err(DbError::SqlParse(format!("{}, got {:?}", message, self.peek())))
+            Err(DbError::SqlParse(format!(
+                "{}, got {:?}",
+                message,
+                self.peek()
+            )))
         }
     }
 
@@ -951,7 +977,11 @@ impl PlSqlParser {
             self.advance();
             Ok(result)
         } else {
-            Err(DbError::SqlParse(format!("{}, got {:?}", message, self.peek())))
+            Err(DbError::SqlParse(format!(
+                "{}, got {:?}",
+                message,
+                self.peek()
+            )))
         }
     }
 

@@ -45,13 +45,13 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
 
-pub mod dns;
-pub mod static_list;
-pub mod kubernetes;
-pub mod consul;
-pub mod etcd;
 pub mod cloud;
+pub mod consul;
+pub mod dns;
+pub mod etcd;
+pub mod kubernetes;
 pub mod registry;
+pub mod static_list;
 
 // Re-exports for convenience
 pub use registry::Registry;

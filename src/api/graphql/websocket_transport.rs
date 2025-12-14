@@ -79,9 +79,7 @@ pub enum GraphQLWsMessage {
 
     /// Direction: bidirectional
     /// Indicates that the operation is complete
-    Complete {
-        id: String,
-    },
+    Complete { id: String },
 }
 
 /// Connection initialization payload
@@ -299,14 +297,7 @@ async fn handle_websocket<Q, M, S>(
 
                 match serde_json::from_str::<GraphQLWsMessage>(&text) {
                     Ok(ws_msg) => {
-                        handle_message(
-                            ws_msg,
-                            &schema,
-                            &state,
-                            &tx,
-                            &config,
-                        )
-                        .await;
+                        handle_message(ws_msg, &schema, &state, &tx, &config).await;
                     }
                     Err(e) => {
                         error!("Failed to parse WebSocket message: {}", e);
@@ -417,23 +408,32 @@ async fn handle_message<Q, M, S>(
                         locations: if e.locations.is_empty() {
                             None
                         } else {
-                            Some(e.locations.into_iter()
-                                .map(|loc| ErrorLocation {
-                                    line: loc.line,
-                                    column: loc.column,
-                                })
-                                .collect())
+                            Some(
+                                e.locations
+                                    .into_iter()
+                                    .map(|loc| ErrorLocation {
+                                        line: loc.line,
+                                        column: loc.column,
+                                    })
+                                    .collect(),
+                            )
                         },
                         path: if e.path.is_empty() {
                             None
                         } else {
-                            Some(e.path.into_iter().map(|s| {
-                                serde_json::to_value(&s).unwrap_or_else(|_| serde_json::Value::Null)
-                            }).collect())
+                            Some(
+                                e.path
+                                    .into_iter()
+                                    .map(|s| {
+                                        serde_json::to_value(&s)
+                                            .unwrap_or_else(|_| serde_json::Value::Null)
+                                    })
+                                    .collect(),
+                            )
                         },
-                        extensions: e.extensions.map(|ext| {
-                            serde_json::to_value(ext).unwrap_or_default()
-                        }),
+                        extensions: e
+                            .extensions
+                            .map(|ext| serde_json::to_value(ext).unwrap_or_default()),
                     })
                     .collect();
 
@@ -444,9 +444,7 @@ async fn handle_message<Q, M, S>(
             }
 
             // Mark subscription complete
-            let _ = tx.send(GraphQLWsMessage::Complete {
-                id: id.clone(),
-            });
+            let _ = tx.send(GraphQLWsMessage::Complete { id: id.clone() });
 
             // Track subscription for management
             let handle = tokio::spawn(async {});

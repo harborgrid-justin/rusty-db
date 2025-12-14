@@ -7,10 +7,10 @@
 // - Service area computation
 // - Network routing and optimization
 
-use std::collections::HashSet;
 use crate::error::{DbError, Result};
 use crate::spatial::geometry::Coordinate;
 use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::collections::{BinaryHeap, HashMap};
 
 // Network node
@@ -216,7 +216,10 @@ impl<'a> DijkstraRouter<'a> {
     // Find shortest path from start to end node
     pub fn shortest_path(&self, start: u64, end: u64) -> Result<Path> {
         if !self.network.nodes.contains_key(&start) {
-            return Err(DbError::InvalidInput(format!("Start node {} not found", start)));
+            return Err(DbError::InvalidInput(format!(
+                "Start node {} not found",
+                start
+            )));
         }
 
         if !self.network.nodes.contains_key(&end) {
@@ -249,7 +252,10 @@ impl<'a> DijkstraRouter<'a> {
                     edge.from_node
                 };
 
-                let edge_cost = self.network.get_edge_cost(edge, node_id).unwrap_or(f64::INFINITY);
+                let edge_cost = self
+                    .network
+                    .get_edge_cost(edge, node_id)
+                    .unwrap_or(f64::INFINITY);
                 let next_cost = cost + edge_cost;
 
                 if next_cost < *distances.get(&next_node).unwrap_or(&f64::INFINITY) {
@@ -321,7 +327,10 @@ impl<'a> DijkstraRouter<'a> {
                     edge.from_node
                 };
 
-                let edge_cost = self.network.get_edge_cost(edge, node_id).unwrap_or(f64::INFINITY);
+                let edge_cost = self
+                    .network
+                    .get_edge_cost(edge, node_id)
+                    .unwrap_or(f64::INFINITY);
                 let next_cost = cost + edge_cost;
 
                 if next_cost < *distances.get(&next_node).unwrap_or(&f64::INFINITY) {
@@ -384,7 +393,10 @@ impl<'a> AStarRouter<'a> {
     // Find shortest path using A* with Euclidean distance heuristic
     pub fn shortest_path(&self, start: u64, end: u64) -> Result<Path> {
         if !self.network.nodes.contains_key(&start) {
-            return Err(DbError::InvalidInput(format!("Start node {} not found", start)));
+            return Err(DbError::InvalidInput(format!(
+                "Start node {} not found",
+                start
+            )));
         }
 
         if !self.network.nodes.contains_key(&end) {
@@ -420,7 +432,10 @@ impl<'a> AStarRouter<'a> {
                     edge.from_node
                 };
 
-                let edge_cost = self.network.get_edge_cost(edge, node_id).unwrap_or(f64::INFINITY);
+                let edge_cost = self
+                    .network
+                    .get_edge_cost(edge, node_id)
+                    .unwrap_or(f64::INFINITY);
                 let next_cost = cost + edge_cost;
 
                 if next_cost < *g_scores.get(&next_node).unwrap_or(&f64::INFINITY) {
@@ -501,7 +516,10 @@ impl<'a> ServiceAreaAnalyzer<'a> {
     // Calculate service area from a center point with max cost
     pub fn calculate(&self, center: u64, max_cost: f64) -> Result<ServiceArea> {
         if !self.network.nodes.contains_key(&center) {
-            return Err(DbError::InvalidInput(format!("Center node {} not found", center)));
+            return Err(DbError::InvalidInput(format!(
+                "Center node {} not found",
+                center
+            )));
         }
 
         let router = DijkstraRouter::new(self.network);
@@ -515,19 +533,15 @@ impl<'a> ServiceAreaAnalyzer<'a> {
                 reachable_nodes.push(node_id);
 
                 // Check if this is a boundary node
-                let is_boundary = self
-                    .network
-                    .get_outgoing_edges(node_id)
-                    .iter()
-                    .any(|edge| {
-                        let next_node = if edge.from_node == node_id {
-                            edge.to_node
-                        } else {
-                            edge.from_node
-                        };
+                let is_boundary = self.network.get_outgoing_edges(node_id).iter().any(|edge| {
+                    let next_node = if edge.from_node == node_id {
+                        edge.to_node
+                    } else {
+                        edge.from_node
+                    };
 
-                        distances.get(&next_node).map_or(true, |&d| d > max_cost)
-                    });
+                    distances.get(&next_node).map_or(true, |&d| d > max_cost)
+                });
 
                 if is_boundary {
                     boundary_nodes.push(node_id);
@@ -635,18 +649,22 @@ impl<'a> TspSolver<'a> {
             for i in 1..path.nodes.len() - 2 {
                 for j in i + 1..path.nodes.len() - 1 {
                     // Calculate cost of current edges
-                    let current_cost = router.shortest_path(path.nodes[i - 1], path.nodes[i])
+                    let current_cost = router
+                        .shortest_path(path.nodes[i - 1], path.nodes[i])
                         .map(|p| p.total_cost)
                         .unwrap_or(f64::INFINITY)
-                        + router.shortest_path(path.nodes[j], path.nodes[j + 1])
+                        + router
+                            .shortest_path(path.nodes[j], path.nodes[j + 1])
                             .map(|p| p.total_cost)
                             .unwrap_or(f64::INFINITY);
 
                     // Calculate cost of swapped edges
-                    let new_cost = router.shortest_path(path.nodes[i - 1], path.nodes[j])
+                    let new_cost = router
+                        .shortest_path(path.nodes[i - 1], path.nodes[j])
                         .map(|p| p.total_cost)
                         .unwrap_or(f64::INFINITY)
-                        + router.shortest_path(path.nodes[i], path.nodes[j + 1])
+                        + router
+                            .shortest_path(path.nodes[i], path.nodes[j + 1])
                             .map(|p| p.total_cost)
                             .unwrap_or(f64::INFINITY);
 
@@ -689,9 +707,9 @@ pub struct TurnRestriction {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RestrictionType {
-    Prohibited,     // No turn allowed
-    Mandatory,      // Only this turn allowed
-    Discouraged,    // Allowed but with additional cost
+    Prohibited,  // No turn allowed
+    Mandatory,   // Only this turn allowed
+    Discouraged, // Allowed but with additional cost
 }
 
 // Network with turn restrictions

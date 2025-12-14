@@ -16,12 +16,12 @@ pub mod strategies;
 pub mod traffic_shaping;
 
 pub use circuit_breaker::{CircuitBreaker, CircuitState};
-pub use retry::{RetryPolicy, RetryStrategy, RetryBudget};
+pub use retry::{RetryBudget, RetryPolicy, RetryStrategy};
 pub use strategies::{
     AdaptiveBalancer, ConsistentHashBalancer, LeastConnectionsBalancer, LoadBalancingStrategy,
     RoundRobinBalancer,
 };
-pub use traffic_shaping::{TrafficShaper, RateLimiter};
+pub use traffic_shaping::{RateLimiter, TrafficShaper};
 
 /// Unique identifier for a backend node
 pub type NodeId = String;
@@ -193,10 +193,7 @@ impl LoadBalancer {
             backends: Arc::new(RwLock::new(Vec::new())),
             strategy,
             traffic_shaper: Arc::new(TrafficShaper::new()),
-            circuit_breaker: Arc::new(RwLock::new(CircuitBreaker::new(
-                5,
-                Duration::from_secs(30),
-            ))),
+            circuit_breaker: Arc::new(RwLock::new(CircuitBreaker::new(5, Duration::from_secs(30)))),
             retry_policy: RetryPolicy::default(),
         }
     }
@@ -243,9 +240,7 @@ impl LoadBalancer {
         // Check circuit breaker
         let circuit_breaker = self.circuit_breaker.read().await;
         if !circuit_breaker.can_attempt().await {
-            return Err(DbError::Unavailable(
-                "Circuit breaker is open".to_string(),
-            ));
+            return Err(DbError::Unavailable("Circuit breaker is open".to_string()));
         }
         drop(circuit_breaker);
 
@@ -259,7 +254,9 @@ impl LoadBalancer {
         let healthy_backends: Vec<_> = backends.iter().filter(|b| b.healthy).cloned().collect();
 
         if healthy_backends.is_empty() {
-            return Err(DbError::Unavailable("No healthy backends available".to_string()));
+            return Err(DbError::Unavailable(
+                "No healthy backends available".to_string(),
+            ));
         }
 
         // Use strategy to select backend

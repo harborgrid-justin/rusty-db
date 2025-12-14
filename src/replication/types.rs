@@ -38,15 +38,15 @@
 // )?;
 // ```
 
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt;
 use std::mem::size_of;
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
-use std::time::{Duration};
-use thiserror::Error;
 use crate::error::DbError;
+use std::time::Duration;
+use thiserror::Error;
 
 // Replication-specific error types
 #[allow(dead_code)]
@@ -130,7 +130,10 @@ impl ReplicaId {
         }
 
         // Valid characters only
-        if !id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+        if !id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        {
             return Err(ReplicationTypeError::InvalidReplicaId {
                 replica_id: id,
                 reason: "Only alphanumeric, hyphens, and underscores allowed".to_string(),
@@ -220,12 +223,13 @@ impl ReplicaAddress {
         }
 
         // Validate port
-        let port: u16 = port_str.parse().map_err(|_| {
-            ReplicationTypeError::InvalidReplicaAddress {
-                address: address.clone(),
-                reason: "Port must be a valid number".to_string(),
-            }
-        })?;
+        let port: u16 =
+            port_str
+                .parse()
+                .map_err(|_| ReplicationTypeError::InvalidReplicaAddress {
+                    address: address.clone(),
+                    reason: "Port must be a valid number".to_string(),
+                })?;
 
         if port == 0 {
             return Err(ReplicationTypeError::InvalidReplicaAddress {
@@ -277,7 +281,9 @@ impl TableName {
         }
 
         // Must start with letter or underscore
-        if !name.chars().next().unwrap().is_ascii_alphabetic() && name.chars().next().unwrap() != '_' {
+        if !name.chars().next().unwrap().is_ascii_alphabetic()
+            && name.chars().next().unwrap() != '_'
+        {
             return Err(ReplicationTypeError::InvalidTableName {
                 table_name: name,
                 reason: "Must start with letter or underscore".to_string(),
@@ -630,7 +636,7 @@ impl ReplicaNode {
             lag_bytes: 0,
             last_sync: now,
             last_heartbeat: now,
-            priority: 10, // Default medium priority
+            priority: 10,               // Default medium priority
             max_lag_bytes: 1024 * 1024, // 1MB default
             metadata: HashMap::new(),
         })
@@ -954,12 +960,8 @@ mod tests {
         let table_name = TableName::new("users").unwrap();
         let data = b"test data".to_vec();
 
-        let entry = WalEntry::new(
-            lsn,
-            ReplicationOperation::Insert,
-            table_name,
-            data.clone(),
-        ).unwrap();
+        let entry =
+            WalEntry::new(lsn, ReplicationOperation::Insert, table_name, data.clone()).unwrap();
 
         assert_eq!(entry.lsn, lsn);
         assert_eq!(entry.operation, ReplicationOperation::Insert);
@@ -975,13 +977,9 @@ mod tests {
         let table_name = TableName::new("users").unwrap();
         let data = b"test data".to_vec();
 
-        let entry = WalEntry::new_with_txn(
-            lsn,
-            txn_id,
-            ReplicationOperation::Insert,
-            table_name,
-            data,
-        ).unwrap();
+        let entry =
+            WalEntry::new_with_txn(lsn, txn_id, ReplicationOperation::Insert, table_name, data)
+                .unwrap();
 
         assert!(entry.is_transactional());
         assert_eq!(entry.transaction_id, Some(txn_id));
@@ -989,11 +987,8 @@ mod tests {
 
     #[test]
     fn test_replication_log_entry() {
-        let entry = ReplicationLogEntry::new(
-            100,
-            ReplicationOperation::Update,
-            b"update data".to_vec(),
-        );
+        let entry =
+            ReplicationLogEntry::new(100, ReplicationOperation::Update, b"update data".to_vec());
 
         assert_eq!(entry.sequence_number, 100);
         assert_eq!(entry.operation, ReplicationOperation::Update);
@@ -1017,7 +1012,10 @@ mod tests {
         let lsn = LogSequenceNumber::new(1000);
         assert_eq!(format!("{}", lsn), "LSN(1000)");
 
-        assert_eq!(format!("{}", ReplicationMode::SemiSynchronous), "Semi-Synchronous");
+        assert_eq!(
+            format!("{}", ReplicationMode::SemiSynchronous),
+            "Semi-Synchronous"
+        );
         assert_eq!(format!("{}", ReplicaStatus::Active), "Active");
         assert_eq!(format!("{}", ReplicationOperation::Insert), "INSERT");
     }

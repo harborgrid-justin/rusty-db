@@ -7,8 +7,8 @@
 // - **Value Functions**: LEAD, LAG, FIRST_VALUE, LAST_VALUE, NTH_VALUE
 // - **Distribution Functions**: PERCENT_RANK, CUME_DIST
 
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
-use crate::error::{Result, DbError};
 
 // =============================================================================
 // Window Function Types
@@ -442,7 +442,8 @@ mod tests {
     #[test]
     fn test_dense_rank() {
         let data = make_data(&[&["1"], &["1"], &["2"]]);
-        let result = apply_window_function(&data, &[], &[0], &WindowFunction::DenseRank, 0).unwrap();
+        let result =
+            apply_window_function(&data, &[], &[0], &WindowFunction::DenseRank, 0).unwrap();
         assert_eq!(result, vec!["1", "1", "2"]);
     }
 
@@ -483,14 +484,9 @@ mod tests {
     #[test]
     fn test_ntile() {
         let data = make_data(&[&["1"], &["2"], &["3"], &["4"]]);
-        let result = apply_window_function(
-            &data,
-            &[],
-            &[],
-            &WindowFunction::NTile { buckets: 2 },
-            0,
-        )
-        .unwrap();
+        let result =
+            apply_window_function(&data, &[], &[], &WindowFunction::NTile { buckets: 2 }, 0)
+                .unwrap();
         assert_eq!(result, vec!["1", "1", "2", "2"]);
     }
 

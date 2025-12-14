@@ -2,7 +2,7 @@
 //
 // Vectorized string comparison, pattern matching, and hash computation using SIMD instructions.
 
-use super::{SimdContext, SimdStats, SelectionVector};
+use super::{SelectionVector, SimdContext, SimdStats};
 use crate::error::Result;
 
 #[cfg(target_arch = "x86_64")]
@@ -132,7 +132,10 @@ impl StringMatcher {
 
                     // Try to match rest of pattern at each position
                     while text_chars.peek().is_some() {
-                        if self.wildcard_match_rest(&mut text_chars.clone(), &mut pattern_chars.clone()) {
+                        if self.wildcard_match_rest(
+                            &mut text_chars.clone(),
+                            &mut pattern_chars.clone(),
+                        ) {
                             return true;
                         }
                         text_chars.next();
@@ -171,7 +174,10 @@ impl StringMatcher {
                     }
 
                     while text_chars.peek().is_some() {
-                        if self.wildcard_match_rest(&mut text_chars.clone(), &mut pattern_chars.clone()) {
+                        if self.wildcard_match_rest(
+                            &mut text_chars.clone(),
+                            &mut pattern_chars.clone(),
+                        ) {
                             return true;
                         }
                         text_chars.next();
@@ -506,9 +512,7 @@ impl SimdStringFilter {
         let pattern_bytes = pattern.as_bytes();
 
         for (i, text) in data.iter().enumerate() {
-            let matches = unsafe {
-                string_eq_avx2(text.as_bytes(), pattern_bytes)
-            };
+            let matches = unsafe { string_eq_avx2(text.as_bytes(), pattern_bytes) };
 
             if matches {
                 selection.add(i);
@@ -571,9 +575,7 @@ impl SimdStringFilter {
         let prefix_bytes = prefix.as_bytes();
 
         for (i, text) in data.iter().enumerate() {
-            let matches = unsafe {
-                string_starts_with_avx2(text.as_bytes(), prefix_bytes)
-            };
+            let matches = unsafe { string_starts_with_avx2(text.as_bytes(), prefix_bytes) };
 
             if matches {
                 selection.add(i);
@@ -636,9 +638,7 @@ impl SimdStringFilter {
         let substring_bytes = substring.as_bytes();
 
         for (i, text) in data.iter().enumerate() {
-            let matches = unsafe {
-                string_contains_avx2(text.as_bytes(), substring_bytes)
-            };
+            let matches = unsafe { string_contains_avx2(text.as_bytes(), substring_bytes) };
 
             if matches {
                 selection.add(i);
@@ -714,17 +714,11 @@ impl StringHashBuilder {
 
     /// Compute hashes for batch of strings
     pub fn hash_batch(&mut self, strings: &[String]) -> Vec<u64> {
-        strings
-            .iter()
-            .map(|s| self.hash_string(s))
-            .collect()
+        strings.iter().map(|s| self.hash_string(s)).collect()
     }
 
     /// Build hash table for join
-    pub fn build_hash_table(
-        &mut self,
-        strings: &[String],
-    ) -> HashMap<u64, Vec<usize>> {
+    pub fn build_hash_table(&mut self, strings: &[String]) -> HashMap<u64, Vec<usize>> {
         let mut table = HashMap::new();
 
         for (i, text) in strings.iter().enumerate() {

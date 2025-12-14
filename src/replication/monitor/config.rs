@@ -68,13 +68,13 @@ pub struct HealthThresholds {
 impl Default for HealthThresholds {
     fn default() -> Self {
         Self {
-            lag_bytes_warning: 100 * 1024 * 1024, // 100MB
+            lag_bytes_warning: 100 * 1024 * 1024,  // 100MB
             lag_bytes_critical: 500 * 1024 * 1024, // 500MB
             lag_time_warning: Duration::from_secs(60),
             lag_time_critical: Duration::from_secs(300),
             throughput_min_warning: 1000.0, // bytes/sec
             throughput_min_critical: 100.0,
-            error_rate_warning: 0.01, // 1%
+            error_rate_warning: 0.01,  // 1%
             error_rate_critical: 0.05, // 5%
             cpu_usage_warning: 80.0,
             cpu_usage_critical: 95.0,

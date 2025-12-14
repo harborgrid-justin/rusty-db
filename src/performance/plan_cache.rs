@@ -2,7 +2,7 @@
 //
 // Provides intelligent query plan caching with LRU eviction
 
-use crate::{Result, error::DbError};
+use crate::{error::DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, RwLock};
@@ -32,17 +32,23 @@ impl QueryPlanCache {
 
     // Get a cached plan
     pub fn get(&self, query_hash: &str) -> Result<Option<QueryPlan>> {
-        let cache = self.cache.read()
+        let cache = self
+            .cache
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
 
         if let Some(cached) = cache.get(query_hash) {
             // Update hit count
-            let mut hits = self.hit_count.write()
+            let mut hits = self
+                .hit_count
+                .write()
                 .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
             *hits += 1;
 
             // Update access order
-            let mut order = self.access_order.write()
+            let mut order = self
+                .access_order
+                .write()
                 .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
             order.retain(|k| k != query_hash);
             order.push_back(query_hash.to_string());
@@ -50,7 +56,9 @@ impl QueryPlanCache {
             Ok(Some(cached.plan.clone()))
         } else {
             // Update miss count
-            let mut misses = self.miss_count.write()
+            let mut misses = self
+                .miss_count
+                .write()
                 .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
             *misses += 1;
 
@@ -60,12 +68,16 @@ impl QueryPlanCache {
 
     // Put a plan in cache
     pub fn put(&self, query_hash: String, plan: QueryPlan, cost: f64) -> Result<()> {
-        let mut cache = self.cache.write()
+        let mut cache = self
+            .cache
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
 
         // Evict if at capacity
         if cache.len() >= self.max_size && !cache.contains_key(&query_hash) {
-            let mut order = self.access_order.write()
+            let mut order = self
+                .access_order
+                .write()
                 .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
 
             if let Some(evict_key) = order.pop_front() {
@@ -82,7 +94,9 @@ impl QueryPlanCache {
 
         cache.insert(query_hash.clone(), cached);
 
-        let mut order = self.access_order.write()
+        let mut order = self
+            .access_order
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         order.push_back(query_hash);
 
@@ -91,11 +105,17 @@ impl QueryPlanCache {
 
     // Get cache statistics
     pub fn get_statistics(&self) -> Result<CacheStatistics> {
-        let hits = *self.hit_count.read()
+        let hits = *self
+            .hit_count
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
-        let misses = *self.miss_count.read()
+        let misses = *self
+            .miss_count
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
-        let cache = self.cache.read()
+        let cache = self
+            .cache
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
 
         let total_requests = hits + misses;
@@ -116,11 +136,15 @@ impl QueryPlanCache {
 
     // Clear cache
     pub fn clear(&self) -> Result<()> {
-        let mut cache = self.cache.write()
+        let mut cache = self
+            .cache
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         cache.clear();
 
-        let mut order = self.access_order.write()
+        let mut order = self
+            .access_order
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         order.clear();
 

@@ -9,11 +9,11 @@
 // - Stratified sampling for better accuracy
 // - Sample synopses for aggregation queries
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
-use std::collections::hash_map::DefaultHasher;
 
 // HyperLogLog for distinct count estimation
 //
@@ -37,7 +37,7 @@ impl HyperLogLog {
     pub fn new(precision: u8) -> Result<Self> {
         if precision < 4 || precision > 16 {
             return Err(DbError::InvalidInput(
-                "HyperLogLog precision must be between 4 and 16".to_string()
+                "HyperLogLog precision must be between 4 and 16".to_string(),
             ));
         }
 
@@ -74,9 +74,10 @@ impl HyperLogLog {
     // Estimate cardinality
     pub fn cardinality(&self) -> u64 {
         // Raw estimate using harmonic mean
-        let raw_estimate = self.alpha
-            * (self.num_registers as f64).powi(2)
-            / self.registers.iter()
+        let raw_estimate = self.alpha * (self.num_registers as f64).powi(2)
+            / self
+                .registers
+                .iter()
                 .map(|&r| 2.0_f64.powi(-(r as i32)))
                 .sum::<f64>();
 
@@ -85,15 +86,16 @@ impl HyperLogLog {
             // Small range correction
             let zeros = self.registers.iter().filter(|&&r| r == 0).count();
             if zeros > 0 {
-                return (self.num_registers as f64
-                    * (self.num_registers as f64 / zeros as f64).ln()) as u64;
+                return (self.num_registers as f64 * (self.num_registers as f64 / zeros as f64).ln())
+                    as u64;
             }
         } else if raw_estimate <= (1u64 << 32) as f64 / 30.0 {
             // Intermediate range - no correction
             return raw_estimate as u64;
         } else {
             // Large range correction
-            return (-( (1i64 << 32) as f64) * (1.0 - raw_estimate / (1u64 << 32) as f64).ln()) as u64;
+            return (-((1i64 << 32) as f64) * (1.0 - raw_estimate / (1u64 << 32) as f64).ln())
+                as u64;
         }
 
         raw_estimate as u64
@@ -108,7 +110,7 @@ impl HyperLogLog {
     pub fn merge(&mut self, other: &HyperLogLog) -> Result<()> {
         if self.precision != other.precision {
             return Err(DbError::InvalidInput(
-                "Cannot merge HyperLogLogs with different precisions".to_string()
+                "Cannot merge HyperLogLogs with different precisions".to_string(),
             ));
         }
 
@@ -155,12 +157,12 @@ impl CountMinSketch {
     pub fn new(epsilon: f64, delta: f64) -> Result<Self> {
         if epsilon <= 0.0 || epsilon >= 1.0 {
             return Err(DbError::InvalidInput(
-                "Epsilon must be between 0 and 1".to_string()
+                "Epsilon must be between 0 and 1".to_string(),
             ));
         }
         if delta <= 0.0 || delta >= 1.0 {
             return Err(DbError::InvalidInput(
-                "Delta must be between 0 and 1".to_string()
+                "Delta must be between 0 and 1".to_string(),
             ));
         }
 
@@ -204,7 +206,7 @@ impl CountMinSketch {
     pub fn merge(&mut self, other: &CountMinSketch) -> Result<()> {
         if self.width != other.width || self.depth != other.depth {
             return Err(DbError::InvalidInput(
-                "Cannot merge sketches with different dimensions".to_string()
+                "Cannot merge sketches with different dimensions".to_string(),
             ));
         }
 
@@ -305,7 +307,8 @@ impl<K: Hash + Eq + Clone, V: Clone> StratifiedSampler<K, V> {
 
     // Add item to appropriate stratum
     pub fn add(&mut self, key: K, value: V) {
-        let sampler = self.strata
+        let sampler = self
+            .strata
             .entry(key)
             .or_insert_with(|| ReservoirSampler::new(self.stratum_size));
         sampler.add(value);
@@ -349,7 +352,7 @@ impl PercentileEstimator {
     pub fn percentile(&self, p: f64) -> Result<f64> {
         if p < 0.0 || p > 100.0 {
             return Err(DbError::InvalidInput(
-                "Percentile must be between 0 and 100".to_string()
+                "Percentile must be between 0 and 100".to_string(),
             ));
         }
 
@@ -367,7 +370,7 @@ impl PercentileEstimator {
     pub fn confidence_interval(&self, p: f64) -> Result<(f64, f64)> {
         if self.sample_size < 30 {
             return Err(DbError::InvalidInput(
-                "Sample size too small for confidence interval".to_string()
+                "Sample size too small for confidence interval".to_string(),
             ));
         }
 
@@ -431,11 +434,7 @@ impl ApproximateQueryExecutor {
     }
 
     // Create distinct count estimator for column
-    pub fn create_distinct_estimator(
-        &mut self,
-        column: String,
-        precision: u8,
-    ) -> Result<()> {
+    pub fn create_distinct_estimator(&mut self, column: String, precision: u8) -> Result<()> {
         let hll = HyperLogLog::new(precision)?;
         self.distinct_estimators.insert(column, hll);
         Ok(())
@@ -443,7 +442,9 @@ impl ApproximateQueryExecutor {
 
     // Add value to distinct estimator
     pub fn add_to_distinct(&mut self, column: &str, value: &str) -> Result<()> {
-        let estimator = self.distinct_estimators.get_mut(column)
+        let estimator = self
+            .distinct_estimators
+            .get_mut(column)
             .ok_or_else(|| DbError::NotFound(format!("Estimator for column: {}", column)))?;
         estimator.add(&value);
         Ok(())
@@ -451,7 +452,9 @@ impl ApproximateQueryExecutor {
 
     // Estimate distinct count
     pub fn estimate_distinct(&self, column: &str) -> Result<ApproximateResult> {
-        let estimator = self.distinct_estimators.get(column)
+        let estimator = self
+            .distinct_estimators
+            .get(column)
             .ok_or_else(|| DbError::NotFound(format!("Estimator for column: {}", column)))?;
 
         let estimate = estimator.cardinality();
@@ -479,7 +482,9 @@ impl ApproximateQueryExecutor {
 
     // Add value to frequency estimator
     pub fn add_to_frequency(&mut self, column: &str, value: &str, count: u64) -> Result<()> {
-        let estimator = self.frequency_estimators.get_mut(column)
+        let estimator = self
+            .frequency_estimators
+            .get_mut(column)
             .ok_or_else(|| DbError::NotFound(format!("Frequency estimator for: {}", column)))?;
         estimator.add(&value, count);
         Ok(())
@@ -487,7 +492,9 @@ impl ApproximateQueryExecutor {
 
     // Estimate frequency of value
     pub fn estimate_frequency(&self, column: &str, value: &str) -> Result<u64> {
-        let estimator = self.frequency_estimators.get(column)
+        let estimator = self
+            .frequency_estimators
+            .get(column)
             .ok_or_else(|| DbError::NotFound(format!("Frequency estimator for: {}", column)))?;
         Ok(estimator.estimate(&value))
     }
@@ -500,7 +507,9 @@ impl ApproximateQueryExecutor {
 
     // Add row to sampler
     pub fn add_to_sample(&mut self, name: &str, row: Vec<String>) -> Result<()> {
-        let sampler = self.samplers.get_mut(name)
+        let sampler = self
+            .samplers
+            .get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Sampler: {}", name)))?;
         sampler.add(row);
         Ok(())
@@ -508,7 +517,9 @@ impl ApproximateQueryExecutor {
 
     // Get sample
     pub fn get_sample(&self, name: &str) -> Result<&[Vec<String>]> {
-        let sampler = self.samplers.get(name)
+        let sampler = self
+            .samplers
+            .get(name)
             .ok_or_else(|| DbError::NotFound(format!("Sampler: {}", name)))?;
         Ok(sampler.sample())
     }
@@ -677,7 +688,9 @@ mod tests {
     fn test_approximate_query_executor() {
         let mut executor = ApproximateQueryExecutor::new();
 
-        executor.create_distinct_estimator("user_id".to_string(), 10).unwrap();
+        executor
+            .create_distinct_estimator("user_id".to_string(), 10)
+            .unwrap();
 
         for i in 0..1000 {
             executor.add_to_distinct("user_id", &i.to_string()).unwrap();

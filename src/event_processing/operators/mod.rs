@@ -1,3 +1,7 @@
+pub mod aggregate_operators;
+pub mod approximate;
+pub mod filter_operators;
+pub mod join_operators;
 /// Stream Processing Operators Module
 ///
 /// Implements functional operators for event stream transformations including
@@ -12,31 +16,23 @@
 /// - `approximate`: Approximate streaming algorithms (HyperLogLog, Count-Min Sketch)
 ///
 /// Public API re-exports all necessary types to maintain compatibility.
-
 pub mod pipeline;
-pub mod filter_operators;
-pub mod aggregate_operators;
-pub mod join_operators;
 pub mod specialized_operators;
-pub mod approximate;
 
 // Re-export all public types for backward compatibility
-pub use pipeline::{StreamOperator, OperatorPipeline, PipelineMetrics};
+pub use pipeline::{OperatorPipeline, PipelineMetrics, StreamOperator};
 
-pub use filter_operators::{FilterOperator, MapOperator, FlatMapOperator};
+pub use filter_operators::{FilterOperator, FlatMapOperator, MapOperator};
 
 pub use aggregate_operators::{
-    AggregationOperator, AggregationType,
-    ApproximateDistinctOperator, ApproximateTopKOperator,
+    AggregationOperator, AggregationType, ApproximateDistinctOperator, ApproximateTopKOperator,
 };
 
-pub use join_operators::{StreamJoinOperator, JoinType};
+pub use join_operators::{JoinType, StreamJoinOperator};
 
-pub use specialized_operators::{
-    DeduplicationOperator, TopNOperator, UnionOperator,
-};
+pub use specialized_operators::{DeduplicationOperator, TopNOperator, UnionOperator};
 
-pub use approximate::{HyperLogLog, CountMinSketch, HeavyHitters};
+pub use approximate::{CountMinSketch, HeavyHitters, HyperLogLog};
 
 #[cfg(test)]
 mod tests {
@@ -148,6 +144,9 @@ mod tests {
         let results = pipeline.process(event).unwrap();
 
         assert_eq!(results.len(), 1);
-        assert_eq!(results[0].get_payload("doubled").unwrap().as_i64(), Some(20));
+        assert_eq!(
+            results[0].get_payload("doubled").unwrap().as_i64(),
+            Some(20)
+        );
     }
 }

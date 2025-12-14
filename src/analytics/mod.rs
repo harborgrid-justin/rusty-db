@@ -88,17 +88,17 @@ pub mod statistics;
 // ============================================================================
 
 pub mod cost_model;
-pub mod query_rewriter;
 pub mod parallel;
+pub mod query_rewriter;
 
 // ============================================================================
 // OLAP & Analytics
 // ============================================================================
 
-pub mod olap;
 pub mod aggregates;
-pub mod window_functions;
+pub mod olap;
 pub mod views;
+pub mod window_functions;
 
 // ============================================================================
 // Time Series & Trends
@@ -118,93 +118,90 @@ pub mod sampling;
 // Workload Analysis
 // ============================================================================
 
-pub mod query_statistics;
 pub mod compression;
+pub mod query_statistics;
 
 // ============================================================================
 // Legacy/Existing Modules
 // ============================================================================
 
-pub mod caching;
-pub mod materialized_views;
 pub mod approximate;
-pub mod window;
+pub mod caching;
 pub mod cube;
-pub mod timeseries;
-pub mod warehouse;
+pub mod materialized_views;
 mod query_cache_impl;
+pub mod timeseries;
 mod view_management;
+pub mod warehouse;
+pub mod window;
 // ============================================================================
 // Re-exports for Convenience
 // ============================================================================
 
 // Manager
-pub use manager::{AnalyticsManager, AnalyticsManagerBuilder, AnalyticsConfig, ManagerStats};
+pub use manager::{AnalyticsConfig, AnalyticsManager, AnalyticsManagerBuilder, ManagerStats};
 
 // Query Cache
-pub use query_cache::{QueryCache, CachedResult, CacheStats};
+pub use query_cache::{CacheStats, CachedResult, QueryCache};
 
 // Statistics
-pub use statistics::{ColumnStatistics, Histogram, HistogramBucket, HistogramType, HistogramManager};
+pub use statistics::{
+    ColumnStatistics, Histogram, HistogramBucket, HistogramManager, HistogramType,
+};
 
 // Cost Model
-pub use cost_model::{CostModel, CardinalityEstimator, JoinAlgorithm};
+pub use cost_model::{CardinalityEstimator, CostModel, JoinAlgorithm};
 
 // Query Rewriter
 pub use query_rewriter::{
-    QueryRewriter, RewriteRule, RewriteResult, RewriteStats,
-    DeltaTable, DeltaOperation, DeltaRow,
-    IncrementalViewMaintenance, ViewDelta,
+    DeltaOperation, DeltaRow, DeltaTable, IncrementalViewMaintenance, QueryRewriter, RewriteResult,
+    RewriteRule, RewriteStats, ViewDelta,
 };
 
 // Parallel Execution
 pub use parallel::ParallelQueryExecutor;
 
 // OLAP
-pub use olap::{OlapCube, OlapCubeBuilder, MultidimensionalAggregator, AggregationCube};
+pub use olap::{AggregationCube, MultidimensionalAggregator, OlapCube, OlapCubeBuilder};
 
 // Aggregates
 pub use aggregates::AggregateFunction;
 
 // Window Functions
-pub use window_functions::{WindowFunction, WindowFrame, FrameType, FrameBound};
+pub use window_functions::{FrameBound, FrameType, WindowFrame, WindowFunction};
 
 // Views
 pub use views::{
-    MaterializedView, View, ViewStatistics, RefreshSchedule,
-    MaterializedViewIndex, CheckOption,
+    CheckOption, MaterializedView, MaterializedViewIndex, RefreshSchedule, View, ViewStatistics,
 };
 
 // Time Series
-pub use timeseries_analyzer::{TimeSeriesAnalyzer, Trend, AnomalyDetector};
+pub use timeseries_analyzer::{AnomalyDetector, TimeSeriesAnalyzer, Trend};
 
 // Data Profiler
-pub use data_profiler::{
-    DataProfiler, ColumnProfile, InferredType, BitmapIndex, IndexSuggestion,
-};
+pub use data_profiler::{BitmapIndex, ColumnProfile, DataProfiler, IndexSuggestion, InferredType};
 
 // Quality
 pub use quality::{
-    DataQualityAnalyzer, QualityMetrics, QualityIssue, QualityIssueType,
-    QualityDimension, ValidationRule, ValidationRuleType,
-    TableQualityReport, QueryPerformanceTracker, PerformanceMetrics,
+    DataQualityAnalyzer, PerformanceMetrics, QualityDimension, QualityIssue, QualityIssueType,
+    QualityMetrics, QueryPerformanceTracker, TableQualityReport, ValidationRule,
+    ValidationRuleType,
 };
 
 // Sampling
 pub use sampling::{
-    QueryResultSampler, SamplingMethod, SamplingConfig, SampledResult,
-    ApproximateQueryProcessor, ApproximateResult, SampledData,
+    ApproximateQueryProcessor, ApproximateResult, QueryResultSampler, SampledData, SampledResult,
+    SamplingConfig, SamplingMethod,
 };
 
 // Query Statistics
 pub use query_statistics::{
-    QueryStatisticsTracker, QueryStats, QueryExecution,
-    WorkloadAnalyzer, WorkloadAnalysisResult, WorkloadQuery,
-    IndexRecommendation, PerformanceReport,
+    IndexRecommendation, PerformanceReport, QueryExecution, QueryStatisticsTracker, QueryStats,
+    WorkloadAnalysisResult, WorkloadAnalyzer, WorkloadQuery,
 };
 
 // Compression
 pub use compression::{
-    QueryResultCompressor, CompressionAlgorithm, CompressedResult,
-    CompressedColumnInfo, CompressionStats,
+    CompressedColumnInfo, CompressedResult, CompressionAlgorithm, CompressionStats,
+    QueryResultCompressor,
 };

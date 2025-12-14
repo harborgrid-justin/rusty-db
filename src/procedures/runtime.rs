@@ -3,14 +3,14 @@
 // This module provides the runtime environment for executing PL/SQL blocks,
 // managing execution context, variable bindings, and control flow.
 
-use crate::{Result, DbError};
 use crate::procedures::parser::{
-    PlSqlBlock, Statement, Expression, LiteralValue, BinaryOperator, UnaryOperator,
-    Declaration, ExceptionHandler, ExceptionType,
+    BinaryOperator, Declaration, ExceptionHandler, ExceptionType, Expression, LiteralValue,
+    PlSqlBlock, Statement, UnaryOperator,
 };
+use crate::{DbError, Result};
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 
 // Runtime value types
 #[repr(C)]
@@ -35,9 +35,13 @@ impl RuntimeValue {
         match self {
             RuntimeValue::Integer(v) => Ok(*v),
             RuntimeValue::Float(v) => Ok(*v as i64),
-            RuntimeValue::String(s) => s.parse::<i64>()
+            RuntimeValue::String(s) => s
+                .parse::<i64>()
                 .map_err(|_| DbError::Runtime(format!("Cannot convert '{}' to integer", s))),
-            _ => Err(DbError::Runtime(format!("Cannot convert {:?} to integer", self))),
+            _ => Err(DbError::Runtime(format!(
+                "Cannot convert {:?} to integer",
+                self
+            ))),
         }
     }
 
@@ -47,9 +51,13 @@ impl RuntimeValue {
         match self {
             RuntimeValue::Float(v) => Ok(*v),
             RuntimeValue::Integer(v) => Ok(*v as f64),
-            RuntimeValue::String(s) => s.parse::<f64>()
+            RuntimeValue::String(s) => s
+                .parse::<f64>()
                 .map_err(|_| DbError::Runtime(format!("Cannot convert '{}' to float", s))),
-            _ => Err(DbError::Runtime(format!("Cannot convert {:?} to float", self))),
+            _ => Err(DbError::Runtime(format!(
+                "Cannot convert {:?} to float",
+                self
+            ))),
         }
     }
 
@@ -74,7 +82,10 @@ impl RuntimeValue {
             RuntimeValue::Boolean(b) => Ok(*b),
             RuntimeValue::Integer(v) => Ok(*v != 0),
             RuntimeValue::Null => Ok(false),
-            _ => Err(DbError::Runtime(format!("Cannot convert {:?} to boolean", self))),
+            _ => Err(DbError::Runtime(format!(
+                "Cannot convert {:?} to boolean",
+                self
+            ))),
         }
     }
 
@@ -190,7 +201,8 @@ impl ExecutionContext {
     // Get a variable value
     #[inline]
     pub fn get_variable(&self, name: &str) -> Result<RuntimeValue> {
-        self.variables.get(name)
+        self.variables
+            .get(name)
             .cloned()
             .ok_or_else(|| Self::variable_not_found(name))
     }
@@ -303,7 +315,8 @@ impl ExecutionContext {
 
     // Record DML operation
     pub fn record_dml_operation(&mut self, operation: &str, table: &str, rows: usize) {
-        self.dml_operations.push((operation.to_string(), table.to_string(), rows));
+        self.dml_operations
+            .push((operation.to_string(), table.to_string(), rows));
         self.rows_affected += rows;
     }
 
@@ -346,7 +359,11 @@ impl ExecutionContext {
     }
 
     // Cursor management
-    pub fn open_cursor(&mut self, name: &str, rows: Vec<HashMap<String, RuntimeValue>>) -> Result<()> {
+    pub fn open_cursor(
+        &mut self,
+        name: &str,
+        rows: Vec<HashMap<String, RuntimeValue>>,
+    ) -> Result<()> {
         let cursor = CursorState {
             name: name.to_string(),
             query: String::new(),
@@ -465,9 +482,10 @@ impl RuntimeExecutor {
 
         // Check NOT NULL constraint
         if decl.not_null && value.is_null() {
-            return Err(DbError::Runtime(
-                format!("Variable '{}' cannot be null", decl.name)
-            ));
+            return Err(DbError::Runtime(format!(
+                "Variable '{}' cannot be null",
+                decl.name
+            )));
         }
 
         ctx.set_variable(decl.name.clone(), value);
@@ -482,7 +500,12 @@ impl RuntimeExecutor {
                 ctx.set_variable(target.clone(), val);
             }
 
-            Statement::If { condition, then_block, elsif_blocks, else_block } => {
+            Statement::If {
+                condition,
+                then_block,
+                elsif_blocks,
+                else_block,
+            } => {
                 let cond_val = self.evaluate_expression(ctx, condition)?;
                 if cond_val.as_boolean()? {
                     for s in then_block {
@@ -520,61 +543,66 @@ impl RuntimeExecutor {
                 }
             }
 
-            Statement::Loop { statements } => {
-                loop {
-                    for s in statements {
-                        self.execute_statement(ctx, s)?;
-
-                        if ctx.should_exit_loop() {
-                            ctx.clear_exit_loop();
-                            return Ok(());
-                        }
-
-                        if ctx.should_continue_loop() {
-                            ctx.clear_continue_loop();
-                            break;
-                        }
-
-                        if ctx.has_exception() || ctx.get_return().is_some() {
-                            return Ok(());
-                        }
-                    }
+            Statement::Loop { statements } => loop {
+                for s in statements {
+                    self.execute_statement(ctx, s)?;
 
                     if ctx.should_exit_loop() {
                         ctx.clear_exit_loop();
-                        break;
+                        return Ok(());
                     }
-                }
-            }
 
-            Statement::While { condition, statements } => {
-                loop {
-                    let cond_val = self.evaluate_expression(ctx, condition)?;
-                    if !cond_val.as_boolean()? {
+                    if ctx.should_continue_loop() {
+                        ctx.clear_continue_loop();
                         break;
                     }
 
-                    for s in statements {
-                        self.execute_statement(ctx, s)?;
-
-                        if ctx.should_exit_loop() {
-                            ctx.clear_exit_loop();
-                            return Ok(());
-                        }
-
-                        if ctx.should_continue_loop() {
-                            ctx.clear_continue_loop();
-                            break;
-                        }
-
-                        if ctx.has_exception() || ctx.get_return().is_some() {
-                            return Ok(());
-                        }
+                    if ctx.has_exception() || ctx.get_return().is_some() {
+                        return Ok(());
                     }
                 }
-            }
 
-            Statement::ForNumeric { iterator, reverse, start, end, statements } => {
+                if ctx.should_exit_loop() {
+                    ctx.clear_exit_loop();
+                    break;
+                }
+            },
+
+            Statement::While {
+                condition,
+                statements,
+            } => loop {
+                let cond_val = self.evaluate_expression(ctx, condition)?;
+                if !cond_val.as_boolean()? {
+                    break;
+                }
+
+                for s in statements {
+                    self.execute_statement(ctx, s)?;
+
+                    if ctx.should_exit_loop() {
+                        ctx.clear_exit_loop();
+                        return Ok(());
+                    }
+
+                    if ctx.should_continue_loop() {
+                        ctx.clear_continue_loop();
+                        break;
+                    }
+
+                    if ctx.has_exception() || ctx.get_return().is_some() {
+                        return Ok(());
+                    }
+                }
+            },
+
+            Statement::ForNumeric {
+                iterator,
+                reverse,
+                start,
+                end,
+                statements,
+            } => {
                 let start_val = self.evaluate_expression(ctx, start)?.as_integer()?;
                 let end_val = self.evaluate_expression(ctx, end)?.as_integer()?;
 
@@ -699,13 +727,18 @@ impl RuntimeExecutor {
                         }
                     }
                     "RAISE_APPLICATION_ERROR" => {
-                        let error_code = arg_values.get(0)
+                        let error_code = arg_values
+                            .get(0)
                             .and_then(|v| v.as_integer().ok())
                             .unwrap_or(-20000);
-                        let error_msg = arg_values.get(1)
+                        let error_msg = arg_values
+                            .get(1)
                             .map(|v| v.as_string())
                             .unwrap_or_else(|| "Application error".to_string());
-                        return Err(DbError::Runtime(format!("ORA{}: {}", error_code, error_msg)));
+                        return Err(DbError::Runtime(format!(
+                            "ORA{}: {}",
+                            error_code, error_msg
+                        )));
                     }
                     _ => {
                         // Store the call for later execution by the procedure manager
@@ -722,7 +755,12 @@ impl RuntimeExecutor {
                 // No operation
             }
 
-            Statement::SelectInto { columns, into_vars, from, where_clause } => {
+            Statement::SelectInto {
+                columns,
+                into_vars,
+                from,
+                where_clause,
+            } => {
                 // Integrate with SQL executor
                 // Build and execute the SELECT statement
                 let where_str = if let Some(ref wc) = where_clause {
@@ -755,10 +793,18 @@ impl RuntimeExecutor {
                                 RuntimeValue::Integer(0) // Placeholder
                             } else if col.to_uppercase().starts_with("SUM") {
                                 RuntimeValue::Float(0.0) // Placeholder
-                            } else if col.to_uppercase() == "SYSDATE" || col.to_uppercase() == "CURRENT_DATE" {
-                                RuntimeValue::Date(chrono::Utc::now().format("%Y-%m-%d").to_string())
-                            } else if col.to_uppercase() == "SYSTIMESTAMP" || col.to_uppercase() == "CURRENT_TIMESTAMP" {
-                                RuntimeValue::Timestamp(chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string())
+                            } else if col.to_uppercase() == "SYSDATE"
+                                || col.to_uppercase() == "CURRENT_DATE"
+                            {
+                                RuntimeValue::Date(
+                                    chrono::Utc::now().format("%Y-%m-%d").to_string(),
+                                )
+                            } else if col.to_uppercase() == "SYSTIMESTAMP"
+                                || col.to_uppercase() == "CURRENT_TIMESTAMP"
+                            {
+                                RuntimeValue::Timestamp(
+                                    chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+                                )
                             } else {
                                 // Default to NULL for unknown columns
                                 RuntimeValue::Null
@@ -774,7 +820,11 @@ impl RuntimeExecutor {
                 }
             }
 
-            Statement::Insert { table, columns, values } => {
+            Statement::Insert {
+                table,
+                columns,
+                values,
+            } => {
                 // Integrate with SQL executor
                 // Build and execute the INSERT statement
                 let mut evaluated_values = Vec::new();
@@ -797,7 +847,11 @@ impl RuntimeExecutor {
                 ctx.increment_rows_affected(1);
             }
 
-            Statement::Update { table, assignments, where_clause } => {
+            Statement::Update {
+                table,
+                assignments,
+                where_clause,
+            } => {
                 // Integrate with SQL executor
                 // Build and execute the UPDATE statement
                 let mut set_clauses = Vec::new();
@@ -827,7 +881,10 @@ impl RuntimeExecutor {
                 ctx.increment_rows_affected(rows);
             }
 
-            Statement::Delete { table, where_clause } => {
+            Statement::Delete {
+                table,
+                where_clause,
+            } => {
                 // Integrate with SQL executor
                 let where_str = if let Some(ref wc) = where_clause {
                     format!(" WHERE {:?}", wc)
@@ -836,11 +893,7 @@ impl RuntimeExecutor {
                 };
 
                 if ctx.is_debug() {
-                    ctx.add_output(format!(
-                        "DELETE FROM {}{}",
-                        table,
-                        where_str
-                    ));
+                    ctx.add_output(format!("DELETE FROM {}{}", table, where_str));
                 }
 
                 // Record the DML operation - in production would return actual rows affected
@@ -904,7 +957,11 @@ impl RuntimeExecutor {
                 }
             }
 
-            Statement::Case { selector, when_clauses, else_clause } => {
+            Statement::Case {
+                selector,
+                when_clauses,
+                else_clause,
+            } => {
                 let selector_val = if let Some(sel) = selector {
                     Some(self.evaluate_expression(ctx, sel)?)
                 } else {
@@ -944,7 +1001,11 @@ impl RuntimeExecutor {
                 }
             }
 
-            Statement::ForCursor { record, cursor, statements } => {
+            Statement::ForCursor {
+                record,
+                cursor,
+                statements,
+            } => {
                 // Implement cursor FOR loops
                 // Implicitly open the cursor if not already open
                 if !ctx.is_cursor_open(cursor) {
@@ -997,7 +1058,11 @@ impl RuntimeExecutor {
     }
 
     // Evaluate an expression
-    fn evaluate_expression(&self, ctx: &ExecutionContext, expr: &Expression) -> Result<RuntimeValue> {
+    fn evaluate_expression(
+        &self,
+        ctx: &ExecutionContext,
+        expr: &Expression,
+    ) -> Result<RuntimeValue> {
         match expr {
             Expression::Literal(lit) => Ok(match lit {
                 LiteralValue::Integer(v) => RuntimeValue::Integer(*v),
@@ -1033,7 +1098,8 @@ impl RuntimeExecutor {
             Expression::FieldAccess { record, field } => {
                 let record_val = ctx.get_variable(record)?;
                 if let RuntimeValue::Record(fields) = record_val {
-                    fields.get(field)
+                    fields
+                        .get(field)
                         .cloned()
                         .ok_or_else(|| DbError::Runtime(format!("Field '{}' not found", field)))
                 } else {
@@ -1041,12 +1107,19 @@ impl RuntimeExecutor {
                 }
             }
 
-            _ => Err(DbError::Runtime("Expression type not yet implemented".to_string())),
+            _ => Err(DbError::Runtime(
+                "Expression type not yet implemented".to_string(),
+            )),
         }
     }
 
     // Apply binary operator
-    fn apply_binary_op(&self, left: &RuntimeValue, op: &BinaryOperator, right: &RuntimeValue) -> Result<RuntimeValue> {
+    fn apply_binary_op(
+        &self,
+        left: &RuntimeValue,
+        op: &BinaryOperator,
+        right: &RuntimeValue,
+    ) -> Result<RuntimeValue> {
         match op {
             BinaryOperator::Add => {
                 if let (RuntimeValue::Integer(l), RuntimeValue::Integer(r)) = (left, right) {
@@ -1154,11 +1227,16 @@ impl RuntimeExecutor {
                 Ok(RuntimeValue::Boolean(l || r))
             }
 
-            BinaryOperator::Concat => {
-                Ok(RuntimeValue::String(format!("{}{}", left.as_string(), right.as_string())))
-            }
+            BinaryOperator::Concat => Ok(RuntimeValue::String(format!(
+                "{}{}",
+                left.as_string(),
+                right.as_string()
+            ))),
 
-            _ => Err(DbError::Runtime(format!("Binary operator {:?} not implemented", op))),
+            _ => Err(DbError::Runtime(format!(
+                "Binary operator {:?} not implemented",
+                op
+            ))),
         }
     }
 
@@ -1222,7 +1300,9 @@ impl RuntimeExecutor {
 
             "SUBSTR" => {
                 if args.len() < 2 || args.len() > 3 {
-                    return Err(DbError::Runtime("SUBSTR expects 2 or 3 arguments".to_string()));
+                    return Err(DbError::Runtime(
+                        "SUBSTR expects 2 or 3 arguments".to_string(),
+                    ));
                 }
                 let s = args[0].as_string();
                 let start = (args[1].as_integer()? - 1).max(0) as usize;
@@ -1249,7 +1329,9 @@ impl RuntimeExecutor {
 
             "ROUND" => {
                 if args.is_empty() || args.len() > 2 {
-                    return Err(DbError::Runtime("ROUND expects 1 or 2 arguments".to_string()));
+                    return Err(DbError::Runtime(
+                        "ROUND expects 1 or 2 arguments".to_string(),
+                    ));
                 }
                 let v = args[0].as_float()?;
                 let decimals = if args.len() == 2 {
@@ -1294,7 +1376,10 @@ impl RuntimeExecutor {
         }
 
         // Exception not handled - propagate it
-        Err(DbError::Runtime(format!("Unhandled exception: {}", exception_name)))
+        Err(DbError::Runtime(format!(
+            "Unhandled exception: {}",
+            exception_name
+        )))
     }
 }
 

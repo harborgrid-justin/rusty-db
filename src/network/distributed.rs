@@ -8,12 +8,12 @@
 // - Load balancing across nodes
 // - Result aggregation from multiple nodes
 
-use std::time::Duration;
 use crate::error::DbError;
-use crate::execution::{QueryResult, planner::PlanNode};
+use crate::execution::{planner::PlanNode, QueryResult};
+use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
+use std::time::Duration;
 use tokio::sync::Semaphore;
 
 // Distributed query coordinator
@@ -47,18 +47,10 @@ impl DistributedCoordinator {
         let strategy = self.analyze_query(plan)?;
 
         match strategy {
-            DistributionStrategy::BroadcastJoin => {
-                self.execute_broadcast_join(plan).await
-            }
-            DistributionStrategy::HashPartitioned => {
-                self.execute_hash_partitioned(plan).await
-            }
-            DistributionStrategy::RangePartitioned => {
-                self.execute_range_partitioned(plan).await
-            }
-            DistributionStrategy::SingleNode => {
-                self.execute_on_single_node(plan).await
-            }
+            DistributionStrategy::BroadcastJoin => self.execute_broadcast_join(plan).await,
+            DistributionStrategy::HashPartitioned => self.execute_hash_partitioned(plan).await,
+            DistributionStrategy::RangePartitioned => self.execute_range_partitioned(plan).await,
+            DistributionStrategy::SingleNode => self.execute_on_single_node(plan).await,
         }
     }
 
@@ -196,9 +188,7 @@ impl LoadBalancer {
             }
             LoadBalancingStrategy::LeastLoaded => {
                 // Select node with least current load
-                available
-                    .into_iter()
-                    .min_by_key(|n| n.get_load())
+                available.into_iter().min_by_key(|n| n.get_load())
             }
             LoadBalancingStrategy::Random => {
                 // Random selection
@@ -240,7 +230,10 @@ impl QueryScheduler {
     // Schedule query for execution
     pub async fn schedule(&self, query: ScheduledQuery) -> Result<(), DbError> {
         // Wait for available slot
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|e| DbError::Internal(format!("Semaphore error: {}", e)))?;
 
         // Add to queue
@@ -298,8 +291,8 @@ impl DataShuffler {
     }
 
     fn hash_to_node(key: &str, node_count: usize) -> usize {
-        use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         key.hash(&mut hasher);
@@ -334,7 +327,8 @@ impl FaultToleranceManager {
     // Execute with retry on failure
     pub async fn execute_with_retry<F, T>(&self, mut operation: F) -> Result<T, DbError>
     where
-        F: FnMut() -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, DbError>> + Send>>,
+        F: FnMut()
+            -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<T, DbError>> + Send>>,
     {
         let mut attempts = 0;
 
@@ -347,9 +341,8 @@ impl FaultToleranceManager {
                         return Err(e);
                     }
                     // Exponential backoff
-                    tokio::time::sleep(Duration::from_millis(
-                        100 * 2u64.pow(attempts as u32)
-                    )).await;
+                    tokio::time::sleep(Duration::from_millis(100 * 2u64.pow(attempts as u32)))
+                        .await;
                 }
             }
         }
@@ -398,10 +391,7 @@ impl ResultAggregator {
             .filter_map(|val| val.parse::<i64>().ok())
             .sum();
 
-        QueryResult::new(
-            vec!["count".to_string()],
-            vec![vec![total.to_string()]],
-        )
+        QueryResult::new(vec!["count".to_string()], vec![vec![total.to_string()]])
     }
 
     fn aggregate_sum(results: Vec<QueryResult>) -> QueryResult {
@@ -412,10 +402,7 @@ impl ResultAggregator {
             .filter_map(|val| val.parse::<f64>().ok())
             .sum();
 
-        QueryResult::new(
-            vec!["sum".to_string()],
-            vec![vec![total.to_string()]],
-        )
+        QueryResult::new(vec!["sum".to_string()], vec![vec![total.to_string()]])
     }
 
     fn aggregate_avg(results: Vec<QueryResult>) -> QueryResult {
@@ -426,10 +413,7 @@ impl ResultAggregator {
         for result in results {
             if let Some(row) = result.rows.first() {
                 if row.len() >= 2 {
-                    if let (Ok(sum), Ok(count)) = (
-                        row[0].parse::<f64>(),
-                        row[1].parse::<i64>(),
-                    ) {
+                    if let (Ok(sum), Ok(count)) = (row[0].parse::<f64>(), row[1].parse::<i64>()) {
                         total_sum += sum;
                         total_count += count;
                     }
@@ -443,10 +427,7 @@ impl ResultAggregator {
             0.0
         };
 
-        QueryResult::new(
-            vec!["avg".to_string()],
-            vec![vec![avg.to_string()]],
-        )
+        QueryResult::new(vec!["avg".to_string()], vec![vec![avg.to_string()]])
     }
 
     fn aggregate_min(results: Vec<QueryResult>) -> QueryResult {
@@ -457,10 +438,7 @@ impl ResultAggregator {
             .cloned()
             .min();
 
-        QueryResult::new(
-            vec!["min".to_string()],
-            vec![vec![min.unwrap_or_default()]],
-        )
+        QueryResult::new(vec!["min".to_string()], vec![vec![min.unwrap_or_default()]])
     }
 
     fn aggregate_max(results: Vec<QueryResult>) -> QueryResult {
@@ -471,10 +449,7 @@ impl ResultAggregator {
             .cloned()
             .max();
 
-        QueryResult::new(
-            vec!["max".to_string()],
-            vec![vec![max.unwrap_or_default()]],
-        )
+        QueryResult::new(vec!["max".to_string()], vec![vec![max.unwrap_or_default()]])
     }
 }
 
@@ -512,7 +487,7 @@ impl DistributedTransactionCoordinator {
                 // Abort if any participant cannot prepare
                 self.abort().await?;
                 return Err(DbError::InvalidOperation(
-                    "Transaction aborted: participant cannot prepare".to_string()
+                    "Transaction aborted: participant cannot prepare".to_string(),
                 ));
             }
         }
@@ -590,10 +565,8 @@ mod tests {
             QueryResult::new(vec!["count".to_string()], vec![vec!["30".to_string()]]),
         ];
 
-        let aggregated = ResultAggregator::aggregate_partial_results(
-            results,
-            AggregationType::Count,
-        );
+        let aggregated =
+            ResultAggregator::aggregate_partial_results(results, AggregationType::Count);
 
         assert_eq!(aggregated.rows[0][0], "60");
     }

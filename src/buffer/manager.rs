@@ -35,8 +35,7 @@
 
 use crate::buffer::eviction::{create_eviction_policy, EvictionPolicy, EvictionPolicyType};
 use crate::buffer::page_cache::{
-    BufferFrame, FrameBatch, FrameGuard, FrameId, PerCoreFramePool,
-    INVALID_PAGE_ID, PAGE_SIZE,
+    BufferFrame, FrameBatch, FrameGuard, FrameId, PerCoreFramePool, INVALID_PAGE_ID, PAGE_SIZE,
 };
 use crate::common::PageId;
 use crate::error::{DbError, Result};
@@ -247,10 +246,7 @@ impl PageTable {
     /// Get total number of entries
     #[cold]
     fn len(&self) -> usize {
-        self.partitions
-            .iter()
-            .map(|p| p.read().len())
-            .sum()
+        self.partitions.iter().map(|p| p.read().len()).sum()
     }
 }
 
@@ -276,11 +272,7 @@ struct FreeFrameManager {
 
 impl FreeFrameManager {
     /// Create a new free frame manager
-    fn new(
-        num_frames: usize,
-        enable_per_core_pools: bool,
-        frames_per_core: usize,
-    ) -> Self {
+    fn new(num_frames: usize, enable_per_core_pools: bool, frames_per_core: usize) -> Self {
         let num_cores = num_cpus::get();
 
         let per_core_pools = if enable_per_core_pools {
@@ -533,7 +525,10 @@ impl BufferPoolManager {
     }
 
     /// Create a new buffer pool manager with a disk manager for production I/O
-    pub fn with_disk_manager(config: BufferPoolConfig, disk_manager: Option<Arc<DiskManager>>) -> Self {
+    pub fn with_disk_manager(
+        config: BufferPoolConfig,
+        disk_manager: Option<Arc<DiskManager>>,
+    ) -> Self {
         let num_frames = config.num_frames;
 
         // Allocate frames
@@ -597,7 +592,10 @@ impl BufferPoolManager {
     /// Create a buffer pool manager with automatic disk manager initialization
     pub fn with_data_directory(config: BufferPoolConfig) -> Result<Self> {
         let disk_manager = DiskManager::new(&config.data_directory, config.page_size)?;
-        Ok(Self::with_disk_manager(config, Some(Arc::new(disk_manager))))
+        Ok(Self::with_disk_manager(
+            config,
+            Some(Arc::new(disk_manager)),
+        ))
     }
 
     /// Pin a page (fetch from disk if not in buffer pool).
@@ -923,7 +921,8 @@ impl BufferPoolManager {
 
         // Track I/O wait time
         let elapsed_us = start.elapsed().as_micros() as u64;
-        self.io_wait_time_us.fetch_add(elapsed_us, Ordering::Relaxed);
+        self.io_wait_time_us
+            .fetch_add(elapsed_us, Ordering::Relaxed);
 
         Ok(())
     }
@@ -960,7 +959,8 @@ impl BufferPoolManager {
 
         // Track I/O wait time
         let elapsed_us = start.elapsed().as_micros() as u64;
-        self.io_wait_time_us.fetch_add(elapsed_us, Ordering::Relaxed);
+        self.io_wait_time_us
+            .fetch_add(elapsed_us, Ordering::Relaxed);
 
         Ok(())
     }
@@ -1466,12 +1466,7 @@ pub mod windows {
 
             // Create completion port with no initial file handle
             let completion_port = unsafe {
-                CreateIoCompletionPort(
-                    INVALID_HANDLE_VALUE,
-                    ptr::null_mut(),
-                    0,
-                    num_threads,
-                )
+                CreateIoCompletionPort(INVALID_HANDLE_VALUE, ptr::null_mut(), 0, num_threads)
             };
 
             if completion_port.is_null() || completion_port == INVALID_HANDLE_VALUE {
@@ -1504,7 +1499,7 @@ pub mod windows {
                     file_handle,
                     self.completion_port,
                     file_handle as usize, // Use file handle as completion key
-                    0, // Ignored when associating with existing port
+                    0,                    // Ignored when associating with existing port
                 )
             };
 
@@ -1533,12 +1528,10 @@ pub mod windows {
         /// # Returns
         ///
         /// Ok(()) if the operation was queued successfully, or an error.
-        pub fn async_read(
-            &self,
-            page_id: PageId,
-            buffer: &mut PageBuffer,
-        ) -> Result<()> {
-            let file = self.data_file.as_ref()
+        pub fn async_read(&self, page_id: PageId, buffer: &mut PageBuffer) -> Result<()> {
+            let file = self
+                .data_file
+                .as_ref()
                 .ok_or_else(|| DbError::Storage("No file associated with IOCP".to_string()))?;
 
             let offset = page_id as u64 * self.page_size as u64;
@@ -1583,12 +1576,10 @@ pub mod windows {
         /// # Returns
         ///
         /// Ok(()) if the operation was queued successfully, or an error.
-        pub fn async_write(
-            &self,
-            page_id: PageId,
-            buffer: &PageBuffer,
-        ) -> Result<()> {
-            let file = self.data_file.as_ref()
+        pub fn async_write(&self, page_id: PageId, buffer: &PageBuffer) -> Result<()> {
+            let file = self
+                .data_file
+                .as_ref()
                 .ok_or_else(|| DbError::Storage("No file associated with IOCP".to_string()))?;
 
             let offset = page_id as u64 * self.page_size as u64;
@@ -1647,7 +1638,11 @@ pub mod windows {
                         &mut bytes_transferred,
                         &mut completion_key,
                         &mut overlapped_ptr,
-                        if completions.is_empty() { timeout_ms } else { 0 },
+                        if completions.is_empty() {
+                            timeout_ms
+                        } else {
+                            0
+                        },
                     )
                 };
 
@@ -1827,8 +1822,10 @@ impl Default for BufferPoolBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::buffer::{BufferPoolBuilder, BufferPoolConfig, BufferPoolManager, EvictionPolicyType};
     use crate::buffer::manager::{FreeFrameManager, PageTable};
+    use crate::buffer::{
+        BufferPoolBuilder, BufferPoolConfig, BufferPoolManager, EvictionPolicyType,
+    };
 
     #[test]
     fn test_buffer_pool_creation() {
@@ -1889,9 +1886,7 @@ mod tests {
 
     #[test]
     fn test_stats() {
-        let pool = BufferPoolBuilder::new()
-            .num_frames(10)
-            .build();
+        let pool = BufferPoolBuilder::new().num_frames(10).build();
 
         let stats = pool.stats();
         assert_eq!(stats.total_frames, 10);

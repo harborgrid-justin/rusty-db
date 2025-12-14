@@ -219,15 +219,18 @@ impl PartitionHealthMonitor {
 
     pub fn generate_health_report(&self) -> HealthReport {
         let total = self.health_checks.len();
-        let healthy = self.health_checks
+        let healthy = self
+            .health_checks
             .values()
             .filter(|h| h.status == HealthStatus::Healthy)
             .count();
-        let warning = self.health_checks
+        let warning = self
+            .health_checks
             .values()
             .filter(|h| h.status == HealthStatus::Warning)
             .count();
-        let critical = self.health_checks
+        let critical = self
+            .health_checks
             .values()
             .filter(|h| h.status == HealthStatus::Critical)
             .count();

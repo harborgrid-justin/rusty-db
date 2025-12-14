@@ -35,13 +35,11 @@ pub enum SerfMessage {
     Join {
         node: NodeInfo,
         #[allow(dead_code)] // Reserved for node tags
-    tags: HashMap<String, String>,
+        tags: HashMap<String, String>,
     },
 
     /// Leave notification
-    Leave {
-        node: NodeInfo,
-    },
+    Leave { node: NodeInfo },
 
     /// Membership update
     MemberUpdate {
@@ -51,16 +49,10 @@ pub enum SerfMessage {
     },
 
     /// Ping for failure detection
-    Ping {
-        from: NodeInfo,
-        sequence: u64,
-    },
+    Ping { from: NodeInfo, sequence: u64 },
 
     /// Ack for ping
-    Ack {
-        from: NodeInfo,
-        sequence: u64,
-    },
+    Ack { from: NodeInfo, sequence: u64 },
 
     /// Custom user event
     UserEvent {
@@ -78,10 +70,7 @@ pub enum SerfMessage {
     },
 
     /// Query response
-    QueryResponse {
-        id: String,
-        payload: Vec<u8>,
-    },
+    QueryResponse { id: String, payload: Vec<u8> },
 }
 
 /// Serf member state
@@ -116,19 +105,19 @@ pub struct SerfProtocol {
 
 impl SerfProtocol {
     /// Create a new Serf protocol instance
-    pub fn new(
-        config: DiscoveryConfig,
-        event_tx: mpsc::Sender<DiscoveryEvent>,
-    ) -> Result<Self> {
+    pub fn new(config: DiscoveryConfig, event_tx: mpsc::Sender<DiscoveryEvent>) -> Result<Self> {
         // Create UDP socket
         let socket = std::net::UdpSocket::bind(config.bind_addr)
             .map_err(|e| DbError::Network(format!("Failed to bind socket: {}", e)))?;
 
-        socket.set_nonblocking(true)
+        socket
+            .set_nonblocking(true)
             .map_err(|e| DbError::Network(format!("Failed to set nonblocking: {}", e)))?;
 
-        let socket = Arc::new(UdpSocket::from_std(socket)
-            .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?);
+        let socket = Arc::new(
+            UdpSocket::from_std(socket)
+                .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?,
+        );
 
         // Extract tags from node metadata
         let tags = Arc::new(RwLock::new(config.local_node.metadata.clone()));
@@ -202,7 +191,9 @@ impl SerfProtocol {
         let data = serde_json::to_vec(msg)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
-        self.socket.send_to(&data, addr).await
+        self.socket
+            .send_to(&data, addr)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to send message: {}", e)))?;
 
         Ok(())
@@ -232,11 +223,18 @@ impl SerfProtocol {
                 self.handle_leave(node).await?;
             }
 
-            SerfMessage::MemberUpdate { node, status, incarnation } => {
+            SerfMessage::MemberUpdate {
+                node,
+                status,
+                incarnation,
+            } => {
                 self.handle_member_update(node, status, incarnation).await?;
             }
 
-            SerfMessage::Ping { from: _sender, sequence } => {
+            SerfMessage::Ping {
+                from: _sender,
+                sequence,
+            } => {
                 // Send ack
                 let ack = SerfMessage::Ack {
                     from: self.config.local_node.clone(),
@@ -245,7 +243,10 @@ impl SerfProtocol {
                 self.send_message(&ack, from).await?;
             }
 
-            SerfMessage::Ack { from: sender, sequence: _ } => {
+            SerfMessage::Ack {
+                from: sender,
+                sequence: _,
+            } => {
                 // Update member as alive
                 let mut members = self.members.write().await;
                 if let Some(member) = members.get_mut(&sender.id) {
@@ -254,12 +255,22 @@ impl SerfProtocol {
                 }
             }
 
-            SerfMessage::UserEvent { name, payload, coalesce: _ } => {
+            SerfMessage::UserEvent {
+                name,
+                payload,
+                coalesce: _,
+            } => {
                 self.handle_user_event(&name, &payload).await?;
             }
 
-            SerfMessage::Query { id, name, payload, filter_tags } => {
-                self.handle_query(id, name, payload, filter_tags, from).await?;
+            SerfMessage::Query {
+                id,
+                name,
+                payload,
+                filter_tags,
+            } => {
+                self.handle_query(id, name, payload, filter_tags, from)
+                    .await?;
             }
 
             SerfMessage::QueryResponse { id: _, payload: _ } => {
@@ -374,9 +385,9 @@ impl SerfProtocol {
     ) -> Result<()> {
         // Check if this node matches the filter tags
         let tags = self.tags.read().await;
-        let matches = filter_tags.iter().all(|(k, v)| {
-            tags.get(k).map(|val| val == v).unwrap_or(false)
-        });
+        let matches = filter_tags
+            .iter()
+            .all(|(k, v)| tags.get(k).map(|val| val == v).unwrap_or(false));
         drop(tags);
 
         if !matches {
@@ -409,7 +420,8 @@ impl SerfProtocol {
         }
 
         // Select random member to ping
-        let alive_members: Vec<_> = members.values()
+        let alive_members: Vec<_> = members
+            .values()
             .filter(|m| m.status == NodeStatus::Alive)
             .cloned()
             .collect();
@@ -514,7 +526,8 @@ impl DiscoveryProtocol for SerfProtocol {
 
     async fn members(&self) -> Result<Vec<NodeInfo>> {
         let members = self.members.read().await;
-        Ok(members.values()
+        Ok(members
+            .values()
             .filter(|m| m.status == NodeStatus::Alive)
             .map(|m| m.info.clone())
             .collect())
@@ -560,10 +573,7 @@ mod tests {
 
     #[test]
     fn test_serf_message_serialization() {
-        let node = NodeInfo::new(
-            "test-node".to_string(),
-            "127.0.0.1:7946".parse().unwrap(),
-        );
+        let node = NodeInfo::new("test-node".to_string(), "127.0.0.1:7946".parse().unwrap());
 
         let msg = SerfMessage::Join {
             node,

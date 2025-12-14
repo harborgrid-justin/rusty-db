@@ -10,16 +10,16 @@
 // - Verification reports and alerts
 // - Recovery procedures for detected issues
 
-use std::collections::HashSet;
-use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-use std::time::{Duration, UNIX_EPOCH};
-use tokio::task;
-use crate::Result;
 use super::ledger::{Block, BlockId, BlockchainTable};
 use crate::common::RowId;
+use crate::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::{Arc, RwLock};
+use std::time::SystemTime;
+use std::time::{Duration, UNIX_EPOCH};
+use tokio::task;
 
 // ============================================================================
 // Verification Result Types
@@ -45,7 +45,10 @@ impl VerificationResult {
     pub fn success(details: VerificationDetails, duration_ms: u64) -> Self {
         Self {
             passed: true,
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             details,
             issues: Vec::new(),
             duration_ms,
@@ -53,10 +56,17 @@ impl VerificationResult {
     }
 
     // Create a new failed result
-    pub fn failure(details: VerificationDetails, issues: Vec<VerificationIssue>, duration_ms: u64) -> Self {
+    pub fn failure(
+        details: VerificationDetails,
+        issues: Vec<VerificationIssue>,
+        duration_ms: u64,
+    ) -> Self {
         Self {
             passed: false,
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             details,
             issues,
             duration_ms,
@@ -120,7 +130,10 @@ impl VerificationIssue {
             block_id: None,
             row_id: None,
             description,
-            detected_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            detected_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
         }
     }
 
@@ -186,57 +199,75 @@ impl BlockVerifier {
 
         // Check block is finalized
         if block.status == super::ledger::BlockStatus::Open {
-            issues.push(VerificationIssue::new(
-                IssueSeverity::Error,
-                IssueType::Other,
-                "Block is not finalized".to_string(),
-            ).with_block(block.block_id));
+            issues.push(
+                VerificationIssue::new(
+                    IssueSeverity::Error,
+                    IssueType::Other,
+                    "Block is not finalized".to_string(),
+                )
+                .with_block(block.block_id),
+            );
         }
 
         // Verify each row
         for row in &block.rows {
             if !row.verify() {
-                issues.push(VerificationIssue::new(
-                    IssueSeverity::Critical,
-                    IssueType::HashMismatch,
-                    format!("Row {} hash verification failed", row.row_id),
-                ).with_block(block.block_id).with_row(row.row_id));
+                issues.push(
+                    VerificationIssue::new(
+                        IssueSeverity::Critical,
+                        IssueType::HashMismatch,
+                        format!("Row {} hash verification failed", row.row_id),
+                    )
+                    .with_block(block.block_id)
+                    .with_row(row.row_id),
+                );
             }
         }
 
         // Verify row chain
         for i in 1..block.rows.len() {
             if !block.rows[i].verify_chain(&block.rows[i - 1]) {
-                issues.push(VerificationIssue::new(
-                    IssueSeverity::Critical,
-                    IssueType::ChainBreak,
-                    format!("Chain break between rows {} and {}", block.rows[i - 1].row_id, block.rows[i].row_id),
-                ).with_block(block.block_id));
+                issues.push(
+                    VerificationIssue::new(
+                        IssueSeverity::Critical,
+                        IssueType::ChainBreak,
+                        format!(
+                            "Chain break between rows {} and {}",
+                            block.rows[i - 1].row_id,
+                            block.rows[i].row_id
+                        ),
+                    )
+                    .with_block(block.block_id),
+                );
             }
         }
 
         // Verify merkle tree
         if !block.rows.is_empty() {
-            let row_data: Vec<&[u8]> = block.rows.iter()
-                .map(|r| r.row_hash.as_ref())
-                .collect();
+            let row_data: Vec<&[u8]> = block.rows.iter().map(|r| r.row_hash.as_ref()).collect();
 
             match super::crypto::MerkleTree::build(&row_data) {
                 Ok(tree) => {
                     if tree.root() != block.merkle_root {
-                        issues.push(VerificationIssue::new(
-                            IssueSeverity::Critical,
-                            IssueType::MerkleInvalid,
-                            "Merkle root mismatch".to_string(),
-                        ).with_block(block.block_id));
+                        issues.push(
+                            VerificationIssue::new(
+                                IssueSeverity::Critical,
+                                IssueType::MerkleInvalid,
+                                "Merkle root mismatch".to_string(),
+                            )
+                            .with_block(block.block_id),
+                        );
                     }
                 }
                 Err(_) => {
-                    issues.push(VerificationIssue::new(
-                        IssueSeverity::Error,
-                        IssueType::MerkleInvalid,
-                        "Failed to build Merkle tree".to_string(),
-                    ).with_block(block.block_id));
+                    issues.push(
+                        VerificationIssue::new(
+                            IssueSeverity::Error,
+                            IssueType::MerkleInvalid,
+                            "Failed to build Merkle tree".to_string(),
+                        )
+                        .with_block(block.block_id),
+                    );
                 }
             }
         }
@@ -245,21 +276,27 @@ impl BlockVerifier {
         let block_valid = match block.verify() {
             Ok(valid) => valid,
             Err(_) => {
-                issues.push(VerificationIssue::new(
-                    IssueSeverity::Critical,
-                    IssueType::HashMismatch,
-                    "Block hash verification failed".to_string(),
-                ).with_block(block.block_id));
+                issues.push(
+                    VerificationIssue::new(
+                        IssueSeverity::Critical,
+                        IssueType::HashMismatch,
+                        "Block hash verification failed".to_string(),
+                    )
+                    .with_block(block.block_id),
+                );
                 false
             }
         };
 
         if !block_valid {
-            issues.push(VerificationIssue::new(
-                IssueSeverity::Critical,
-                IssueType::HashMismatch,
-                "Block integrity check failed".to_string(),
-            ).with_block(block.block_id));
+            issues.push(
+                VerificationIssue::new(
+                    IssueSeverity::Critical,
+                    IssueType::HashMismatch,
+                    "Block integrity check failed".to_string(),
+                )
+                .with_block(block.block_id),
+            );
         }
 
         let duration = SystemTime::now().duration_since(start).unwrap().as_millis() as u64;
@@ -285,12 +322,18 @@ impl BlockVerifier {
         // Check rows have increasing timestamps
         for i in 1..block.rows.len() {
             if block.rows[i].timestamp < block.rows[i - 1].timestamp {
-                issues.push(VerificationIssue::new(
-                    IssueSeverity::Warning,
-                    IssueType::TimestampAnomaly,
-                    format!("Row {} has earlier timestamp than row {}",
-                            block.rows[i].row_id, block.rows[i - 1].row_id),
-                ).with_block(block.block_id));
+                issues.push(
+                    VerificationIssue::new(
+                        IssueSeverity::Warning,
+                        IssueType::TimestampAnomaly,
+                        format!(
+                            "Row {} has earlier timestamp than row {}",
+                            block.rows[i].row_id,
+                            block.rows[i - 1].row_id
+                        ),
+                    )
+                    .with_block(block.block_id),
+                );
             }
         }
 
@@ -331,11 +374,14 @@ impl ChainVerifier {
         if let Some(first_block) = blocks.get(&0) {
             let genesis_hash = [0u8; 32];
             if first_block.previous_block_hash != genesis_hash {
-                issues.push(VerificationIssue::new(
-                    IssueSeverity::Critical,
-                    IssueType::ChainBreak,
-                    "First block does not reference genesis hash".to_string(),
-                ).with_block(0));
+                issues.push(
+                    VerificationIssue::new(
+                        IssueSeverity::Critical,
+                        IssueType::ChainBreak,
+                        "First block does not reference genesis hash".to_string(),
+                    )
+                    .with_block(0),
+                );
             }
             row_count += first_block.rows.len();
         } else {
@@ -354,27 +400,40 @@ impl ChainVerifier {
             match (prev_block, curr_block) {
                 (Some(prev), Some(curr)) => {
                     if curr.previous_block_hash != prev.block_hash {
-                        issues.push(VerificationIssue::new(
-                            IssueSeverity::Critical,
-                            IssueType::ChainBreak,
-                            format!("Block {} does not chain to block {}", block_id, block_id - 1),
-                        ).with_block(block_id));
+                        issues.push(
+                            VerificationIssue::new(
+                                IssueSeverity::Critical,
+                                IssueType::ChainBreak,
+                                format!(
+                                    "Block {} does not chain to block {}",
+                                    block_id,
+                                    block_id - 1
+                                ),
+                            )
+                            .with_block(block_id),
+                        );
                     }
                     row_count += curr.rows.len();
                 }
                 (None, _) => {
-                    issues.push(VerificationIssue::new(
-                        IssueSeverity::Critical,
-                        IssueType::MissingData,
-                        format!("Block {} is missing", block_id - 1),
-                    ).with_block(block_id - 1));
+                    issues.push(
+                        VerificationIssue::new(
+                            IssueSeverity::Critical,
+                            IssueType::MissingData,
+                            format!("Block {} is missing", block_id - 1),
+                        )
+                        .with_block(block_id - 1),
+                    );
                 }
                 (_, None) => {
-                    issues.push(VerificationIssue::new(
-                        IssueSeverity::Critical,
-                        IssueType::MissingData,
-                        format!("Block {} is missing", block_id),
-                    ).with_block(block_id));
+                    issues.push(
+                        VerificationIssue::new(
+                            IssueSeverity::Critical,
+                            IssueType::MissingData,
+                            format!("Block {} is missing", block_id),
+                        )
+                        .with_block(block_id),
+                    );
                 }
             }
         }
@@ -405,11 +464,15 @@ impl ChainVerifier {
         for block in blocks.values() {
             for row in &block.rows {
                 if !seen_row_ids.insert(row.row_id) {
-                    issues.push(VerificationIssue::new(
-                        IssueSeverity::Critical,
-                        IssueType::DuplicateEntry,
-                        format!("Duplicate row ID {}", row.row_id),
-                    ).with_block(block.block_id).with_row(row.row_id));
+                    issues.push(
+                        VerificationIssue::new(
+                            IssueSeverity::Critical,
+                            IssueType::DuplicateEntry,
+                            format!("Duplicate row ID {}", row.row_id),
+                        )
+                        .with_block(block.block_id)
+                        .with_row(row.row_id),
+                    );
                 }
             }
         }
@@ -450,9 +513,7 @@ impl ParallelVerifier {
         // Verify blocks in parallel
         let mut tasks = Vec::new();
         for block in block_vec {
-            let task = task::spawn(async move {
-                BlockVerifier::verify_block(&block)
-            });
+            let task = task::spawn(async move { BlockVerifier::verify_block(&block) });
             tasks.push(task);
         }
 
@@ -537,9 +598,7 @@ impl VerificationScheduler {
         let last = self.last_verification.read().unwrap();
         match *last {
             None => true,
-            Some(time) => {
-                SystemTime::now().duration_since(time).unwrap() >= self.interval
-            }
+            Some(time) => SystemTime::now().duration_since(time).unwrap() >= self.interval,
         }
     }
 
@@ -616,11 +675,14 @@ impl TamperDetector {
                     }
                 }
                 Err(e) => {
-                    issues.push(VerificationIssue::new(
-                        IssueSeverity::Error,
-                        IssueType::Other,
-                        format!("Block verification error: {}", e),
-                    ).with_block(block.block_id));
+                    issues.push(
+                        VerificationIssue::new(
+                            IssueSeverity::Error,
+                            IssueType::Other,
+                            format!("Block verification error: {}", e),
+                        )
+                        .with_block(block.block_id),
+                    );
                 }
             }
         }
@@ -640,7 +702,10 @@ impl TamperDetector {
         };
 
         TamperReport {
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             total_blocks: stats.total_blocks,
             total_rows: stats.total_rows,
             issues_found,
@@ -695,8 +760,10 @@ impl RecoveryManager {
                 IssueType::HashMismatch => {
                     actions.push(RecoveryAction {
                         action_type: RecoveryActionType::RestoreFromBackup,
-                        description: format!("Restore corrupted block {} from backup",
-                                           issue.block_id.unwrap_or(0)),
+                        description: format!(
+                            "Restore corrupted block {} from backup",
+                            issue.block_id.unwrap_or(0)
+                        ),
                         priority: RecoveryPriority::High,
                     });
                 }
@@ -710,8 +777,10 @@ impl RecoveryManager {
                 IssueType::MissingData => {
                     actions.push(RecoveryAction {
                         action_type: RecoveryActionType::RestoreFromBackup,
-                        description: format!("Restore missing block {} from backup",
-                                           issue.block_id.unwrap_or(0)),
+                        description: format!(
+                            "Restore missing block {} from backup",
+                            issue.block_id.unwrap_or(0)
+                        ),
                         priority: RecoveryPriority::High,
                     });
                 }
@@ -772,8 +841,8 @@ pub enum RecoveryPriority {
 
 #[cfg(test)]
 mod tests {
-    use crate::blockchain::LedgerRow;
     use super::*;
+    use crate::blockchain::LedgerRow;
     use crate::common::Value;
 
     #[test]
@@ -781,9 +850,7 @@ mod tests {
         let mut block = Block::new(0, 1, [0u8; 32], "user1".to_string());
 
         let data = vec![Value::Integer(1)];
-        let row = LedgerRow::new(
-            0, 1, 0, 0, data, [0u8; 32], "user1".to_string()
-        );
+        let row = LedgerRow::new(0, 1, 0, 0, data, [0u8; 32], "user1".to_string());
         block.add_row(row).unwrap();
 
         block.finalize().unwrap();
@@ -798,7 +865,9 @@ mod tests {
             IssueSeverity::Critical,
             IssueType::HashMismatch,
             "Test issue".to_string(),
-        ).with_block(5).with_row(10);
+        )
+        .with_block(5)
+        .with_row(10);
 
         assert_eq!(issue.severity, IssueSeverity::Critical);
         assert_eq!(issue.block_id, Some(5));

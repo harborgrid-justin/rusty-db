@@ -8,18 +8,15 @@
 // - Index structures for graph lookups
 // - Graph compression techniques
 
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::HashSet;
-use std::collections::{HashMap};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
 
-use crate::error::{Result, DbError};
-use super::property_graph::{
-    PropertyGraph, VertexId, EdgeId, Vertex, Properties,
-    EdgeDirection,
-};
+use super::property_graph::{EdgeDirection, EdgeId, Properties, PropertyGraph, Vertex, VertexId};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Storage Format Types
@@ -127,12 +124,14 @@ impl AdjacencyList {
             );
 
             // Update adjacency lists
-            adj_list.outgoing
+            adj_list
+                .outgoing
                 .entry(edge.source)
                 .or_insert_with(Vec::new)
                 .push((edge.target, edge.id));
 
-            adj_list.incoming
+            adj_list
+                .incoming
                 .entry(edge.target)
                 .or_insert_with(Vec::new)
                 .push((edge.source, edge.id));
@@ -285,29 +284,30 @@ impl CSRGraph {
 
     // Get out-degree of a vertex
     pub fn out_degree(&self, vertex: VertexId) -> Option<usize> {
-        self.vertex_index.get(&vertex).map(|&idx| {
-            self.offsets[idx + 1] - self.offsets[idx]
-        })
+        self.vertex_index
+            .get(&vertex)
+            .map(|&idx| self.offsets[idx + 1] - self.offsets[idx])
     }
 
     // Iterate over all edges
     pub fn edges_iter(&self) -> impl Iterator<Item = (VertexId, VertexId, EdgeId)> + '_ {
-        self.vertex_map.iter().enumerate().flat_map(move |(idx, &vertex_id)| {
-            let start = self.offsets[idx];
-            let end = self.offsets[idx + 1];
+        self.vertex_map
+            .iter()
+            .enumerate()
+            .flat_map(move |(idx, &vertex_id)| {
+                let start = self.offsets[idx];
+                let end = self.offsets[idx + 1];
 
-            (start..end).map(move |i| {
-                (vertex_id, self.neighbors[i], self.edge_ids[i])
+                (start..end).map(move |i| (vertex_id, self.neighbors[i], self.edge_ids[i]))
             })
-        })
     }
 
     // Memory footprint in bytes
     pub fn memory_footprint(&self) -> usize {
-        size_of::<Self>() +
-        self.offsets.len() * size_of::<usize>() +
-        self.neighbors.len() * size_of::<VertexId>() +
-        self.edge_ids.len() * size_of::<EdgeId>()
+        size_of::<Self>()
+            + self.offsets.len() * size_of::<usize>()
+            + self.neighbors.len() * size_of::<VertexId>()
+            + self.edge_ids.len() * size_of::<EdgeId>()
     }
 }
 
@@ -375,7 +375,8 @@ impl EdgeCentricStorage {
         self.source_index
             .get(&source)
             .map(|indices| {
-                indices.iter()
+                indices
+                    .iter()
                     .filter_map(|&idx| self.edges.get(idx))
                     .collect()
             })
@@ -387,7 +388,8 @@ impl EdgeCentricStorage {
         self.target_index
             .get(&target)
             .map(|indices| {
-                indices.iter()
+                indices
+                    .iter()
                     .filter_map(|&idx| self.edges.get(idx))
                     .collect()
             })
@@ -396,7 +398,8 @@ impl EdgeCentricStorage {
 
     // Get edges in a time range (for temporal graphs)
     pub fn edges_in_range(&self, start_time: i64, end_time: i64) -> Vec<&EdgeRecord> {
-        self.edges.iter()
+        self.edges
+            .iter()
             .filter(|edge| {
                 if let Some(ts) = edge.timestamp {
                     ts >= start_time && ts <= end_time
@@ -531,14 +534,13 @@ impl GraphStorageManager {
                 Ok(Self::adjacency_list_to_graph(&adj_list)?)
             }
             StorageFormat::CSR => {
-                let csr: CSRGraph = bincode::serde::decode_from_slice(&data, bincode::config::standard())
-                    .map(|(csr, _)| csr)
-                    .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?;
+                let csr: CSRGraph =
+                    bincode::serde::decode_from_slice(&data, bincode::config::standard())
+                        .map(|(csr, _)| csr)
+                        .map_err(|e| DbError::Internal(format!("Deserialization error: {}", e)))?;
                 Ok(Self::csr_to_graph(&csr)?)
             }
-            _ => {
-                Err(DbError::Internal("Unsupported storage format".to_string()))
-            }
+            _ => Err(DbError::Internal("Unsupported storage format".to_string())),
         }
     }
 
@@ -601,7 +603,9 @@ impl GraphStorageManager {
 
         // Add vertices
         for (idx, &_vertex_id) in csr.vertex_map.iter().enumerate() {
-            let _properties = csr.vertex_properties.get(idx)
+            let _properties = csr
+                .vertex_properties
+                .get(idx)
                 .cloned()
                 .unwrap_or_else(Properties::new);
             // Simplified conversion
@@ -609,7 +613,9 @@ impl GraphStorageManager {
 
         // Add edges
         for (source, target, edge_id) in csr.edges_iter() {
-            let properties = csr.edge_properties.get(&edge_id)
+            let properties = csr
+                .edge_properties
+                .get(&edge_id)
                 .cloned()
                 .unwrap_or_else(Properties::new);
 
@@ -663,7 +669,8 @@ impl GraphIndex {
         // Build vertex label index
         for vertex in graph.vertices() {
             for label in &vertex.labels {
-                index.vertex_label_index
+                index
+                    .vertex_label_index
                     .entry(label.clone())
                     .or_insert_with(HashSet::new)
                     .insert(vertex.id);
@@ -671,7 +678,8 @@ impl GraphIndex {
 
             // Build property index (only by key, not value)
             for key in vertex.properties.keys() {
-                index.vertex_property_index
+                index
+                    .vertex_property_index
                     .entry(key.clone())
                     .or_insert_with(HashSet::new)
                     .insert(vertex.id);
@@ -680,7 +688,8 @@ impl GraphIndex {
 
         // Build edge label index
         for edge in graph.edges() {
-            index.edge_label_index
+            index
+                .edge_label_index
                 .entry(edge.label.clone())
                 .or_insert_with(HashSet::new)
                 .insert(edge.id);
@@ -794,9 +803,21 @@ mod tests {
     #[test]
     fn test_adjacency_list() {
         let mut graph = PropertyGraph::new();
-        let v1 = graph.add_vertex(vec!["A".to_string()], Properties::new()).unwrap();
-        let v2 = graph.add_vertex(vec!["B".to_string()], Properties::new()).unwrap();
-        graph.add_edge(v1, v2, "E".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
+        let v1 = graph
+            .add_vertex(vec!["A".to_string()], Properties::new())
+            .unwrap();
+        let v2 = graph
+            .add_vertex(vec!["B".to_string()], Properties::new())
+            .unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "E".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         let adj_list = AdjacencyList::from_graph(&graph);
 
@@ -812,17 +833,23 @@ mod tests {
         let v1 = 1;
         let v2 = 2;
 
-        adj_list.vertices.insert(v1, VertexData {
-            id: v1,
-            labels: vec![],
-            properties: Properties::new(),
-        });
+        adj_list.vertices.insert(
+            v1,
+            VertexData {
+                id: v1,
+                labels: vec![],
+                properties: Properties::new(),
+            },
+        );
 
-        adj_list.vertices.insert(v2, VertexData {
-            id: v2,
-            labels: vec![],
-            properties: Properties::new(),
-        });
+        adj_list.vertices.insert(
+            v2,
+            VertexData {
+                id: v2,
+                labels: vec![],
+                properties: Properties::new(),
+            },
+        );
 
         adj_list.outgoing.insert(v1, vec![(v2, 1)]);
         adj_list.outgoing.insert(v2, vec![]);

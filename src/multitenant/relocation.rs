@@ -22,15 +22,15 @@
 // 5. **Switchover**: Redirect to new location
 // 6. **Cleanup**: Remove source PDB
 
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::sync::Mutex;
+use super::pdb::PdbId;
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
-use tokio::sync::{RwLock};
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
-use super::pdb::PdbId;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::sync::RwLock;
 
 // Relocation configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -159,7 +159,10 @@ impl RelocationProgress {
             total_bytes,
             progress_percent: 0.0,
             eta_secs: 0,
-            phase_start_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            phase_start_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             error_message: None,
         }
     }
@@ -175,7 +178,10 @@ impl RelocationProgress {
     // Transition to next state
     pub fn transition(&mut self, state: RelocationState) {
         self.state = state;
-        self.phase_start_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        self.phase_start_at = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
     }
 }
 
@@ -243,7 +249,10 @@ impl RelocationEngine {
             config: config.clone(),
             progress: RelocationProgress::new(0),
             target_pdb_id: None,
-            started_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            started_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             ended_at: None,
         };
 
@@ -326,7 +335,12 @@ impl RelocationEngine {
         {
             let mut jobs = relocations.write().await;
             if let Some(job) = jobs.get_mut(&job_id) {
-                job.ended_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+                job.ended_at = Some(
+                    SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap()
+                        .as_secs(),
+                );
             }
         }
 
@@ -343,7 +357,10 @@ impl RelocationEngine {
             job.progress.transition(state);
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Relocation job {} not found", job_id)))
+            Err(DbError::NotFound(format!(
+                "Relocation job {} not found",
+                job_id
+            )))
         }
     }
 
@@ -357,7 +374,10 @@ impl RelocationEngine {
             job.progress.update(bytes);
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Relocation job {} not found", job_id)))
+            Err(DbError::NotFound(format!(
+                "Relocation job {} not found",
+                job_id
+            )))
         }
     }
 
@@ -379,7 +399,10 @@ impl RelocationEngine {
             jobs.remove(&job_id);
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Relocation job {} not found", job_id)))
+            Err(DbError::NotFound(format!(
+                "Relocation job {} not found",
+                job_id
+            )))
         }
     }
 
@@ -470,7 +493,11 @@ impl StateTransferProtocol {
     }
 
     // Apply incremental changes
-    pub async fn apply_incremental(&self, _source_pdb_id: PdbId, _target_pdb_id: PdbId) -> Result<()> {
+    pub async fn apply_incremental(
+        &self,
+        _source_pdb_id: PdbId,
+        _target_pdb_id: PdbId,
+    ) -> Result<()> {
         // Apply redo logs from source to target
         tokio::time::sleep(Duration::from_millis(50)).await;
         Ok(())
@@ -609,8 +636,8 @@ impl CrossCdbMigrator {
 
 #[cfg(test)]
 mod tests {
-    use std::thread::sleep;
     use super::*;
+    use std::thread::sleep;
 
     #[tokio::test]
     async fn test_relocation_engine() {
@@ -646,6 +673,9 @@ mod tests {
         let source_pdb_id = PdbId::new(1);
         let target_pdb_id = PdbId::new(2);
 
-        protocol.transfer_data(source_pdb_id, target_pdb_id, 1024 * 1024).await.unwrap();
+        protocol
+            .transfer_data(source_pdb_id, target_pdb_id, 1024 * 1024)
+            .await
+            .unwrap();
     }
 }

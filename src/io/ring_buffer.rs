@@ -3,13 +3,13 @@
 // High-performance, lock-free ring buffer for I/O request submission
 // and completion queues.
 
-use crate::error::{Result, DbError};
-use crate::io::{IoOpType, IoRequest, IoCompletion, IoHandle};
+use crate::error::{DbError, Result};
+use crate::io::{IoCompletion, IoHandle, IoOpType, IoRequest};
+use std::alloc::{alloc, dealloc, Layout};
+use std::mem::size_of;
+use std::ptr;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::alloc::{alloc, dealloc, Layout};
-use std::ptr;
-use std::mem::size_of;
 
 // ============================================================================
 // Ring Buffer Configuration
@@ -246,9 +246,7 @@ impl<T> IoRingBuffer<T> {
     pub fn new(config: RingBufferConfig) -> Result<Self> {
         // Check that size is power of 2
         if !config.size.is_power_of_two() {
-            return Err(DbError::Internal(
-                RingBufferError::InvalidSize.to_string(),
-            ));
+            return Err(DbError::Internal(RingBufferError::InvalidSize.to_string()));
         }
 
         // Allocate aligned memory
@@ -260,7 +258,9 @@ impl<T> IoRingBuffer<T> {
 
         let entries = unsafe { alloc(layout) as *mut T };
         if entries.is_null() {
-            return Err(DbError::Internal(RingBufferError::AllocationFailed.to_string()));
+            return Err(DbError::Internal(
+                RingBufferError::AllocationFailed.to_string(),
+            ));
         }
 
         // Initialize entries with zeros

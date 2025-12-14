@@ -42,19 +42,19 @@
 // }
 // ```
 
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fmt;
-use std::time::Instant;
-use std::sync::Mutex;
-use std::time::SystemTime;
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::time::{Duration};
 use std::future::Future;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 use tokio::sync::{RwLock, Semaphore};
-use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-use crate::{Result, DbError};
+use crate::{DbError, Result};
 
 // ============================================================================
 // Distributed Tracing
@@ -372,7 +372,10 @@ impl CircuitBreaker {
             }
             Err(e) => {
                 self.on_failure().await;
-                Err(DbError::Internal(format!("Circuit breaker call failed: {}", e)))
+                Err(DbError::Internal(format!(
+                    "Circuit breaker call failed: {}",
+                    e
+                )))
             }
         }
     }
@@ -630,7 +633,7 @@ where
                 tokio::time::sleep(delay).await;
 
                 delay = Duration::from_secs_f64(
-                    (delay.as_secs_f64() * policy.multiplier).min(policy.max_delay.as_secs_f64())
+                    (delay.as_secs_f64() * policy.multiplier).min(policy.max_delay.as_secs_f64()),
                 );
             }
         }
@@ -664,7 +667,10 @@ impl Bulkhead {
     where
         F: Future<Output = Result<T>>,
     {
-        let _permit = self.semaphore.acquire().await
+        let _permit = self
+            .semaphore
+            .acquire()
+            .await
             .map_err(|e| DbError::Internal(format!("Bulkhead acquire failed: {}", e)))?;
 
         f.await
@@ -718,30 +724,19 @@ impl ErrorHandler {
         T: Clone,
     {
         match strategy {
-            RecoveryStrategy::Retry => {
-                retry_with_backoff(&self.retry_policy, || operation()).await
-            }
+            RecoveryStrategy::Retry => retry_with_backoff(&self.retry_policy, || operation()).await,
             RecoveryStrategy::FailFast => operation().await,
-            RecoveryStrategy::Fallback => {
-                match operation().await {
-                    Ok(v) => Ok(v),
-                    Err(_) => {
-                        fallback.ok_or_else(|| {
-                            DbError::Internal("No fallback value provided".to_string())
-                        })
-                    }
-                }
-            }
-            RecoveryStrategy::Ignore => {
-                match operation().await {
-                    Ok(v) => Ok(v),
-                    Err(_) => {
-                        fallback.ok_or_else(|| {
-                            DbError::Internal("No fallback value for ignored error".to_string())
-                        })
-                    }
-                }
-            }
+            RecoveryStrategy::Fallback => match operation().await {
+                Ok(v) => Ok(v),
+                Err(_) => fallback
+                    .ok_or_else(|| DbError::Internal("No fallback value provided".to_string())),
+            },
+            RecoveryStrategy::Ignore => match operation().await {
+                Ok(v) => Ok(v),
+                Err(_) => fallback.ok_or_else(|| {
+                    DbError::Internal("No fallback value for ignored error".to_string())
+                }),
+            },
         }
     }
 }
@@ -812,9 +807,7 @@ mod tests {
 
         assert_eq!(bulkhead.available_permits(), 2);
 
-        let result = bulkhead.execute(async {
-            Ok::<_, DbError>(42)
-        }).await;
+        let result = bulkhead.execute(async { Ok::<_, DbError>(42) }).await;
 
         assert_eq!(result.unwrap(), 42);
         assert_eq!(bulkhead.available_permits(), 2);

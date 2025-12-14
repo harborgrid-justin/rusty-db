@@ -1,11 +1,11 @@
 // Multi-tenant architecture module for RustyDB
 // Provides Oracle-like Pluggable Database (PDB) / Container Database (CDB) capabilities
 
-pub mod container;
-pub mod tenant;
-pub mod isolation;
 pub mod consolidation;
+pub mod container;
+pub mod isolation;
 pub mod provisioning;
+pub mod tenant;
 
 // Re-export main types
 pub use container::{
@@ -14,24 +14,23 @@ pub use container::{
 };
 
 pub use tenant::{
-    ResourceQuota, ResourceUsage, ServiceTier, SlaMetrics, Tenant,
-    TenantError, TenantManager, TenantMetadata, TenantPriority,
-    TenantResult, TenantState, TenantStatistics,
+    ResourceQuota, ResourceUsage, ServiceTier, SlaMetrics, Tenant, TenantError, TenantManager,
+    TenantMetadata, TenantPriority, TenantResult, TenantState, TenantStatistics,
 };
 
 pub use isolation::{
-    BufferPoolPartitioner, CpuScheduler, IoBandwidthAllocator, IsolationError,
-    IsolationResult, LockContentionIsolator, MemoryIsolator, NetworkIsolator,
+    BufferPoolPartitioner, CpuScheduler, IoBandwidthAllocator, IsolationError, IsolationResult,
+    LockContentionIsolator, MemoryIsolator, NetworkIsolator,
 };
 
 pub use consolidation::{
-    AffinityRule, AffinityType, ConsolidationHost, ConsolidationMetrics,
-    ConsolidationPlan, ConsolidationPlanner, WorkloadProfile, WorkloadType,
+    AffinityRule, AffinityType, ConsolidationHost, ConsolidationMetrics, ConsolidationPlan,
+    ConsolidationPlanner, WorkloadProfile, WorkloadType,
 };
 
 pub use provisioning::{
-    DeprovisioningPolicy, DeprovisioningRequest, ProvisioningRequest,
-    ProvisioningService, ProvisioningTemplate, ServiceTier as ProvisioningTier,
+    DeprovisioningPolicy, DeprovisioningRequest, ProvisioningRequest, ProvisioningService,
+    ProvisioningTemplate, ServiceTier as ProvisioningTier,
 };
 
 use std::sync::Arc;
@@ -72,11 +71,10 @@ impl MultiTenantDatabase {
         service_tier: ServiceTier,
     ) -> Result<String, Box<dyn std::error::Error>> {
         // Create PDB in container database
-        let pdb = self.container_db.create_pdb(
-            tenant_name.clone(),
-            admin_user.clone(),
-            admin_password,
-        ).await?;
+        let pdb = self
+            .container_db
+            .create_pdb(tenant_name.clone(), admin_user.clone(), admin_password)
+            .await?;
 
         let pdb_config = pdb.read().await;
         let tenant_id = pdb_config.pdb_name.clone();
@@ -94,28 +92,30 @@ impl MultiTenantDatabase {
         self.tenant_manager.register_tenant(tenant.clone()).await?;
 
         // Configure resource isolation
-        self.memory_isolator.set_quota(
-            &tenant_id,
-            service_tier.memory_mb * 1024 * 1024,
-        ).await?;
+        self.memory_isolator
+            .set_quota(&tenant_id, service_tier.memory_mb * 1024 * 1024)
+            .await?;
 
-        self.io_allocator.configure_tenant(
-            tenant_id.clone(),
-            service_tier.network_mbps,
-        ).await;
+        self.io_allocator
+            .configure_tenant(tenant_id.clone(), service_tier.network_mbps)
+            .await;
 
-        self.cpu_scheduler.configure_tenant(
-            tenant_id.clone(),
-            1000,
-            10,
-            (service_tier.cpu_cores * 100.0) as u32,
-        ).await?;
+        self.cpu_scheduler
+            .configure_tenant(
+                tenant_id.clone(),
+                1000,
+                10,
+                (service_tier.cpu_cores * 100.0) as u32,
+            )
+            .await?;
 
-        self.network_isolator.allocate_tenant(
-            tenant_id.clone(),
-            service_tier.network_mbps,
-            service_tier.max_connections,
-        ).await?;
+        self.network_isolator
+            .allocate_tenant(
+                tenant_id.clone(),
+                service_tier.network_mbps,
+                service_tier.max_connections,
+            )
+            .await?;
 
         Ok(tenant_id)
     }
@@ -126,7 +126,9 @@ impl MultiTenantDatabase {
         tenant_id: String,
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Open PDB
-        self.container_db.open_pdb(tenant_id.clone(), OpenMode::ReadWrite).await?;
+        self.container_db
+            .open_pdb(tenant_id.clone(), OpenMode::ReadWrite)
+            .await?;
 
         // Resume tenant if suspended
         let tenant = self.tenant_manager.get_tenant(&tenant_id).await?;
@@ -219,12 +221,14 @@ mod tests {
     async fn test_multi_tenant_database() {
         let mtdb = MultiTenantDatabase::new("CDB_PROD".to_string(), 100);
 
-        let result = mtdb.provision_tenant(
-            "tenant1".to_string(),
-            "admin".to_string(),
-            "password".to_string(),
-            ServiceTier::silver(),
-        ).await;
+        let result = mtdb
+            .provision_tenant(
+                "tenant1".to_string(),
+                "admin".to_string(),
+                "password".to_string(),
+                ServiceTier::silver(),
+            )
+            .await;
 
         assert!(result.is_ok());
     }
@@ -233,12 +237,15 @@ mod tests {
     async fn test_tenant_activation() {
         let mtdb = MultiTenantDatabase::new("CDB_PROD".to_string(), 100);
 
-        let tenant_id = mtdb.provision_tenant(
-            "tenant1".to_string(),
-            "admin".to_string(),
-            "password".to_string(),
-            ServiceTier::bronze(),
-        ).await.unwrap();
+        let tenant_id = mtdb
+            .provision_tenant(
+                "tenant1".to_string(),
+                "admin".to_string(),
+                "password".to_string(),
+                ServiceTier::bronze(),
+            )
+            .await
+            .unwrap();
 
         let result = mtdb.activate_tenant(tenant_id).await;
         assert!(result.is_ok());

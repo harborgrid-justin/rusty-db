@@ -6,13 +6,13 @@
 // - Starvation prevention
 // - Queue statistics
 
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{Instant, Duration};
 use parking_lot::Condvar;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use super::core::PoolError;
 
@@ -66,7 +66,7 @@ struct WaitQueueStats {
     total_enqueued: AtomicU64,
     total_dequeued: AtomicU64,
     total_timeouts: AtomicU64,
-    max_wait_time: AtomicU64, // in microseconds
+    max_wait_time: AtomicU64,   // in microseconds
     total_wait_time: AtomicU64, // in microseconds
 }
 
@@ -112,7 +112,9 @@ impl WaitQueue {
             queue.push_back(entry);
         } else {
             // Priority-based - insert based on priority
-            let insert_pos = queue.iter().position(|e| e.priority < priority)
+            let insert_pos = queue
+                .iter()
+                .position(|e| e.priority < priority)
                 .unwrap_or(queue.len());
             queue.insert(insert_pos, entry);
         }
@@ -171,7 +173,9 @@ impl WaitQueue {
     // Record wait time
     fn record_wait_time(&self, duration: Duration) {
         let micros = duration.as_micros() as u64;
-        self.stats.total_wait_time.fetch_add(micros, Ordering::SeqCst);
+        self.stats
+            .total_wait_time
+            .fetch_add(micros, Ordering::SeqCst);
 
         // Update max wait time
         let mut current_max = self.stats.max_wait_time.load(Ordering::SeqCst);
@@ -259,8 +263,11 @@ impl DeadlockDetector {
         if let Some(oldest) = entries.front() {
             if oldest.enqueued_at.elapsed() > self.deadlock_threshold {
                 self.deadlocks_detected.fetch_add(1, Ordering::SeqCst);
-                tracing::warn!("Potential deadlock detected: waiter {} waiting for {:?}",
-                             oldest.id, oldest.enqueued_at.elapsed());
+                tracing::warn!(
+                    "Potential deadlock detected: waiter {} waiting for {:?}",
+                    oldest.id,
+                    oldest.enqueued_at.elapsed()
+                );
                 return true;
             }
         }
@@ -321,8 +328,11 @@ impl StarvationPrevention {
 
                     self.boosted_count.fetch_add(1, Ordering::SeqCst);
 
-                    tracing::info!("Boosted priority for waiter {} after {:?}",
-                                 entry.id, entry.enqueued_at.elapsed());
+                    tracing::info!(
+                        "Boosted priority for waiter {} after {:?}",
+                        entry.id,
+                        entry.enqueued_at.elapsed()
+                    );
                 }
             }
         }

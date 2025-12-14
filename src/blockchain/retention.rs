@@ -9,15 +9,15 @@
 // - Retention inheritance
 // - Compliance reporting
 
-use std::fmt;
-use std::time::{SystemTime, UNIX_EPOCH};
+use super::ledger::{BlockId, LedgerRow};
+use crate::common::{RowId, TableId};
+use crate::error::DbError;
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::{Arc, RwLock};
-use crate::common::{TableId, RowId};
-use crate::Result;
-use crate::error::DbError;
-use super::ledger::{BlockId, LedgerRow};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // ============================================================================
 // Retention Period
@@ -99,8 +99,16 @@ pub struct RetentionPolicy {
 
 impl RetentionPolicy {
     // Create a new retention policy
-    pub fn new(policy_id: String, name: String, period: RetentionPeriod, description: String) -> Self {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+    pub fn new(
+        policy_id: String,
+        name: String,
+        period: RetentionPeriod,
+        description: String,
+    ) -> Self {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
 
         Self {
             policy_id,
@@ -117,7 +125,10 @@ impl RetentionPolicy {
     // Add a regulation reference
     pub fn add_regulation(&mut self, regulation: String) {
         self.regulations.push(regulation);
-        self.updated_at = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        self.updated_at = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
     }
 
     // Check if data created at timestamp should be retained
@@ -127,10 +138,13 @@ impl RetentionPolicy {
         }
 
         match self.period.to_seconds() {
-            None => true, // Forever
+            None => true,     // Forever
             Some(0) => false, // None
             Some(period_secs) => {
-                let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+                let now = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs();
                 let age = now.saturating_sub(created_at);
                 age < period_secs
             }
@@ -193,7 +207,10 @@ impl LegalHold {
             case_id,
             description,
             custodian,
-            started_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            started_at: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             ended_at: None,
             status: LegalHoldStatus::Active,
             tables: Vec::new(),
@@ -227,7 +244,12 @@ impl LegalHold {
     // Release the hold
     pub fn release(&mut self) {
         self.status = LegalHoldStatus::Released;
-        self.ended_at = Some(SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+        self.ended_at = Some(
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
+        );
     }
 
     // Check if hold is active
@@ -352,7 +374,8 @@ impl RetentionManager {
     // Release a legal hold
     pub fn release_legal_hold(&self, hold_id: &str) -> Result<()> {
         let mut holds = self.legal_holds.write().unwrap();
-        let hold = holds.get_mut(hold_id)
+        let hold = holds
+            .get_mut(hold_id)
             .ok_or_else(|| DbError::NotFound(format!("Legal hold {} not found", hold_id)))?;
         hold.release();
         Ok(())
@@ -367,7 +390,8 @@ impl RetentionManager {
                 continue;
             }
 
-            if hold.covers_row(row_id) || hold.covers_block(block_id) || hold.covers_table(table_id) {
+            if hold.covers_row(row_id) || hold.covers_block(block_id) || hold.covers_table(table_id)
+            {
                 return true;
             }
         }
@@ -392,7 +416,10 @@ impl RetentionManager {
         // Check retention locks
         let locks = self.retention_locks.read().unwrap();
         if let Some(&expiration) = locks.get(&row.row_id) {
-            let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+            let now = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
             if now < expiration {
                 return false;
             }
@@ -416,10 +443,7 @@ impl RetentionManager {
     // Get all active legal holds
     pub fn get_active_legal_holds(&self) -> Vec<LegalHold> {
         let holds = self.legal_holds.read().unwrap();
-        holds.values()
-            .filter(|h| h.is_active())
-            .cloned()
-            .collect()
+        holds.values().filter(|h| h.is_active()).cloned().collect()
     }
 
     // Get all policies
@@ -472,13 +496,20 @@ impl RetentionEnforcer {
     // Generate expiration report
     pub fn generate_expiration_report(&self, rows: &[LedgerRow]) -> ExpirationReport {
         let expired = self.find_expired_rows(rows);
-        let under_hold: Vec<RowId> = rows.iter()
-            .filter(|r| self.manager.is_under_legal_hold(r.row_id, r.table_id, r.block_id))
+        let under_hold: Vec<RowId> = rows
+            .iter()
+            .filter(|r| {
+                self.manager
+                    .is_under_legal_hold(r.row_id, r.table_id, r.block_id)
+            })
             .map(|r| r.row_id)
             .collect();
 
         let mut expiring_soon = Vec::new();
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
         let seven_days = 7 * 86400;
 
         for row in rows {
@@ -605,14 +636,19 @@ impl ComplianceReporter {
 
     // Generate a compliance report
     pub fn generate_report(&self, start_time: u64, end_time: u64) -> ComplianceReport {
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
 
         // Get all policies
         let policies = self.manager.get_all_policies();
-        let policy_compliance: Vec<PolicyCompliance> = policies.iter()
+        let policy_compliance: Vec<PolicyCompliance> = policies
+            .iter()
             .map(|p| {
                 let table_policies = self.manager.table_policies.read().unwrap();
-                let tables: Vec<TableId> = table_policies.iter()
+                let tables: Vec<TableId> = table_policies
+                    .iter()
                     .filter(|(_, pid)| *pid == &p.policy_id)
                     .map(|(tid, _)| *tid)
                     .collect();
@@ -630,7 +666,8 @@ impl ComplianceReporter {
 
         // Get legal holds
         let holds = self.manager.legal_holds.read().unwrap();
-        let hold_compliance: Vec<LegalHoldCompliance> = holds.values()
+        let hold_compliance: Vec<LegalHoldCompliance> = holds
+            .values()
             .map(|h| {
                 let duration_days = (now - h.started_at) / 86400;
                 LegalHoldCompliance {
@@ -646,7 +683,8 @@ impl ComplianceReporter {
         let statistics = RetentionStatistics {
             total_rows: 0, // Would need to be calculated from actual data
             rows_under_retention: 0,
-            rows_under_legal_hold: holds.values()
+            rows_under_legal_hold: holds
+                .values()
                 .filter(|h| h.is_active())
                 .map(|h| h.rows.len() as u64)
                 .sum(),
@@ -696,7 +734,10 @@ mod tests {
             "Standard retention".to_string(),
         );
 
-        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
         assert!(policy.should_retain(now));
         assert!(!policy.should_retain(now - 31 * 86400));
     }
@@ -733,7 +774,9 @@ mod tests {
         );
 
         manager.add_policy(policy).unwrap();
-        manager.assign_policy_to_table(1, "policy1".to_string()).unwrap();
+        manager
+            .assign_policy_to_table(1, "policy1".to_string())
+            .unwrap();
 
         let retrieved = manager.get_table_policy(1);
         assert!(retrieved.is_some());

@@ -3,19 +3,19 @@
 // Request and response types for the REST API, along with internal data structures.
 // All types are strongly typed with domain-specific newtypes where appropriate.
 
-use std::time::{SystemTime, UNIX_EPOCH};
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::{RwLock, Semaphore};
 use utoipa::ToSchema;
 use uuid::Uuid;
-use axum::{
-    response::{IntoResponse, Response},
-    http::StatusCode,
-    Json,
-};
 
 use crate::error::DbError;
 use crate::networking::NetworkManager;
@@ -214,7 +214,10 @@ impl RateLimiter {
         let now = SystemTime::now();
         let cutoff = now - Duration::from_secs(self.window_secs);
 
-        let entry = self.requests.entry(identifier.to_string()).or_insert_with(Vec::new);
+        let entry = self
+            .requests
+            .entry(identifier.to_string())
+            .or_insert_with(Vec::new);
         entry.retain(|&t| t > cutoff);
 
         if entry.len() as u64 >= self.max_requests {
@@ -464,7 +467,7 @@ pub struct ComponentHealth {
 // Maintenance request
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct MaintenanceRequest {
-    pub operation: String, // vacuum, analyze, reindex, checkpoint
+    pub operation: String,      // vacuum, analyze, reindex, checkpoint
     pub target: Option<String>, // table name or database
     pub options: Option<HashMap<String, serde_json::Value>>,
 }
@@ -683,7 +686,7 @@ pub struct ConnectionInfo {
 pub struct ClusterNodeInfo {
     pub node_id: String,
     pub address: String,
-    pub role: String, // leader, follower, candidate
+    pub role: String,   // leader, follower, candidate
     pub status: String, // healthy, degraded, unhealthy
     pub version: String,
     pub uptime_seconds: u64,

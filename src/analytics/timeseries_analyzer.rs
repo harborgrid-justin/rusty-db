@@ -84,11 +84,7 @@ impl TimeSeriesAnalyzer {
             let weights: Vec<f64> = (1..=window.len()).map(|w| w as f64).collect();
             let weight_sum: f64 = weights.iter().sum();
 
-            let weighted_sum: f64 = window
-                .iter()
-                .zip(weights.iter())
-                .map(|(v, w)| v * w)
-                .sum();
+            let weighted_sum: f64 = window.iter().zip(weights.iter()).map(|(v, w)| v * w).sum();
 
             result.push(weighted_sum / weight_sum);
         }

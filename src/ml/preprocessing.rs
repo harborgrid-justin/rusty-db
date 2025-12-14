@@ -3,12 +3,12 @@
 // This module provides comprehensive data preprocessing capabilities for ML pipelines,
 // including feature scaling, encoding, selection, and transformation.
 
-use std::collections::HashSet;
+use super::{Dataset, FeatureNames, MLError, Matrix, Vector};
 use crate::error::Result;
-use super::{Dataset, Vector, Matrix, FeatureNames, MLError};
-use std::collections::{HashMap};
 use rand::prelude::SliceRandom;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
 
 // ============================================================================
 // Preprocessor Trait
@@ -89,9 +89,11 @@ impl StandardScaler {
 
     // Calculate standard deviation of a column
     fn calculate_std(features: &Matrix, col: usize, mean: f64) -> f64 {
-        let variance = features.iter()
+        let variance = features
+            .iter()
             .map(|row| (row[col] - mean).powi(2))
-            .sum::<f64>() / features.len() as f64;
+            .sum::<f64>()
+            / features.len() as f64;
         variance.sqrt().max(1e-10) // Avoid division by zero
     }
 }
@@ -129,13 +131,12 @@ impl Preprocessor for StandardScaler {
             return Err(MLError::InvalidConfiguration("Scaler not fitted".to_string()).into());
         }
 
-        Ok(features.iter()
+        Ok(features
+            .iter()
             .map(|row| {
                 row.iter()
                     .enumerate()
-                    .map(|(i, &value)| {
-                        (value - self.means[i]) / self.std_devs[i]
-                    })
+                    .map(|(i, &value)| (value - self.means[i]) / self.std_devs[i])
                     .collect()
             })
             .collect())
@@ -242,7 +243,8 @@ impl Preprocessor for MinMaxScaler {
         let (target_min, target_max) = self.feature_range;
         let target_range = target_max - target_min;
 
-        Ok(features.iter()
+        Ok(features
+            .iter()
             .map(|row| {
                 row.iter()
                     .enumerate()
@@ -329,7 +331,11 @@ impl OneHotEncoder {
     }
 
     // Fit on categorical data (strings converted to numbers)
-    pub fn fit_categorical(&mut self, data: &[Vec<String>], feature_names: &FeatureNames) -> Result<()> {
+    pub fn fit_categorical(
+        &mut self,
+        data: &[Vec<String>],
+        feature_names: &FeatureNames,
+    ) -> Result<()> {
         if data.is_empty() {
             return Err(MLError::InsufficientData("Empty data".to_string()).into());
         }
@@ -385,9 +391,11 @@ impl OneHotEncoder {
                     // Handle unknown category
                     match self.handle_unknown {
                         UnknownHandling::Error => {
-                            return Err(MLError::InvalidConfiguration(
-                                format!("Unknown category '{}' in feature {}", value, col)
-                            ).into());
+                            return Err(MLError::InvalidConfiguration(format!(
+                                "Unknown category '{}' in feature {}",
+                                value, col
+                            ))
+                            .into());
                         }
                         UnknownHandling::Ignore | UnknownHandling::UseDefault => {
                             // All zeros
@@ -415,7 +423,8 @@ impl Default for OneHotEncoder {
 impl Preprocessor for OneHotEncoder {
     fn fit(&mut self, features: &Matrix, feature_names: &FeatureNames) -> Result<()> {
         // Convert numeric features to strings for categorical encoding
-        let categorical_data: Vec<Vec<String>> = features.iter()
+        let categorical_data: Vec<Vec<String>> = features
+            .iter()
             .map(|row| row.iter().map(|&v| v.to_string()).collect())
             .collect();
 
@@ -423,7 +432,8 @@ impl Preprocessor for OneHotEncoder {
     }
 
     fn transform(&self, features: &Matrix) -> Result<Matrix> {
-        let categorical_data: Vec<Vec<String>> = features.iter()
+        let categorical_data: Vec<Vec<String>> = features
+            .iter()
             .map(|row| row.iter().map(|&v| v.to_string()).collect())
             .collect();
 
@@ -508,7 +518,8 @@ impl Imputer {
     fn calculate_fill_value(&self, features: &Matrix, col: usize) -> f64 {
         match self.strategy {
             ImputationStrategy::Mean => {
-                let values: Vec<f64> = features.iter()
+                let values: Vec<f64> = features
+                    .iter()
                     .map(|row| row[col])
                     .filter(|&v| !v.is_nan())
                     .collect();
@@ -519,7 +530,8 @@ impl Imputer {
                 }
             }
             ImputationStrategy::Median => {
-                let mut values: Vec<f64> = features.iter()
+                let mut values: Vec<f64> = features
+                    .iter()
                     .map(|row| row[col])
                     .filter(|&v| !v.is_nan())
                     .collect();
@@ -543,7 +555,8 @@ impl Imputer {
                         *counts.entry(value as i64).or_insert(0) += 1;
                     }
                 }
-                counts.into_iter()
+                counts
+                    .into_iter()
                     .max_by_key(|(_, count)| *count)
                     .map(|(value, _)| value as f64)
                     .unwrap_or(0.0)
@@ -614,22 +627,21 @@ impl Preprocessor for Imputer {
                 }
                 Ok(result)
             }
-            _ => {
-                Ok(features.iter()
-                    .map(|row| {
-                        row.iter()
-                            .enumerate()
-                            .map(|(i, &value)| {
-                                if value.is_nan() {
-                                    self.fill_values[i]
-                                } else {
-                                    value
-                                }
-                            })
-                            .collect()
-                    })
-                    .collect())
-            }
+            _ => Ok(features
+                .iter()
+                .map(|row| {
+                    row.iter()
+                        .enumerate()
+                        .map(|(i, &value)| {
+                            if value.is_nan() {
+                                self.fill_values[i]
+                            } else {
+                                value
+                            }
+                        })
+                        .collect()
+                })
+                .collect()),
         }
     }
 
@@ -688,7 +700,12 @@ impl FeatureSelector {
     }
 
     // Fit selector with target values
-    pub fn fit_with_target(&mut self, features: &Matrix, target: &Vector, feature_names: &FeatureNames) -> Result<()> {
+    pub fn fit_with_target(
+        &mut self,
+        features: &Matrix,
+        target: &Vector,
+        feature_names: &FeatureNames,
+    ) -> Result<()> {
         if features.is_empty() {
             return Err(MLError::InsufficientData("Empty feature matrix".to_string()).into());
         }
@@ -700,33 +717,45 @@ impl FeatureSelector {
             SelectionMethod::VarianceThreshold => {
                 // Calculate variance for each feature
                 for col in 0..n_features {
-                    let mean = features.iter().map(|row| row[col]).sum::<f64>() / features.len() as f64;
-                    let variance = features.iter()
+                    let mean =
+                        features.iter().map(|row| row[col]).sum::<f64>() / features.len() as f64;
+                    let variance = features
+                        .iter()
                         .map(|row| (row[col] - mean).powi(2))
-                        .sum::<f64>() / features.len() as f64;
+                        .sum::<f64>()
+                        / features.len() as f64;
                     scores.push((col, variance));
                 }
             }
             SelectionMethod::SelectKBest | SelectionMethod::SelectPercentile => {
                 // Calculate correlation with target for each feature
                 let target_mean = target.iter().sum::<f64>() / target.len() as f64;
-                let target_std = (target.iter()
+                let target_std = (target
+                    .iter()
                     .map(|&y| (y - target_mean).powi(2))
-                    .sum::<f64>() / target.len() as f64).sqrt();
+                    .sum::<f64>()
+                    / target.len() as f64)
+                    .sqrt();
 
                 for col in 0..n_features {
-                    let feature_mean = features.iter().map(|row| row[col]).sum::<f64>() / features.len() as f64;
-                    let feature_std = (features.iter()
+                    let feature_mean =
+                        features.iter().map(|row| row[col]).sum::<f64>() / features.len() as f64;
+                    let feature_std = (features
+                        .iter()
                         .map(|row| (row[col] - feature_mean).powi(2))
-                        .sum::<f64>() / features.len() as f64).sqrt();
+                        .sum::<f64>()
+                        / features.len() as f64)
+                        .sqrt();
 
                     let correlation = if feature_std.abs() < 1e-10 || target_std.abs() < 1e-10 {
                         0.0
                     } else {
-                        features.iter()
+                        features
+                            .iter()
                             .zip(target.iter())
                             .map(|(row, &y)| (row[col] - feature_mean) * (y - target_mean))
-                            .sum::<f64>() / (features.len() as f64 * feature_std * target_std)
+                            .sum::<f64>()
+                            / (features.len() as f64 * feature_std * target_std)
                     };
 
                     scores.push((col, correlation.abs()));
@@ -739,25 +768,34 @@ impl FeatureSelector {
 
         // Select features based on method
         self.selected_indices = match self.method {
-            SelectionMethod::VarianceThreshold => {
-                scores.iter()
-                    .filter(|(_, score)| *score >= self.threshold)
+            SelectionMethod::VarianceThreshold => scores
+                .iter()
+                .filter(|(_, score)| *score >= self.threshold)
+                .map(|(idx, _)| *idx)
+                .collect(),
+            SelectionMethod::SelectKBest => {
+                let k = self.threshold as usize;
+                scores
+                    .iter()
+                    .take(k.min(n_features))
                     .map(|(idx, _)| *idx)
                     .collect()
             }
-            SelectionMethod::SelectKBest => {
-                let k = self.threshold as usize;
-                scores.iter().take(k.min(n_features)).map(|(idx, _)| *idx).collect()
-            }
             SelectionMethod::SelectPercentile => {
                 let k = ((self.threshold / 100.0) * n_features as f64).ceil() as usize;
-                scores.iter().take(k.min(n_features)).map(|(idx, _)| *idx).collect()
+                scores
+                    .iter()
+                    .take(k.min(n_features))
+                    .map(|(idx, _)| *idx)
+                    .collect()
             }
         };
 
         self.selected_indices.sort();
         self.original_feature_names = feature_names.clone();
-        self.selected_feature_names = self.selected_indices.iter()
+        self.selected_feature_names = self
+            .selected_indices
+            .iter()
             .map(|&idx| feature_names[idx].clone())
             .collect();
 
@@ -778,19 +816,24 @@ impl Preprocessor for FeatureSelector {
 
         for col in 0..n_features {
             let mean = features.iter().map(|row| row[col]).sum::<f64>() / features.len() as f64;
-            let variance = features.iter()
+            let variance = features
+                .iter()
                 .map(|row| (row[col] - mean).powi(2))
-                .sum::<f64>() / features.len() as f64;
+                .sum::<f64>()
+                / features.len() as f64;
             variances.push((col, variance));
         }
 
-        self.selected_indices = variances.iter()
+        self.selected_indices = variances
+            .iter()
             .filter(|(_, var)| *var >= self.threshold)
             .map(|(idx, _)| *idx)
             .collect();
 
         self.original_feature_names = feature_names.clone();
-        self.selected_feature_names = self.selected_indices.iter()
+        self.selected_feature_names = self
+            .selected_indices
+            .iter()
             .map(|&idx| feature_names[idx].clone())
             .collect();
 
@@ -803,12 +846,9 @@ impl Preprocessor for FeatureSelector {
             return Err(MLError::InvalidConfiguration("Selector not fitted".to_string()).into());
         }
 
-        Ok(features.iter()
-            .map(|row| {
-                self.selected_indices.iter()
-                    .map(|&idx| row[idx])
-                    .collect()
-            })
+        Ok(features
+            .iter()
+            .map(|row| self.selected_indices.iter().map(|&idx| row[idx]).collect())
             .collect())
     }
 
@@ -837,9 +877,11 @@ impl DataSplitter {
         shuffle: bool,
     ) -> Result<(Dataset, Dataset)> {
         if test_size <= 0.0 || test_size >= 1.0 {
-            return Err(MLError::InvalidConfiguration(
-                format!("test_size must be between 0 and 1, got {}", test_size)
-            ).into());
+            return Err(MLError::InvalidConfiguration(format!(
+                "test_size must be between 0 and 1, got {}",
+                test_size
+            ))
+            .into());
         }
 
         let n_samples = dataset.num_samples();
@@ -857,47 +899,50 @@ impl DataSplitter {
         let train_indices = &indices[..n_train];
         let test_indices = &indices[n_train..];
 
-        let train_features: Matrix = train_indices.iter()
+        let train_features: Matrix = train_indices
+            .iter()
             .map(|&i| dataset.features[i].clone())
             .collect();
-        let test_features: Matrix = test_indices.iter()
+        let test_features: Matrix = test_indices
+            .iter()
             .map(|&i| dataset.features[i].clone())
             .collect();
 
-        let train_target = dataset.target.as_ref().map(|target| {
-            train_indices.iter().map(|&i| target[i]).collect()
-        });
-        let test_target = dataset.target.as_ref().map(|target| {
-            test_indices.iter().map(|&i| target[i]).collect()
-        });
+        let train_target = dataset
+            .target
+            .as_ref()
+            .map(|target| train_indices.iter().map(|&i| target[i]).collect());
+        let test_target = dataset
+            .target
+            .as_ref()
+            .map(|target| test_indices.iter().map(|&i| target[i]).collect());
 
-        let train_dataset = Dataset::new(
-            train_features,
-            train_target,
-            dataset.feature_names.clone(),
-        );
-        let test_dataset = Dataset::new(
-            test_features,
-            test_target,
-            dataset.feature_names.clone(),
-        );
+        let train_dataset =
+            Dataset::new(train_features, train_target, dataset.feature_names.clone());
+        let test_dataset = Dataset::new(test_features, test_target, dataset.feature_names.clone());
 
         Ok((train_dataset, test_dataset))
     }
 
     // Create k-fold cross-validation splits
-    pub fn k_fold_split(dataset: &Dataset, k: usize, shuffle: bool) -> Result<Vec<(Dataset, Dataset)>> {
+    pub fn k_fold_split(
+        dataset: &Dataset,
+        k: usize,
+        shuffle: bool,
+    ) -> Result<Vec<(Dataset, Dataset)>> {
         if k < 2 {
-            return Err(MLError::InvalidConfiguration(
-                format!("k must be at least 2, got {}", k)
-            ).into());
+            return Err(
+                MLError::InvalidConfiguration(format!("k must be at least 2, got {}", k)).into(),
+            );
         }
 
         let n_samples = dataset.num_samples();
         if k > n_samples {
-            return Err(MLError::InvalidConfiguration(
-                format!("k ({}) cannot be greater than number of samples ({})", k, n_samples)
-            ).into());
+            return Err(MLError::InvalidConfiguration(format!(
+                "k ({}) cannot be greater than number of samples ({})",
+                k, n_samples
+            ))
+            .into());
         }
 
         let mut indices: Vec<usize> = (0..n_samples).collect();
@@ -919,36 +964,35 @@ impl DataSplitter {
             };
 
             let test_indices = &indices[test_start..test_end];
-            let train_indices: Vec<usize> = indices.iter()
+            let train_indices: Vec<usize> = indices
+                .iter()
                 .enumerate()
                 .filter(|(i, _)| *i < test_start || *i >= test_end)
                 .map(|(_, &idx)| idx)
                 .collect();
 
-            let train_features: Matrix = train_indices.iter()
+            let train_features: Matrix = train_indices
+                .iter()
                 .map(|&i| dataset.features[i].clone())
                 .collect();
-            let test_features: Matrix = test_indices.iter()
+            let test_features: Matrix = test_indices
+                .iter()
                 .map(|&i| dataset.features[i].clone())
                 .collect();
 
-            let train_target = dataset.target.as_ref().map(|target| {
-                train_indices.iter().map(|&i| target[i]).collect()
-            });
-            let test_target = dataset.target.as_ref().map(|target| {
-                test_indices.iter().map(|&i| target[i]).collect()
-            });
+            let train_target = dataset
+                .target
+                .as_ref()
+                .map(|target| train_indices.iter().map(|&i| target[i]).collect());
+            let test_target = dataset
+                .target
+                .as_ref()
+                .map(|target| test_indices.iter().map(|&i| target[i]).collect());
 
-            let train_dataset = Dataset::new(
-                train_features,
-                train_target,
-                dataset.feature_names.clone(),
-            );
-            let test_dataset = Dataset::new(
-                test_features,
-                test_target,
-                dataset.feature_names.clone(),
-            );
+            let train_dataset =
+                Dataset::new(train_features, train_target, dataset.feature_names.clone());
+            let test_dataset =
+                Dataset::new(test_features, test_target, dataset.feature_names.clone());
 
             folds.push((train_dataset, test_dataset));
         }
@@ -963,11 +1007,7 @@ mod tests {
 
     #[test]
     fn test_standard_scaler() {
-        let features = vec![
-            vec![1.0, 2.0],
-            vec![2.0, 4.0],
-            vec![3.0, 6.0],
-        ];
+        let features = vec![vec![1.0, 2.0], vec![2.0, 4.0], vec![3.0, 6.0]];
         let feature_names = vec!["f1".to_string(), "f2".to_string()];
 
         let mut scaler = StandardScaler::new();
@@ -980,11 +1020,7 @@ mod tests {
 
     #[test]
     fn test_minmax_scaler() {
-        let features = vec![
-            vec![1.0, 2.0],
-            vec![2.0, 4.0],
-            vec![3.0, 6.0],
-        ];
+        let features = vec![vec![1.0, 2.0], vec![2.0, 4.0], vec![3.0, 6.0]];
         let feature_names = vec!["f1".to_string(), "f2".to_string()];
 
         let mut scaler = MinMaxScaler::new();
@@ -1000,13 +1036,7 @@ mod tests {
 
     #[test]
     fn test_train_test_split() {
-        let features = vec![
-            vec![1.0],
-            vec![2.0],
-            vec![3.0],
-            vec![4.0],
-            vec![5.0],
-        ];
+        let features = vec![vec![1.0], vec![2.0], vec![3.0], vec![4.0], vec![5.0]];
         let target = Some(vec![1.0, 2.0, 3.0, 4.0, 5.0]);
         let dataset = Dataset::new(features, target, vec!["x".to_string()]);
 

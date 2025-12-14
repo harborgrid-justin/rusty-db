@@ -2,62 +2,61 @@
 // Enterprise-grade monitoring with ASH, profiling, resource management, and real-time dashboards
 
 use std::time::SystemTime;
+pub mod alerts;
+pub mod ash;
+pub mod dashboard;
+pub mod diagnostics;
 pub mod metrics;
 pub mod profiler;
-pub mod ash;
 pub mod resource_manager;
-pub mod alerts;
 pub mod statistics;
-pub mod diagnostics;
-pub mod dashboard;
 
 // Re-export commonly used types
 pub use metrics::{
-    Counter, Gauge, Histogram, Summary, Metric, MetricType, MetricRegistry, MetricAggregator,
-    HistogramBucket, Quantile,
+    Counter, Gauge, Histogram, HistogramBucket, Metric, MetricAggregator, MetricRegistry,
+    MetricType, Quantile, Summary,
 };
 
 pub use profiler::{
-    QueryProfiler, QueryProfile, ProfileBuilder, PlanOperator, OperatorType,
-    WaitEvent, WaitEventType,
+    OperatorType, PlanOperator, ProfileBuilder, QueryProfile, QueryProfiler, WaitEvent,
+    WaitEventType,
 };
 
 pub use ash::{
-    ActiveSessionHistory, AshSample, AshReportGenerator, SessionState, WaitClass,
-    SqlStatistics, SessionStatistics,
+    ActiveSessionHistory, AshReportGenerator, AshSample, SessionState, SessionStatistics,
+    SqlStatistics, WaitClass,
 };
 
 pub use resource_manager::{
-    ResourceManager, ResourceGroup, ResourceLimit, ResourceType, QueryResourceUsage,
-    ResourceLimitStatus, EnforcementPolicy, ResourcePlanner, ResourceGroupStatistics,
+    EnforcementPolicy, QueryResourceUsage, ResourceGroup, ResourceGroupStatistics, ResourceLimit,
+    ResourceLimitStatus, ResourceManager, ResourcePlanner, ResourceType,
 };
 
 pub use alerts::{
-    AlertManager, Alert, AlertSeverity, AlertState, AlertCategory,
-    ThresholdRule, AnomalyRule, ComparisonOperator, AnomalyDetectionAlgorithm,
+    Alert, AlertCategory, AlertManager, AlertSeverity, AlertState, AnomalyDetectionAlgorithm,
+    AnomalyRule, ComparisonOperator, ThresholdRule,
 };
 
 pub use statistics::{
-    StatisticsCollector, VSession, VSql, VSysstat, VSystemEvent, VSesstat,
-    VLock, VTransaction, VSqlarea, VBgprocess, VParameter, VDatabase,
+    StatisticsCollector, VBgprocess, VDatabase, VLock, VParameter, VSession, VSesstat, VSql,
+    VSqlarea, VSysstat, VSystemEvent, VTransaction,
 };
 
 pub use diagnostics::{
-    DiagnosticRepository, Incident, DiagnosticDump, HealthCheck, HealthCheckResult,
-    IncidentType, IncidentSeverity, DumpType, HealthStatus,
-    ConnectionHealthCheck, MemoryHealthCheck,
+    ConnectionHealthCheck, DiagnosticDump, DiagnosticRepository, DumpType, HealthCheck,
+    HealthCheckResult, HealthStatus, Incident, IncidentSeverity, IncidentType, MemoryHealthCheck,
 };
 
 pub use dashboard::{
-    DashboardDataAggregator, DashboardSnapshot, DashboardStreamer, DashboardMessage,
-    TimeSeriesMetric, TopQuery, ConnectionPoolStats, ReplicationLag,
-    ResourceSnapshot, PerformanceSummary, MetricDataPoint,
+    ConnectionPoolStats, DashboardDataAggregator, DashboardMessage, DashboardSnapshot,
+    DashboardStreamer, MetricDataPoint, PerformanceSummary, ReplicationLag, ResourceSnapshot,
+    TimeSeriesMetric, TopQuery,
 };
 
-use serde::{Deserialize, Serialize};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
 
 // Query statistics and performance metrics (legacy compatibility)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,7 +142,9 @@ impl MonitoringSystem {
     }
 
     pub fn update_metrics<F>(&self, updater: F)
-    where F: FnOnce(&mut SystemMetrics) {
+    where
+        F: FnOnce(&mut SystemMetrics),
+    {
         let mut metrics = self.metrics.write();
         updater(&mut *metrics);
     }
@@ -194,10 +195,14 @@ impl MonitoringHub {
     // Initialize default metrics
     pub fn initialize_default_metrics(&self) {
         // Register core metrics
-        self.metrics_registry.register_counter("queries_total", "Total number of queries executed");
-        self.metrics_registry.register_counter("queries_errors", "Total number of query errors");
-        self.metrics_registry.register_gauge("active_connections", "Current active connections");
-        self.metrics_registry.register_gauge("active_transactions", "Current active transactions");
+        self.metrics_registry
+            .register_counter("queries_total", "Total number of queries executed");
+        self.metrics_registry
+            .register_counter("queries_errors", "Total number of query errors");
+        self.metrics_registry
+            .register_gauge("active_connections", "Current active connections");
+        self.metrics_registry
+            .register_gauge("active_transactions", "Current active transactions");
 
         // Query latency histogram
         self.metrics_registry.register_histogram(
@@ -207,11 +212,15 @@ impl MonitoringHub {
         );
 
         // Register time series for dashboard
-        self.dashboard.register_time_series("queries_per_second", "qps");
-        self.dashboard.register_time_series("cpu_usage_percent", "%");
-        self.dashboard.register_time_series("memory_usage_percent", "%");
+        self.dashboard
+            .register_time_series("queries_per_second", "qps");
+        self.dashboard
+            .register_time_series("cpu_usage_percent", "%");
+        self.dashboard
+            .register_time_series("memory_usage_percent", "%");
         self.dashboard.register_time_series("cache_hit_ratio", "%");
-        self.dashboard.register_time_series("active_connections", "count");
+        self.dashboard
+            .register_time_series("active_connections", "count");
 
         // Register default alert rules
         self.alert_manager.add_threshold_rule(
@@ -222,7 +231,7 @@ impl MonitoringHub {
                 ComparisonOperator::GreaterThan,
                 AlertSeverity::Warning,
             )
-            .with_category(AlertCategory::Performance)
+            .with_category(AlertCategory::Performance),
         );
 
         self.alert_manager.add_threshold_rule(
@@ -233,14 +242,11 @@ impl MonitoringHub {
                 ComparisonOperator::GreaterThan,
                 AlertSeverity::Error,
             )
-            .with_category(AlertCategory::Capacity)
+            .with_category(AlertCategory::Capacity),
         );
 
         // Register default health checks
-        let conn_check = Arc::new(ConnectionHealthCheck::new(
-            100,
-            Arc::new(RwLock::new(0)),
-        ));
+        let conn_check = Arc::new(ConnectionHealthCheck::new(100, Arc::new(RwLock::new(0))));
         self.diagnostics.register_health_check(conn_check);
 
         let mem_check = Arc::new(MemoryHealthCheck::new(
@@ -293,7 +299,10 @@ impl MonitoringHub {
         let sample = AshSample::new(0, session_id, user_id)
             .with_state(SessionState::Active)
             .with_sql(query_id, sql.clone(), 0)
-            .with_timing(execution_time.as_micros() as u64, execution_time.as_micros() as u64);
+            .with_timing(
+                execution_time.as_micros() as u64,
+                execution_time.as_micros() as u64,
+            );
         self.ash.record_sample(sample);
 
         // Update SQL statistics

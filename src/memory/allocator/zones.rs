@@ -59,14 +59,20 @@ impl MemoryZone {
                 return None;
             }
 
-            if self.offset.compare_exchange(
-                current_offset,
-                new_offset,
-                Ordering::Release,
-                Ordering::Acquire,
-            ).is_ok() {
+            if self
+                .offset
+                .compare_exchange(
+                    current_offset,
+                    new_offset,
+                    Ordering::Release,
+                    Ordering::Acquire,
+                )
+                .is_ok()
+            {
                 unsafe {
-                    return Some(NonNull::new_unchecked(self.base.as_ptr().add(aligned_offset)));
+                    return Some(NonNull::new_unchecked(
+                        self.base.as_ptr().add(aligned_offset),
+                    ));
                 }
             }
         }
@@ -136,7 +142,9 @@ impl BuddyAllocator {
     // Create a new buddy allocator
     pub fn new(size: usize, min_block_size: usize) -> Result<Self> {
         if !size.is_power_of_two() || !min_block_size.is_power_of_two() {
-            return Err(DbError::InvalidArgument("Size must be power of 2".to_string()));
+            return Err(DbError::InvalidArgument(
+                "Size must be power of 2".to_string(),
+            ));
         }
 
         unsafe {
@@ -145,7 +153,9 @@ impl BuddyAllocator {
 
             let base = System.alloc(layout);
             if base.is_null() {
-                return Err(DbError::OutOfMemory("Failed to allocate buddy memory".to_string()));
+                return Err(DbError::OutOfMemory(
+                    "Failed to allocate buddy memory".to_string(),
+                ));
             }
 
             let num_orders = (size / min_block_size).trailing_zeros() as usize + 1;
@@ -196,14 +206,20 @@ impl BuddyAllocator {
                     let block_size = self.min_block_size << split_order;
                     let buddy_offset = offset ^ block_size;
 
-                    self.free_lists[split_order].lock().unwrap().push(buddy_offset);
+                    self.free_lists[split_order]
+                        .lock()
+                        .unwrap()
+                        .push(buddy_offset);
 
                     let mut states = self.block_states.lock().unwrap();
                     states.insert(offset, BlockState::Split);
                     states.insert(buddy_offset, BlockState::Free);
                 }
 
-                self.block_states.lock().unwrap().insert(offset, BlockState::Allocated);
+                self.block_states
+                    .lock()
+                    .unwrap()
+                    .insert(offset, BlockState::Allocated);
 
                 unsafe {
                     return Some(NonNull::new_unchecked(self.base.as_ptr().add(offset)));
@@ -217,7 +233,8 @@ impl BuddyAllocator {
     // Deallocate memory
     pub fn deallocate(&self, ptr: NonNull<u8>, size: usize) -> Result<()> {
         let offset = unsafe { ptr.as_ptr().offset_from(self.base.as_ptr()) as usize };
-        let order = self.size_to_order(size)
+        let order = self
+            .size_to_order(size)
             .ok_or_else(|| DbError::InvalidArgument("Invalid size".to_string()))?;
 
         let mut current_offset = offset;
@@ -241,8 +258,14 @@ impl BuddyAllocator {
             }
         }
 
-        self.free_lists[current_order].lock().unwrap().push(current_offset);
-        self.block_states.lock().unwrap().insert(current_offset, BlockState::Free);
+        self.free_lists[current_order]
+            .lock()
+            .unwrap()
+            .push(current_offset);
+        self.block_states
+            .lock()
+            .unwrap()
+            .insert(current_offset, BlockState::Free);
 
         Ok(())
     }

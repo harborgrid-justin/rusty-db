@@ -8,10 +8,10 @@
 // - **Refresh Scheduling**: Automatic refresh of materialized views
 // - **View Statistics**: Access and performance tracking
 
-use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
-use std::time::{Duration};
 use crate::catalog::Schema;
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
+use std::time::SystemTime;
 
 // =============================================================================
 // View Types

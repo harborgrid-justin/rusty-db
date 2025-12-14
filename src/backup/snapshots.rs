@@ -1,16 +1,16 @@
 // Snapshot Management - Copy-on-write snapshots with cloning and scheduling
 // Provides space-efficient storage snapshots for testing and backup
 
-use std::collections::BTreeMap;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::fs::{create_dir_all};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use std::collections::{HashMap};
-use parking_lot::{Mutex, RwLock};
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::{Mutex, RwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::fs::create_dir_all;
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 // Snapshot metadata
 #[repr(C)]
@@ -38,7 +38,12 @@ pub struct Snapshot {
 
 impl Snapshot {
     #[inline]
-    pub fn new(snapshot_id: String, snapshot_name: String, database_name: String, scn: u64) -> Self {
+    pub fn new(
+        snapshot_id: String,
+        snapshot_name: String,
+        database_name: String,
+        scn: u64,
+    ) -> Self {
         Self {
             snapshot_id,
             snapshot_name,
@@ -161,7 +166,9 @@ impl CowTracker {
     // Get original block data
     pub fn get_block(&self, file_id: u32, block_id: u64) -> Option<Vec<u8>> {
         let blocks = self.blocks.read();
-        blocks.get(&(file_id, block_id)).map(|b| b.original_data.clone())
+        blocks
+            .get(&(file_id, block_id))
+            .map(|b| b.original_data.clone())
     }
 
     // Get total size of COW blocks
@@ -250,12 +257,8 @@ impl SnapshotSchedule {
         let now = SystemTime::now();
 
         self.next_execution = match &self.frequency {
-            SnapshotFrequency::Hourly => {
-                Some(now + Duration::from_secs(3600))
-            }
-            SnapshotFrequency::Daily { hour: _ } => {
-                Some(now + Duration::from_secs(86400))
-            }
+            SnapshotFrequency::Hourly => Some(now + Duration::from_secs(3600)),
+            SnapshotFrequency::Daily { hour: _ } => Some(now + Duration::from_secs(86400)),
             SnapshotFrequency::Weekly { day: _, hour: _ } => {
                 Some(now + Duration::from_secs(7 * 86400))
             }
@@ -306,12 +309,7 @@ impl SnapshotManager {
         let snapshot_id = self.generate_snapshot_id();
         let scn = self.generate_scn();
 
-        let mut snapshot = Snapshot::new(
-            snapshot_id.clone(),
-            snapshot_name,
-            database_name,
-            scn,
-        );
+        let mut snapshot = Snapshot::new(snapshot_id.clone(), snapshot_name, database_name, scn);
 
         snapshot.snapshot_type = snapshot_type;
         snapshot.metadata_path = self.snapshot_dir.join(&snapshot_id).join("metadata.json");
@@ -324,7 +322,9 @@ impl SnapshotManager {
 
         // Initialize COW tracker
         let cow_tracker = CowTracker::new(snapshot_id.clone());
-        self.cow_trackers.write().insert(snapshot_id.clone(), cow_tracker);
+        self.cow_trackers
+            .write()
+            .insert(snapshot_id.clone(), cow_tracker);
 
         // Simulate snapshot creation
         self.perform_snapshot(&mut snapshot)?;
@@ -361,7 +361,11 @@ impl SnapshotManager {
         purpose: ClonePurpose,
     ) -> Result<String> {
         // Verify parent snapshot exists
-        let _parent = self.snapshots.read().get(parent_snapshot_id).cloned()
+        let _parent = self
+            .snapshots
+            .read()
+            .get(parent_snapshot_id)
+            .cloned()
             .ok_or_else(|| DbError::BackupError("Parent snapshot not found".to_string()))?;
 
         let clone_id = self.generate_clone_id();
@@ -384,7 +388,9 @@ impl SnapshotManager {
         // If writable, create COW tracker for the clone
         if writable {
             let cow_tracker = CowTracker::new(clone_id.clone());
-            self.cow_trackers.write().insert(clone_id.clone(), cow_tracker);
+            self.cow_trackers
+                .write()
+                .insert(clone_id.clone(), cow_tracker);
         }
 
         // Add clone to parent snapshot
@@ -400,13 +406,18 @@ impl SnapshotManager {
     // Delete a snapshot
     pub fn delete_snapshot(&self, snapshot_id: &str) -> Result<()> {
         // Check if snapshot has clones
-        let snapshot = self.snapshots.read().get(snapshot_id).cloned()
+        let snapshot = self
+            .snapshots
+            .read()
+            .get(snapshot_id)
+            .cloned()
             .ok_or_else(|| DbError::BackupError("Snapshot not found".to_string()))?;
 
         if !snapshot.clones.is_empty() {
-            return Err(DbError::BackupError(
-                format!("Cannot delete snapshot with {} active clones", snapshot.clones.len())
-            ));
+            return Err(DbError::BackupError(format!(
+                "Cannot delete snapshot with {} active clones",
+                snapshot.clones.len()
+            )));
         }
 
         // Remove COW tracker
@@ -415,9 +426,8 @@ impl SnapshotManager {
         // Delete snapshot files
         let snapshot_path = self.snapshot_dir.join(snapshot_id);
         if snapshot_path.exists() {
-            std::fs::remove_dir_all(&snapshot_path).map_err(|e| {
-                DbError::BackupError(format!("Failed to delete snapshot: {}", e))
-            })?;
+            std::fs::remove_dir_all(&snapshot_path)
+                .map_err(|e| DbError::BackupError(format!("Failed to delete snapshot: {}", e)))?;
         }
 
         // Remove from snapshots map
@@ -428,7 +438,11 @@ impl SnapshotManager {
 
     // Delete a clone
     pub fn delete_clone(&self, clone_id: &str) -> Result<()> {
-        let clone = self.clones.read().get(clone_id).cloned()
+        let clone = self
+            .clones
+            .read()
+            .get(clone_id)
+            .cloned()
             .ok_or_else(|| DbError::BackupError("Clone not found".to_string()))?;
 
         // Remove from parent's clone list
@@ -455,7 +469,9 @@ impl SnapshotManager {
 
     // Remove a snapshot schedule
     pub fn remove_schedule(&self, schedule_id: &str) -> Result<()> {
-        self.schedules.write().remove(schedule_id)
+        self.schedules
+            .write()
+            .remove(schedule_id)
             .ok_or_else(|| DbError::BackupError("Schedule not found".to_string()))?;
         Ok(())
     }
@@ -469,10 +485,14 @@ impl SnapshotManager {
             if schedule.is_due() {
                 // Create snapshot for each database in the schedule
                 for database_name in &schedule.databases {
-                    let snapshot_name = format!("{}-{}",
+                    let snapshot_name = format!(
+                        "{}-{}",
                         schedule.name,
-                        SystemTime::now().duration_since(UNIX_EPOCH)
-                            .unwrap_or_default().as_secs());
+                        SystemTime::now()
+                            .duration_since(UNIX_EPOCH)
+                            .unwrap_or_default()
+                            .as_secs()
+                    );
 
                     let snapshot_id = self.create_snapshot(
                         snapshot_name,
@@ -503,7 +523,8 @@ impl SnapshotManager {
 
     // List snapshots for a specific database
     pub fn list_snapshots_for_database(&self, database_name: &str) -> Vec<Snapshot> {
-        self.snapshots.read()
+        self.snapshots
+            .read()
             .values()
             .filter(|s| s.database_name == database_name)
             .cloned()
@@ -604,11 +625,13 @@ mod tests {
     #[test]
     fn test_snapshot_creation() {
         let manager = SnapshotManager::new(PathBuf::from("/tmp/snapshots")).unwrap();
-        let snapshot_id = manager.create_snapshot(
-            "test_snapshot".to_string(),
-            "testdb".to_string(),
-            SnapshotType::Manual,
-        ).unwrap();
+        let snapshot_id = manager
+            .create_snapshot(
+                "test_snapshot".to_string(),
+                "testdb".to_string(),
+                SnapshotType::Manual,
+            )
+            .unwrap();
 
         let snapshot = manager.get_snapshot(&snapshot_id).unwrap();
         assert_eq!(snapshot.snapshot_name, "test_snapshot");
@@ -618,18 +641,22 @@ mod tests {
     #[test]
     fn test_snapshot_clone() {
         let manager = SnapshotManager::new(PathBuf::from("/tmp/snapshots")).unwrap();
-        let snapshot_id = manager.create_snapshot(
-            "parent".to_string(),
-            "testdb".to_string(),
-            SnapshotType::Manual,
-        ).unwrap();
+        let snapshot_id = manager
+            .create_snapshot(
+                "parent".to_string(),
+                "testdb".to_string(),
+                SnapshotType::Manual,
+            )
+            .unwrap();
 
-        let clone_id = manager.clone_snapshot(
-            &snapshot_id,
-            "test_clone".to_string(),
-            true,
-            ClonePurpose::Testing,
-        ).unwrap();
+        let clone_id = manager
+            .clone_snapshot(
+                &snapshot_id,
+                "test_clone".to_string(),
+                true,
+                ClonePurpose::Testing,
+            )
+            .unwrap();
 
         let clone = manager.get_clone(&clone_id).unwrap();
         assert_eq!(clone.clone_name, "test_clone");

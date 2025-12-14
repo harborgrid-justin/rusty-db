@@ -2,9 +2,9 @@
 //
 // Background writer, write coalescing, double-write buffer, and flush lists.
 
-use super::common::*;
 use super::checkpoint::DirtyPage;
-use serde::{Serialize, Deserialize};
+use super::common::*;
+use serde::{Deserialize, Serialize};
 
 pub struct BackgroundWriter {
     // Write batch size
@@ -113,9 +113,7 @@ impl WriteCoalescingBuffer {
         let extent_id = page.page_id.page_number / 64; // 64 pages per extent
 
         let mut pending = self.pending_writes.lock();
-        pending.entry(extent_id)
-            .or_insert_with(Vec::new)
-            .push(page);
+        pending.entry(extent_id).or_insert_with(Vec::new).push(page);
     }
 
     // Flush extent if coalescing window expired or extent is full
@@ -123,17 +121,16 @@ impl WriteCoalescingBuffer {
         let mut pending = self.pending_writes.lock();
 
         if let Some(pages) = pending.get(&extent_id) {
-            let oldest_time = pages.iter()
-                .map(|p| p.dirty_time)
-                .min()
-                .unwrap();
+            let oldest_time = pages.iter().map(|p| p.dirty_time).min().unwrap();
 
             if oldest_time.elapsed() >= self.coalesce_window || pages.len() >= 64 {
                 let pages = pending.remove(&extent_id).unwrap();
                 let saved_io = (pages.len() as u64).saturating_sub(1);
 
                 self.stats.writes_coalesced.fetch_add(1, Ordering::Relaxed);
-                self.stats.io_operations_saved.fetch_add(saved_io, Ordering::Relaxed);
+                self.stats
+                    .io_operations_saved
+                    .fetch_add(saved_io, Ordering::Relaxed);
 
                 return Some(pages);
             }
@@ -230,7 +227,9 @@ impl DoubleWriteBuffer {
     // Recover from double-write buffer after crash
     pub fn recover(&self) -> usize {
         // Would read double-write buffer from disk and restore any partial writes
-        self.stats.recovery_operations.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .recovery_operations
+            .fetch_add(1, Ordering::Relaxed);
         0
     }
 
@@ -296,7 +295,8 @@ impl FlushListManager {
 
         // Create new flush list for tablespace
         let mut lists = self.flush_lists.write();
-        let list = lists.entry(tablespace_id)
+        let list = lists
+            .entry(tablespace_id)
             .or_insert_with(|| Mutex::new(VecDeque::new()));
 
         let mut list = list.lock();
@@ -318,7 +318,9 @@ impl FlushListManager {
                 }
             }
 
-            self.stats.pages_flushed.fetch_add(flush_count as u64, Ordering::Relaxed);
+            self.stats
+                .pages_flushed
+                .fetch_add(flush_count as u64, Ordering::Relaxed);
             self.stats.flush_operations.fetch_add(1, Ordering::Relaxed);
 
             return flush_count;

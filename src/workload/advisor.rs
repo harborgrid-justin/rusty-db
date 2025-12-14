@@ -1,13 +1,13 @@
 // RustyDB Automatic Database Diagnostic Monitor (ADDM) - Oracle-like diagnostic advisor
 // Provides automatic bottleneck detection, root cause analysis, and recommendations
 
-use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::SystemTime;
 
 // Automatic Database Diagnostic Monitor
 pub struct DiagnosticAdvisor {
@@ -334,7 +334,9 @@ impl DiagnosticAdvisor {
 
         // Store results
         self.findings.write().insert(analysis_id, findings);
-        self.recommendations.write().insert(analysis_id, recommendations);
+        self.recommendations
+            .write()
+            .insert(analysis_id, recommendations);
 
         // Update status
         {
@@ -492,7 +494,9 @@ impl DiagnosticAdvisor {
                         priority: RecommendationPriority::High,
                         category: RecommendationCategory::SqlTuning,
                         title: "Optimize CPU-intensive SQL statements".to_string(),
-                        rationale: "Reducing CPU consumption will improve overall system performance".to_string(),
+                        rationale:
+                            "Reducing CPU consumption will improve overall system performance"
+                                .to_string(),
                         action: "Run SQL Tuning Advisor on top CPU-consuming queries".to_string(),
                         estimated_benefit_pct: 30.0,
                         implementation_effort: ImplementationEffort::Medium,
@@ -509,13 +513,17 @@ impl DiagnosticAdvisor {
                         priority: RecommendationPriority::High,
                         category: RecommendationCategory::IndexCreation,
                         title: "Create missing indexes to reduce I/O".to_string(),
-                        rationale: "Proper indexing can significantly reduce physical I/O".to_string(),
-                        action: "Analyze table access patterns and create appropriate indexes".to_string(),
+                        rationale: "Proper indexing can significantly reduce physical I/O"
+                            .to_string(),
+                        action: "Analyze table access patterns and create appropriate indexes"
+                            .to_string(),
                         estimated_benefit_pct: 40.0,
                         implementation_effort: ImplementationEffort::Low,
                         prerequisites: vec!["Analyze SQL execution plans".to_string()],
                         risks: vec!["Index maintenance overhead".to_string()],
-                        validation_steps: vec!["Monitor I/O statistics after index creation".to_string()],
+                        validation_steps: vec![
+                            "Monitor I/O statistics after index creation".to_string()
+                        ],
                     });
                     rec_id += 1;
                 }
@@ -544,7 +552,8 @@ impl DiagnosticAdvisor {
                         category: RecommendationCategory::ApplicationChange,
                         title: "Reduce lock hold times".to_string(),
                         rationale: "Shorter transactions reduce lock contention".to_string(),
-                        action: "Review and optimize transaction boundaries in application code".to_string(),
+                        action: "Review and optimize transaction boundaries in application code"
+                            .to_string(),
                         estimated_benefit_pct: 25.0,
                         implementation_effort: ImplementationEffort::High,
                         prerequisites: vec!["Identify long-running transactions".to_string()],
@@ -560,8 +569,10 @@ impl DiagnosticAdvisor {
                         priority: RecommendationPriority::Medium,
                         category: RecommendationCategory::SqlTuning,
                         title: "Tune high-impact SQL statement".to_string(),
-                        rationale: "Optimizing this SQL will improve overall performance".to_string(),
-                        action: "Use SQL Tuning Advisor to generate tuning recommendations".to_string(),
+                        rationale: "Optimizing this SQL will improve overall performance"
+                            .to_string(),
+                        action: "Use SQL Tuning Advisor to generate tuning recommendations"
+                            .to_string(),
                         estimated_benefit_pct: finding.impact_pct * 0.7,
                         implementation_effort: ImplementationEffort::Medium,
                         prerequisites: vec!["Gather execution statistics".to_string()],
@@ -663,7 +674,11 @@ impl DiagnosticAdvisor {
         top_findings.truncate(5);
 
         let mut top_recs: Vec<Recommendation> = recommendations_vec.clone();
-        top_recs.sort_by(|a, b| b.estimated_benefit_pct.partial_cmp(&a.estimated_benefit_pct).unwrap());
+        top_recs.sort_by(|a, b| {
+            b.estimated_benefit_pct
+                .partial_cmp(&a.estimated_benefit_pct)
+                .unwrap()
+        });
         top_recs.truncate(5);
 
         Ok(AnalysisSummary {
@@ -710,12 +725,7 @@ mod tests {
     fn test_create_analysis() {
         let advisor = DiagnosticAdvisor::new();
         let analysis_id = advisor
-            .create_analysis(
-                "test_analysis".to_string(),
-                1,
-                10,
-                AnalysisScope::Database,
-            )
+            .create_analysis("test_analysis".to_string(), 1, 10, AnalysisScope::Database)
             .unwrap();
 
         assert_eq!(analysis_id, 1);
@@ -725,12 +735,7 @@ mod tests {
     fn test_execute_analysis() {
         let advisor = DiagnosticAdvisor::new();
         let analysis_id = advisor
-            .create_analysis(
-                "test_analysis".to_string(),
-                1,
-                10,
-                AnalysisScope::Database,
-            )
+            .create_analysis("test_analysis".to_string(), 1, 10, AnalysisScope::Database)
             .unwrap();
 
         advisor.execute_analysis(analysis_id).unwrap();
@@ -747,12 +752,7 @@ mod tests {
     fn test_analysis_summary() {
         let advisor = DiagnosticAdvisor::new();
         let analysis_id = advisor
-            .create_analysis(
-                "test_analysis".to_string(),
-                1,
-                10,
-                AnalysisScope::Database,
-            )
+            .create_analysis("test_analysis".to_string(), 1, 10, AnalysisScope::Database)
             .unwrap();
 
         advisor.execute_analysis(analysis_id).unwrap();

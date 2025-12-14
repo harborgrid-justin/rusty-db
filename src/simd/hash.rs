@@ -81,7 +81,8 @@ unsafe fn xxhash3_avx2_impl(data: &[u8], seed: u64) -> u64 {
         }
 
         // Merge accumulators
-        h64 = acc1.rotate_left(1)
+        h64 = acc1
+            .rotate_left(1)
             .wrapping_add(acc2.rotate_left(7))
             .wrapping_add(acc3.rotate_left(12))
             .wrapping_add(acc4.rotate_left(18));
@@ -182,14 +183,20 @@ unsafe fn process_tail(ptr: *const u8, len: usize, mut h64: u64) -> u64 {
     while offset + 8 <= len {
         let val = (ptr.add(offset) as *const u64).read_unaligned();
         h64 ^= round(0, val);
-        h64 = h64.rotate_left(27).wrapping_mul(PRIME64_1).wrapping_add(PRIME64_2);
+        h64 = h64
+            .rotate_left(27)
+            .wrapping_mul(PRIME64_1)
+            .wrapping_add(PRIME64_2);
         offset += 8;
     }
 
     if offset + 4 <= len {
         let val = (ptr.add(offset) as *const u32).read_unaligned() as u64;
         h64 ^= val.wrapping_mul(PRIME64_1);
-        h64 = h64.rotate_left(23).wrapping_mul(PRIME64_2).wrapping_add(PRIME64_5);
+        h64 = h64
+            .rotate_left(23)
+            .wrapping_mul(PRIME64_2)
+            .wrapping_add(PRIME64_5);
         offset += 4;
     }
 
@@ -223,7 +230,7 @@ pub fn wyhash(data: &[u8], seed: u64) -> u64 {
 
     // Process 8-byte chunks
     while i + 8 <= len {
-        let v = u64::from_le_bytes(data[i..i+8].try_into().unwrap());
+        let v = u64::from_le_bytes(data[i..i + 8].try_into().unwrap());
         h = wymix(h ^ PRIME2, v ^ PRIME1);
         i += 8;
     }
@@ -345,8 +352,8 @@ impl Default for HashBuilder {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
     use super::*;
+    use std::collections::HashSet;
 
     #[test]
     fn test_xxhash3_basic() {
@@ -356,7 +363,10 @@ mod tests {
         assert_eq!(hash1, hash2, "Hash should be deterministic");
 
         let hash3 = xxhash3_avx2(data, 42);
-        assert_ne!(hash1, hash3, "Different seeds should produce different hashes");
+        assert_ne!(
+            hash1, hash3,
+            "Different seeds should produce different hashes"
+        );
     }
 
     #[test]
@@ -450,7 +460,10 @@ mod tests {
 
         // Check that all hashes are unique (high probability)
         let unique = hashes.iter().collect::<HashSet<_>>();
-        assert!(unique.len() > 995, "Hash function should have low collision rate");
+        assert!(
+            unique.len() > 995,
+            "Hash function should have low collision rate"
+        );
 
         // Check distribution across buckets
         let mut buckets = vec![0; 16];
@@ -461,8 +474,11 @@ mod tests {
         // Each bucket should have roughly 1000/16 = 62.5 entries
         // Allow 50% deviation
         for &count in &buckets {
-            assert!(count > 30 && count < 95,
-                "Hash distribution is skewed: bucket has {} entries", count);
+            assert!(
+                count > 30 && count < 95,
+                "Hash distribution is skewed: bucket has {} entries",
+                count
+            );
         }
     }
 
@@ -473,7 +489,10 @@ mod tests {
         let h2 = hash_str("Test"); // Only one bit different in ASCII
 
         let diff_bits = (h1 ^ h2).count_ones();
-        assert!(diff_bits > 20,
-            "Avalanche effect too weak: only {} bits differ", diff_bits);
+        assert!(
+            diff_bits > 20,
+            "Avalanche effect too weak: only {} bits differ",
+            diff_bits
+        );
     }
 }

@@ -7,17 +7,15 @@
 // - Health check integration
 // - Metrics registry integration
 
-use std::sync::Arc;
-use std::collections::HashMap;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
 
-use crate::websocket::metrics::{
-    WebSocketMetrics, MetricsSnapshot, ConnectionMetrics, ErrorType,
-};
+use super::health::{HealthCheckResult, HealthStatus};
 use super::metrics_core::*;
 use super::metrics_registry::MetricsRegistry;
-use super::health::{HealthCheckResult, HealthStatus};
+use crate::websocket::metrics::{ConnectionMetrics, ErrorType, MetricsSnapshot, WebSocketMetrics};
 
 // ============================================================================
 // WebSocket Metrics Collector
@@ -207,13 +205,16 @@ impl WebSocketMetricsCollector {
     fn get_error_counter(&self, error_type: ErrorType) -> Arc<CounterMetric> {
         let mut refs = self.metric_refs.write();
 
-        refs.errors.entry(error_type).or_insert_with(|| {
-            self.registry.get_or_create_counter(
-                "websocket_errors_total",
-                &[("type", error_type.as_str())],
-                "Total WebSocket errors by type",
-            )
-        }).clone()
+        refs.errors
+            .entry(error_type)
+            .or_insert_with(|| {
+                self.registry.get_or_create_counter(
+                    "websocket_errors_total",
+                    &[("type", error_type.as_str())],
+                    "Total WebSocket errors by type",
+                )
+            })
+            .clone()
     }
 
     /// Get the underlying WebSocket metrics
@@ -227,48 +228,57 @@ impl WebSocketMetricsCollector {
         let refs = self.metric_refs.read();
 
         // Update connection metrics
-        refs.active_connections.set(snapshot.active_connections as f64);
+        refs.active_connections
+            .set(snapshot.active_connections as f64);
 
         // For counters, we need to set them to the total value
         // (In a real implementation, we might track deltas instead)
         let current_connections = refs.total_connections.get();
         if snapshot.total_connections > current_connections {
-            refs.total_connections.inc_by(snapshot.total_connections - current_connections);
+            refs.total_connections
+                .inc_by(snapshot.total_connections - current_connections);
         }
 
         let current_disconnections = refs.total_disconnections.get();
         if snapshot.total_disconnections > current_disconnections {
-            refs.total_disconnections.inc_by(snapshot.total_disconnections - current_disconnections);
+            refs.total_disconnections
+                .inc_by(snapshot.total_disconnections - current_disconnections);
         }
 
         // Update message metrics
         let current_sent = refs.messages_sent.get();
         if snapshot.messages_sent > current_sent {
-            refs.messages_sent.inc_by(snapshot.messages_sent - current_sent);
+            refs.messages_sent
+                .inc_by(snapshot.messages_sent - current_sent);
         }
 
         let current_received = refs.messages_received.get();
         if snapshot.messages_received > current_received {
-            refs.messages_received.inc_by(snapshot.messages_received - current_received);
+            refs.messages_received
+                .inc_by(snapshot.messages_received - current_received);
         }
 
         // Update byte metrics
         let current_bytes_sent = refs.bytes_sent.get();
         if snapshot.bytes_sent > current_bytes_sent {
-            refs.bytes_sent.inc_by(snapshot.bytes_sent - current_bytes_sent);
+            refs.bytes_sent
+                .inc_by(snapshot.bytes_sent - current_bytes_sent);
         }
 
         let current_bytes_received = refs.bytes_received.get();
         if snapshot.bytes_received > current_bytes_received {
-            refs.bytes_received.inc_by(snapshot.bytes_received - current_bytes_received);
+            refs.bytes_received
+                .inc_by(snapshot.bytes_received - current_bytes_received);
         }
 
         // Update subscription metrics
-        refs.subscriptions_active.set(snapshot.subscriptions_active as f64);
+        refs.subscriptions_active
+            .set(snapshot.subscriptions_active as f64);
 
         let current_subs = refs.subscriptions_total.get();
         if snapshot.subscriptions_total > current_subs {
-            refs.subscriptions_total.inc_by(snapshot.subscriptions_total - current_subs);
+            refs.subscriptions_total
+                .inc_by(snapshot.subscriptions_total - current_subs);
         }
 
         // Update performance metrics
@@ -276,7 +286,8 @@ impl WebSocketMetricsCollector {
 
         let current_backpressure = refs.backpressure_events.get();
         if snapshot.backpressure_events > current_backpressure {
-            refs.backpressure_events.inc_by(snapshot.backpressure_events - current_backpressure);
+            refs.backpressure_events
+                .inc_by(snapshot.backpressure_events - current_backpressure);
         }
 
         // Update error metrics
@@ -325,49 +336,88 @@ impl WebSocketMetricsCollector {
         // Connection metrics
         output.push_str("# HELP websocket_active_connections Number of currently active WebSocket connections\n");
         output.push_str("# TYPE websocket_active_connections gauge\n");
-        output.push_str(&format!("websocket_active_connections {}\n", snapshot.active_connections));
+        output.push_str(&format!(
+            "websocket_active_connections {}\n",
+            snapshot.active_connections
+        ));
 
         output.push_str("# HELP websocket_connections_total Total number of WebSocket connections since startup\n");
         output.push_str("# TYPE websocket_connections_total counter\n");
-        output.push_str(&format!("websocket_connections_total {}\n", snapshot.total_connections));
+        output.push_str(&format!(
+            "websocket_connections_total {}\n",
+            snapshot.total_connections
+        ));
 
         // Message metrics
-        output.push_str("# HELP websocket_messages_sent_total Total number of messages sent to clients\n");
+        output.push_str(
+            "# HELP websocket_messages_sent_total Total number of messages sent to clients\n",
+        );
         output.push_str("# TYPE websocket_messages_sent_total counter\n");
-        output.push_str(&format!("websocket_messages_sent_total {}\n", snapshot.messages_sent));
+        output.push_str(&format!(
+            "websocket_messages_sent_total {}\n",
+            snapshot.messages_sent
+        ));
 
         output.push_str("# HELP websocket_messages_received_total Total number of messages received from clients\n");
         output.push_str("# TYPE websocket_messages_received_total counter\n");
-        output.push_str(&format!("websocket_messages_received_total {}\n", snapshot.messages_received));
+        output.push_str(&format!(
+            "websocket_messages_received_total {}\n",
+            snapshot.messages_received
+        ));
 
         // Bytes metrics
         output.push_str("# HELP websocket_bytes_sent_total Total bytes sent to clients\n");
         output.push_str("# TYPE websocket_bytes_sent_total counter\n");
-        output.push_str(&format!("websocket_bytes_sent_total {}\n", snapshot.bytes_sent));
+        output.push_str(&format!(
+            "websocket_bytes_sent_total {}\n",
+            snapshot.bytes_sent
+        ));
 
-        output.push_str("# HELP websocket_bytes_received_total Total bytes received from clients\n");
+        output
+            .push_str("# HELP websocket_bytes_received_total Total bytes received from clients\n");
         output.push_str("# TYPE websocket_bytes_received_total counter\n");
-        output.push_str(&format!("websocket_bytes_received_total {}\n", snapshot.bytes_received));
+        output.push_str(&format!(
+            "websocket_bytes_received_total {}\n",
+            snapshot.bytes_received
+        ));
 
         // Subscription metrics
-        output.push_str("# HELP websocket_subscriptions_active Number of currently active subscriptions\n");
+        output.push_str(
+            "# HELP websocket_subscriptions_active Number of currently active subscriptions\n",
+        );
         output.push_str("# TYPE websocket_subscriptions_active gauge\n");
-        output.push_str(&format!("websocket_subscriptions_active {}\n", snapshot.subscriptions_active));
+        output.push_str(&format!(
+            "websocket_subscriptions_active {}\n",
+            snapshot.subscriptions_active
+        ));
 
         // Performance metrics
-        output.push_str("# HELP websocket_message_queue_depth Current depth of the outgoing message queue\n");
+        output.push_str(
+            "# HELP websocket_message_queue_depth Current depth of the outgoing message queue\n",
+        );
         output.push_str("# TYPE websocket_message_queue_depth gauge\n");
-        output.push_str(&format!("websocket_message_queue_depth {}\n", snapshot.message_queue_depth));
+        output.push_str(&format!(
+            "websocket_message_queue_depth {}\n",
+            snapshot.message_queue_depth
+        ));
 
-        output.push_str("# HELP websocket_backpressure_events_total Total number of backpressure events\n");
+        output.push_str(
+            "# HELP websocket_backpressure_events_total Total number of backpressure events\n",
+        );
         output.push_str("# TYPE websocket_backpressure_events_total counter\n");
-        output.push_str(&format!("websocket_backpressure_events_total {}\n", snapshot.backpressure_events));
+        output.push_str(&format!(
+            "websocket_backpressure_events_total {}\n",
+            snapshot.backpressure_events
+        ));
 
         // Error metrics
         output.push_str("# HELP websocket_errors_total Total WebSocket errors by type\n");
         output.push_str("# TYPE websocket_errors_total counter\n");
         for (error_type, count) in &snapshot.errors_by_type {
-            output.push_str(&format!("websocket_errors_total{{type=\"{}\"}} {}\n", error_type, count));
+            output.push_str(&format!(
+                "websocket_errors_total{{type=\"{}\"}} {}\n",
+                error_type, count
+            ));
         }
 
         output
@@ -402,14 +452,20 @@ impl WebSocketMetricsCollector {
         if snapshot.message_queue_depth > max_degraded_queue_depth {
             return HealthCheckResult::unhealthy(
                 "websocket",
-                format!("Message queue depth critically high: {}", snapshot.message_queue_depth),
+                format!(
+                    "Message queue depth critically high: {}",
+                    snapshot.message_queue_depth
+                ),
             );
         }
 
         if snapshot.message_queue_depth > max_healthy_queue_depth {
             return HealthCheckResult::degraded(
                 "websocket",
-                format!("Message queue depth elevated: {}", snapshot.message_queue_depth),
+                format!(
+                    "Message queue depth elevated: {}",
+                    snapshot.message_queue_depth
+                ),
             );
         }
 
@@ -448,7 +504,8 @@ impl WebSocketMetricsCollector {
             active_connections: snapshot.active_connections,
             messages_per_sec: 0.0, // Would need to calculate rate
             bytes_per_sec: 0.0,    // Would need to calculate rate
-            avg_latency_ms: snapshot.avg_message_latency
+            avg_latency_ms: snapshot
+                .avg_message_latency
                 .map(|d| d.as_secs_f64() * 1000.0),
             queue_depth: snapshot.message_queue_depth,
             error_count: snapshot.errors_by_type.values().sum(),

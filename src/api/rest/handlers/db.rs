@@ -5,19 +5,19 @@
 
 use axum::{
     extract::{Path, State},
-    Json as AxumJson,
     http::StatusCode,
+    Json as AxumJson,
 };
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 use uuid::Uuid;
 
+use super::{CATALOG, SQL_PARSER, TXN_MANAGER};
 use crate::api::rest::types::*;
-use crate::catalog::{Schema, Column, DataType};
+use crate::catalog::{Column, DataType, Schema};
 use crate::error::DbError;
 use crate::execution::Executor;
-use super::{CATALOG, TXN_MANAGER, SQL_PARSER};
 
 /// Helper function to format DataType enum as a string for display
 fn format_data_type(data_type: &DataType) -> String {
@@ -62,21 +62,27 @@ pub async fn execute_query(
     // Record query execution
     {
         let mut queries = state.active_queries.write().await;
-        queries.insert(query_id, QueryExecution {
+        queries.insert(
             query_id,
-            sql: request.sql.clone(),
-            started_at: start,
-            session_id: SessionId(1), // Default session
-            status: "running".to_string(),
-        });
+            QueryExecution {
+                query_id,
+                sql: request.sql.clone(),
+                started_at: start,
+                session_id: SessionId(1), // Default session
+                status: "running".to_string(),
+            },
+        );
     }
 
     // Parse SQL
-    let stmts = SQL_PARSER.parse(&request.sql)
+    let stmts = SQL_PARSER
+        .parse(&request.sql)
         .map_err(|e| ApiError::new("SQL_PARSE_ERROR", &e.to_string()))?;
 
     // Get first statement
-    let stmt = stmts.into_iter().next()
+    let stmt = stmts
+        .into_iter()
+        .next()
         .ok_or_else(|| ApiError::new("SQL_PARSE_ERROR", "No valid SQL statement found"))?;
 
     // Execute query
@@ -85,7 +91,8 @@ pub async fn execute_query(
         let catalog_snapshot = (*catalog_guard).clone();
         Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone())
     };
-    let result = executor.execute(stmt)
+    let result = executor
+        .execute(stmt)
         .map_err(|e| ApiError::new("EXECUTION_ERROR", &e.to_string()))?;
 
     let execution_time = start.elapsed().unwrap_or_default().as_millis() as u64;
@@ -97,23 +104,31 @@ pub async fn execute_query(
     }
 
     // Convert QueryResult to QueryResponse
-    let columns_meta: Vec<ColumnMetadata> = result.columns.iter().map(|name| ColumnMetadata {
-        name: name.clone(),
-        data_type: "TEXT".to_string(),
-        nullable: true,
-        precision: None,
-        scale: None,
-    }).collect();
+    let columns_meta: Vec<ColumnMetadata> = result
+        .columns
+        .iter()
+        .map(|name| ColumnMetadata {
+            name: name.clone(),
+            data_type: "TEXT".to_string(),
+            nullable: true,
+            precision: None,
+            scale: None,
+        })
+        .collect();
 
-    let rows: Vec<HashMap<String, serde_json::Value>> = result.rows.iter().map(|row| {
-        let mut map = HashMap::new();
-        for (i, val) in row.iter().enumerate() {
-            if let Some(col_name) = result.columns.get(i) {
-                map.insert(col_name.clone(), serde_json::Value::String(val.clone()));
+    let rows: Vec<HashMap<String, serde_json::Value>> = result
+        .rows
+        .iter()
+        .map(|row| {
+            let mut map = HashMap::new();
+            for (i, val) in row.iter().enumerate() {
+                if let Some(col_name) = result.columns.get(i) {
+                    map.insert(col_name.clone(), serde_json::Value::String(val.clone()));
+                }
             }
-        }
-        map
-    }).collect();
+            map
+        })
+        .collect();
 
     let response = QueryResponse {
         query_id: query_id.to_string(),
@@ -149,7 +164,10 @@ pub async fn execute_batch(
     let start = SystemTime::now();
 
     if request.statements.is_empty() {
-        return Err(ApiError::new("INVALID_INPUT", "Batch must contain at least one statement"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "Batch must contain at least one statement",
+        ));
     }
 
     let mut results = Vec::new();
@@ -169,7 +187,9 @@ pub async fn execute_batch(
                 if let Some(stmt) = stmts.into_iter().next() {
                     executor.execute(stmt)
                 } else {
-                    Err(DbError::SqlParse("No valid SQL statement found".to_string()))
+                    Err(DbError::SqlParse(
+                        "No valid SQL statement found".to_string(),
+                    ))
                 }
             }
             Err(e) => Err(DbError::SqlParse(e.to_string())),
@@ -231,16 +251,21 @@ pub async fn get_table(
     Path(name): Path<String>,
 ) -> ApiResult<AxumJson<TableInfo>> {
     let catalog = CATALOG.read();
-    let schema = catalog.get_table(&name)
+    let schema = catalog
+        .get_table(&name)
         .map_err(|_| ApiError::new("NOT_FOUND", &format!("Table {} not found", name)))?;
 
-    let columns = schema.columns.iter().map(|c| ColumnMetadata {
-        name: c.name.clone(),
-        data_type: format_data_type(&c.data_type),
-        nullable: c.nullable,
-        precision: None,
-        scale: None,
-    }).collect();
+    let columns = schema
+        .columns
+        .iter()
+        .map(|c| ColumnMetadata {
+            name: c.name.clone(),
+            data_type: format_data_type(&c.data_type),
+            nullable: c.nullable,
+            precision: None,
+            scale: None,
+        })
+        .collect();
 
     let table = TableInfo {
         name: schema.name.clone(),
@@ -272,19 +297,26 @@ pub async fn create_table(
 ) -> ApiResult<StatusCode> {
     // Validate input
     if request.columns.is_empty() {
-        return Err(ApiError::new("INVALID_INPUT", "Table must have at least one column"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "Table must have at least one column",
+        ));
     }
 
     // Convert API column definitions to catalog columns
-    let columns: Vec<Column> = request.columns.iter().map(|col| {
-        let data_type = parse_data_type(&col.data_type);
-        Column {
-            name: col.name.clone(),
-            data_type,
-            nullable: col.nullable,
-            default: col.default_value.as_ref().map(|v| v.to_string()),
-        }
-    }).collect();
+    let columns: Vec<Column> = request
+        .columns
+        .iter()
+        .map(|col| {
+            let data_type = parse_data_type(&col.data_type);
+            Column {
+                name: col.name.clone(),
+                data_type,
+                nullable: col.nullable,
+                default: col.default_value.as_ref().map(|v| v.to_string()),
+            }
+        })
+        .collect();
 
     // Create schema
     let schema = if let Some(pk) = &request.primary_key {
@@ -303,9 +335,15 @@ pub async fn create_table(
         Ok(_) => Ok(StatusCode::CREATED),
         Err(e) => {
             if e.to_string().contains("already exists") {
-                Err(ApiError::new("CONFLICT", format!("Table '{}' already exists", name)))
+                Err(ApiError::new(
+                    "CONFLICT",
+                    format!("Table '{}' already exists", name),
+                ))
             } else {
-                Err(ApiError::new("DATABASE_ERROR", format!("Failed to create table: {}", e)))
+                Err(ApiError::new(
+                    "DATABASE_ERROR",
+                    format!("Failed to create table: {}", e),
+                ))
             }
         }
     }
@@ -357,7 +395,10 @@ pub async fn update_table(
     {
         let catalog = CATALOG.read();
         if catalog.get_table(&name).is_err() {
-            return Err(ApiError::new("NOT_FOUND", format!("Table '{}' not found", name)));
+            return Err(ApiError::new(
+                "NOT_FOUND",
+                format!("Table '{}' not found", name),
+            ));
         }
     }
 
@@ -367,24 +408,32 @@ pub async fn update_table(
 
     // Drop existing table
     if let Err(e) = catalog.drop_table(&name) {
-        return Err(ApiError::new("DATABASE_ERROR", format!("Failed to update table: {}", e)));
+        return Err(ApiError::new(
+            "DATABASE_ERROR",
+            format!("Failed to update table: {}", e),
+        ));
     }
 
     // Create new schema with updated columns
-    let columns: Vec<Column> = request.columns.iter().map(|col| {
-        Column {
+    let columns: Vec<Column> = request
+        .columns
+        .iter()
+        .map(|col| Column {
             name: col.name.clone(),
             data_type: parse_data_type(&col.data_type),
             nullable: col.nullable,
             default: col.default_value.as_ref().map(|v| v.to_string()),
-        }
-    }).collect();
+        })
+        .collect();
 
     let schema = Schema::new(name.clone(), columns);
 
     match catalog.create_table(schema) {
         Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err(ApiError::new("DATABASE_ERROR", format!("Failed to recreate table: {}", e))),
+        Err(e) => Err(ApiError::new(
+            "DATABASE_ERROR",
+            format!("Failed to recreate table: {}", e),
+        )),
     }
 }
 
@@ -406,7 +455,10 @@ pub async fn delete_table(
 
     match catalog.drop_table(&name) {
         Ok(_) => Ok(StatusCode::NO_CONTENT),
-        Err(e) => Err(ApiError::new("NOT_FOUND", format!("Table '{}' not found: {}", name, e))),
+        Err(e) => Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Table '{}' not found: {}", name, e),
+        )),
     }
 }
 
@@ -429,13 +481,17 @@ pub async fn get_schema(
 
     for table_name in &table_names {
         if let Ok(schema) = catalog.get_table(table_name) {
-            let columns: Vec<ColumnMetadata> = schema.columns.iter().map(|col| ColumnMetadata {
-                name: col.name.clone(),
-                data_type: format_data_type(&col.data_type),
-                nullable: col.nullable,
-                precision: None,
-                scale: None,
-            }).collect();
+            let columns: Vec<ColumnMetadata> = schema
+                .columns
+                .iter()
+                .map(|col| ColumnMetadata {
+                    name: col.name.clone(),
+                    data_type: format_data_type(&col.data_type),
+                    nullable: col.nullable,
+                    precision: None,
+                    scale: None,
+                })
+                .collect();
 
             tables.push(TableInfo {
                 name: schema.name.clone(),
@@ -453,8 +509,8 @@ pub async fn get_schema(
     let response = SchemaResponse {
         database_name: "rustydb".to_string(),
         tables,
-        views: vec![],  // Would need view catalog integration
-        procedures: vec![],  // Would need procedure catalog integration
+        views: vec![],      // Would need view catalog integration
+        procedures: vec![], // Would need procedure catalog integration
         total_count,
     };
 
@@ -479,16 +535,24 @@ pub async fn begin_transaction(
     let txn_id = match TXN_MANAGER.begin() {
         Ok(id) => id,
         Err(e) => {
-            return Err(ApiError::new("TRANSACTION_ERROR", format!("Failed to begin transaction: {}", e)));
+            return Err(ApiError::new(
+                "TRANSACTION_ERROR",
+                format!("Failed to begin transaction: {}", e),
+            ));
         }
     };
 
-    let isolation_level = request.isolation_level.unwrap_or_else(|| "READ_COMMITTED".to_string());
+    let isolation_level = request
+        .isolation_level
+        .unwrap_or_else(|| "READ_COMMITTED".to_string());
 
     let response = TransactionResponse {
         transaction_id: TransactionId(txn_id),
         isolation_level,
-        started_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        started_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         status: "active".to_string(),
     };
 
@@ -514,13 +578,19 @@ pub async fn commit_transaction(
 ) -> ApiResult<StatusCode> {
     // Verify transaction exists
     if !TXN_MANAGER.is_active(id) {
-        return Err(ApiError::new("NOT_FOUND", format!("Transaction {} not found or already completed", id)));
+        return Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Transaction {} not found or already completed", id),
+        ));
     }
 
     // Commit the transaction
     match TXN_MANAGER.commit(id) {
         Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err(ApiError::new("TRANSACTION_ERROR", format!("Failed to commit transaction: {}", e))),
+        Err(e) => Err(ApiError::new(
+            "TRANSACTION_ERROR",
+            format!("Failed to commit transaction: {}", e),
+        )),
     }
 }
 
@@ -543,12 +613,18 @@ pub async fn rollback_transaction(
 ) -> ApiResult<StatusCode> {
     // Verify transaction exists
     if !TXN_MANAGER.is_active(id) {
-        return Err(ApiError::new("NOT_FOUND", format!("Transaction {} not found or already completed", id)));
+        return Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Transaction {} not found or already completed", id),
+        ));
     }
 
     // Abort/rollback the transaction
     match TXN_MANAGER.abort(id) {
         Ok(_) => Ok(StatusCode::OK),
-        Err(e) => Err(ApiError::new("TRANSACTION_ERROR", format!("Failed to rollback transaction: {}", e))),
+        Err(e) => Err(ApiError::new(
+            "TRANSACTION_ERROR",
+            format!("Failed to rollback transaction: {}", e),
+        )),
     }
 }

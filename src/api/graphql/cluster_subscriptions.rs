@@ -2,14 +2,12 @@
 //
 // Real-time subscription resolvers for replication, clustering, and RAC operations
 
-use async_graphql::{
-    Context, Enum, Object, SimpleObject, Subscription, ID,
-};
+use async_graphql::{Context, Enum, Object, SimpleObject, Subscription, ID};
 use futures_util::stream::{Stream, StreamExt};
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::{BroadcastStream, IntervalStream};
-use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // Replication Subscription Types
@@ -417,7 +415,9 @@ impl ClusterSubscriptionRoot {
 
         stream.map(move |_| {
             ReplicationLagEvent {
-                replica_id: replica_id.clone().unwrap_or_else(|| ID::from("replica-001")),
+                replica_id: replica_id
+                    .clone()
+                    .unwrap_or_else(|| ID::from("replica-001")),
                 lag_bytes: 524288, // 512 KB
                 lag_seconds: 2.5,
                 threshold_bytes: threshold.unwrap_or(262144),
@@ -438,14 +438,14 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_secs(10));
         let stream = IntervalStream::new(interval);
 
-        stream.map(move |_| {
-            ReplicaStatusEvent {
-                replica_id: replica_id.clone().unwrap_or_else(|| ID::from("replica-001")),
-                old_status: ReplicaStatus::CatchingUp,
-                new_status: ReplicaStatus::InSync,
-                reason: Some("Caught up with primary".to_string()),
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(move |_| ReplicaStatusEvent {
+            replica_id: replica_id
+                .clone()
+                .unwrap_or_else(|| ID::from("replica-001")),
+            old_status: ReplicaStatus::CatchingUp,
+            new_status: ReplicaStatus::InSync,
+            reason: Some("Caught up with primary".to_string()),
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 
@@ -460,16 +460,14 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_secs(30));
         let stream = IntervalStream::new(interval);
 
-        stream.map(move |_| {
-            ConflictEvent {
-                conflict_id: ID::from(uuid::Uuid::new_v4().to_string()),
-                table_name: "users".to_string(),
-                conflict_type: ConflictType::UpdateUpdate,
-                resolution_strategy: "LastWriterWins".to_string(),
-                resolved: true,
-                source_replica: ID::from("replica-002"),
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(move |_| ConflictEvent {
+            conflict_id: ID::from(uuid::Uuid::new_v4().to_string()),
+            table_name: "users".to_string(),
+            conflict_type: ConflictType::UpdateUpdate,
+            resolution_strategy: "LastWriterWins".to_string(),
+            resolved: true,
+            source_replica: ID::from("replica-002"),
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 
@@ -489,12 +487,19 @@ impl ClusterSubscriptionRoot {
             progress = (progress + 5.0).min(100.0);
             RebalanceProgressEvent {
                 plan_id: ID::from("plan-abc123"),
-                table_name: table_id.as_ref().map(|id| id.to_string()).unwrap_or_else(|| "orders".to_string()),
+                table_name: table_id
+                    .as_ref()
+                    .map(|id| id.to_string())
+                    .unwrap_or_else(|| "orders".to_string()),
                 progress_percent: progress,
                 rows_migrated: (progress * 10000.0) as i64,
                 total_rows: 1000000,
                 eta_seconds: Some(((100.0 - progress) * 2.0)),
-                phase: if progress < 100.0 { RebalancePhase::Copying } else { RebalancePhase::Completed },
+                phase: if progress < 100.0 {
+                    RebalancePhase::Copying
+                } else {
+                    RebalancePhase::Completed
+                },
                 timestamp: chrono::Utc::now().timestamp(),
             }
         })
@@ -510,16 +515,14 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_secs(5));
         let stream = IntervalStream::new(interval);
 
-        stream.map(|_| {
-            ClusterHealthEvent {
-                status: ClusterStatus::Healthy,
-                total_nodes: 5,
-                healthy_nodes: 4,
-                degraded_nodes: 1,
-                failed_nodes: 0,
-                has_quorum: true,
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(|_| ClusterHealthEvent {
+            status: ClusterStatus::Healthy,
+            total_nodes: 5,
+            healthy_nodes: 4,
+            degraded_nodes: 1,
+            failed_nodes: 0,
+            has_quorum: true,
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 
@@ -534,17 +537,15 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_secs(15));
         let stream = IntervalStream::new(interval);
 
-        stream.map(move |_| {
-            NodeStatusEvent {
-                node_id: node_id.clone().unwrap_or_else(|| ID::from("node-001")),
-                old_status: NodeStatus::Healthy,
-                new_status: NodeStatus::Degraded,
-                role: NodeRole::Follower,
-                cpu_usage: 78.5,
-                memory_usage: 65.2,
-                disk_usage: 45.0,
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(move |_| NodeStatusEvent {
+            node_id: node_id.clone().unwrap_or_else(|| ID::from("node-001")),
+            old_status: NodeStatus::Healthy,
+            new_status: NodeStatus::Degraded,
+            role: NodeRole::Follower,
+            cpu_usage: 78.5,
+            memory_usage: 65.2,
+            disk_usage: 45.0,
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 
@@ -558,17 +559,15 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_secs(60));
         let stream = IntervalStream::new(interval);
 
-        stream.map(|_| {
-            FailoverEvent {
-                failover_id: ID::from(uuid::Uuid::new_v4().to_string()),
-                failed_node: ID::from("node-003"),
-                replacement_node: Some(ID::from("node-004")),
-                failover_type: FailoverType::Automatic,
-                success: true,
-                duration_seconds: Some(5.2),
-                error_message: None,
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(|_| FailoverEvent {
+            failover_id: ID::from(uuid::Uuid::new_v4().to_string()),
+            failed_node: ID::from("node-003"),
+            replacement_node: Some(ID::from("node-004")),
+            failover_type: FailoverType::Automatic,
+            success: true,
+            duration_seconds: Some(5.2),
+            error_message: None,
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 
@@ -582,15 +581,13 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_secs(120));
         let stream = IntervalStream::new(interval);
 
-        stream.map(|_| {
-            LeaderElectionEvent {
-                leader_id: ID::from("node-002"),
-                previous_leader: Some(ID::from("node-001")),
-                term: 42,
-                votes_received: 3,
-                total_voters: 5,
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(|_| LeaderElectionEvent {
+            leader_id: ID::from("node-002"),
+            previous_leader: Some(ID::from("node-001")),
+            term: 42,
+            votes_received: 3,
+            total_voters: 5,
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 
@@ -605,18 +602,18 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_millis(500));
         let stream = IntervalStream::new(interval);
 
-        stream.map(move |_| {
-            CacheFusionEvent {
-                event_type: CacheFusionEventType::BlockTransfer,
-                block_id: format!("blk_{}", uuid::Uuid::new_v4().to_string()[..8].to_string()),
-                source_instance: ID::from("instance-1"),
-                target_instance: instance_id.clone().unwrap_or_else(|| ID::from("instance-2")),
-                block_mode: BlockMode::Shared,
-                transfer_size: 8192,
-                duration_micros: 150,
-                success: true,
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(move |_| CacheFusionEvent {
+            event_type: CacheFusionEventType::BlockTransfer,
+            block_id: format!("blk_{}", uuid::Uuid::new_v4().to_string()[..8].to_string()),
+            source_instance: ID::from("instance-1"),
+            target_instance: instance_id
+                .clone()
+                .unwrap_or_else(|| ID::from("instance-2")),
+            block_mode: BlockMode::Shared,
+            transfer_size: 8192,
+            duration_micros: 150,
+            success: true,
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 
@@ -631,17 +628,17 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_secs(1));
         let stream = IntervalStream::new(interval);
 
-        stream.map(move |_| {
-            LockEvent {
-                event_type: LockEventType::Granted,
-                resource_id: resource_id.clone().unwrap_or_else(|| "res_users_table".to_string()),
-                lock_type: LockType::Shared,
-                previous_lock_type: None,
-                instance_id: ID::from("instance-2"),
-                granted: true,
-                wait_time_ms: Some(5),
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(move |_| LockEvent {
+            event_type: LockEventType::Granted,
+            resource_id: resource_id
+                .clone()
+                .unwrap_or_else(|| "res_users_table".to_string()),
+            lock_type: LockType::Shared,
+            previous_lock_type: None,
+            instance_id: ID::from("instance-2"),
+            granted: true,
+            wait_time_ms: Some(5),
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 
@@ -659,7 +656,11 @@ impl ClusterSubscriptionRoot {
         stream.map(move |_| {
             progress = (progress + 10.0).min(100.0);
             RecoveryEvent {
-                event_type: if progress < 100.0 { RecoveryEventType::Progress } else { RecoveryEventType::Completed },
+                event_type: if progress < 100.0 {
+                    RecoveryEventType::Progress
+                } else {
+                    RecoveryEventType::Completed
+                },
                 failed_instance: ID::from("instance-3"),
                 recovering_instance: Some(ID::from("instance-1")),
                 recovery_phase: RecoveryPhase::RedoApply,
@@ -683,18 +684,18 @@ impl ClusterSubscriptionRoot {
         let interval = tokio::time::interval(Duration::from_secs(10));
         let stream = IntervalStream::new(interval);
 
-        stream.map(move |_| {
-            ParallelQueryEvent {
-                event_type: QueryEventType::Completed,
-                query_id: query_id.clone().unwrap_or_else(|| ID::from(uuid::Uuid::new_v4().to_string())),
-                sql_text: "SELECT * FROM large_table WHERE...".to_string(),
-                dop: 4,
-                instances: vec![ID::from("instance-1"), ID::from("instance-2")],
-                rows_processed: 1000000,
-                duration_ms: 5420,
-                success: true,
-                timestamp: chrono::Utc::now().timestamp(),
-            }
+        stream.map(move |_| ParallelQueryEvent {
+            event_type: QueryEventType::Completed,
+            query_id: query_id
+                .clone()
+                .unwrap_or_else(|| ID::from(uuid::Uuid::new_v4().to_string())),
+            sql_text: "SELECT * FROM large_table WHERE...".to_string(),
+            dop: 4,
+            instances: vec![ID::from("instance-1"), ID::from("instance-2")],
+            rows_processed: 1000000,
+            duration_ms: 5420,
+            success: true,
+            timestamp: chrono::Utc::now().timestamp(),
         })
     }
 }

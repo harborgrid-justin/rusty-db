@@ -17,8 +17,8 @@
 // wal.flush()?;
 // ```
 
-use std::fmt;
 use std::collections::VecDeque;
+use std::fmt;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -235,7 +235,11 @@ impl WALManager {
     /// # Errors
     ///
     /// Returns an error if the log directory cannot be created.
-    pub fn new(log_path: PathBuf, buffer_size: usize, sync_on_commit: bool) -> TransactionResult<Self> {
+    pub fn new(
+        log_path: PathBuf,
+        buffer_size: usize,
+        sync_on_commit: bool,
+    ) -> TransactionResult<Self> {
         if let Some(parent) = log_path.parent() {
             std::fs::create_dir_all(parent).map_err(TransactionError::WalWriteError)?;
         }
@@ -421,19 +425,21 @@ impl WALManager {
             for entry in &entries_to_keep {
                 let serialized = serde_json::to_vec(&entry)?;
                 let length = serialized.len() as u32;
-                temp_file.write_all(&length.to_le_bytes())
+                temp_file
+                    .write_all(&length.to_le_bytes())
                     .map_err(TransactionError::WalWriteError)?;
-                temp_file.write_all(&serialized)
+                temp_file
+                    .write_all(&serialized)
                     .map_err(TransactionError::WalWriteError)?;
             }
 
-            temp_file.sync_all()
+            temp_file
+                .sync_all()
                 .map_err(TransactionError::WalWriteError)?;
         }
 
         // Replace original log with compacted log
-        std::fs::rename(&temp_path, &self.log_path)
-            .map_err(TransactionError::WalWriteError)?;
+        std::fs::rename(&temp_path, &self.log_path).map_err(TransactionError::WalWriteError)?;
 
         Ok(())
     }

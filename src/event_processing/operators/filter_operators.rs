@@ -1,9 +1,8 @@
+use super::super::Event;
 /// Filter Operators Module
 ///
 /// Basic stream transformation operators: filter, map, and flatmap.
-
 use super::pipeline::StreamOperator;
-use super::super::Event;
 use crate::error::Result;
 
 /// Filter operator

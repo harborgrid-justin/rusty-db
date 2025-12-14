@@ -34,16 +34,16 @@
 // └──────────┘
 // ```
 
-use std::time::Instant;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::Instant;
 
 use parking_lot::RwLock;
 use tokio::time::timeout;
 use tracing::{debug, info, warn};
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 
 // Circuit breaker state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -508,7 +508,7 @@ impl Default for CircuitBreakerRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::collections::HashMap;
+    use std::collections::HashMap;
     use std::thread::sleep;
 
     #[tokio::test]

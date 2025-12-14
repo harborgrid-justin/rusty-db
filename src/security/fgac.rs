@@ -12,14 +12,14 @@
 // - Context-sensitive access control
 // - Data classification and sensitivity levels
 
-use std::collections::HashSet;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use parking_lot::RwLock;
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
 use crate::security::injection_prevention::{DangerousPatternDetector, SQLValidator};
+use crate::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
 
 // Table identifier
 pub type TableId = String;
@@ -223,13 +223,16 @@ impl FgacManager {
     // Add a row-level security policy
     pub fn add_row_policy(&self, policy: RowLevelPolicy) -> Result<()> {
         let mut policies = self.row_policies.write();
-        let table_policies = policies.entry(policy.table_id.clone()).or_insert_with(Vec::new);
+        let table_policies = policies
+            .entry(policy.table_id.clone())
+            .or_insert_with(Vec::new);
 
         // Check for duplicate policy names on same table
         if table_policies.iter().any(|p| p.name == policy.name) {
-            return Err(DbError::AlreadyExists(
-                format!("Policy {} already exists on table {}", policy.name, policy.table_id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Policy {} already exists on table {}",
+                policy.name, policy.table_id
+            )));
         }
 
         table_policies.push(policy);
@@ -260,13 +263,17 @@ impl FgacManager {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("No policies for table {}", table_id)))
+            Err(DbError::NotFound(format!(
+                "No policies for table {}",
+                table_id
+            )))
         }
     }
 
     // Get row-level policies for a table
     pub fn get_row_policies(&self, table_id: &TableId) -> Vec<RowLevelPolicy> {
-        self.row_policies.read()
+        self.row_policies
+            .read()
             .get(table_id)
             .cloned()
             .unwrap_or_default()
@@ -275,14 +282,19 @@ impl FgacManager {
     // Add a column-level policy
     pub fn add_column_policy(&self, policy: ColumnPolicy) -> Result<()> {
         let mut policies = self.column_policies.write();
-        let table_policies = policies.entry(policy.table_id.clone()).or_insert_with(HashMap::new);
-        let column_policies = table_policies.entry(policy.column_id.clone()).or_insert_with(Vec::new);
+        let table_policies = policies
+            .entry(policy.table_id.clone())
+            .or_insert_with(HashMap::new);
+        let column_policies = table_policies
+            .entry(policy.column_id.clone())
+            .or_insert_with(Vec::new);
 
         // Check for duplicate
         if column_policies.iter().any(|p| p.id == policy.id) {
-            return Err(DbError::AlreadyExists(
-                format!("Column policy {} already exists", policy.id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Column policy {} already exists",
+                policy.id
+            )));
         }
 
         column_policies.push(policy);
@@ -327,7 +339,8 @@ impl FgacManager {
         table_id: &TableId,
         column_id: &ColumnId,
     ) -> Vec<ColumnPolicy> {
-        self.column_policies.read()
+        self.column_policies
+            .read()
             .get(table_id)
             .and_then(|t| t.get(column_id))
             .cloned()
@@ -357,9 +370,9 @@ impl FgacManager {
             }
 
             // Check if policy applies to this principal
-            let applies = policy.principals.is_empty() ||
-                         policy.principals.contains(principal_id) ||
-                         policy.principals.iter().any(|p| context.roles.contains(p));
+            let applies = policy.principals.is_empty()
+                || policy.principals.contains(principal_id)
+                || policy.principals.iter().any(|p| context.roles.contains(p));
 
             if applies {
                 // Take most restrictive access level
@@ -393,9 +406,7 @@ impl FgacManager {
             MaskingFunction::Hash => {
                 format!("HASH_{:x}", value.len()) // Simplified hash
             }
-            MaskingFunction::Fixed { value: fixed } => {
-                fixed.clone()
-            }
+            MaskingFunction::Fixed { value: fixed } => fixed.clone(),
             MaskingFunction::Email => {
                 if let Some(at_pos) = value.find('@') {
                     let (user, domain) = value.split_at(at_pos);
@@ -410,7 +421,7 @@ impl FgacManager {
             }
             MaskingFunction::CreditCard => {
                 if value.len() > 4 {
-                    let last4 = &value[value.len()-4..];
+                    let last4 = &value[value.len() - 4..];
                     format!("****-****-****-{}", last4)
                 } else {
                     "****".to_string()
@@ -420,9 +431,7 @@ impl FgacManager {
                 // Would generate random value with same characteristics
                 "RANDOM_VALUE".to_string()
             }
-            MaskingFunction::Null => {
-                "NULL".to_string()
-            }
+            MaskingFunction::Null => "NULL".to_string(),
             MaskingFunction::Custom { expression: _ } => {
                 // Would evaluate custom expression
                 "CUSTOM_MASKED".to_string()
@@ -433,13 +442,16 @@ impl FgacManager {
     // Add a VPD context
     pub fn add_vpd_context(&self, context: VpdContext) -> Result<()> {
         let mut contexts = self.vpd_contexts.write();
-        let table_contexts = contexts.entry(context.table_id.clone()).or_insert_with(Vec::new);
+        let table_contexts = contexts
+            .entry(context.table_id.clone())
+            .or_insert_with(Vec::new);
 
         // Check for duplicate
         if table_contexts.iter().any(|c| c.id == context.id) {
-            return Err(DbError::AlreadyExists(
-                format!("VPD context {} already exists", context.id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "VPD context {} already exists",
+                context.id
+            )));
         }
 
         table_contexts.push(context);
@@ -459,7 +471,10 @@ impl FgacManager {
             table_contexts.retain(|c| c.id != context_id);
 
             if table_contexts.len() == original_len {
-                return Err(DbError::NotFound(format!("VPD context {} not found", context_id)));
+                return Err(DbError::NotFound(format!(
+                    "VPD context {} not found",
+                    context_id
+                )));
             }
 
             // Invalidate cache
@@ -467,13 +482,17 @@ impl FgacManager {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("No VPD contexts for table {}", table_id)))
+            Err(DbError::NotFound(format!(
+                "No VPD contexts for table {}",
+                table_id
+            )))
         }
     }
 
     // Get VPD contexts for a table
     pub fn get_vpd_contexts(&self, table_id: &TableId) -> Vec<VpdContext> {
-        self.vpd_contexts.read()
+        self.vpd_contexts
+            .read()
             .get(table_id)
             .cloned()
             .unwrap_or_default()
@@ -498,9 +517,9 @@ impl FgacManager {
             }
 
             // Check if policy applies to this user/roles
-            let applies = policy.principals.is_empty() ||
-                         policy.principals.contains(&context.user_id) ||
-                         policy.principals.iter().any(|p| context.roles.contains(p));
+            let applies = policy.principals.is_empty()
+                || policy.principals.contains(&context.user_id)
+                || policy.principals.iter().any(|p| context.roles.contains(p));
 
             if applies {
                 let predicate = SecurityPredicate {
@@ -517,7 +536,8 @@ impl FgacManager {
 
         // Combine permissive policies with OR
         if !permissive_predicates.is_empty() {
-            let combined_expr = permissive_predicates.iter()
+            let combined_expr = permissive_predicates
+                .iter()
                 .map(|p| format!("({})", p.expression))
                 .collect::<Vec<_>>()
                 .join(" OR ");
@@ -554,7 +574,9 @@ impl FgacManager {
         tags: HashSet<String>,
     ) -> Result<()> {
         let mut classifications = self.column_classifications.write();
-        let table_classifications = classifications.entry(table_id.clone()).or_insert_with(HashMap::new);
+        let table_classifications = classifications
+            .entry(table_id.clone())
+            .or_insert_with(HashMap::new);
 
         table_classifications.insert(
             column_id.clone(),
@@ -575,7 +597,8 @@ impl FgacManager {
         table_id: &TableId,
         column_id: &ColumnId,
     ) -> Option<ColumnClassification> {
-        self.column_classifications.read()
+        self.column_classifications
+            .read()
             .get(table_id)
             .and_then(|t| t.get(column_id))
             .cloned()
@@ -607,7 +630,8 @@ impl FgacManager {
         required_level: &DataClassification,
     ) -> bool {
         // Get user's clearance level from session attributes
-        let user_clearance = context.session_attributes
+        let user_clearance = context
+            .session_attributes
             .get("clearance_level")
             .and_then(|s| match s.as_str() {
                 "PUBLIC" => Some(DataClassification::Public),
@@ -651,12 +675,14 @@ impl FgacManager {
             })?;
 
             // Validate SQL syntax structure
-            validator.validate_sql(&format!("SELECT 1 WHERE {}", predicate.expression)).map_err(|e| {
-                DbError::Security(format!(
-                    "Predicate syntax validation failed: {}. Predicate: '{}'",
-                    e, predicate.expression
-                ))
-            })?;
+            validator
+                .validate_sql(&format!("SELECT 1 WHERE {}", predicate.expression))
+                .map_err(|e| {
+                    DbError::Security(format!(
+                        "Predicate syntax validation failed: {}. Predicate: '{}'",
+                        e, predicate.expression
+                    ))
+                })?;
 
             // Block dangerous patterns that could allow SQL injection
             let expression_upper = predicate.expression.to_uppercase();
@@ -680,7 +706,8 @@ impl FgacManager {
         }
 
         // Build combined WHERE clause (predicates are now validated)
-        let security_where = predicates.iter()
+        let security_where = predicates
+            .iter()
             .map(|p| format!("({})", p.expression))
             .collect::<Vec<_>>()
             .join(" AND ");
@@ -706,14 +733,13 @@ impl FgacManager {
         let classifications = self.column_classifications.read();
 
         let total_row_policies: usize = row_policies.values().map(|v| v.len()).sum();
-        let total_column_policies: usize = column_policies.values()
+        let total_column_policies: usize = column_policies
+            .values()
             .flat_map(|t| t.values())
             .map(|v| v.len())
             .sum();
         let total_vpd_contexts: usize = vpd_contexts.values().map(|v| v.len()).sum();
-        let total_classified_columns: usize = classifications.values()
-            .map(|t| t.len())
-            .sum();
+        let total_classified_columns: usize = classifications.values().map(|t| t.len()).sum();
 
         FgacStatistics {
             total_row_policies,
@@ -771,18 +797,12 @@ mod tests {
         let manager = FgacManager::new();
 
         // Test email masking
-        let masked = manager.apply_masking(
-            "user@example.com",
-            &MaskingFunction::Email,
-        );
+        let masked = manager.apply_masking("user@example.com", &MaskingFunction::Email);
         assert!(masked.contains("@example.com"));
         assert!(masked.contains("***"));
 
         // Test credit card masking
-        let masked = manager.apply_masking(
-            "1234567890123456",
-            &MaskingFunction::CreditCard,
-        );
+        let masked = manager.apply_masking("1234567890123456", &MaskingFunction::CreditCard);
         assert!(masked.ends_with("3456"));
         assert!(masked.contains("****"));
     }
@@ -791,20 +811,23 @@ mod tests {
     fn test_data_classification() {
         let manager = FgacManager::new();
 
-        manager.set_column_classification(
-            "employees".to_string(),
-            "salary".to_string(),
-            DataClassification::Confidential,
-            HashSet::from(["pii".to_string(), "financial".to_string()]),
-        ).unwrap();
+        manager
+            .set_column_classification(
+                "employees".to_string(),
+                "salary".to_string(),
+                DataClassification::Confidential,
+                HashSet::from(["pii".to_string(), "financial".to_string()]),
+            )
+            .unwrap();
 
-        let classification = manager.get_column_classification(
-            &"employees".to_string(),
-            &"salary".to_string(),
-        );
+        let classification =
+            manager.get_column_classification(&"employees".to_string(), &"salary".to_string());
 
         assert!(classification.is_some());
-        assert_eq!(classification.unwrap().classification, DataClassification::Confidential);
+        assert_eq!(
+            classification.unwrap().classification,
+            DataClassification::Confidential
+        );
     }
 
     #[test]

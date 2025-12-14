@@ -2,7 +2,7 @@
 //
 // Analyzes query patterns and provides insights into database workload
 
-use crate::{Result, error::DbError};
+use crate::{error::DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -28,7 +28,9 @@ impl WorkloadAnalyzer {
 
     // Log query execution
     pub fn log_execution(&self, execution: QueryExecution) -> Result<()> {
-        let mut log = self.query_log.write()
+        let mut log = self
+            .query_log
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
 
         log.push(execution);
@@ -39,7 +41,9 @@ impl WorkloadAnalyzer {
         }
 
         // Invalidate analysis cache
-        let mut cache = self.analysis_cache.write()
+        let mut cache = self
+            .analysis_cache
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         *cache = None;
 
@@ -49,7 +53,9 @@ impl WorkloadAnalyzer {
     // Analyze workload
     pub fn analyze(&self) -> Result<WorkloadAnalysis> {
         // Check cache
-        let cache = self.analysis_cache.read()
+        let cache = self
+            .analysis_cache
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
 
         if let Some(analysis) = cache.as_ref() {
@@ -57,7 +63,9 @@ impl WorkloadAnalyzer {
         }
         drop(cache);
 
-        let log = self.query_log.read()
+        let log = self
+            .query_log
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
 
         if log.is_empty() {
@@ -69,14 +77,14 @@ impl WorkloadAnalyzer {
         let total_time_ms: u64 = log.iter().map(|q| q.execution_time_ms).sum();
         let avg_time_ms = total_time_ms as f64 / total_queries as f64;
 
-        let slow_queries = log.iter()
-            .filter(|q| q.execution_time_ms > 1000)
-            .count();
+        let slow_queries = log.iter().filter(|q| q.execution_time_ms > 1000).count();
 
         // Identify most frequent queries
         let mut query_counts: HashMap<String, usize> = HashMap::new();
         for execution in log.iter() {
-            *query_counts.entry(execution.query_hash.clone()).or_insert(0) += 1;
+            *query_counts
+                .entry(execution.query_hash.clone())
+                .or_insert(0) += 1;
         }
 
         let mut most_frequent: Vec<_> = query_counts.into_iter().collect();
@@ -93,7 +101,9 @@ impl WorkloadAnalyzer {
         };
 
         // Update cache
-        let mut cache = self.analysis_cache.write()
+        let mut cache = self
+            .analysis_cache
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
         *cache = Some(analysis.clone());
 
@@ -102,7 +112,9 @@ impl WorkloadAnalyzer {
 
     // Get query execution log
     pub fn get_log(&self) -> Result<Vec<QueryExecution>> {
-        let log = self.query_log.read()
+        let log = self
+            .query_log
+            .read()
             .map_err(|_| DbError::LockError("Failed to acquire read lock".to_string()))?;
         Ok(log.clone())
     }

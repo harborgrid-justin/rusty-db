@@ -2,18 +2,18 @@
 //
 // Enterprise-grade API gateway with security and routing
 
-pub mod types;
-pub mod core;
+pub mod audit;
 pub mod auth;
 pub mod authz;
+pub mod core;
 pub mod ratelimit;
 pub mod security;
-pub mod audit;
+pub mod types;
 
 // Re-export main types and functions
-pub use types::*;
+pub use audit::*;
 pub use auth::*;
 pub use authz::*;
 pub use ratelimit::*;
 pub use security::*;
-pub use audit::*;
+pub use types::*;

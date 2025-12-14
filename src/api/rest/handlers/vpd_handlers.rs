@@ -3,16 +3,16 @@
 // REST API endpoints for managing VPD policies, including row-level security
 // and dynamic predicate injection.
 
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::security_vault::{SecurityPredicate, SecurityVaultManager, VpdPolicy};
 use axum::{
-    extract::{State, Path},
+    extract::{Path, State},
     response::Json,
 };
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use std::collections::HashMap;
 use parking_lot::RwLock;
-use crate::api::rest::types::{ApiState, ApiResult, ApiError};
-use crate::security_vault::{SecurityVaultManager, VpdPolicy, SecurityPredicate};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Arc;
 
 // Request/Response Types
 
@@ -109,19 +109,19 @@ pub async fn list_vpd_policies(
 ) -> ApiResult<Json<Vec<VpdPolicyResponse>>> {
     let vault = get_or_init_vault()?;
 
-        let vpd_engine = vault.vpd_engine();
-        let vpd_guard = vpd_engine.read();
+    let vpd_engine = vault.vpd_engine();
+    let vpd_guard = vpd_engine.read();
 
-        let policy_names = vpd_guard.list_policies();
-        let mut responses = Vec::new();
+    let policy_names = vpd_guard.list_policies();
+    let mut responses = Vec::new();
 
-        for name in policy_names {
-            if let Some(policy) = vpd_guard.get_policy(&name) {
-                responses.push(policy_to_response(&policy));
-            }
+    for name in policy_names {
+        if let Some(policy) = vpd_guard.get_policy(&name) {
+            responses.push(policy_to_response(&policy));
         }
+    }
 
-        Ok(Json(responses))
+    Ok(Json(responses))
 }
 
 /// GET /api/v1/security/vpd/policies/{name}
@@ -133,13 +133,16 @@ pub async fn get_vpd_policy(
 ) -> ApiResult<Json<VpdPolicyResponse>> {
     let vault = get_or_init_vault()?;
 
-        let vpd_engine = vault.vpd_engine();
-        let vpd_guard = vpd_engine.read();
+    let vpd_engine = vault.vpd_engine();
+    let vpd_guard = vpd_engine.read();
 
-        match vpd_guard.get_policy(&name) {
-            Some(policy) => Ok(Json(policy_to_response(&policy))),
-            None => Err(ApiError::new("POLICY_NOT_FOUND", format!("Policy '{}' not found", name))),
-        }
+    match vpd_guard.get_policy(&name) {
+        Some(policy) => Ok(Json(policy_to_response(&policy))),
+        None => Err(ApiError::new(
+            "POLICY_NOT_FOUND",
+            format!("Policy '{}' not found", name),
+        )),
+    }
 }
 
 /// POST /api/v1/security/vpd/policies
@@ -151,7 +154,7 @@ pub async fn create_vpd_policy(
 ) -> ApiResult<Json<VpdPolicyResponse>> {
     // Note: Stub implementation - actual VPD policy creation requires &mut self on vault
     // TODO: Refactor SecurityVaultManager methods to use interior mutability consistently
-    let _ = get_or_init_vault()?;  // Ensure vault exists
+    let _ = get_or_init_vault()?; // Ensure vault exists
 
     Ok(Json(VpdPolicyResponse {
         name: request.name,
@@ -174,39 +177,44 @@ pub async fn update_vpd_policy(
 ) -> ApiResult<Json<VpdPolicyResponse>> {
     let vault = get_or_init_vault()?;
 
-        let vpd_engine = vault.vpd_engine();
-        let vpd_guard = vpd_engine.write();
+    let vpd_engine = vault.vpd_engine();
+    let vpd_guard = vpd_engine.write();
 
-        // Get the current policy
-        match vpd_guard.get_policy(&name) {
-            Some(mut policy) => {
-                // Update fields if provided
-                if let Some(enabled) = request.enabled {
-                    if enabled {
-                        drop(vpd_guard);
-                        let vpd_engine = vault.vpd_engine();
-                        let mut vpd_guard = vpd_engine.write();
-                        vpd_guard.enable_policy(&name)
-                            .map_err(|e| ApiError::new("POLICY_UPDATE_ERROR", e.to_string()))?;
-                    } else {
-                        drop(vpd_guard);
-                        let vpd_engine = vault.vpd_engine();
-                        let mut vpd_guard = vpd_engine.write();
-                        vpd_guard.disable_policy(&name)
-                            .map_err(|e| ApiError::new("POLICY_UPDATE_ERROR", e.to_string()))?;
-                    }
-                    policy.enabled = enabled;
+    // Get the current policy
+    match vpd_guard.get_policy(&name) {
+        Some(mut policy) => {
+            // Update fields if provided
+            if let Some(enabled) = request.enabled {
+                if enabled {
+                    drop(vpd_guard);
+                    let vpd_engine = vault.vpd_engine();
+                    let mut vpd_guard = vpd_engine.write();
+                    vpd_guard
+                        .enable_policy(&name)
+                        .map_err(|e| ApiError::new("POLICY_UPDATE_ERROR", e.to_string()))?;
+                } else {
+                    drop(vpd_guard);
+                    let vpd_engine = vault.vpd_engine();
+                    let mut vpd_guard = vpd_engine.write();
+                    vpd_guard
+                        .disable_policy(&name)
+                        .map_err(|e| ApiError::new("POLICY_UPDATE_ERROR", e.to_string()))?;
                 }
-                if let Some(predicate_str) = request.predicate {
-                    match SecurityPredicate::parse(&predicate_str) {
-                        Ok(predicate) => policy.predicate = predicate,
-                        Err(e) => return Err(ApiError::new("INVALID_PREDICATE", e.to_string())),
-                    }
-                }
-                Ok(Json(policy_to_response(&policy)))
+                policy.enabled = enabled;
             }
-            None => Err(ApiError::new("POLICY_NOT_FOUND", format!("Policy '{}' not found", name))),
+            if let Some(predicate_str) = request.predicate {
+                match SecurityPredicate::parse(&predicate_str) {
+                    Ok(predicate) => policy.predicate = predicate,
+                    Err(e) => return Err(ApiError::new("INVALID_PREDICATE", e.to_string())),
+                }
+            }
+            Ok(Json(policy_to_response(&policy)))
         }
+        None => Err(ApiError::new(
+            "POLICY_NOT_FOUND",
+            format!("Policy '{}' not found", name),
+        )),
+    }
 }
 
 /// DELETE /api/v1/security/vpd/policies/{name}
@@ -218,18 +226,16 @@ pub async fn delete_vpd_policy(
 ) -> ApiResult<Json<serde_json::Value>> {
     let vault = get_or_init_vault()?;
 
-        let vpd_engine = vault.vpd_engine();
-        let mut vpd_guard = vpd_engine.write();
+    let vpd_engine = vault.vpd_engine();
+    let mut vpd_guard = vpd_engine.write();
 
-        match vpd_guard.drop_policy(&name) {
-            Ok(_) => {
-                Ok(Json(serde_json::json!({
-                    "success": true,
-                    "message": format!("VPD policy '{}' deleted successfully", name),
-                })))
-            }
-            Err(e) => Err(ApiError::new("POLICY_DELETE_ERROR", e.to_string())),
-        }
+    match vpd_guard.drop_policy(&name) {
+        Ok(_) => Ok(Json(serde_json::json!({
+            "success": true,
+            "message": format!("VPD policy '{}' deleted successfully", name),
+        }))),
+        Err(e) => Err(ApiError::new("POLICY_DELETE_ERROR", e.to_string())),
+    }
 }
 
 /// POST /api/v1/security/vpd/test-predicate
@@ -246,11 +252,11 @@ pub async fn test_vpd_predicate(
             match predicate.evaluate(&request.context) {
                 Ok(evaluated) => {
                     // Simple SQL validation (check for basic SQL keywords)
-                    let valid_sql = evaluated.contains("=") ||
-                                    evaluated.contains(">") ||
-                                    evaluated.contains("<") ||
-                                    evaluated.contains("AND") ||
-                                    evaluated.contains("OR");
+                    let valid_sql = evaluated.contains("=")
+                        || evaluated.contains(">")
+                        || evaluated.contains("<")
+                        || evaluated.contains("AND")
+                        || evaluated.contains("OR");
 
                     Ok(Json(TestVpdPredicateResult {
                         original_predicate: request.predicate,
@@ -275,22 +281,22 @@ pub async fn get_table_policies(
 ) -> ApiResult<Json<Vec<VpdPolicyResponse>>> {
     let vault = get_or_init_vault()?;
 
-        let vpd_engine = vault.vpd_engine();
-        let vpd_guard = vpd_engine.read();
+    let vpd_engine = vault.vpd_engine();
+    let vpd_guard = vpd_engine.read();
 
-        // Filter policies by table name
-        let policy_names = vpd_guard.list_policies();
-        let mut responses = Vec::new();
+    // Filter policies by table name
+    let policy_names = vpd_guard.list_policies();
+    let mut responses = Vec::new();
 
-        for name in policy_names {
-            if let Some(policy) = vpd_guard.get_policy(&name) {
-                if policy.table_name == table_name {
-                    responses.push(policy_to_response(&policy));
-                }
+    for name in policy_names {
+        if let Some(policy) = vpd_guard.get_policy(&name) {
+            if policy.table_name == table_name {
+                responses.push(policy_to_response(&policy));
             }
         }
+    }
 
-        Ok(Json(responses))
+    Ok(Json(responses))
 }
 
 /// POST /api/v1/security/vpd/policies/{name}/enable
@@ -302,18 +308,16 @@ pub async fn enable_vpd_policy(
 ) -> ApiResult<Json<serde_json::Value>> {
     let vault = get_or_init_vault()?;
 
-        let vpd_engine = vault.vpd_engine();
-        let mut vpd_guard = vpd_engine.write();
+    let vpd_engine = vault.vpd_engine();
+    let mut vpd_guard = vpd_engine.write();
 
-        match vpd_guard.enable_policy(&name) {
-            Ok(_) => {
-                Ok(Json(serde_json::json!({
-                    "success": true,
-                    "message": format!("VPD policy '{}' enabled", name),
-                })))
-            }
-            Err(e) => Err(ApiError::new("POLICY_ENABLE_ERROR", e.to_string())),
-        }
+    match vpd_guard.enable_policy(&name) {
+        Ok(_) => Ok(Json(serde_json::json!({
+            "success": true,
+            "message": format!("VPD policy '{}' enabled", name),
+        }))),
+        Err(e) => Err(ApiError::new("POLICY_ENABLE_ERROR", e.to_string())),
+    }
 }
 
 /// POST /api/v1/security/vpd/policies/{name}/disable
@@ -325,16 +329,14 @@ pub async fn disable_vpd_policy(
 ) -> ApiResult<Json<serde_json::Value>> {
     let vault = get_or_init_vault()?;
 
-        let vpd_engine = vault.vpd_engine();
-        let mut vpd_guard = vpd_engine.write();
+    let vpd_engine = vault.vpd_engine();
+    let mut vpd_guard = vpd_engine.write();
 
-        match vpd_guard.disable_policy(&name) {
-            Ok(_) => {
-                Ok(Json(serde_json::json!({
-                    "success": true,
-                    "message": format!("VPD policy '{}' disabled", name),
-                })))
-            }
-            Err(e) => Err(ApiError::new("POLICY_DISABLE_ERROR", e.to_string())),
-        }
+    match vpd_guard.disable_policy(&name) {
+        Ok(_) => Ok(Json(serde_json::json!({
+            "success": true,
+            "message": format!("VPD policy '{}' disabled", name),
+        }))),
+        Err(e) => Err(ApiError::new("POLICY_DISABLE_ERROR", e.to_string())),
+    }
 }

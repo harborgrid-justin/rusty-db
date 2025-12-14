@@ -7,29 +7,23 @@
 // - CTE materialization and optimization
 
 mod core;
+mod dependency;
 mod optimizer;
 mod statistics;
-mod dependency;
 
 // Re-export public types
-pub use core::{
-    CteDefinition, CteContext, RecursiveCteEvaluator,
-    CycleDetector, CtePlanNode,
-};
-pub use optimizer::{
-    CteReferenceTracker, CteOptimizer, CteRewriteRules,
-    MaterializationStrategy, MaterializationStrategySelector,
-    NestedCteHandler,
-};
-pub use statistics::{
-    CteStatistics, CteStatisticsReport, CteDetail,
-};
+pub use core::{CteContext, CteDefinition, CtePlanNode, CycleDetector, RecursiveCteEvaluator};
 pub use dependency::CteDependencyGraph;
+pub use optimizer::{
+    CteOptimizer, CteReferenceTracker, CteRewriteRules, MaterializationStrategy,
+    MaterializationStrategySelector, NestedCteHandler,
+};
+pub use statistics::{CteDetail, CteStatistics, CteStatisticsReport};
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::execution::{QueryResult, planner::PlanNode};
+    use crate::execution::{planner::PlanNode, QueryResult};
     use crate::parser::JoinType;
 
     #[test]

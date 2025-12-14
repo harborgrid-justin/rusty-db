@@ -7,8 +7,8 @@
 // quantized = round((value / scale) + zero_point)
 // dequantized = (quantized - zero_point) * scale
 
-use serde::{Serialize, Deserialize};
-use super::{Vector};
+use super::Vector;
+use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // Quantized Weights
@@ -88,7 +88,9 @@ impl Default for QuantizationConfig {
 pub fn quantize_weights(weights: &[f64], config: &QuantizationConfig) -> QuantizedWeights {
     match config.method {
         QuantizationMethod::Symmetric => quantize_symmetric(weights),
-        QuantizationMethod::Asymmetric => quantize_asymmetric(weights, config.calibration_percentile),
+        QuantizationMethod::Asymmetric => {
+            quantize_asymmetric(weights, config.calibration_percentile)
+        }
         QuantizationMethod::PerChannel => {
             // For vector, treat as single channel
             quantize_asymmetric(weights, config.calibration_percentile)
@@ -103,16 +105,9 @@ fn quantize_symmetric(weights: &[f64]) -> QuantizedWeights {
     }
 
     // Find maximum absolute value
-    let max_abs = weights
-        .iter()
-        .map(|w| w.abs())
-        .fold(0.0, f64::max);
+    let max_abs = weights.iter().map(|w| w.abs()).fold(0.0, f64::max);
 
-    let scale = if max_abs > 0.0 {
-        max_abs / 127.0
-    } else {
-        1.0
-    };
+    let scale = if max_abs > 0.0 { max_abs / 127.0 } else { 1.0 };
 
     let values: Vec<i8> = weights
         .iter()
@@ -139,7 +134,10 @@ fn quantize_asymmetric(weights: &[f64], calibration_percentile: f64) -> Quantize
         let lower_idx = ((100.0 - calibration_percentile) / 200.0 * weights.len() as f64) as usize;
         let upper_idx = ((100.0 + calibration_percentile) / 200.0 * weights.len() as f64) as usize;
 
-        (sorted_weights[lower_idx], sorted_weights[upper_idx.min(weights.len() - 1)])
+        (
+            sorted_weights[lower_idx],
+            sorted_weights[upper_idx.min(weights.len() - 1)],
+        )
     } else {
         let min_val = weights.iter().copied().fold(f64::INFINITY, f64::min);
         let max_val = weights.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -147,11 +145,7 @@ fn quantize_asymmetric(weights: &[f64], calibration_percentile: f64) -> Quantize
     };
 
     let range = max_val - min_val;
-    let scale = if range > 0.0 {
-        range / 255.0
-    } else {
-        1.0
-    };
+    let scale = if range > 0.0 { range / 255.0 } else { 1.0 };
 
     let zero_point = (-min_val / scale).round().clamp(-128.0, 127.0) as i8;
 
@@ -188,10 +182,7 @@ pub fn dequantize_weights(qweights: &QuantizedWeights) -> Vector {
 // 1. INT8 operations are faster than FP64
 // 2. Less memory bandwidth required
 // 3. Can use SIMD INT8 instructions
-pub fn quantized_dot_product(
-    qa: &QuantizedWeights,
-    qb: &QuantizedWeights,
-) -> f64 {
+pub fn quantized_dot_product(qa: &QuantizedWeights, qb: &QuantizedWeights) -> f64 {
     assert_eq!(qa.values.len(), qb.values.len());
 
     // Compute dot product in integer domain
@@ -227,11 +218,7 @@ pub fn quantized_matrix_vector_multiply(
 // Output: float prediction
 //
 // This avoids quantizing input features, only weights are quantized
-pub fn quantized_linear_predict(
-    qweights: &QuantizedWeights,
-    features: &[f64],
-    bias: f64,
-) -> f64 {
+pub fn quantized_linear_predict(qweights: &QuantizedWeights, features: &[f64], bias: f64) -> f64 {
     assert_eq!(qweights.values.len(), features.len());
 
     let mut sum = bias;
@@ -348,11 +335,7 @@ pub struct QuantizationStatsData {
 
 impl QuantizedLinearModel {
     // Create quantized model from float weights
-    pub fn from_weights(
-        weights: &[f64],
-        bias: f64,
-        config: &QuantizationConfig,
-    ) -> Self {
+    pub fn from_weights(weights: &[f64], bias: f64, config: &QuantizationConfig) -> Self {
         let qweights = quantize_weights(weights, config);
         let stats = QuantizationStats::compute(weights, &qweights);
 

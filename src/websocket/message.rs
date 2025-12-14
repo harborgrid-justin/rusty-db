@@ -26,10 +26,10 @@
 // let json = serde_json::to_string(&msg)?;
 // ```
 
-use serde::{Deserialize, Serialize};
-use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
+use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 
 /// Query result for WebSocket messages (simplified)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -60,10 +60,7 @@ pub enum WebSocketMessage {
     Pong(Vec<u8>),
 
     /// Close message with optional reason
-    Close {
-        code: u16,
-        reason: String,
-    },
+    Close { code: u16, reason: String },
 
     /// Query request message
     Query {
@@ -73,10 +70,7 @@ pub enum WebSocketMessage {
     },
 
     /// Query result message
-    QueryResult {
-        id: String,
-        result: WsQueryResult,
-    },
+    QueryResult { id: String, result: WsQueryResult },
 
     /// Error message
     Error {
@@ -93,9 +87,7 @@ pub enum WebSocketMessage {
     },
 
     /// Unsubscribe message
-    Unsubscribe {
-        id: String,
-    },
+    Unsubscribe { id: String },
 
     /// Event notification
     Event {
@@ -167,9 +159,7 @@ impl WebSocketMessage {
 
     /// Create an unsubscribe message
     pub fn unsubscribe<S: Into<String>>(id: S) -> Self {
-        WebSocketMessage::Unsubscribe {
-            id: id.into(),
-        }
+        WebSocketMessage::Unsubscribe { id: id.into() }
     }
 
     /// Create an event notification message
@@ -182,10 +172,9 @@ impl WebSocketMessage {
 
     /// Check if this is a control message (ping, pong, close)
     pub fn is_control(&self) -> bool {
-        matches!(self,
-            WebSocketMessage::Ping(_) |
-            WebSocketMessage::Pong(_) |
-            WebSocketMessage::Close { .. }
+        matches!(
+            self,
+            WebSocketMessage::Ping(_) | WebSocketMessage::Pong(_) | WebSocketMessage::Close { .. }
         )
     }
 
@@ -290,14 +279,12 @@ impl MessageCodec {
             WebSocketMessage::Binary(data) => Ok(TungsteniteMessage::Binary(data.clone().into())),
             WebSocketMessage::Ping(data) => Ok(TungsteniteMessage::Ping(data.clone().into())),
             WebSocketMessage::Pong(data) => Ok(TungsteniteMessage::Pong(data.clone().into())),
-            WebSocketMessage::Close { code, reason } => {
-                Ok(TungsteniteMessage::Close(Some(
-                    tokio_tungstenite::tungstenite::protocol::CloseFrame {
-                        code: (*code).into(),
-                        reason: reason.clone().into(),
-                    }
-                )))
-            }
+            WebSocketMessage::Close { code, reason } => Ok(TungsteniteMessage::Close(Some(
+                tokio_tungstenite::tungstenite::protocol::CloseFrame {
+                    code: (*code).into(),
+                    reason: reason.clone().into(),
+                },
+            ))),
             // For structured messages, serialize to JSON
             _ => {
                 let json = serde_json::to_string(msg)
@@ -336,16 +323,16 @@ impl MessageCodec {
                     })
                 }
             }
-            TungsteniteMessage::Frame(_) => {
-                Err(DbError::InvalidInput("Unexpected frame message".to_string()))
-            }
+            TungsteniteMessage::Frame(_) => Err(DbError::InvalidInput(
+                "Unexpected frame message".to_string(),
+            )),
         }
     }
 
     /// Encode a message envelope
     pub fn encode_envelope(envelope: &MessageEnvelope) -> Result<TungsteniteMessage> {
-        let json = serde_json::to_string(envelope)
-            .map_err(|e| DbError::Serialization(e.to_string()))?;
+        let json =
+            serde_json::to_string(envelope).map_err(|e| DbError::Serialization(e.to_string()))?;
         Ok(TungsteniteMessage::Text(json.into()))
     }
 
@@ -357,7 +344,7 @@ impl MessageCodec {
                     .map_err(|e| DbError::Serialization(e.to_string()))
             }
             _ => Err(DbError::InvalidInput(
-                "Envelopes must be text messages".to_string()
+                "Envelopes must be text messages".to_string(),
             )),
         }
     }
@@ -374,7 +361,8 @@ pub struct MessageRouter {
 }
 
 /// Message handler function type
-pub type MessageHandler = Box<dyn Fn(&WebSocketMessage) -> Result<Option<WebSocketMessage>> + Send + Sync>;
+pub type MessageHandler =
+    Box<dyn Fn(&WebSocketMessage) -> Result<Option<WebSocketMessage>> + Send + Sync>;
 
 impl MessageRouter {
     /// Create a new message router
@@ -441,9 +429,7 @@ mod tests {
     #[test]
     fn test_message_envelope() {
         let payload = WebSocketMessage::text("test");
-        let envelope = MessageEnvelope::new(payload)
-            .from("conn1")
-            .to("conn2");
+        let envelope = MessageEnvelope::new(payload).from("conn1").to("conn2");
 
         assert_eq!(envelope.from, Some("conn1".to_string()));
         assert_eq!(envelope.to, Some("conn2".to_string()));
@@ -466,13 +452,11 @@ mod tests {
     fn test_message_router() {
         let mut router = MessageRouter::new();
 
-        router.register("text", |msg| {
-            match msg {
-                WebSocketMessage::Text(text) => {
-                    Ok(Some(WebSocketMessage::text(format!("Echo: {}", text))))
-                }
-                _ => Ok(None),
+        router.register("text", |msg| match msg {
+            WebSocketMessage::Text(text) => {
+                Ok(Some(WebSocketMessage::text(format!("Echo: {}", text))))
             }
+            _ => Ok(None),
         });
 
         let msg = WebSocketMessage::text("hello");

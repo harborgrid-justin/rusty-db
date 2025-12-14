@@ -35,19 +35,19 @@
 // // Automatically zeroed on drop
 // ```
 
-use std::time::SystemTime;
-use std::time::Instant;
-use std::alloc::{alloc, dealloc, Layout};
-use std::ptr::{self, NonNull};
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::collections::HashMap;
+use crate::error::{DbError, Result};
 #[cfg(unix)]
 use libc::mprotect;
 use parking_lot::RwLock;
-use std::time::{Duration};
-use crate::error::{Result, DbError};
 use rand::Rng;
+use std::alloc::{alloc, dealloc, Layout};
+use std::collections::HashMap;
+use std::ptr::{self, NonNull};
+use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // ============================================================================
 // Constants and Configuration
@@ -359,11 +359,7 @@ impl GuardedMemory {
 
         let mut buffer = vec![0u8; len];
         unsafe {
-            ptr::copy_nonoverlapping(
-                self.data_ptr.as_ptr().add(offset),
-                buffer.as_mut_ptr(),
-                len,
-            );
+            ptr::copy_nonoverlapping(self.data_ptr.as_ptr().add(offset), buffer.as_mut_ptr(), len);
         }
 
         Ok(buffer)
@@ -375,7 +371,7 @@ impl Drop for GuardedMemory {
         // Unprotect guard pages before deallocation
         #[cfg(unix)]
         {
-use libc::{PROT_READ, PROT_WRITE};
+            use libc::{PROT_READ, PROT_WRITE};
             unsafe {
                 mprotect(
                     self.front_guard.as_ptr() as *mut libc::c_void,
@@ -478,7 +474,9 @@ impl<T> SecureBuffer<T> {
         let front_value = u64::from_le_bytes(front_bytes.try_into().unwrap());
 
         if self.front_canary.is_corrupted(front_value) {
-            return Err(DbError::Other("Front canary corrupted - buffer overflow detected!".into()));
+            return Err(DbError::Other(
+                "Front canary corrupted - buffer overflow detected!".into(),
+            ));
         }
 
         // Read back canary
@@ -487,7 +485,9 @@ impl<T> SecureBuffer<T> {
         let back_value = u64::from_le_bytes(back_bytes.try_into().unwrap());
 
         if self.back_canary.is_corrupted(back_value) {
-            return Err(DbError::Other("Back canary corrupted - buffer overflow detected!".into()));
+            return Err(DbError::Other(
+                "Back canary corrupted - buffer overflow detected!".into(),
+            ));
         }
 
         Ok(())
@@ -507,10 +507,7 @@ impl<T> SecureBuffer<T> {
 
         let offset = CANARY_SIZE + index * size_of::<T>();
         let bytes = unsafe {
-            std::slice::from_raw_parts(
-                data.as_ptr() as *const u8,
-                data.len() * size_of::<T>(),
-            )
+            std::slice::from_raw_parts(data.as_ptr() as *const u8, data.len() * size_of::<T>())
         };
 
         self.memory.write(offset, bytes)?;
@@ -543,11 +540,7 @@ impl<T> SecureBuffer<T> {
 
         let mut result = vec![T::default(); count];
         unsafe {
-            ptr::copy_nonoverlapping(
-                bytes.as_ptr(),
-                result.as_mut_ptr() as *mut u8,
-                size,
-            );
+            ptr::copy_nonoverlapping(bytes.as_ptr(), result.as_mut_ptr() as *mut u8, size);
         }
 
         Ok(result)
@@ -576,11 +569,7 @@ impl<T> SecureBuffer<T> {
         let offset = CANARY_SIZE;
         let size = self.capacity * size_of::<T>();
         unsafe {
-            ptr::write_bytes(
-                self.memory.as_mut_ptr().add(offset),
-                0,
-                size,
-            );
+            ptr::write_bytes(self.memory.as_mut_ptr().add(offset), 0, size);
         }
         self.length.store(0, Ordering::Release);
     }
@@ -641,7 +630,7 @@ impl AllocationMetadata {
                 SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .unwrap()
-                    .as_secs()
+                    .as_secs(),
             ),
             access_count: AtomicU64::new(0),
             is_freed: AtomicBool::new(false),
@@ -649,8 +638,7 @@ impl AllocationMetadata {
     }
 
     fn is_valid(&self) -> bool {
-        self.magic.load(Ordering::Acquire) == ALLOC_MAGIC
-            && !self.is_freed.load(Ordering::Acquire)
+        self.magic.load(Ordering::Acquire) == ALLOC_MAGIC && !self.is_freed.load(Ordering::Acquire)
     }
 
     fn mark_freed(&self) {
@@ -710,7 +698,9 @@ impl SecureZeroingAllocator {
 
         let ptr = unsafe { alloc(layout) };
         if ptr.is_null() {
-            self.stats.allocation_failures.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .allocation_failures
+                .fetch_add(1, Ordering::Relaxed);
             return Err(DbError::Other("Memory allocation failed".into()));
         }
 
@@ -729,11 +719,14 @@ impl SecureZeroingAllocator {
 
         // Update statistics
         self.stats.total_allocations.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_allocated.fetch_add(size as u64, Ordering::Relaxed);
-        self.stats.active_allocations.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .bytes_allocated
+            .fetch_add(size as u64, Ordering::Relaxed);
+        self.stats
+            .active_allocations
+            .fetch_add(1, Ordering::Relaxed);
 
-        NonNull::new(ptr)
-            .ok_or_else(|| DbError::Other("Invalid allocation pointer".into()))
+        NonNull::new(ptr).ok_or_else(|| DbError::Other("Invalid allocation pointer".into()))
     }
 
     // Deallocate memory with secure zeroing
@@ -745,15 +738,21 @@ impl SecureZeroingAllocator {
             let allocations = self.allocations.write();
             if let Some(metadata) = allocations.get(&address) {
                 if !metadata.is_valid() {
-                    self.stats.double_free_detected.fetch_add(1, Ordering::Relaxed);
+                    self.stats
+                        .double_free_detected
+                        .fetch_add(1, Ordering::Relaxed);
                     return Err(DbError::Other("Double-free detected!".into()));
                 }
 
                 // Mark as freed
                 metadata.mark_freed();
             } else {
-                self.stats.invalid_free_detected.fetch_add(1, Ordering::Relaxed);
-                return Err(DbError::Other("Invalid free - pointer not allocated by this allocator".into()));
+                self.stats
+                    .invalid_free_detected
+                    .fetch_add(1, Ordering::Relaxed);
+                return Err(DbError::Other(
+                    "Invalid free - pointer not allocated by this allocator".into(),
+                ));
             }
         }
 
@@ -781,9 +780,15 @@ impl SecureZeroingAllocator {
         self.allocations.write().remove(&address);
 
         // Update statistics
-        self.stats.total_deallocations.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_deallocated.fetch_add(size as u64, Ordering::Relaxed);
-        self.stats.active_allocations.fetch_sub(1, Ordering::Relaxed);
+        self.stats
+            .total_deallocations
+            .fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .bytes_deallocated
+            .fetch_add(size as u64, Ordering::Relaxed);
+        self.stats
+            .active_allocations
+            .fetch_sub(1, Ordering::Relaxed);
 
         Ok(())
     }
@@ -915,7 +920,9 @@ impl IsolatedHeap {
         let new_offset = current_offset + size;
 
         if new_offset > self.total_size {
-            self.stats.allocation_failures.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .allocation_failures
+                .fetch_add(1, Ordering::Relaxed);
             return Err(DbError::Other("Isolated heap exhausted".into()));
         }
 
@@ -935,10 +942,11 @@ impl IsolatedHeap {
 
         // Update statistics
         self.stats.total_allocations.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_allocated.fetch_add(size as u64, Ordering::Relaxed);
+        self.stats
+            .bytes_allocated
+            .fetch_add(size as u64, Ordering::Relaxed);
 
-        NonNull::new(ptr)
-            .ok_or_else(|| DbError::Other("Invalid allocation pointer".into()))
+        NonNull::new(ptr).ok_or_else(|| DbError::Other("Invalid allocation pointer".into()))
     }
 
     // Encrypt data in heap

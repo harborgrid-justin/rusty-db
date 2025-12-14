@@ -11,14 +11,14 @@
 // - Dynamic operator parameter tuning
 // - Adaptive query timeouts and resource limits
 
-use std::time::Instant;
 use crate::error::DbError;
-use crate::execution::{QueryResult, planner::PlanNode};
+use crate::execution::{planner::PlanNode, QueryResult};
 use crate::parser::JoinType;
-use std::sync::Arc;
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
+use std::time::Instant;
 
 // Adaptive execution context that tracks runtime statistics
 pub struct AdaptiveContext {
@@ -84,10 +84,10 @@ impl AdaptiveContext {
     pub fn allocate_memory(&self, size: usize) -> Result<(), DbError> {
         let mut used = self.memory_used.write();
         if *used + size > self.memory_budget {
-            return Err(DbError::Execution(
-                format!("Memory budget exceeded: {} + {} > {}",
-                        *used, size, self.memory_budget)
-            ));
+            return Err(DbError::Execution(format!(
+                "Memory budget exceeded: {} + {} > {}",
+                *used, size, self.memory_budget
+            )));
         }
         *used += size;
         Ok(())
@@ -290,15 +290,19 @@ impl AdaptiveExecutor {
     // Execute with periodic adaptation checkpoints
     fn execute_with_checkpoints(&self, plan: PlanNode) -> Result<QueryResult, DbError> {
         match plan {
-            PlanNode::Join { join_type, left, right, condition } => {
-                self.execute_adaptive_join(join_type, *left, *right, condition)
-            }
-            PlanNode::Aggregate { input, group_by, aggregates, having } => {
-                self.execute_adaptive_aggregate(*input, group_by, aggregates, having)
-            }
-            PlanNode::TableScan { table, columns } => {
-                self.execute_adaptive_scan(table, columns)
-            }
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => self.execute_adaptive_join(join_type, *left, *right, condition),
+            PlanNode::Aggregate {
+                input,
+                group_by,
+                aggregates,
+                having,
+            } => self.execute_adaptive_aggregate(*input, group_by, aggregates, having),
+            PlanNode::TableScan { table, columns } => self.execute_adaptive_scan(table, columns),
             _ => {
                 // Fall back to standard execution
                 Ok(QueryResult::empty())
@@ -347,8 +351,10 @@ impl AdaptiveExecutor {
             ctx.record_adaptation(AdaptationDecision {
                 timestamp: Instant::now(),
                 decision_type: AdaptationType::JoinAlgorithmSwitch,
-                reason: format!("Memory pressure: {:.2}, left cardinality: {}",
-                               memory_pressure, left_card),
+                reason: format!(
+                    "Memory pressure: {:.2}, left cardinality: {}",
+                    memory_pressure, left_card
+                ),
                 old_strategy: "hash".to_string(),
                 new_strategy: format!("{:?}", join_algorithm),
             });
@@ -383,7 +389,8 @@ impl AdaptiveExecutor {
 
                 for row in &right.rows {
                     if let Some(key) = row.get(0) {
-                        hash_table.entry(key.clone())
+                        hash_table
+                            .entry(key.clone())
                             .or_insert_with(Vec::new)
                             .push(row.clone());
                     }
@@ -422,7 +429,9 @@ impl AdaptiveExecutor {
 
                 for left_row in &left_sorted {
                     while right_idx < right_sorted.len() {
-                        if let (Some(lk), Some(rk)) = (left_row.get(0), right_sorted[right_idx].get(0)) {
+                        if let (Some(lk), Some(rk)) =
+                            (left_row.get(0), right_sorted[right_idx].get(0))
+                        {
                             if lk == rk {
                                 let mut joined = left_row.clone();
                                 joined.extend(right_sorted[right_idx].clone());
@@ -490,8 +499,10 @@ impl AdaptiveExecutor {
             ctx.record_adaptation(AdaptationDecision {
                 timestamp: Instant::now(),
                 decision_type: AdaptationType::AggregationStrategy,
-                reason: format!("Memory pressure: {:.2}, input size: {}",
-                               memory_pressure, input_card),
+                reason: format!(
+                    "Memory pressure: {:.2}, input size: {}",
+                    memory_pressure, input_card
+                ),
                 old_strategy: "hash".to_string(),
                 new_strategy: format!("{:?}", agg_strategy),
             });

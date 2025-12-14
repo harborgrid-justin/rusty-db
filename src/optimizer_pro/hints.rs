@@ -6,11 +6,10 @@
 // - Conflicting hint resolution
 // - Hint reporting
 
+use crate::error::{DbError, Result};
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
-use crate::error::{Result, DbError};
-use std::collections::{HashMap};
-
 
 // ============================================================================
 // Hint Parser
@@ -235,7 +234,8 @@ impl HintParser {
 
     // Register hint definition
     fn register_hint(&mut self, definition: HintDefinition) {
-        self.supported_hints.insert(definition.name.clone(), definition);
+        self.supported_hints
+            .insert(definition.name.clone(), definition);
     }
 
     // Register validation rules
@@ -290,7 +290,10 @@ impl HintParser {
     #[inline]
     fn parse_single_hint(&self, hint_str: &str) -> Result<Option<OptimizerHint>> {
         // Parse hint name and parameters
-        let parts: Vec<&str> = hint_str.trim_matches(|c| c == '(' || c == ')').split('(').collect();
+        let parts: Vec<&str> = hint_str
+            .trim_matches(|c| c == '(' || c == ')')
+            .split('(')
+            .collect();
         let hint_name = parts[0].to_uppercase();
 
         if !self.supported_hints.contains_key(&hint_name) {
@@ -299,10 +302,7 @@ impl HintParser {
         }
 
         let params = if parts.len() > 1 {
-            parts[1]
-                .split(',')
-                .map(|s| s.trim().to_string())
-                .collect()
+            parts[1].split(',').map(|s| s.trim().to_string()).collect()
         } else {
             vec![]
         };
@@ -550,7 +550,11 @@ impl HintValidator {
     }
 
     // Check for conflict between two hints
-    fn check_conflict(&self, hint1: &OptimizerHint, hint2: &OptimizerHint) -> Option<&ConflictRule> {
+    fn check_conflict(
+        &self,
+        hint1: &OptimizerHint,
+        hint2: &OptimizerHint,
+    ) -> Option<&ConflictRule> {
         let name1 = self.get_hint_name(hint1);
         let name2 = self.get_hint_name(hint2);
 
@@ -734,7 +738,7 @@ pub struct HintUsageStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::SystemTime;
+    use std::time::SystemTime;
 
     #[test]
     fn test_hint_parser() {

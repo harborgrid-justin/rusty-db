@@ -1,13 +1,13 @@
 // RustyDB Performance Hub - Unified performance dashboard and analysis
 // Provides comprehensive performance views and drill-down capabilities
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use std::time::{Duration};
-use parking_lot::RwLock;
+use std::time::Duration;
+use std::time::SystemTime;
 
 /// Performance Hub - unified performance monitoring and analysis
 pub struct PerformanceHub {
@@ -353,8 +353,10 @@ impl PerformanceHub {
 
         let mut tracker = self.top_sql_tracker.write();
 
-        let stats = tracker.sql_lookup.entry(sql_id.clone()).or_insert_with(|| {
-            SqlStats {
+        let stats = tracker
+            .sql_lookup
+            .entry(sql_id.clone())
+            .or_insert_with(|| SqlStats {
                 sql_id: sql_id.clone(),
                 sql_text: sql_text.clone(),
                 sql_hash: 0,
@@ -374,8 +376,7 @@ impl PerformanceHub {
                 last_active_time: SystemTime::now(),
                 module: None,
                 action: None,
-            }
-        });
+            });
 
         stats.executions += 1;
         stats.total_elapsed_time_micros += elapsed_micros;
@@ -392,10 +393,18 @@ impl PerformanceHub {
         let stats_clone = stats.clone();
 
         // Update indexes
-        tracker.by_elapsed_time.insert(stats_clone.total_elapsed_time_micros, stats_clone.clone());
-        tracker.by_cpu_time.insert(stats_clone.total_cpu_time_micros, stats_clone.clone());
-        tracker.by_io.insert(stats_clone.total_physical_reads, stats_clone.clone());
-        tracker.by_executions.insert(stats_clone.executions, stats_clone);
+        tracker
+            .by_elapsed_time
+            .insert(stats_clone.total_elapsed_time_micros, stats_clone.clone());
+        tracker
+            .by_cpu_time
+            .insert(stats_clone.total_cpu_time_micros, stats_clone.clone());
+        tracker
+            .by_io
+            .insert(stats_clone.total_physical_reads, stats_clone.clone());
+        tracker
+            .by_executions
+            .insert(stats_clone.executions, stats_clone);
     }
 
     /// Update session activity
@@ -410,8 +419,10 @@ impl PerformanceHub {
     ) {
         let mut tracker = self.session_tracker.write();
 
-        let activity = tracker.active_sessions.entry(session_id).or_insert_with(|| {
-            SessionActivity {
+        let activity = tracker
+            .active_sessions
+            .entry(session_id)
+            .or_insert_with(|| SessionActivity {
                 session_id,
                 user_name: user_name.clone(),
                 program: program.clone(),
@@ -430,8 +441,7 @@ impl PerformanceHub {
                 last_call_elapsed: Duration::from_secs(0),
                 logon_time: SystemTime::now(),
                 last_activity_time: SystemTime::now(),
-            }
-        });
+            });
 
         activity.state = state;
         activity.cpu_time_micros = cpu_time.as_micros() as u64;
@@ -452,8 +462,10 @@ impl PerformanceHub {
         let key = format!("{}:{}", wait_class, wait_event);
         let wait_micros = wait_time.as_micros() as u64;
 
-        let metrics = analyzer.wait_events.entry(key).or_insert_with(|| {
-            WaitEventMetrics {
+        let metrics = analyzer
+            .wait_events
+            .entry(key)
+            .or_insert_with(|| WaitEventMetrics {
                 wait_class: wait_class.clone(),
                 wait_event: wait_event.clone(),
                 total_waits: 0,
@@ -462,8 +474,7 @@ impl PerformanceHub {
                 max_wait_time_micros: 0,
                 time_waited_pct: 0.0,
                 sessions_affected: 0,
-            }
-        });
+            });
 
         metrics.total_waits += 1;
         metrics.total_wait_time_micros += wait_micros;
@@ -494,8 +505,10 @@ impl PerformanceHub {
 
         let duration_micros = duration.as_micros() as u64;
 
-        let stats = analyzer.file_stats.entry(file_name.clone()).or_insert_with(|| {
-            FileIoStats {
+        let stats = analyzer
+            .file_stats
+            .entry(file_name.clone())
+            .or_insert_with(|| FileIoStats {
                 file_name: file_name.clone(),
                 file_type: file_type.clone(),
                 reads: 0,
@@ -506,21 +519,22 @@ impl PerformanceHub {
                 write_time_micros: 0,
                 avg_read_time_ms: 0.0,
                 avg_write_time_ms: 0.0,
-            }
-        });
+            });
 
         match operation {
             IoOperation::Read => {
                 stats.reads += 1;
                 stats.read_bytes += bytes;
                 stats.read_time_micros += duration_micros;
-                stats.avg_read_time_ms = (stats.read_time_micros / stats.reads.max(1)) as f64 / 1000.0;
+                stats.avg_read_time_ms =
+                    (stats.read_time_micros / stats.reads.max(1)) as f64 / 1000.0;
             }
             IoOperation::Write => {
                 stats.writes += 1;
                 stats.write_bytes += bytes;
                 stats.write_time_micros += duration_micros;
-                stats.avg_write_time_ms = (stats.write_time_micros / stats.writes.max(1)) as f64 / 1000.0;
+                stats.avg_write_time_ms =
+                    (stats.write_time_micros / stats.writes.max(1)) as f64 / 1000.0;
             }
         }
 
@@ -575,19 +589,14 @@ impl PerformanceHub {
     /// Get top SQL by I/O
     pub fn get_top_sql_by_io(&self, limit: usize) -> Vec<SqlStats> {
         let tracker = self.top_sql_tracker.read();
-        tracker
-            .by_io
-            .values()
-            .rev()
-            .take(limit)
-            .cloned()
-            .collect()
+        tracker.by_io.values().rev().take(limit).cloned().collect()
     }
 
     /// Get top sessions
     pub fn get_top_sessions(&self, limit: usize) -> Vec<SessionActivity> {
         let tracker = self.session_tracker.read();
-        let mut sessions: Vec<SessionActivity> = tracker.active_sessions.values().cloned().collect();
+        let mut sessions: Vec<SessionActivity> =
+            tracker.active_sessions.values().cloned().collect();
         sessions.sort_by(|a, b| b.cpu_time_micros.cmp(&a.cpu_time_micros));
         sessions.into_iter().take(limit).collect()
     }
@@ -635,13 +644,21 @@ impl PerformanceHub {
     }
 
     /// Get wait event analysis for a time period
-    pub fn get_wait_event_analysis(&self, _start_time: SystemTime, _end_time: SystemTime) -> Vec<WaitEventMetrics> {
+    pub fn get_wait_event_analysis(
+        &self,
+        _start_time: SystemTime,
+        _end_time: SystemTime,
+    ) -> Vec<WaitEventMetrics> {
         let analyzer = self.wait_analyzer.read();
         analyzer.wait_events.values().cloned().collect()
     }
 
     /// Get I/O analysis for a time period
-    pub fn get_io_analysis(&self, _start_time: SystemTime, _end_time: SystemTime) -> Vec<FileIoStats> {
+    pub fn get_io_analysis(
+        &self,
+        _start_time: SystemTime,
+        _end_time: SystemTime,
+    ) -> Vec<FileIoStats> {
         let analyzer = self.io_analyzer.read();
         analyzer.file_stats.values().cloned().collect()
     }
@@ -707,5 +724,3 @@ mod tests {
         assert_eq!(wait_events[0].total_waits, 1);
     }
 }
-
-

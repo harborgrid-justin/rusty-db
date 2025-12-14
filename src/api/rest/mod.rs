@@ -14,23 +14,26 @@
 // 9. **Consistent Formatting**: `rustfmt` and `clippy` compliant
 // 10. **Comprehensive Tests**: Unit and integration tests included
 
-pub mod types;
+pub mod cors;
 pub mod handlers;
 pub mod middleware;
-pub mod server;
-pub mod cors;
-pub mod system_metrics;
 pub mod openapi;
+pub mod server;
 pub mod swagger;
+pub mod system_metrics;
+pub mod types;
 
 // Re-export main types and functions for convenience
-pub use types::*;
-pub use server::RestApiServer;
+pub use cors::{build_cors_layer, development_origins, production_origins, OriginMatcher};
 pub use handlers::*;
 pub use middleware::*;
-pub use cors::{OriginMatcher, build_cors_layer, development_origins, production_origins};
-pub use openapi::{ApiDoc, get_openapi_json, get_openapi_pretty};
-pub use swagger::{configure_swagger, configure_default_swagger, configure_production_swagger, configure_development_swagger, create_api_docs_router, SwaggerConfiguration};
+pub use openapi::{get_openapi_json, get_openapi_pretty, ApiDoc};
+pub use server::RestApiServer;
+pub use swagger::{
+    configure_default_swagger, configure_development_swagger, configure_production_swagger,
+    configure_swagger, create_api_docs_router, SwaggerConfiguration,
+};
+pub use types::*;
 
 // Re-export the server as the main entry point
 pub use server::RestApiServer as Server;

@@ -1,13 +1,13 @@
 // RustyDB SQL Tuning Advisor - Oracle-like SQL performance tuning
 // Provides automated SQL analysis, plan recommendations, and tuning suggestions
 
-use std::time::SystemTime;
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::Result;
-use crate::error::DbError;
+use std::time::SystemTime;
 
 // SQL Tuning Advisor for automated query optimization
 pub struct SqlTuningAdvisor {
@@ -451,7 +451,9 @@ impl SqlTuningAdvisor {
         let recommendations = self.analyze_sql(task_id)?;
 
         // Store recommendations
-        self.recommendations.write().insert(task_id, recommendations);
+        self.recommendations
+            .write()
+            .insert(task_id, recommendations);
 
         // Update task status
         {
@@ -514,7 +516,8 @@ impl SqlTuningAdvisor {
                         recommendation_type: RecommendationType::AlternativePlan,
                         benefit_type: BenefitType::ExecutionTime,
                         estimated_benefit_pct: 20.0 + (i as f64 * 5.0),
-                        rationale: "Alternative execution plan with different join order".to_string(),
+                        rationale: "Alternative execution plan with different join order"
+                            .to_string(),
                         action: "Consider using SQL profile to stabilize this plan".to_string(),
                         details: RecommendationDetails::AlternativePlan(plan.clone()),
                     });
@@ -550,7 +553,8 @@ impl SqlTuningAdvisor {
         let mut issues = Vec::new();
 
         // Check for potential full table scan
-        if sql_text.to_uppercase().contains("SELECT") && !sql_text.to_uppercase().contains("WHERE") {
+        if sql_text.to_uppercase().contains("SELECT") && !sql_text.to_uppercase().contains("WHERE")
+        {
             issues.push(PlanIssue {
                 severity: IssueSeverity::Warning,
                 issue_type: IssueType::FullTableScan,
@@ -580,28 +584,24 @@ impl SqlTuningAdvisor {
             plan_hash: self.compute_plan_hash(sql_text),
             estimated_cost: 1000.0,
             estimated_cardinality: 10000,
-            operations: vec![
-                PlanOperation {
-                    id: 1,
-                    operation: "TABLE ACCESS FULL".to_string(),
-                    object_name: Some("USERS".to_string()),
-                    cost: 1000.0,
-                    cardinality: 10000,
-                    bytes: 1000000,
-                    partition_start: None,
-                    partition_stop: None,
-                },
-            ],
+            operations: vec![PlanOperation {
+                id: 1,
+                operation: "TABLE ACCESS FULL".to_string(),
+                object_name: Some("USERS".to_string()),
+                cost: 1000.0,
+                cardinality: 10000,
+                bytes: 1000000,
+                partition_start: None,
+                partition_stop: None,
+            }],
             issues,
-            access_paths: vec![
-                AccessPath {
-                    table_name: "USERS".to_string(),
-                    access_type: AccessType::FullTableScan,
-                    index_name: None,
-                    estimated_cost: 1000.0,
-                    estimated_rows: 10000,
-                },
-            ],
+            access_paths: vec![AccessPath {
+                table_name: "USERS".to_string(),
+                access_type: AccessType::FullTableScan,
+                index_name: None,
+                estimated_cost: 1000.0,
+                estimated_rows: 10000,
+            }],
         })
     }
 
@@ -612,7 +612,9 @@ impl SqlTuningAdvisor {
             recommendation_type: RecommendationType::Index,
             benefit_type: BenefitType::IoReduction,
             estimated_benefit_pct: 40.0,
-            rationale: "Creating an index can significantly reduce I/O and improve query performance".to_string(),
+            rationale:
+                "Creating an index can significantly reduce I/O and improve query performance"
+                    .to_string(),
             action: "CREATE INDEX idx_users_id ON users(id)".to_string(),
             details: RecommendationDetails::Index(IndexRecommendation {
                 table_name: "users".to_string(),
@@ -620,7 +622,8 @@ impl SqlTuningAdvisor {
                 index_type: "B-TREE".to_string(),
                 estimated_size_bytes: 1024 * 1024,
                 estimated_improvement_pct: 40.0,
-                usage_description: "This index will be used for equality predicates on id column".to_string(),
+                usage_description: "This index will be used for equality predicates on id column"
+                    .to_string(),
             }),
         })
     }
@@ -634,8 +637,12 @@ impl SqlTuningAdvisor {
             recommendation_type: RecommendationType::SqlProfile,
             benefit_type: BenefitType::ExecutionTime,
             estimated_benefit_pct: 25.0,
-            rationale: "SQL profile can stabilize execution plan and improve performance".to_string(),
-            action: format!("Execute DBMS_SQLTUNE.ACCEPT_SQL_PROFILE for SQL_ID {}", sql_id),
+            rationale: "SQL profile can stabilize execution plan and improve performance"
+                .to_string(),
+            action: format!(
+                "Execute DBMS_SQLTUNE.ACCEPT_SQL_PROFILE for SQL_ID {}",
+                sql_id
+            ),
             details: RecommendationDetails::SqlProfile(SqlProfileDetails {
                 profile_name: format!("SYS_SQLPROF_{}", sql_id),
                 hints: vec![
@@ -656,7 +663,8 @@ impl SqlTuningAdvisor {
             recommendation_type: RecommendationType::Statistics,
             benefit_type: BenefitType::ExecutionTime,
             estimated_benefit_pct: 15.0,
-            rationale: "Current statistics are stale or missing, causing suboptimal plans".to_string(),
+            rationale: "Current statistics are stale or missing, causing suboptimal plans"
+                .to_string(),
             action: "EXEC DBMS_STATS.GATHER_TABLE_STATS('SCHEMA', 'TABLE')".to_string(),
             details: RecommendationDetails::Statistics(StatisticsRecommendation {
                 object_name: "USERS".to_string(),
@@ -702,12 +710,15 @@ impl SqlTuningAdvisor {
                 original_sql: sql_text.to_string(),
                 rewritten_sql: sql_text.replace(" IN ", " EXISTS "),
                 rewrite_type: RewriteType::InToExists,
-                explanation: "Converting IN to EXISTS can improve performance for large subqueries".to_string(),
+                explanation: "Converting IN to EXISTS can improve performance for large subqueries"
+                    .to_string(),
             });
         }
 
         // Example: Suggest UNION ALL instead of UNION
-        if sql_text.to_uppercase().contains(" UNION ") && !sql_text.to_uppercase().contains(" UNION ALL ") {
+        if sql_text.to_uppercase().contains(" UNION ")
+            && !sql_text.to_uppercase().contains(" UNION ALL ")
+        {
             rewrites.push(RestructureRecommendation {
                 original_sql: sql_text.to_string(),
                 rewritten_sql: sql_text.replace(" UNION ", " UNION ALL "),

@@ -2,16 +2,16 @@
 //
 // Bidirectional replication with conflict detection and resolution,
 // quorum-based writes, and convergence guarantees.
+use super::conflicts::{ConflictResolutionStrategy, ConflictResolver, ConflictingChange};
+use crate::error::DbError;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
 use std::sync::Arc;
-use parking_lot::RwLock;
-use tokio::sync::mpsc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use crate::error::DbError;
-use super::conflicts::{ConflictResolver, ConflictingChange, ConflictResolutionStrategy};
+use tokio::sync::mpsc;
 
 type Result<T> = std::result::Result<T, DbError>;
 
@@ -164,9 +164,10 @@ impl MultiMasterReplication {
         let mut groups = self.groups.write();
 
         if groups.contains_key(&group.id) {
-            return Err(DbError::Replication(
-                format!("Group {} already exists", group.id)
-            ));
+            return Err(DbError::Replication(format!(
+                "Group {} already exists",
+                group.id
+            )));
         }
 
         groups.insert(group.id.clone(), group);
@@ -177,15 +178,15 @@ impl MultiMasterReplication {
     pub fn add_site_to_group(&self, group_id: &str, site: SiteInfo) -> Result<()> {
         let mut groups = self.groups.write();
 
-        let group = groups.get_mut(group_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Group {} not found", group_id)
-            ))?;
+        let group = groups
+            .get_mut(group_id)
+            .ok_or_else(|| DbError::Replication(format!("Group {} not found", group_id)))?;
 
         if group.members.iter().any(|s| s.site_id == site.site_id) {
-            return Err(DbError::Replication(
-                format!("Site {} already in group", site.site_id)
-            ));
+            return Err(DbError::Replication(format!(
+                "Site {} already in group",
+                site.site_id
+            )));
         }
 
         group.members.push(site);
@@ -196,10 +197,9 @@ impl MultiMasterReplication {
     pub fn remove_site_from_group(&self, group_id: &str, site_id: &str) -> Result<()> {
         let mut groups = self.groups.write();
 
-        let group = groups.get_mut(group_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Group {} not found", group_id)
-            ))?;
+        let group = groups
+            .get_mut(group_id)
+            .ok_or_else(|| DbError::Replication(format!("Group {} not found", group_id)))?;
 
         group.members.retain(|s| s.site_id != site_id);
         Ok(())
@@ -209,10 +209,9 @@ impl MultiMasterReplication {
     pub async fn quorum_write(&self, op: ReplicationOp, group_id: &str) -> Result<QuorumResult> {
         let group = {
             let groups = self.groups.read();
-            groups.get(group_id)
-                .ok_or_else(|| DbError::Replication(
-                    format!("Group {} not found", group_id)
-                ))?
+            groups
+                .get(group_id)
+                .ok_or_else(|| DbError::Replication(format!("Group {} not found", group_id)))?
                 .clone()
         };
 
@@ -280,9 +279,10 @@ impl MultiMasterReplication {
         if rand::random::<f64>() < 0.95 {
             Ok(())
         } else {
-            Err(DbError::Replication(
-                format!("Failed to send to site {}", site.site_id)
-            ))
+            Err(DbError::Replication(format!(
+                "Failed to send to site {}",
+                site.site_id
+            )))
         }
     }
 
@@ -322,7 +322,10 @@ impl MultiMasterReplication {
                 vector_clock: op.vector_clock.clone(),
             };
 
-            if let Some(mut conflict) = self.conflict_resolver.detect_conflict(local_change, remote_change)? {
+            if let Some(mut conflict) = self
+                .conflict_resolver
+                .detect_conflict(local_change, remote_change)?
+            {
                 // Update statistics
                 {
                     let mut stats = self.stats.write();
@@ -381,12 +384,16 @@ impl MultiMasterReplication {
         match op.op_type {
             OpType::Insert => {
                 if op.new_value.is_none() {
-                    return Err(DbError::Replication("Insert requires new value".to_string()));
+                    return Err(DbError::Replication(
+                        "Insert requires new value".to_string(),
+                    ));
                 }
             }
             OpType::Update => {
                 if op.new_value.is_none() {
-                    return Err(DbError::Replication("Update requires new value".to_string()));
+                    return Err(DbError::Replication(
+                        "Update requires new value".to_string(),
+                    ));
                 }
             }
             OpType::Delete => {
@@ -401,7 +408,8 @@ impl MultiMasterReplication {
     /// Receive operation from remote site
     pub async fn receive_operation(&self, op: ReplicationOp) -> Result<()> {
         // Queue for processing
-        self.op_tx.send(op)
+        self.op_tx
+            .send(op)
             .map_err(|e| DbError::Replication(format!("Failed to queue operation: {}", e)))?;
 
         Ok(())
@@ -422,10 +430,9 @@ impl MultiMasterReplication {
     pub fn update_heartbeat(&self, group_id: &str, site_id: &str) -> Result<()> {
         let mut groups = self.groups.write();
 
-        let group = groups.get_mut(group_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Group {} not found", group_id)
-            ))?;
+        let group = groups
+            .get_mut(group_id)
+            .ok_or_else(|| DbError::Replication(format!("Group {} not found", group_id)))?;
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -434,7 +441,10 @@ impl MultiMasterReplication {
             }
         }
 
-        Err(DbError::Replication(format!("Site {} not found in group", site_id)))
+        Err(DbError::Replication(format!(
+            "Site {} not found in group",
+            site_id
+        )))
     }
 
     /// Check for failed sites (no heartbeat)
@@ -444,7 +454,9 @@ impl MultiMasterReplication {
         let mut failed = HashMap::new();
 
         for (group_id, group) in groups.iter() {
-            let failed_sites: Vec<String> = group.members.iter()
+            let failed_sites: Vec<String> = group
+                .members
+                .iter()
                 .filter(|s| s.last_heartbeat < cutoff)
                 .map(|s| s.site_id.clone())
                 .collect();
@@ -461,10 +473,9 @@ impl MultiMasterReplication {
     pub fn mark_site_inactive(&self, group_id: &str, site_id: &str) -> Result<()> {
         let mut groups = self.groups.write();
 
-        let group = groups.get_mut(group_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Group {} not found", group_id)
-            ))?;
+        let group = groups
+            .get_mut(group_id)
+            .ok_or_else(|| DbError::Replication(format!("Group {} not found", group_id)))?;
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -473,17 +484,19 @@ impl MultiMasterReplication {
             }
         }
 
-        Err(DbError::Replication(format!("Site {} not found in group", site_id)))
+        Err(DbError::Replication(format!(
+            "Site {} not found in group",
+            site_id
+        )))
     }
 
     /// Mark a site as active
     pub fn mark_site_active(&self, group_id: &str, site_id: &str) -> Result<()> {
         let mut groups = self.groups.write();
 
-        let group = groups.get_mut(group_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Group {} not found", group_id)
-            ))?;
+        let group = groups
+            .get_mut(group_id)
+            .ok_or_else(|| DbError::Replication(format!("Group {} not found", group_id)))?;
 
         for site in &mut group.members {
             if site.site_id == site_id {
@@ -493,7 +506,10 @@ impl MultiMasterReplication {
             }
         }
 
-        Err(DbError::Replication(format!("Site {} not found in group", site_id)))
+        Err(DbError::Replication(format!(
+            "Site {} not found in group",
+            site_id
+        )))
     }
 
     /// Get replication statistics
@@ -516,10 +532,9 @@ impl MultiMasterReplication {
 
     /// Verify convergence for a group
     pub async fn verify_convergence(&self, group_id: &str) -> Result<ConvergenceReport> {
-        let group = self.get_group(group_id)
-            .ok_or_else(|| DbError::Replication(
-                format!("Group {} not found", group_id)
-            ))?;
+        let group = self
+            .get_group(group_id)
+            .ok_or_else(|| DbError::Replication(format!("Group {} not found", group_id)))?;
 
         let mut site_checksums = HashMap::new();
 

@@ -3,14 +3,16 @@
 // Per-node connection pool implementation with lifecycle management,
 // validation, and automatic scaling.
 
+use super::{
+    manager::HealthCheckResult, manager::PoolStatistics, Connection, PoolConfig, PooledConnection,
+};
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
-use super::{PoolConfig, Connection, PooledConnection, manager::PoolStatistics, manager::HealthCheckResult};
 use std::collections::VecDeque;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::{Mutex, Semaphore, RwLock};
+use tokio::sync::{Mutex, RwLock, Semaphore};
 
 /// Connection state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -69,8 +71,7 @@ impl ManagedConnection {
     }
 
     fn is_idle_expired(&self, idle_timeout: Duration) -> bool {
-        self.state == ConnectionState::Idle
-            && self.last_used_at.elapsed() > idle_timeout
+        self.state == ConnectionState::Idle && self.last_used_at.elapsed() > idle_timeout
     }
 
     fn mark_used(&mut self) {
@@ -131,9 +132,7 @@ impl NodePool {
     pub async fn acquire(&self) -> Result<PooledConnection> {
         // Check if pool is shutting down
         if *self.shutdown.read().await {
-            return Err(DbError::InvalidState(
-                "Pool is shutting down".to_string()
-            ));
+            return Err(DbError::InvalidState("Pool is shutting down".to_string()));
         }
 
         let start = Instant::now();
@@ -154,7 +153,9 @@ impl NodePool {
             } else {
                 // Connection is unhealthy, close it
                 let _ = managed.connection.close().await;
-                self.stats.connections_closed.fetch_add(1, Ordering::Relaxed);
+                self.stats
+                    .connections_closed
+                    .fetch_add(1, Ordering::Relaxed);
             }
         }
 
@@ -162,22 +163,24 @@ impl NodePool {
         // Acquire semaphore permit
         let permit = tokio::time::timeout(
             self.config.acquire_timeout,
-            self.connection_semaphore.acquire()
+            self.connection_semaphore.acquire(),
         )
         .await
-        .map_err(|_| DbError::Timeout(format!(
-            "Failed to acquire connection to {} within {:?}",
-            self.node_id, self.config.acquire_timeout
-        )))?
-        .map_err(|_| DbError::Internal(
-            "Semaphore closed".to_string()
-        ))?;
+        .map_err(|_| {
+            DbError::Timeout(format!(
+                "Failed to acquire connection to {} within {:?}",
+                self.node_id, self.config.acquire_timeout
+            ))
+        })?
+        .map_err(|_| DbError::Internal("Semaphore closed".to_string()))?;
 
         // Create new connection
         let connection = self.create_connection().await?;
 
         self.stats.record_acquire(start.elapsed());
-        self.stats.connections_created.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .connections_created
+            .fetch_add(1, Ordering::Relaxed);
 
         // Keep the permit alive by forgetting it (connection counts toward limit)
         permit.forget();
@@ -191,7 +194,9 @@ impl NodePool {
     /// Release a connection back to the pool
     pub async fn release(&self, mut connection: Box<dyn Connection>, usage_duration_ms: u64) {
         // Update statistics
-        self.stats.active_connections.fetch_sub(1, Ordering::Relaxed);
+        self.stats
+            .active_connections
+            .fetch_sub(1, Ordering::Relaxed);
         self.stats.record_release(usage_duration_ms);
 
         // Check if shutting down
@@ -203,7 +208,9 @@ impl NodePool {
         // Check if connection is still healthy
         if !connection.is_healthy().await {
             let _ = connection.close().await;
-            self.stats.connections_closed.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .connections_closed
+                .fetch_add(1, Ordering::Relaxed);
             return;
         }
 
@@ -225,11 +232,15 @@ impl NodePool {
                 || conn.is_idle_expired(self.config.idle_timeout)
             {
                 let _ = conn.connection.close().await;
-                self.stats.connections_closed.fetch_add(1, Ordering::Relaxed);
+                self.stats
+                    .connections_closed
+                    .fetch_add(1, Ordering::Relaxed);
                 continue;
             }
 
-            self.stats.active_connections.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .active_connections
+                .fetch_add(1, Ordering::Relaxed);
             return Some(conn);
         }
 
@@ -320,7 +331,10 @@ impl NodePool {
 
     /// Warm up the pool by creating initial connections
     pub async fn warmup(&self) -> Result<()> {
-        let warmup_count = self.config.warmup_connections.min(self.config.max_connections);
+        let warmup_count = self
+            .config
+            .warmup_connections
+            .min(self.config.max_connections);
 
         for _ in 0..warmup_count {
             let connection = self.create_connection().await?;
@@ -330,7 +344,9 @@ impl NodePool {
             let mut idle = self.idle_connections.lock().await;
             idle.push_back(managed);
 
-            self.stats.connections_created.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .connections_created
+                .fetch_add(1, Ordering::Relaxed);
         }
 
         Ok(())
@@ -347,7 +363,9 @@ impl NodePool {
         let mut idle = self.idle_connections.lock().await;
         while let Some(mut conn) = idle.pop_front() {
             let _ = conn.connection.close().await;
-            self.stats.connections_closed.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .connections_closed
+                .fetch_add(1, Ordering::Relaxed);
         }
 
         Ok(())
@@ -470,7 +488,8 @@ impl PoolStatisticsInner {
     fn record_acquire(&self, duration: Duration) {
         let wait_ms = duration.as_millis() as u64;
         self.successful_acquires.fetch_add(1, Ordering::Relaxed);
-        self.total_acquire_wait_ms.fetch_add(wait_ms, Ordering::Relaxed);
+        self.total_acquire_wait_ms
+            .fetch_add(wait_ms, Ordering::Relaxed);
 
         // Update max
         let mut current_max = self.max_acquire_wait_ms.load(Ordering::Relaxed);

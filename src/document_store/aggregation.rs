@@ -3,15 +3,15 @@
 // MongoDB-style aggregation pipeline with stages like $match, $project, $group,
 // $sort, $limit, $skip, $unwind, $lookup, and $facet.
 
-use std::collections::HashSet;
-use std::collections::BTreeMap;
+use super::document::{Document, DocumentId};
+use super::qbe::QueryDocument;
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 use std::collections::HashMap;
-use crate::error::Result;
-use super::document::{Document, DocumentId};
-use super::qbe::QueryDocument;
+use std::collections::HashSet;
 
 // Aggregation pipeline
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,9 +23,7 @@ pub struct Pipeline {
 impl Pipeline {
     // Create a new empty pipeline
     pub fn new() -> Self {
-        Self {
-            stages: Vec::new(),
-        }
+        Self { stages: Vec::new() }
     }
 
     // Add a stage to the pipeline
@@ -85,7 +83,10 @@ pub enum PipelineStage {
 
     // Unwind array field
     #[serde(rename = "$unwind")]
-    Unwind { path: String, preserve_null_and_empty: bool },
+    Unwind {
+        path: String,
+        preserve_null_and_empty: bool,
+    },
 
     // Lookup/join from another collection
     #[serde(rename = "$lookup")]
@@ -93,7 +94,9 @@ pub enum PipelineStage {
 
     // Multi-faceted aggregation
     #[serde(rename = "$facet")]
-    Facet { facets: HashMap<String, Vec<PipelineStage>> },
+    Facet {
+        facets: HashMap<String, Vec<PipelineStage>>,
+    },
 
     // Add computed fields
     #[serde(rename = "$addFields")]
@@ -118,14 +121,17 @@ impl PipelineStage {
             PipelineStage::Sort { sort_spec } => self.execute_sort(documents, sort_spec),
             PipelineStage::Limit { count } => Ok(self.execute_limit(documents, *count)),
             PipelineStage::Skip { count } => Ok(self.execute_skip(documents, *count)),
-            PipelineStage::Unwind { path, preserve_null_and_empty } => {
-                self.execute_unwind(documents, path, *preserve_null_and_empty)
-            }
+            PipelineStage::Unwind {
+                path,
+                preserve_null_and_empty,
+            } => self.execute_unwind(documents, path, *preserve_null_and_empty),
             PipelineStage::Lookup { lookup_spec } => self.execute_lookup(documents, lookup_spec),
             PipelineStage::Facet { facets } => self.execute_facet(documents, facets),
             PipelineStage::AddFields { fields } => self.execute_add_fields(documents, fields),
             PipelineStage::Count { field } => self.execute_count(documents, field),
-            PipelineStage::ReplaceRoot { new_root } => self.execute_replace_root(documents, new_root),
+            PipelineStage::ReplaceRoot { new_root } => {
+                self.execute_replace_root(documents, new_root)
+            }
         }
     }
 
@@ -206,7 +212,11 @@ impl PipelineStage {
         Ok(results)
     }
 
-    fn execute_sort(&self, mut documents: Vec<Value>, sort_spec: &BTreeMap<String, i32>) -> Result<Vec<Value>> {
+    fn execute_sort(
+        &self,
+        mut documents: Vec<Value>,
+        sort_spec: &BTreeMap<String, i32>,
+    ) -> Result<Vec<Value>> {
         documents.sort_by(|a, b| {
             for (field, order) in sort_spec {
                 let a_val = get_field_value(a, field);
@@ -233,7 +243,12 @@ impl PipelineStage {
         documents.into_iter().skip(count).collect()
     }
 
-    fn execute_unwind(&self, documents: Vec<Value>, path: &str, preserve: bool) -> Result<Vec<Value>> {
+    fn execute_unwind(
+        &self,
+        documents: Vec<Value>,
+        path: &str,
+        preserve: bool,
+    ) -> Result<Vec<Value>> {
         let mut results = Vec::new();
         let field = path.trim_start_matches('$');
 
@@ -264,13 +279,21 @@ impl PipelineStage {
         Ok(results)
     }
 
-    fn execute_lookup(&self, documents: Vec<Value>, _lookup_spec: &LookupSpec) -> Result<Vec<Value>> {
+    fn execute_lookup(
+        &self,
+        documents: Vec<Value>,
+        _lookup_spec: &LookupSpec,
+    ) -> Result<Vec<Value>> {
         // Simplified lookup implementation
         // In a real implementation, this would join with another collection
         Ok(documents)
     }
 
-    fn execute_facet(&self, documents: Vec<Value>, facets: &HashMap<String, Vec<PipelineStage>>) -> Result<Vec<Value>> {
+    fn execute_facet(
+        &self,
+        documents: Vec<Value>,
+        facets: &HashMap<String, Vec<PipelineStage>>,
+    ) -> Result<Vec<Value>> {
         let mut result = serde_json::Map::new();
 
         for (facet_name, stages) in facets {
@@ -286,7 +309,11 @@ impl PipelineStage {
         Ok(vec![Value::Object(result)])
     }
 
-    fn execute_add_fields(&self, documents: Vec<Value>, fields: &HashMap<String, Expression>) -> Result<Vec<Value>> {
+    fn execute_add_fields(
+        &self,
+        documents: Vec<Value>,
+        fields: &HashMap<String, Expression>,
+    ) -> Result<Vec<Value>> {
         let mut results = Vec::new();
 
         for doc in documents {
@@ -386,13 +413,20 @@ pub enum ComplexExpression {
     Multiply { values: Vec<Expression> },
     // Division
     #[serde(rename = "$divide")]
-    Divide { dividend: Expression, divisor: Expression },
+    Divide {
+        dividend: Expression,
+        divisor: Expression,
+    },
     // Concatenation
     #[serde(rename = "$concat")]
     Concat { values: Vec<Expression> },
     // Conditional
     #[serde(rename = "$cond")]
-    Cond { if_expr: Expression, then_expr: Expression, else_expr: Expression },
+    Cond {
+        if_expr: Expression,
+        then_expr: Expression,
+        else_expr: Expression,
+    },
 }
 
 impl ComplexExpression {
@@ -429,7 +463,9 @@ impl ComplexExpression {
                         product *= n;
                     }
                 }
-                Ok(Value::Number(serde_json::Number::from_f64(product).unwrap()))
+                Ok(Value::Number(
+                    serde_json::Number::from_f64(product).unwrap(),
+                ))
             }
             ComplexExpression::Divide { dividend, divisor } => {
                 let num = dividend.evaluate(doc)?.as_f64().unwrap_or(0.0);
@@ -447,7 +483,11 @@ impl ComplexExpression {
                 }
                 Ok(Value::String(result))
             }
-            ComplexExpression::Cond { if_expr, then_expr, else_expr } => {
+            ComplexExpression::Cond {
+                if_expr,
+                then_expr,
+                else_expr,
+            } => {
                 let condition = if_expr.evaluate(doc)?;
                 if condition.as_bool().unwrap_or(false) {
                     then_expr.evaluate(doc)
@@ -527,7 +567,8 @@ impl Accumulator {
                         min = Some(min.map_or(n, |m| m.min(n)));
                     }
                 }
-                Ok(min.map(|m| Value::Number(serde_json::Number::from_f64(m).unwrap()))
+                Ok(min
+                    .map(|m| Value::Number(serde_json::Number::from_f64(m).unwrap()))
                     .unwrap_or(Value::Null))
             }
             Accumulator::Max { expr } => {
@@ -538,12 +579,11 @@ impl Accumulator {
                         max = Some(max.map_or(n, |m| m.max(n)));
                     }
                 }
-                Ok(max.map(|m| Value::Number(serde_json::Number::from_f64(m).unwrap()))
+                Ok(max
+                    .map(|m| Value::Number(serde_json::Number::from_f64(m).unwrap()))
                     .unwrap_or(Value::Null))
             }
-            Accumulator::Count => {
-                Ok(Value::Number(documents.len().into()))
-            }
+            Accumulator::Count => Ok(Value::Number(documents.len().into())),
             Accumulator::First { expr } => {
                 if let Some(first) = documents.first() {
                     expr.evaluate(first)
@@ -641,7 +681,9 @@ impl PipelineBuilder {
 
     // Add a $project stage
     pub fn project(mut self, projection: Value) -> Self {
-        self.pipeline.stages.push(PipelineStage::Project { projection });
+        self.pipeline
+            .stages
+            .push(PipelineStage::Project { projection });
         self
     }
 
@@ -710,9 +752,7 @@ mod tests {
             projection: json!({"name": true, "age": true}),
         };
 
-        let docs = vec![
-            json!({"name": "Alice", "age": 30, "email": "alice@example.com"}),
-        ];
+        let docs = vec![json!({"name": "Alice", "age": 30, "email": "alice@example.com"})];
 
         let results = stage.execute(docs).unwrap();
         assert!(results[0].get("name").is_some());
@@ -764,9 +804,7 @@ mod tests {
             preserve_null_and_empty: false,
         };
 
-        let docs = vec![
-            json!({"name": "Alice", "tags": ["rust", "database"]}),
-        ];
+        let docs = vec![json!({"name": "Alice", "tags": ["rust", "database"]})];
 
         let results = stage.execute(docs).unwrap();
         assert_eq!(results.len(), 2);

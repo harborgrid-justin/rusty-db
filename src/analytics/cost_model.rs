@@ -77,7 +77,9 @@ impl CardinalityEstimator {
 
         // Estimate distinct values using sqrt heuristic
         let distinct_per_col = (input_card as f64).sqrt();
-        distinct_per_col.powi(group_by_cols as i32).min(input_card as f64) as u64
+        distinct_per_col
+            .powi(group_by_cols as i32)
+            .min(input_card as f64) as u64
     }
 
     // Estimate cardinality for a DISTINCT operation.
@@ -88,7 +90,8 @@ impl CardinalityEstimator {
 
     // Cache a selectivity estimate.
     pub fn cache_selectivity(&mut self, predicate: String, selectivity: f64) {
-        self.selectivity_cache.insert(predicate, selectivity.clamp(0.0, 1.0));
+        self.selectivity_cache
+            .insert(predicate, selectivity.clamp(0.0, 1.0));
     }
 }
 

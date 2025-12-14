@@ -8,7 +8,10 @@ pub struct ResourceLimits {
 
 impl Default for ResourceLimits {
     fn default() -> Self {
-        Self { memory_limit: None, cpu_limit: None }
+        Self {
+            memory_limit: None,
+            cpu_limit: None,
+        }
     }
 }
 

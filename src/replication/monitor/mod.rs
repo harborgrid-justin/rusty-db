@@ -3,24 +3,23 @@
 // This module provides comprehensive health monitoring for replication systems,
 // including metrics collection, trend analysis, alerting, and historical tracking.
 
-mod errors;
-mod types;
 mod config;
+mod errors;
 mod monitor;
 mod monitor_impl;
+mod types;
 
 // Re-export public types
-#[allow(unused_imports)]
-pub use types::{
-    ReplicaHealthStatus, HealthCheckResult, HealthComponents, ComponentHealth,
-    HealthIssue, IssueSeverity, HealthMetrics, HealthAlert, AlertStatus,
-    HealthHistoryEntry, HealthStatistics, HealthTrend, TrendDirection,
-    HealthPrediction,
-};
 #[allow(unused_imports)]
 pub use config::{HealthMonitorConfig, HealthThresholds};
 #[allow(unused_imports)]
 pub use monitor::{HealthMonitor, ReplicationHealthMonitor};
+#[allow(unused_imports)]
+pub use types::{
+    AlertStatus, ComponentHealth, HealthAlert, HealthCheckResult, HealthComponents,
+    HealthHistoryEntry, HealthIssue, HealthMetrics, HealthPrediction, HealthStatistics,
+    HealthTrend, IssueSeverity, ReplicaHealthStatus, TrendDirection,
+};
 
 #[cfg(test)]
 mod tests {

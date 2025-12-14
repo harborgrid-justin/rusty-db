@@ -8,15 +8,15 @@
 // - Delta propagation for efficient updates
 // - View dependency graph management
 
-use std::collections::HashSet;
-use std::time::SystemTime;
-use crate::error::{Result, DbError};
 use crate::catalog::Schema;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
+use crate::error::{DbError, Result};
 use parking_lot::RwLock;
-use std::time::{Duration};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Materialized view with full metadata and state tracking
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -63,7 +63,13 @@ pub enum RefreshPolicy {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Weekday {
-    Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday,
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday,
 }
 
 // Maintenance mode for materialized views
@@ -147,7 +153,7 @@ pub enum IndexType {
     BTree,
     Hash,
     Bitmap,
-    GIN, // Generalized Inverted Index
+    GIN,  // Generalized Inverted Index
     GIST, // Generalized Search Tree
 }
 
@@ -234,7 +240,9 @@ impl MaterializedViewManager {
 
         // Schedule refresh if needed
         if let RefreshPolicy::Scheduled { .. } = refresh_policy {
-            self.refresh_scheduler.write().schedule_view(&id, &refresh_policy);
+            self.refresh_scheduler
+                .write()
+                .schedule_view(&id, &refresh_policy);
         }
 
         self.views.write().insert(name.clone(), view);
@@ -245,7 +253,8 @@ impl MaterializedViewManager {
     // Refresh a materialized view
     pub fn refresh_view(&self, name: &str) -> Result<RefreshResult> {
         let mut views = self.views.write();
-        let view = views.get_mut(name)
+        let view = views
+            .get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?;
 
         let start = SystemTime::now();
@@ -264,9 +273,10 @@ impl MaterializedViewManager {
         view.statistics.refresh_count += 1;
 
         let elapsed = start.elapsed().unwrap_or(Duration::from_secs(0));
-        view.statistics.avg_refresh_time_ms =
-            (view.statistics.avg_refresh_time_ms * (view.statistics.refresh_count - 1) as f64
-            + elapsed.as_millis() as f64) / view.statistics.refresh_count as f64;
+        view.statistics.avg_refresh_time_ms = (view.statistics.avg_refresh_time_ms
+            * (view.statistics.refresh_count - 1) as f64
+            + elapsed.as_millis() as f64)
+            / view.statistics.refresh_count as f64;
 
         Ok(result)
     }
@@ -348,7 +358,8 @@ impl MaterializedViewManager {
     ) -> Result<()> {
         // Find all views depending on this table
         let views = self.views.read();
-        let affected_views: Vec<_> = views.values()
+        let affected_views: Vec<_> = views
+            .values()
             .filter(|v| v.base_tables.contains(&table.to_string()))
             .map(|v| v.id.clone())
             .collect();
@@ -366,7 +377,8 @@ impl MaterializedViewManager {
         // Record delta for each affected view
         let mut delta_log = self.delta_log.write();
         for view_id in affected_views {
-            delta_log.entry(view_id)
+            delta_log
+                .entry(view_id)
                 .or_insert_with(Vec::new)
                 .push(delta.clone());
         }
@@ -378,10 +390,9 @@ impl MaterializedViewManager {
             if view.base_tables.contains(&table.to_string()) {
                 view.staleness_info.is_stale = true;
                 view.staleness_info.pending_changes += 1;
-                view.staleness_info.last_base_table_update.insert(
-                    table.to_string(),
-                    SystemTime::now(),
-                );
+                view.staleness_info
+                    .last_base_table_update
+                    .insert(table.to_string(), SystemTime::now());
             }
         }
 
@@ -396,7 +407,8 @@ impl MaterializedViewManager {
     // Get staleness information for a view
     pub fn get_staleness(&self, name: &str) -> Result<StalenessInfo> {
         let views = self.views.read();
-        let view = views.get(name)
+        let view = views
+            .get(name)
             .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?;
         Ok(view.staleness_info.clone())
     }
@@ -411,7 +423,8 @@ impl MaterializedViewManager {
         unique: bool,
     ) -> Result<()> {
         let mut views = self.views.write();
-        let view = views.get_mut(view_name)
+        let view = views
+            .get_mut(view_name)
             .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", view_name)))?;
 
         let index = ViewIndex {
@@ -434,7 +447,8 @@ impl MaterializedViewManager {
     // Analyze view and update statistics
     pub fn analyze_view(&self, name: &str) -> Result<ViewStatistics> {
         let mut views = self.views.write();
-        let view = views.get_mut(name)
+        let view = views
+            .get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Materialized view: {}", name)))?;
 
         // In production, would scan view data and compute statistics
@@ -513,7 +527,8 @@ impl DependencyGraph {
     }
 
     pub fn get_affected_views(&self, table: &str) -> Vec<String> {
-        self.table_to_views.get(table)
+        self.table_to_views
+            .get(table)
             .map(|views| views.iter().cloned().collect())
             .unwrap_or_default()
     }
@@ -636,7 +651,8 @@ impl QueryRewriter {
         _views: &HashMap<String, MaterializedView>,
     ) -> Result<String> {
         // Cost-based selection
-        candidates.first()
+        candidates
+            .first()
             .cloned()
             .ok_or_else(|| DbError::Internal("No candidates".to_string()))
     }
@@ -686,7 +702,11 @@ impl RefreshScheduler {
     }
 
     pub fn schedule_view(&mut self, view_id: &str, policy: &RefreshPolicy) {
-        if let RefreshPolicy::Scheduled { interval, next_refresh } = policy {
+        if let RefreshPolicy::Scheduled {
+            interval,
+            next_refresh,
+        } = policy
+        {
             self.scheduled_views.insert(
                 view_id.to_string(),
                 ScheduledRefresh {
@@ -700,7 +720,8 @@ impl RefreshScheduler {
 
     pub fn get_due_refreshes(&self) -> Vec<String> {
         let now = SystemTime::now();
-        self.scheduled_views.values()
+        self.scheduled_views
+            .values()
             .filter(|sr| sr.next_refresh <= now)
             .map(|sr| sr.view_id.clone())
             .collect()
@@ -725,14 +746,12 @@ mod tests {
         let schema = Schema {
             name: "test_schema".to_string(),
             primary_key: Some("id".to_string()),
-            columns: vec![
-                Column {
-                    name: "id".to_string(),
-                    data_type: DataType::Integer,
-                    nullable: false,
-                    default: None,
-                },
-            ],
+            columns: vec![Column {
+                name: "id".to_string(),
+                data_type: DataType::Integer,
+                nullable: false,
+                default: None,
+            }],
         };
 
         let result = manager.create_view(
@@ -765,27 +784,27 @@ mod tests {
         let schema = Schema {
             name: "delta_schema".to_string(),
             primary_key: Some("id".to_string()),
-            columns: vec![
-                Column {
-                    name: "id".to_string(),
-                    data_type: DataType::Integer,
-                    nullable: false,
-                    default: None,
-                },
-            ],
+            columns: vec![Column {
+                name: "id".to_string(),
+                data_type: DataType::Integer,
+                nullable: false,
+                default: None,
+            }],
         };
 
-        manager.create_view(
-            "test_mv".to_string(),
-            "SELECT * FROM users".to_string(),
-            schema,
-            vec!["users".to_string()],
-            RefreshPolicy::Manual,
-            MaintenanceMode::Incremental {
-                delta_log: Vec::new(),
-                max_delta_size: 1000,
-            },
-        ).unwrap();
+        manager
+            .create_view(
+                "test_mv".to_string(),
+                "SELECT * FROM users".to_string(),
+                schema,
+                vec!["users".to_string()],
+                RefreshPolicy::Manual,
+                MaintenanceMode::Incremental {
+                    delta_log: Vec::new(),
+                    max_delta_size: 1000,
+                },
+            )
+            .unwrap();
 
         let result = manager.record_base_table_change(
             "users",
@@ -808,14 +827,12 @@ mod tests {
         let schema = Schema {
             name: "some_name".to_string(),
             primary_key: Some("some_pk".to_string()),
-            columns: vec![
-                Column {
-                    name: "id".to_string(),
-                    data_type: DataType::Integer,
-                    nullable: false,
-                    default: None,
-                },
-            ],
+            columns: vec![Column {
+                name: "id".to_string(),
+                data_type: DataType::Integer,
+                nullable: false,
+                default: None,
+            }],
         };
 
         let result = manager.create_view(
@@ -839,14 +856,12 @@ mod tests {
         let schema = Schema {
             name: "some_name".to_string(),
             primary_key: Some("some_pk".to_string()),
-            columns: vec![
-                Column {
-                    name: "c".to_string(),
-                    data_type: DataType::Integer,
-                    nullable: false,
-                    default: None,
-                },
-            ],
+            columns: vec![Column {
+                name: "c".to_string(),
+                data_type: DataType::Integer,
+                nullable: false,
+                default: None,
+            }],
         };
 
         let result = manager.create_view(

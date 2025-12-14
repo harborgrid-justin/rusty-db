@@ -3,10 +3,10 @@
 // Configuration and setup for Swagger UI interactive documentation.
 // Provides customization options for branding, security, and display.
 
-use serde::{Deserialize, Serialize};
-use utoipa_swagger_ui::SwaggerUi;
-use utoipa::OpenApi;
 use axum::Router;
+use serde::{Deserialize, Serialize};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 use super::openapi::ApiDoc;
 
@@ -117,7 +117,12 @@ impl SwaggerConfiguration {
     }
 
     /// Set custom branding
-    pub fn with_branding(mut self, title: String, description: String, logo_url: Option<String>) -> Self {
+    pub fn with_branding(
+        mut self,
+        title: String,
+        description: String,
+        logo_url: Option<String>,
+    ) -> Self {
         self.customization.title = title;
         self.customization.description = description;
         self.customization.logo_url = logo_url;
@@ -137,7 +142,11 @@ impl SwaggerConfiguration {
     }
 
     /// Configure security defaults (for development only)
-    pub fn with_security_defaults(mut self, bearer_token: Option<String>, api_key: Option<String>) -> Self {
+    pub fn with_security_defaults(
+        mut self,
+        bearer_token: Option<String>,
+        api_key: Option<String>,
+    ) -> Self {
         self.security.default_bearer_token = bearer_token;
         self.security.default_api_key = api_key;
         self
@@ -166,8 +175,7 @@ impl SwaggerConfiguration {
 /// ```
 pub fn configure_swagger(config: SwaggerConfiguration) -> SwaggerUi {
     // Create the Swagger UI with the OpenAPI spec
-    SwaggerUi::new(config.base_url)
-        .url(config.spec_url, ApiDoc::openapi())
+    SwaggerUi::new(config.base_url).url(config.spec_url, ApiDoc::openapi())
 }
 
 /// Configure Swagger UI with default settings
@@ -224,8 +232,7 @@ pub fn configure_development_swagger(
     bearer_token: Option<String>,
     api_key: Option<String>,
 ) -> SwaggerUi {
-    let config = SwaggerConfiguration::default()
-        .with_security_defaults(bearer_token, api_key);
+    let config = SwaggerConfiguration::default().with_security_defaults(bearer_token, api_key);
 
     configure_swagger(config)
 }
@@ -265,11 +272,10 @@ pub fn create_api_docs_router() -> Router {
     use axum::{routing::get, Json};
 
     // Create OpenAPI spec endpoint
-    let openapi_route = Router::new()
-        .route(
-            "/api-docs/openapi.json",
-            get(|| async { Json(ApiDoc::openapi()) }),
-        );
+    let openapi_route = Router::new().route(
+        "/api-docs/openapi.json",
+        get(|| async { Json(ApiDoc::openapi()) }),
+    );
 
     // Merge with Swagger UI
     let swagger_ui = configure_default_swagger();
@@ -292,22 +298,18 @@ mod tests {
 
     #[test]
     fn test_custom_configuration() {
-        let config = SwaggerConfiguration::new(
-            "/docs".to_string(),
-            "/openapi.json".to_string(),
-        );
+        let config = SwaggerConfiguration::new("/docs".to_string(), "/openapi.json".to_string());
         assert_eq!(config.base_url, "/docs");
         assert_eq!(config.spec_url, "/openapi.json");
     }
 
     #[test]
     fn test_branding_configuration() {
-        let config = SwaggerConfiguration::default()
-            .with_branding(
-                "Custom API".to_string(),
-                "Custom Description".to_string(),
-                Some("https://example.com/logo.png".to_string()),
-            );
+        let config = SwaggerConfiguration::default().with_branding(
+            "Custom API".to_string(),
+            "Custom Description".to_string(),
+            Some("https://example.com/logo.png".to_string()),
+        );
         assert_eq!(config.customization.title, "Custom API");
         assert_eq!(config.customization.description, "Custom Description");
         assert_eq!(
@@ -318,20 +320,22 @@ mod tests {
 
     #[test]
     fn test_color_configuration() {
-        let config = SwaggerConfiguration::default()
-            .with_primary_color("#ff0000".to_string());
+        let config = SwaggerConfiguration::default().with_primary_color("#ff0000".to_string());
         assert_eq!(config.customization.primary_color, "#ff0000");
     }
 
     #[test]
     fn test_security_configuration() {
         let config = SwaggerConfiguration::default()
-            .with_security_defaults(
-                Some("test-token".to_string()),
-                Some("test-key".to_string()),
-            );
-        assert_eq!(config.security.default_bearer_token, Some("test-token".to_string()));
-        assert_eq!(config.security.default_api_key, Some("test-key".to_string()));
+            .with_security_defaults(Some("test-token".to_string()), Some("test-key".to_string()));
+        assert_eq!(
+            config.security.default_bearer_token,
+            Some("test-token".to_string())
+        );
+        assert_eq!(
+            config.security.default_api_key,
+            Some("test-key".to_string())
+        );
     }
 
     #[test]

@@ -42,7 +42,10 @@ impl MessageDispatcher {
         let mut failed_nodes = Vec::new();
 
         for node in target_nodes {
-            match self.router.send_message(node.clone(), message.clone(), priority) {
+            match self
+                .router
+                .send_message(node.clone(), message.clone(), priority)
+            {
                 Ok(_) => success_count += 1,
                 Err(_) => failed_nodes.push(node),
             }
@@ -67,7 +70,10 @@ impl MessageDispatcher {
         let mut failed_nodes = Vec::new();
 
         for node in nodes {
-            match self.router.send_message(node.clone(), message.clone(), priority) {
+            match self
+                .router
+                .send_message(node.clone(), message.clone(), priority)
+            {
                 Ok(_) => success_count += 1,
                 Err(_) => failed_nodes.push(node),
             }
@@ -104,7 +110,10 @@ impl MessageDispatcher {
         let mut failed_nodes = Vec::new();
 
         for node in target_nodes {
-            match self.router.send_message(node.clone(), message.clone(), priority) {
+            match self
+                .router
+                .send_message(node.clone(), message.clone(), priority)
+            {
                 Ok(_) => success_count += 1,
                 Err(_) => failed_nodes.push(node),
             }
@@ -130,7 +139,10 @@ impl MessageDispatcher {
         let mut failures = Vec::new();
 
         for node in nodes {
-            match self.router.send_message(node.clone(), message.clone(), priority) {
+            match self
+                .router
+                .send_message(node.clone(), message.clone(), priority)
+            {
                 Ok(_) => success_count += 1,
                 Err(e) => failures.push((node, e.to_string())),
             }
@@ -160,7 +172,9 @@ impl MessageDispatcher {
             let msg = message.clone();
 
             tasks.spawn(async move {
-                let result = router.send_request(node.clone(), msg, priority, Some(timeout)).await;
+                let result = router
+                    .send_request(node.clone(), msg, priority, Some(timeout))
+                    .await;
                 (node, result)
             });
         }
@@ -217,7 +231,9 @@ impl MessageDispatcher {
             let msg = message.clone();
 
             tasks.spawn(async move {
-                let result = router.send_request(node.clone(), msg, priority, Some(timeout)).await;
+                let result = router
+                    .send_request(node.clone(), msg, priority, Some(timeout))
+                    .await;
                 (node, result)
             });
         }
@@ -299,7 +315,9 @@ impl MessageDispatcher {
             let msg = message.clone();
 
             tasks.spawn(async move {
-                let result = router.send_request(node.clone(), msg, priority, Some(timeout)).await;
+                let result = router
+                    .send_request(node.clone(), msg, priority, Some(timeout))
+                    .await;
                 (node, result)
             });
         }
@@ -411,8 +429,16 @@ mod tests {
         let table = RoutingTable::new();
 
         // Add some nodes
-        table.add_node(NodeId::new("node1"), NodeAddress::new("localhost", 8001), None);
-        table.add_node(NodeId::new("node2"), NodeAddress::new("localhost", 8002), None);
+        table.add_node(
+            NodeId::new("node1"),
+            NodeAddress::new("localhost", 8001),
+            None,
+        );
+        table.add_node(
+            NodeId::new("node2"),
+            NodeAddress::new("localhost", 8002),
+            None,
+        );
 
         let router = Arc::new(MessageRouter::new(table));
         let dispatcher = MessageDispatcher::new(router);

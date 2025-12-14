@@ -11,13 +11,13 @@
 // - **Hole Punching**: UDP/TCP hole punching techniques
 
 use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::net::{IpAddr, SocketAddr, Ipv4Addr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
-use tokio::sync::RwLock;
 use tokio::net::UdpSocket;
-use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 /// NAT mapping information
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -114,29 +114,33 @@ impl StunClient {
     /// Query a specific STUN server
     async fn query_stun_server(&self, server: &str) -> Result<IpAddr> {
         // Parse server address
-        let server_addr: SocketAddr = server.parse()
+        let server_addr: SocketAddr = server
+            .parse()
             .map_err(|e| DbError::Network(format!("Invalid STUN server address: {}", e)))?;
 
         // Create UDP socket
-        let socket = UdpSocket::bind("0.0.0.0:0").await
+        let socket = UdpSocket::bind("0.0.0.0:0")
+            .await
             .map_err(|e| DbError::Network(format!("Failed to bind UDP socket: {}", e)))?;
 
-        socket.connect(server_addr).await
+        socket
+            .connect(server_addr)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to connect to STUN server: {}", e)))?;
 
         // Build STUN binding request (simplified)
         let request = self.build_stun_request();
 
         // Send request
-        socket.send(&request).await
+        socket
+            .send(&request)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to send STUN request: {}", e)))?;
 
         // Receive response with timeout
         let mut buffer = vec![0u8; 1024];
-        let response_size = tokio::time::timeout(
-            Duration::from_secs(5),
-            socket.recv(&mut buffer)
-        ).await
+        let response_size = tokio::time::timeout(Duration::from_secs(5), socket.recv(&mut buffer))
+            .await
             .map_err(|_| DbError::Timeout("STUN request timeout".to_string()))?
             .map_err(|e| DbError::Network(format!("Failed to receive STUN response: {}", e)))?;
 
@@ -176,19 +180,24 @@ impl StunClient {
     /// Parse STUN response to extract external IP
     fn parse_stun_response(&self, response: &[u8]) -> Result<IpAddr> {
         if response.len() < 20 {
-            return Err(DbError::Network("Invalid STUN response: too short".to_string()));
+            return Err(DbError::Network(
+                "Invalid STUN response: too short".to_string(),
+            ));
         }
 
         // Check magic cookie
         if &response[4..8] != [0x21, 0x12, 0xA4, 0x42] {
-            return Err(DbError::Network("Invalid STUN response: bad magic cookie".to_string()));
+            return Err(DbError::Network(
+                "Invalid STUN response: bad magic cookie".to_string(),
+            ));
         }
 
         // Parse attributes (starting at offset 20)
         let mut offset = 20;
         while offset + 4 <= response.len() {
             let attr_type = u16::from_be_bytes([response[offset], response[offset + 1]]);
-            let attr_len = u16::from_be_bytes([response[offset + 2], response[offset + 3]]) as usize;
+            let attr_len =
+                u16::from_be_bytes([response[offset + 2], response[offset + 3]]) as usize;
 
             if offset + 4 + attr_len > response.len() {
                 break;
@@ -196,7 +205,10 @@ impl StunClient {
 
             // MAPPED-ADDRESS (0x0001) or XOR-MAPPED-ADDRESS (0x0020)
             if attr_type == 0x0001 || attr_type == 0x0020 {
-                return self.parse_mapped_address(&response[offset + 4..offset + 4 + attr_len], attr_type == 0x0020);
+                return self.parse_mapped_address(
+                    &response[offset + 4..offset + 4 + attr_len],
+                    attr_type == 0x0020,
+                );
             }
 
             offset += 4 + attr_len;
@@ -204,13 +216,17 @@ impl StunClient {
             offset = (offset + 3) & !3;
         }
 
-        Err(DbError::Network("No mapped address in STUN response".to_string()))
+        Err(DbError::Network(
+            "No mapped address in STUN response".to_string(),
+        ))
     }
 
     /// Parse mapped address attribute
     fn parse_mapped_address(&self, data: &[u8], is_xor: bool) -> Result<IpAddr> {
         if data.len() < 8 {
-            return Err(DbError::Network("Invalid mapped address attribute".to_string()));
+            return Err(DbError::Network(
+                "Invalid mapped address attribute".to_string(),
+            ));
         }
 
         let family = data[1];
@@ -248,7 +264,10 @@ impl StunClient {
 
             Ok(IpAddr::V6(ip_bytes.into()))
         } else {
-            Err(DbError::Network(format!("Unknown address family: {}", family)))
+            Err(DbError::Network(format!(
+                "Unknown address family: {}",
+                family
+            )))
         }
     }
 
@@ -294,7 +313,9 @@ impl UpnpClient {
         // to discover UPnP Internet Gateway Devices
 
         // For now, return not implemented
-        Err(DbError::NotImplemented("UPnP discovery not yet implemented".to_string()))
+        Err(DbError::NotImplemented(
+            "UPnP discovery not yet implemented".to_string(),
+        ))
     }
 
     /// Add a port mapping
@@ -308,12 +329,16 @@ impl UpnpClient {
         // Check if gateway is discovered
         let gateway = self.gateway.read().await;
         if gateway.is_none() {
-            return Err(DbError::InvalidState("No UPnP gateway discovered".to_string()));
+            return Err(DbError::InvalidState(
+                "No UPnP gateway discovered".to_string(),
+            ));
         }
 
         // In a real implementation, this would send UPnP commands to the gateway
         // For now, return not implemented
-        Err(DbError::NotImplemented("UPnP port mapping not yet implemented".to_string()))
+        Err(DbError::NotImplemented(
+            "UPnP port mapping not yet implemented".to_string(),
+        ))
     }
 
     /// Remove a port mapping
@@ -366,7 +391,11 @@ impl NatTraversal {
     /// Set up port mapping for a port
     pub async fn setup_port_mapping(&mut self, port: u16) -> Result<()> {
         // Try UPnP first
-        match self.upnp_client.add_port_mapping(port, port, "TCP", 3600).await {
+        match self
+            .upnp_client
+            .add_port_mapping(port, port, "TCP", 3600)
+            .await
+        {
             Ok(mapping) => {
                 let mut mappings = self.mappings.write().await;
                 mappings.insert(port, mapping);
@@ -403,8 +432,10 @@ impl NatTraversal {
         // Simple TCP connection test
         match tokio::time::timeout(
             Duration::from_secs(5),
-            tokio::net::TcpStream::connect(remote_addr)
-        ).await {
+            tokio::net::TcpStream::connect(remote_addr),
+        )
+        .await
+        {
             Ok(Ok(_)) => Ok(true),
             Ok(Err(_)) => Ok(false),
             Err(_) => Ok(false),

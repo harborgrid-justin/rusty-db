@@ -1,26 +1,21 @@
 // WebSocket Integration Tests
 // Tests for WebSocket functionality including connection, messaging, authentication, and subscriptions
 
+use futures_util::{SinkExt, StreamExt};
 use serde_json::json;
 use std::time::Duration;
 use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use futures_util::{SinkExt, StreamExt};
 
 const WS_SERVER_URL: &str = "ws://127.0.0.1:5432/ws";
 const WS_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// Helper function to create a WebSocket connection
 async fn create_ws_connection() -> Result<
-    tokio_tungstenite::WebSocketStream<
-        tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>
-    >,
-    Box<dyn std::error::Error>
+    tokio_tungstenite::WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>,
+    Box<dyn std::error::Error>,
 > {
-    let (ws_stream, _) = timeout(
-        WS_TIMEOUT,
-        connect_async(WS_SERVER_URL)
-    ).await??;
+    let (ws_stream, _) = timeout(WS_TIMEOUT, connect_async(WS_SERVER_URL)).await??;
     Ok(ws_stream)
 }
 
@@ -30,10 +25,7 @@ async fn create_ws_connection() -> Result<
 async fn test_websocket_connection() {
     // Skip test if server is not running
     // In actual integration tests, the server should be started beforehand
-    let result = timeout(
-        Duration::from_secs(2),
-        connect_async(WS_SERVER_URL)
-    ).await;
+    let result = timeout(Duration::from_secs(2), connect_async(WS_SERVER_URL)).await;
 
     match result {
         Ok(Ok((mut ws_stream, response))) => {
@@ -72,9 +64,9 @@ async fn test_websocket_message_send_receive() {
             }
         });
 
-        let send_result = ws_stream.send(
-            Message::Text(test_message.to_string())
-        ).await;
+        let send_result = ws_stream
+            .send(Message::Text(test_message.to_string()))
+            .await;
 
         assert!(send_result.is_ok(), "Failed to send message");
 
@@ -84,8 +76,8 @@ async fn test_websocket_message_send_receive() {
         match response {
             Ok(Some(Ok(Message::Text(text)))) => {
                 // Verify we got a valid JSON response
-                let parsed: serde_json::Value = serde_json::from_str(&text)
-                    .expect("Response should be valid JSON");
+                let parsed: serde_json::Value =
+                    serde_json::from_str(&text).expect("Response should be valid JSON");
 
                 assert!(parsed.is_object(), "Response should be a JSON object");
                 println!("Message roundtrip test: PASSED");
@@ -167,9 +159,9 @@ async fn test_websocket_authentication() {
             }
         });
 
-        let send_result = ws_stream.send(
-            Message::Text(auth_message.to_string())
-        ).await;
+        let send_result = ws_stream
+            .send(Message::Text(auth_message.to_string()))
+            .await;
 
         assert!(send_result.is_ok(), "Failed to send auth message");
 
@@ -178,8 +170,8 @@ async fn test_websocket_authentication() {
 
         match response {
             Ok(Some(Ok(Message::Text(text)))) => {
-                let parsed: serde_json::Value = serde_json::from_str(&text)
-                    .expect("Auth response should be valid JSON");
+                let parsed: serde_json::Value =
+                    serde_json::from_str(&text).expect("Auth response should be valid JSON");
 
                 // Verify response has expected structure
                 assert!(
@@ -189,11 +181,16 @@ async fn test_websocket_authentication() {
 
                 let response_type = parsed["type"].as_str().unwrap_or("");
                 assert!(
-                    response_type == "auth_success" || response_type == "auth_failure" || response_type == "error",
+                    response_type == "auth_success"
+                        || response_type == "auth_failure"
+                        || response_type == "error",
                     "Response type should be auth-related"
                 );
 
-                println!("Authentication test: PASSED (response type: {})", response_type);
+                println!(
+                    "Authentication test: PASSED (response type: {})",
+                    response_type
+                );
             }
             Ok(Some(Ok(msg))) => {
                 println!("Received unexpected message type during auth: {:?}", msg);
@@ -234,9 +231,9 @@ async fn test_websocket_subscription() {
             }
         });
 
-        let send_result = ws_stream.send(
-            Message::Text(subscribe_message.to_string())
-        ).await;
+        let send_result = ws_stream
+            .send(Message::Text(subscribe_message.to_string()))
+            .await;
 
         assert!(send_result.is_ok(), "Failed to send subscribe message");
 
@@ -258,16 +255,19 @@ async fn test_websocket_subscription() {
                     }
                 });
 
-                let unsub_result = ws_stream.send(
-                    Message::Text(unsubscribe_message.to_string())
-                ).await;
+                let unsub_result = ws_stream
+                    .send(Message::Text(unsubscribe_message.to_string()))
+                    .await;
 
                 assert!(unsub_result.is_ok(), "Failed to send unsubscribe message");
 
                 println!("Subscription lifecycle test: PASSED");
             }
             Ok(Some(Ok(msg))) => {
-                println!("Received unexpected message type during subscription: {:?}", msg);
+                println!(
+                    "Received unexpected message type during subscription: {:?}",
+                    msg
+                );
             }
             Ok(Some(Err(e))) => {
                 panic!("Error receiving subscription response: {:?}", e);
@@ -324,9 +324,9 @@ async fn test_websocket_broadcast() {
             }
         });
 
-        let _ = ws_stream1.send(
-            Message::Text(broadcast_message.to_string())
-        ).await;
+        let _ = ws_stream1
+            .send(Message::Text(broadcast_message.to_string()))
+            .await;
 
         // Both clients should receive the broadcast
         // (Implementation dependent - may or may not echo back to sender)
@@ -369,9 +369,12 @@ async fn test_websocket_rate_limiting() {
                         if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&text) {
                             if let Some(msg_type) = parsed.get("type").and_then(|t| t.as_str()) {
                                 if msg_type == "rate_limit_exceeded" || msg_type == "error" {
-                                    if let Some(message) = parsed.get("message").and_then(|m| m.as_str()) {
-                                        if message.to_lowercase().contains("rate") ||
-                                           message.to_lowercase().contains("limit") {
+                                    if let Some(message) =
+                                        parsed.get("message").and_then(|m| m.as_str())
+                                    {
+                                        if message.to_lowercase().contains("rate")
+                                            || message.to_lowercase().contains("limit")
+                                        {
                                             rate_limited = true;
                                             println!("Rate limiting triggered at message {}", i);
                                             break;
@@ -415,9 +418,9 @@ async fn test_websocket_reconnection() {
             "type": "ping"
         });
 
-        let _ = ws_stream1.send(
-            Message::Text(test_message.to_string())
-        ).await;
+        let _ = ws_stream1
+            .send(Message::Text(test_message.to_string()))
+            .await;
 
         // Close the connection
         let _ = ws_stream1.close(None).await;
@@ -435,11 +438,14 @@ async fn test_websocket_reconnection() {
                     "type": "ping"
                 });
 
-                let send_result = ws_stream2.send(
-                    Message::Text(test_message2.to_string())
-                ).await;
+                let send_result = ws_stream2
+                    .send(Message::Text(test_message2.to_string()))
+                    .await;
 
-                assert!(send_result.is_ok(), "Failed to send message after reconnection");
+                assert!(
+                    send_result.is_ok(),
+                    "Failed to send message after reconnection"
+                );
 
                 println!("Reconnection test: PASSED");
 
@@ -465,7 +471,9 @@ async fn test_websocket_error_handling() {
         // Send invalid JSON
         let invalid_json = "{ this is not valid json }";
 
-        let _ = ws_stream.send(Message::Text(invalid_json.to_string())).await;
+        let _ = ws_stream
+            .send(Message::Text(invalid_json.to_string()))
+            .await;
 
         // Should receive an error response
         let response = timeout(WS_TIMEOUT, ws_stream.next()).await;
@@ -529,7 +537,10 @@ async fn test_websocket_concurrent_connections() {
         }
     }
 
-    println!("Successfully created {} concurrent connections", connections.len());
+    println!(
+        "Successfully created {} concurrent connections",
+        connections.len()
+    );
 
     // Close all connections
     for mut ws_stream in connections {

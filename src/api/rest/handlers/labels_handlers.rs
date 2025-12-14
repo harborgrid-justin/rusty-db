@@ -3,16 +3,16 @@
 // REST API endpoints for managing security labels, compartments, and
 // mandatory access control (MAC) policies.
 
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::security::labels::{ClassificationLevel, Compartment, SecurityLabel, UserClearance};
 use axum::{
-    extract::{State, Path},
+    extract::{Path, State},
     response::Json,
 };
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use std::collections::HashSet;
 use parking_lot::RwLock;
-use crate::api::rest::types::{ApiState, ApiResult, ApiError};
-use crate::security::labels::{SecurityLabel, ClassificationLevel, Compartment, UserClearance};
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
+use std::sync::Arc;
 
 // Request/Response Types
 
@@ -113,7 +113,10 @@ fn parse_classification(s: &str) -> Result<ClassificationLevel, ApiError> {
         "CONFIDENTIAL" => Ok(ClassificationLevel::Confidential),
         "SECRET" => Ok(ClassificationLevel::Secret),
         "TOPSECRET" | "TOP_SECRET" => Ok(ClassificationLevel::TopSecret),
-        _ => Err(ApiError::new("INVALID_CLASSIFICATION", format!("Unknown classification: {}", s))),
+        _ => Err(ApiError::new(
+            "INVALID_CLASSIFICATION",
+            format!("Unknown classification: {}", s),
+        )),
     }
 }
 
@@ -156,7 +159,8 @@ pub async fn list_compartments(
 ) -> ApiResult<Json<Vec<CompartmentResponse>>> {
     let registry = LABEL_REGISTRY.read();
 
-    let responses: Vec<CompartmentResponse> = registry.compartments
+    let responses: Vec<CompartmentResponse> = registry
+        .compartments
         .iter()
         .map(|c| CompartmentResponse {
             id: c.id.clone(),
@@ -212,7 +216,10 @@ pub async fn get_compartment(
             parent: compartment.parent.clone(),
         }))
     } else {
-        Err(ApiError::new("COMPARTMENT_NOT_FOUND", format!("Compartment {} not found", id)))
+        Err(ApiError::new(
+            "COMPARTMENT_NOT_FOUND",
+            format!("Compartment {} not found", id),
+        ))
     }
 }
 
@@ -232,7 +239,10 @@ pub async fn delete_compartment(
             "message": format!("Compartment {} deleted", id),
         })))
     } else {
-        Err(ApiError::new("COMPARTMENT_NOT_FOUND", format!("Compartment {} not found", id)))
+        Err(ApiError::new(
+            "COMPARTMENT_NOT_FOUND",
+            format!("Compartment {} not found", id),
+        ))
     }
 }
 
@@ -254,7 +264,10 @@ pub async fn get_user_clearance(
             authorized_compartments: clearance.authorized_compartments.iter().cloned().collect(),
         }))
     } else {
-        Err(ApiError::new("CLEARANCE_NOT_FOUND", format!("No clearance found for user {}", user_id)))
+        Err(ApiError::new(
+            "CLEARANCE_NOT_FOUND",
+            format!("No clearance found for user {}", user_id),
+        ))
     }
 }
 
@@ -290,7 +303,9 @@ pub async fn set_user_clearance(
         authorized_groups: HashSet::new(),
     };
 
-    registry.user_clearances.insert(request.user_id.clone(), clearance);
+    registry
+        .user_clearances
+        .insert(request.user_id.clone(), clearance);
 
     Ok(Json(UserClearanceResponse {
         user_id: request.user_id,
@@ -354,7 +369,10 @@ pub async fn validate_label_access(
             },
         })))
     } else {
-        Err(ApiError::new("CLEARANCE_NOT_FOUND", format!("No clearance found for user {}", user_id)))
+        Err(ApiError::new(
+            "CLEARANCE_NOT_FOUND",
+            format!("No clearance found for user {}", user_id),
+        ))
     }
 }
 

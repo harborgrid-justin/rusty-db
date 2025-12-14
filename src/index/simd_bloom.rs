@@ -31,7 +31,7 @@
 // - Throughput: 100M+ probes/second with AVX2
 // - Cache efficiency: 95%+ hit rate (1 cache line per probe)
 
-use crate::simd::hash::{xxhash3_avx2, wyhash};
+use crate::simd::hash::{wyhash, xxhash3_avx2};
 
 // Block size in bits (512 bits = 64 bytes = 1 cache line)
 const BLOCK_SIZE_BITS: usize = 512;
@@ -389,7 +389,11 @@ mod tests {
         println!("Measured FPR: {:.4}%, Expected: ~1%", measured_fpr * 100.0);
 
         // Allow some variance (should be < 3%)
-        assert!(measured_fpr < 0.03, "FPR too high: {:.4}%", measured_fpr * 100.0);
+        assert!(
+            measured_fpr < 0.03,
+            "FPR too high: {:.4}%",
+            measured_fpr * 100.0
+        );
     }
 
     #[test]
@@ -410,11 +414,11 @@ mod tests {
 
         let results = bloom.contains_batch(&keys);
 
-        assert_eq!(results[0], true);  // key1 present
+        assert_eq!(results[0], true); // key1 present
         assert_eq!(results[1], false); // key2 absent
-        assert_eq!(results[2], true);  // key3 present
+        assert_eq!(results[2], true); // key3 present
         assert_eq!(results[3], false); // key4 absent
-        assert_eq!(results[4], true);  // key5 present
+        assert_eq!(results[4], true); // key5 present
     }
 
     #[test]
@@ -434,9 +438,17 @@ mod tests {
         let bloom = SimdBloomFilter::new(10000, 0.01);
         let memory = bloom.memory_usage();
 
-        println!("Memory usage: {} bytes ({:.2} KB)", memory, memory as f64 / 1024.0);
+        println!(
+            "Memory usage: {} bytes ({:.2} KB)",
+            memory,
+            memory as f64 / 1024.0
+        );
         assert!(memory > 0);
-        assert_eq!(memory % BLOCK_SIZE_BYTES, 0, "Memory should be block-aligned");
+        assert_eq!(
+            memory % BLOCK_SIZE_BYTES,
+            0,
+            "Memory should be block-aligned"
+        );
     }
 
     #[test]

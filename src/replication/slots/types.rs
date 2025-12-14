@@ -59,7 +59,8 @@ impl SlotName {
     }
 
     fn is_valid_name(name: &str) -> bool {
-        name.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+        name.chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
     }
 
     pub fn as_str(&self) -> &str {
@@ -159,7 +160,7 @@ impl Default for SlotConfig {
     fn default() -> Self {
         Self {
             retain_wal: true,
-            max_lag_bytes: 1024 * 1024 * 1024, // 1GB
+            max_lag_bytes: 1024 * 1024 * 1024,  // 1GB
             max_age: Duration::from_secs(3600), // 1 hour
             auto_advance: false,
             restart_on_error: true,

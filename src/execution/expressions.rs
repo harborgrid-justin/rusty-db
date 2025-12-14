@@ -24,11 +24,10 @@
 //    - String: LIKE, CONCAT, SUBSTRING
 //    - Aggregate: SUM, COUNT, AVG, MIN, MAX
 
-use std::fmt;
-use crate::error::DbError;
 use crate::catalog::DataType;
+use crate::error::DbError;
 use std::collections::HashMap;
-
+use std::fmt;
 
 // Expression value with NULL support
 #[derive(Debug, Clone, PartialEq)]
@@ -86,9 +85,12 @@ impl ExprValue {
             ExprValue::Boolean(b) => Ok(if *b { 1 } else { 0 }),
             ExprValue::Integer(i) => Ok(*i),
             ExprValue::Float(f) => Ok(*f as i64),
-            ExprValue::String(s) => s.parse::<i64>()
+            ExprValue::String(s) => s
+                .parse::<i64>()
                 .map_err(|_| DbError::Execution(format!("Cannot convert '{}' to integer", s))),
-            _ => Err(DbError::Execution("Invalid type conversion to integer".to_string())),
+            _ => Err(DbError::Execution(
+                "Invalid type conversion to integer".to_string(),
+            )),
         }
     }
 
@@ -99,9 +101,12 @@ impl ExprValue {
             ExprValue::Boolean(b) => Ok(if *b { 1.0 } else { 0.0 }),
             ExprValue::Integer(i) => Ok(*i as f64),
             ExprValue::Float(f) => Ok(*f),
-            ExprValue::String(s) => s.parse::<f64>()
+            ExprValue::String(s) => s
+                .parse::<f64>()
                 .map_err(|_| DbError::Execution(format!("Cannot convert '{}' to float", s))),
-            _ => Err(DbError::Execution("Invalid type conversion to float".to_string())),
+            _ => Err(DbError::Execution(
+                "Invalid type conversion to float".to_string(),
+            )),
         }
     }
 
@@ -231,13 +236,15 @@ impl ExpressionEvaluator {
     }
 
     // Evaluate expression with given row context
-    pub fn eval(&self, expr: &Expr, row: &HashMap<String, ExprValue>) -> Result<ExprValue, DbError> {
+    pub fn eval(
+        &self,
+        expr: &Expr,
+        row: &HashMap<String, ExprValue>,
+    ) -> Result<ExprValue, DbError> {
         match expr {
             Expr::Literal(val) => Ok(val.clone()),
 
-            Expr::ColumnRef(name) => {
-                Ok(row.get(name).cloned().unwrap_or(ExprValue::Null))
-            }
+            Expr::ColumnRef(name) => Ok(row.get(name).cloned().unwrap_or(ExprValue::Null)),
 
             Expr::BinaryOp { left, op, right } => {
                 let left_val = self.eval(left, row)?;
@@ -251,14 +258,16 @@ impl ExpressionEvaluator {
             }
 
             Expr::Function { name, args } => {
-                let arg_values: Result<Vec<ExprValue>, DbError> = args.iter()
-                    .map(|arg| self.eval(arg, row))
-                    .collect();
+                let arg_values: Result<Vec<ExprValue>, DbError> =
+                    args.iter().map(|arg| self.eval(arg, row)).collect();
                 let arg_values = arg_values?;
                 self.eval_function(name, arg_values)
             }
 
-            Expr::Case { conditions, else_expr } => {
+            Expr::Case {
+                conditions,
+                else_expr,
+            } => {
                 for (cond, result) in conditions {
                     let cond_val = self.eval(cond, row)?;
                     if cond_val.to_bool() {
@@ -292,8 +301,10 @@ impl ExpressionEvaluator {
                 let low_val = self.eval(low, row)?;
                 let high_val = self.eval(high, row)?;
 
-                let ge_low = self.eval_binary_op(&expr_val, BinaryOperator::GreaterThanOrEqual, &low_val)?;
-                let le_high = self.eval_binary_op(&expr_val, BinaryOperator::LessThanOrEqual, &high_val)?;
+                let ge_low =
+                    self.eval_binary_op(&expr_val, BinaryOperator::GreaterThanOrEqual, &low_val)?;
+                let le_high =
+                    self.eval_binary_op(&expr_val, BinaryOperator::LessThanOrEqual, &high_val)?;
 
                 Ok(ExprValue::Boolean(ge_low.to_bool() && le_high.to_bool()))
             }
@@ -390,12 +401,8 @@ impl ExpressionEvaluator {
             }
 
             // Logical
-            BinaryOperator::And => {
-                Ok(ExprValue::Boolean(left.to_bool() && right.to_bool()))
-            }
-            BinaryOperator::Or => {
-                Ok(ExprValue::Boolean(left.to_bool() || right.to_bool()))
-            }
+            BinaryOperator::And => Ok(ExprValue::Boolean(left.to_bool() && right.to_bool())),
+            BinaryOperator::Or => Ok(ExprValue::Boolean(left.to_bool() || right.to_bool())),
 
             // String
             BinaryOperator::Like => {
@@ -429,12 +436,8 @@ impl ExpressionEvaluator {
                     Ok(ExprValue::Float(-num))
                 }
             }
-            UnaryOperator::IsNull => {
-                Ok(ExprValue::Boolean(val.is_null()))
-            }
-            UnaryOperator::IsNotNull => {
-                Ok(ExprValue::Boolean(!val.is_null()))
-            }
+            UnaryOperator::IsNull => Ok(ExprValue::Boolean(val.is_null())),
+            UnaryOperator::IsNotNull => Ok(ExprValue::Boolean(!val.is_null())),
         }
     }
 
@@ -467,7 +470,9 @@ impl ExpressionEvaluator {
             }
             "SUBSTRING" | "SUBSTR" => {
                 if args.len() < 2 || args.len() > 3 {
-                    return Err(DbError::Execution("SUBSTRING requires 2 or 3 arguments".to_string()));
+                    return Err(DbError::Execution(
+                        "SUBSTRING requires 2 or 3 arguments".to_string(),
+                    ));
                 }
                 let s = args[0].to_string();
                 let start = args[1].to_integer()? as usize;
@@ -477,7 +482,8 @@ impl ExpressionEvaluator {
                     s.len()
                 };
 
-                let result = s.chars()
+                let result = s
+                    .chars()
                     .skip(start.saturating_sub(1))
                     .take(len)
                     .collect::<String>();
@@ -493,7 +499,9 @@ impl ExpressionEvaluator {
             }
             "ROUND" => {
                 if args.len() < 1 || args.len() > 2 {
-                    return Err(DbError::Execution("ROUND requires 1 or 2 arguments".to_string()));
+                    return Err(DbError::Execution(
+                        "ROUND requires 1 or 2 arguments".to_string(),
+                    ));
                 }
                 let num = args[0].to_float()?;
                 let decimals = if args.len() == 2 {
@@ -525,13 +533,25 @@ impl ExpressionEvaluator {
 
         // Try numeric comparison first
         if let (Ok(l), Ok(r)) = (left.to_float(), right.to_float()) {
-            return Ok(if l < r { -1 } else if l > r { 1 } else { 0 });
+            return Ok(if l < r {
+                -1
+            } else if l > r {
+                1
+            } else {
+                0
+            });
         }
 
         // Fall back to string comparison
         let l = left.to_string();
         let r = right.to_string();
-        Ok(if l < r { -1 } else if l > r { 1 } else { 0 })
+        Ok(if l < r {
+            -1
+        } else if l > r {
+            1
+        } else {
+            0
+        })
     }
 
     // Check value equality
@@ -567,7 +587,8 @@ impl ExpressionEvaluator {
                     // Try matching at each position
                     let mut text_clone = text.clone();
                     while text_clone.peek().is_some() {
-                        if self.like_match_recursive(&mut text_clone.clone(), &mut pattern.clone()) {
+                        if self.like_match_recursive(&mut text_clone.clone(), &mut pattern.clone())
+                        {
                             return true;
                         }
                         text_clone.next();
@@ -701,10 +722,14 @@ mod tests {
         let left = ExprValue::Integer(10);
         let right = ExprValue::Integer(5);
 
-        let result = evaluator.eval_binary_op(&left, BinaryOperator::Add, &right).unwrap();
+        let result = evaluator
+            .eval_binary_op(&left, BinaryOperator::Add, &right)
+            .unwrap();
         assert_eq!(result.to_float().unwrap(), 15.0);
 
-        let result = evaluator.eval_binary_op(&left, BinaryOperator::Multiply, &right).unwrap();
+        let result = evaluator
+            .eval_binary_op(&left, BinaryOperator::Multiply, &right)
+            .unwrap();
         assert_eq!(result.to_float().unwrap(), 50.0);
     }
 
@@ -714,7 +739,9 @@ mod tests {
         let null = ExprValue::Null;
         let val = ExprValue::Integer(10);
 
-        let result = evaluator.eval_binary_op(&null, BinaryOperator::Add, &val).unwrap();
+        let result = evaluator
+            .eval_binary_op(&null, BinaryOperator::Add, &val)
+            .unwrap();
         assert!(result.is_null());
     }
 
@@ -745,14 +772,14 @@ mod tests {
     fn test_functions() {
         let evaluator = ExpressionEvaluator::new();
 
-        let result = evaluator.eval_function("UPPER", vec![
-            ExprValue::String("hello".to_string())
-        ]).unwrap();
+        let result = evaluator
+            .eval_function("UPPER", vec![ExprValue::String("hello".to_string())])
+            .unwrap();
         assert_eq!(result.to_string(), "HELLO");
 
-        let result = evaluator.eval_function("LENGTH", vec![
-            ExprValue::String("test".to_string())
-        ]).unwrap();
+        let result = evaluator
+            .eval_function("LENGTH", vec![ExprValue::String("test".to_string())])
+            .unwrap();
         assert_eq!(result.to_integer().unwrap(), 4);
     }
 }

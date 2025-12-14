@@ -20,7 +20,8 @@ use tokio::sync::oneshot;
 #[async_trait]
 pub trait MessageHandler: Send + Sync {
     /// Handle an incoming message
-    async fn handle(&self, from: NodeId, message: ClusterMessage) -> Result<Option<ClusterMessage>>;
+    async fn handle(&self, from: NodeId, message: ClusterMessage)
+        -> Result<Option<ClusterMessage>>;
 
     /// Get the message types this handler can process
     fn message_types(&self) -> Vec<&'static str>;
@@ -122,7 +123,8 @@ impl MessageRouter {
         let request_id = RequestId::new();
 
         // Create queued message
-        let queued_message = QueuedMessage::new(request_id.clone(), destination.clone(), message, priority);
+        let queued_message =
+            QueuedMessage::new(request_id.clone(), destination.clone(), message, priority);
 
         // Register with delivery tracker
         self.delivery_tracker.register_message(
@@ -168,8 +170,9 @@ impl MessageRouter {
         }
 
         // Create queued message
-        let queued_message = QueuedMessage::new(request_id.clone(), destination.clone(), message, priority)
-            .with_max_attempts(self.default_max_retries);
+        let queued_message =
+            QueuedMessage::new(request_id.clone(), destination.clone(), message, priority)
+                .with_max_attempts(self.default_max_retries);
 
         // Register with delivery tracker
         self.delivery_tracker.register_message(
@@ -305,7 +308,9 @@ impl MessageRouter {
         // Handle timed-out requests
         for request_id in timed_out {
             if let Some(pending) = self.pending_requests.write().remove(&request_id) {
-                let _ = pending.response_tx.send(Err(DbError::Network("Request timeout".to_string())));
+                let _ = pending
+                    .response_tx
+                    .send(Err(DbError::Network("Request timeout".to_string())));
             }
         }
     }
@@ -363,7 +368,11 @@ mod tests {
 
     #[async_trait]
     impl MessageHandler for TestHandler {
-        async fn handle(&self, _from: NodeId, _message: ClusterMessage) -> Result<Option<ClusterMessage>> {
+        async fn handle(
+            &self,
+            _from: NodeId,
+            _message: ClusterMessage,
+        ) -> Result<Option<ClusterMessage>> {
             Ok(None)
         }
 

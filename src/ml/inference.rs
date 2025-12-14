@@ -3,20 +3,22 @@
 // This module provides real-time and batch prediction capabilities with optimized
 // execution paths, model caching, and prediction explanations.
 
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::time::Instant;
-use crate::error::Result;
 use super::{
-    Vector, Matrix, MLError,
-    engine::{ModelRegistry, StoredModel, ModelVersion},
-    algorithms::{Algorithm, ModelType, LinearRegression, LogisticRegression,
-                 DecisionTree, RandomForest, KMeansClustering, NaiveBayes},
+    algorithms::{
+        Algorithm, DecisionTree, KMeansClustering, LinearRegression, LogisticRegression, ModelType,
+        NaiveBayes, RandomForest,
+    },
+    engine::{ModelRegistry, ModelVersion, StoredModel},
+    MLError, Matrix, Vector,
 };
+use crate::error::Result;
+use parking_lot::Mutex;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
-use serde::{Serialize, Deserialize};
-use parking_lot::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // ============================================================================
 // Prediction Result
@@ -87,7 +89,10 @@ impl Default for PredictionMetadata {
         Self {
             model_name: String::new(),
             model_version: ModelVersion::new(0, 0, 0),
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             inference_time_us: 0,
             num_samples: 0,
             cache_hit: false,
@@ -143,14 +148,13 @@ impl ConfidenceScore {
 
     // Get minimum confidence
     pub fn min(&self) -> f64 {
-        self.scores.iter()
-            .copied()
-            .fold(f64::INFINITY, f64::min)
+        self.scores.iter().copied().fold(f64::INFINITY, f64::min)
     }
 
     // Get maximum confidence
     pub fn max(&self) -> f64 {
-        self.scores.iter()
+        self.scores
+            .iter()
             .copied()
             .fold(f64::NEG_INFINITY, f64::max)
     }
@@ -174,17 +178,15 @@ pub struct FeatureImportance {
 impl FeatureImportance {
     // Create feature importance
     pub fn new(feature_names: Vec<String>, importance_scores: Vector) -> Self {
-        let mut feature_scores: Vec<(String, f64)> = feature_names.iter()
+        let mut feature_scores: Vec<(String, f64)> = feature_names
+            .iter()
             .zip(importance_scores.iter())
             .map(|(name, &score)| (name.clone(), score))
             .collect();
 
         feature_scores.sort_by(|(_, a), (_, b)| b.partial_cmp(a).unwrap());
 
-        let top_features = feature_scores.iter()
-            .take(10)
-            .cloned()
-            .collect();
+        let top_features = feature_scores.iter().take(10).cloned().collect();
 
         Self {
             feature_names,
@@ -195,7 +197,8 @@ impl FeatureImportance {
 
     // Get importance for a specific feature
     pub fn get_importance(&self, feature_name: &str) -> Option<f64> {
-        self.feature_names.iter()
+        self.feature_names
+            .iter()
             .position(|name| name == feature_name)
             .and_then(|idx| self.importance_scores.get(idx).copied())
     }
@@ -295,7 +298,11 @@ impl ModelCache {
             let mut stats = self.stats.lock();
             stats.hits += 1;
 
-            Some((cached.model_type, cached.model_data.clone(), cached.feature_names.clone()))
+            Some((
+                cached.model_type,
+                cached.model_data.clone(),
+                cached.feature_names.clone(),
+            ))
         } else {
             let mut stats = self.stats.lock();
             stats.misses += 1;
@@ -324,7 +331,8 @@ impl ModelCache {
         }
 
         // Find LRU item
-        let lru_key = cache.iter()
+        let lru_key = cache
+            .iter()
             .min_by_key(|(_, cached)| cached.last_access)
             .map(|(key, _)| key.clone());
 
@@ -402,7 +410,10 @@ pub struct BatchPredictor {
 impl BatchPredictor {
     // Create a new batch predictor
     pub fn new(batch_size: usize, parallel: bool) -> Self {
-        Self { batch_size, parallel }
+        Self {
+            batch_size,
+            parallel,
+        }
     }
 
     // Predict in batches
@@ -436,38 +447,46 @@ impl BatchPredictor {
     ) -> Result<Vector> {
         match model_type {
             ModelType::LinearRegression => {
-                let model: LinearRegression = serde_json::from_slice(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                let model: LinearRegression = serde_json::from_slice(model_data).map_err(|e| {
+                    MLError::PredictionFailed(format!("Deserialization failed: {}", e))
+                })?;
                 model.predict(features)
             }
             ModelType::LogisticRegression => {
-                let model: LogisticRegression = serde_json::from_slice(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                let model: LogisticRegression =
+                    serde_json::from_slice(model_data).map_err(|e| {
+                        MLError::PredictionFailed(format!("Deserialization failed: {}", e))
+                    })?;
                 model.predict(features)
             }
             ModelType::DecisionTree => {
-                let model: DecisionTree = serde_json::from_slice(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                let model: DecisionTree = serde_json::from_slice(model_data).map_err(|e| {
+                    MLError::PredictionFailed(format!("Deserialization failed: {}", e))
+                })?;
                 model.predict(features)
             }
             ModelType::RandomForest => {
-                let model: RandomForest = serde_json::from_slice(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                let model: RandomForest = serde_json::from_slice(model_data).map_err(|e| {
+                    MLError::PredictionFailed(format!("Deserialization failed: {}", e))
+                })?;
                 model.predict(features)
             }
             ModelType::KMeans => {
-                let model: KMeansClustering = serde_json::from_slice(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                let model: KMeansClustering = serde_json::from_slice(model_data).map_err(|e| {
+                    MLError::PredictionFailed(format!("Deserialization failed: {}", e))
+                })?;
                 model.predict(features)
             }
             ModelType::NaiveBayes => {
-                let model: NaiveBayes = serde_json::from_slice(model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                let model: NaiveBayes = serde_json::from_slice(model_data).map_err(|e| {
+                    MLError::PredictionFailed(format!("Deserialization failed: {}", e))
+                })?;
                 model.predict(features)
             }
-            ModelType::KMeansClustering => {
-                Err(MLError::PredictionFailed("KMeans clustering prediction not yet implemented".to_string()).into())
-            }
+            ModelType::KMeansClustering => Err(MLError::PredictionFailed(
+                "KMeans clustering prediction not yet implemented".to_string(),
+            )
+            .into()),
         }
     }
 
@@ -555,7 +574,8 @@ impl InferenceEngine {
         let start = Instant::now();
 
         // Get model from cache or registry
-        let cache_key = model_version.as_ref()
+        let cache_key = model_version
+            .as_ref()
             .map(|v| format!("{}:{}", model_name, v))
             .unwrap_or_else(|| model_name.to_string());
 
@@ -582,11 +602,14 @@ impl InferenceEngine {
             return Err(MLError::FeatureMismatch {
                 expected: feature_names.len(),
                 got: n_features,
-            }.into());
+            }
+            .into());
         }
 
         // Make prediction
-        let predictions = self.batch_predictor.predict_batch(features, model_type, &model_data)?;
+        let predictions = self
+            .batch_predictor
+            .predict_batch(features, model_type, &model_data)?;
 
         let inference_time = start.elapsed();
 
@@ -594,7 +617,10 @@ impl InferenceEngine {
         let metadata = PredictionMetadata {
             model_name: model_name.to_string(),
             model_version: actual_version,
-            timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs(),
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             inference_time_us: inference_time.as_micros() as u64,
             num_samples: features.len(),
             cache_hit,
@@ -656,13 +682,17 @@ impl InferenceEngine {
         // Extract feature importance from model if supported
         let importance_scores = match stored.metadata.model_type {
             ModelType::LinearRegression => {
-                let model: LinearRegression = serde_json::from_slice(&stored.model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                let model: LinearRegression =
+                    serde_json::from_slice(&stored.model_data).map_err(|e| {
+                        MLError::PredictionFailed(format!("Deserialization failed: {}", e))
+                    })?;
                 model.feature_importance()
             }
             ModelType::LogisticRegression => {
                 let model: LogisticRegression = serde_json::from_slice(&stored.model_data)
-                    .map_err(|e| MLError::PredictionFailed(format!("Deserialization failed: {}", e)))?;
+                    .map_err(|e| {
+                        MLError::PredictionFailed(format!("Deserialization failed: {}", e))
+                    })?;
                 model.feature_importance()
             }
             _ => None,
@@ -714,8 +744,8 @@ impl InferenceEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ml::engine::{ModelMetadata, StoredModel};
     use crate::ml::algorithms::ModelType;
+    use crate::ml::engine::{ModelMetadata, StoredModel};
 
     #[test]
     fn test_model_cache() {

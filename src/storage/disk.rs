@@ -191,8 +191,7 @@ impl ReadAheadBuffer {
         }
 
         // Detect sequential access pattern
-        let is_sequential = self.access_pattern.windows(2)
-            .all(|w| w[1] == w[0] + 1);
+        let is_sequential = self.access_pattern.windows(2).all(|w| w[1] == w[0] + 1);
 
         if is_sequential {
             // Prefetch next N pages
@@ -255,10 +254,9 @@ impl WriteBehindBuffer {
 
         let page_ids: Vec<PageId> = self.dirty_pages.drain(..batch_size).collect();
 
-        page_ids.into_iter()
-            .filter_map(|page_id| {
-                self.buffer.remove(&page_id).map(|data| (page_id, data))
-            })
+        page_ids
+            .into_iter()
+            .filter_map(|page_id| self.buffer.remove(&page_id).map(|data| (page_id, data)))
             .collect()
     }
 
@@ -267,10 +265,9 @@ impl WriteBehindBuffer {
 
         let page_ids: Vec<PageId> = self.dirty_pages.drain(..).collect();
 
-        page_ids.into_iter()
-            .filter_map(|page_id| {
-                self.buffer.remove(&page_id).map(|data| (page_id, data))
-            })
+        page_ids
+            .into_iter()
+            .filter_map(|page_id| self.buffer.remove(&page_id).map(|data| (page_id, data)))
             .collect()
     }
 
@@ -293,7 +290,7 @@ impl Default for DirectIoConfig {
     fn default() -> Self {
         Self {
             enabled: false,
-            alignment: 4096,  // 4KB alignment for most systems
+            alignment: 4096, // 4KB alignment for most systems
             min_size: 4096,
         }
     }
@@ -329,7 +326,7 @@ unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
 
     // Process remaining bytes
     while remaining > 0 {
-        let value= *ptr;
+        let value = *ptr;
         crc = _mm_crc32_u8(crc, value);
         ptr = ptr.add(1);
         remaining -= 1;
@@ -625,7 +622,7 @@ impl DiskManager {
             read_ahead: Arc::new(Mutex::new(ReadAheadBuffer::new(64, 10))),
             write_behind: Arc::new(Mutex::new(WriteBehindBuffer::new(128, 32))),
             write_coalescer: Arc::new(Mutex::new(WriteCoalescer::new(5000, 64))), // 5ms window, 64 pages
-            io_uring: Arc::new(Mutex::new(IoUring::new(256, false))), // 256 queue depth
+            io_uring: Arc::new(Mutex::new(IoUring::new(256, false))),             // 256 queue depth
             direct_io_config,
             adaptive_page_size: false,
             min_page_size: 4096,
@@ -640,7 +637,9 @@ impl DiskManager {
 
         // Check read-ahead buffer first
         {
-            let mut read_ahead = self.read_ahead.lock()
+            let mut read_ahead = self
+                .read_ahead
+                .lock()
                 .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
             if let Some(data) = read_ahead.get(page_id) {
                 let mut stats = self.stats.write();
@@ -667,7 +666,9 @@ impl DiskManager {
     }
 
     fn read_from_disk(&self, page_id: PageId) -> Result<Page> {
-        let mut file = self.data_file.lock()
+        let mut file = self
+            .data_file
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let offset = page_id as u64 * self.page_size as u64;
 
@@ -680,7 +681,9 @@ impl DiskManager {
     }
 
     fn trigger_read_ahead(&self, _page_id: PageId) -> Result<()> {
-        let mut read_ahead = self.read_ahead.lock()
+        let mut read_ahead = self
+            .read_ahead
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let next_pages = read_ahead.predict_next_pages();
 
@@ -701,7 +704,9 @@ impl DiskManager {
         let start = Instant::now();
 
         // Try write-behind buffer first
-        let mut write_behind = self.write_behind.lock()
+        let mut write_behind = self
+            .write_behind
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         if write_behind.add(page.id, page.data.clone()) {
             drop(write_behind);
@@ -731,7 +736,9 @@ impl DiskManager {
     }
 
     fn write_to_disk(&self, page: &Page) -> Result<()> {
-        let mut file = self.data_file.lock()
+        let mut file = self
+            .data_file
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let offset = page.id as u64 * self.page_size as u64;
 
@@ -747,7 +754,9 @@ impl DiskManager {
     }
 
     fn flush_write_behind_if_needed(&self) -> Result<()> {
-        let mut write_behind = self.write_behind.lock()
+        let mut write_behind = self
+            .write_behind
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
 
         if write_behind.should_flush() {
@@ -764,7 +773,9 @@ impl DiskManager {
     }
 
     pub fn flush_all_writes(&self) -> Result<()> {
-        let mut write_behind = self.write_behind.lock()
+        let mut write_behind = self
+            .write_behind
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let batch = write_behind.flush_all();
         drop(write_behind);
@@ -775,7 +786,9 @@ impl DiskManager {
         }
 
         // Force sync
-        let file = self.data_file.lock()
+        let file = self
+            .data_file
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         file.sync_all()?;
 
@@ -783,7 +796,9 @@ impl DiskManager {
     }
 
     pub fn allocate_page(&self) -> Result<PageId> {
-        let mut num_pages = self.num_pages.lock()
+        let mut num_pages = self
+            .num_pages
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         let page_id = *num_pages;
         *num_pages += 1;
@@ -812,7 +827,8 @@ impl DiskManager {
         self.scheduler.lock().unwrap().schedule(op);
 
         // Buffer the write
-        self.write_behind.lock()
+        self.write_behind
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?
             .add(page.id, page.data.clone());
 
@@ -868,13 +884,13 @@ impl DiskManager {
             return Ok(Vec::new());
         }
 
-        let mut file = self.data_file.lock()
+        let mut file = self
+            .data_file
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
 
         let mut pages = Vec::with_capacity(page_ids.len());
-        let mut bufs: Vec<Vec<u8>> = page_ids.iter()
-            .map(|_| vec![0u8; self.page_size])
-            .collect();
+        let mut bufs: Vec<Vec<u8>> = page_ids.iter().map(|_| vec![0u8; self.page_size]).collect();
 
         // Read pages sequentially (in real impl with preadv, would be single syscall)
         for (idx, &page_id) in page_ids.iter().enumerate() {
@@ -905,7 +921,9 @@ impl DiskManager {
             return Ok(());
         }
 
-        let mut file = self.data_file.lock()
+        let mut file = self
+            .data_file
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
 
         // Sort pages by ID for sequential writes
@@ -941,7 +959,9 @@ impl DiskManager {
         let offset = page.id as u64 * self.page_size as u64;
 
         let should_flush = {
-            let mut coalescer = self.write_coalescer.lock()
+            let mut coalescer = self
+                .write_coalescer
+                .lock()
                 .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
             coalescer.add_write(page.clone(), offset)
         };
@@ -959,7 +979,9 @@ impl DiskManager {
     // Flush coalesced writes
     pub fn flush_coalesced_writes(&self) -> Result<()> {
         let batch = {
-            let mut coalescer = self.write_coalescer.lock()
+            let mut coalescer = self
+                .write_coalescer
+                .lock()
                 .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
             coalescer.get_coalesced_batch()
         };
@@ -976,7 +998,9 @@ impl DiskManager {
         let offset = page_id as u64 * self.page_size as u64;
         let op = IoUringOp::read(page_id, offset, self.page_size);
 
-        let mut io_uring = self.io_uring.lock()
+        let mut io_uring = self
+            .io_uring
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.submit_op(op)?;
 
@@ -990,7 +1014,9 @@ impl DiskManager {
         let offset = page.id as u64 * self.page_size as u64;
         let op = IoUringOp::write(page.id, offset, page.data.clone());
 
-        let mut io_uring = self.io_uring.lock()
+        let mut io_uring = self
+            .io_uring
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.submit_op(op)?;
 
@@ -1001,14 +1027,21 @@ impl DiskManager {
 
     // Submit pending io_uring operations
     pub fn submit_io_uring_batch(&self) -> Result<usize> {
-        let mut io_uring = self.io_uring.lock()
+        let mut io_uring = self
+            .io_uring
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.submit_batch()
     }
 
     // Wait for io_uring completions
-    pub fn wait_io_uring_completions(&self, min_complete: usize) -> Result<Vec<(u64, Result<usize>)>> {
-        let mut io_uring = self.io_uring.lock()
+    pub fn wait_io_uring_completions(
+        &self,
+        min_complete: usize,
+    ) -> Result<Vec<(u64, Result<usize>)>> {
+        let mut io_uring = self
+            .io_uring
+            .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?;
         io_uring.wait_completions(min_complete)?;
 
@@ -1060,11 +1093,11 @@ impl DiskManager {
 
 #[cfg(test)]
 mod tests {
-    use tempfile::tempdir;
     use super::IoScheduler;
-    use crate::DbError;
     use crate::storage::disk::{IoOpType, IoOperation};
     use crate::storage::{DiskManager, IoPriority};
+    use crate::DbError;
+    use tempfile::tempdir;
 
     #[test]
     fn test_disk_manager() -> Result<(), DbError> {
@@ -1123,7 +1156,7 @@ mod tests {
     }
 
     struct ScheduleInfo {
-    // Placeholder for future scheduling metadata
+        // Placeholder for future scheduling metadata
     }
 
     #[test]

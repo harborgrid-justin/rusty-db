@@ -8,49 +8,42 @@
 // - Lifecycle events
 // - Main session manager
 
-pub mod state;
 pub mod auth;
-pub mod resources;
 pub mod coordination;
 pub mod events;
 pub mod manager;
+pub mod resources;
+pub mod state;
 
 // Re-export core types
 pub use state::{
-    SID, CursorId, StatementId,
-    SessionState, SessionSettings, SessionStatus,
-    TransactionState, IsolationLevel, OptimizerMode, CursorSharingMode,
-    CursorState, CursorStatus, PreparedStatement, ClientInfo, ResourceUsage,
+    ClientInfo, CursorId, CursorSharingMode, CursorState, CursorStatus, IsolationLevel,
+    OptimizerMode, PreparedStatement, ResourceUsage, SessionSettings, SessionState, SessionStatus,
+    StatementId, TransactionState, SID,
 };
 
 // Re-export auth types
 pub use auth::{
-    AuthenticationProvider, AuthMethod, AuthConfig,
+    AuthConfig, AuthMethod, AuthenticationProvider, AuthenticationResult, Credentials,
     PrivilegeCache, RoleManager, SessionCredentials,
-    Credentials, AuthenticationResult,
 };
 
 // Re-export resource types
 pub use resources::{
-    ResourceLimits, ResourceController, ResourceGovernor,
-    ConsumerGroup, ResourcePlan,
+    ConsumerGroup, ResourceController, ResourceGovernor, ResourceLimits, ResourcePlan,
 };
 
 // Re-export coordination types
 pub use coordination::{
-    SessionPool, SessionTag, SessionAffinity,
-    PooledSession, SessionSelector,
-    PoolConfig, PoolStatistics,
+    PoolConfig, PoolStatistics, PooledSession, SessionAffinity, SessionPool, SessionSelector,
+    SessionTag,
 };
 
 // Re-export event types
 pub use events::{
-    SessionEvent, EventHandler, EventManager,
-    LoginTrigger, LogoffTrigger, IdleTimeout,
-    SessionEventManager, SessionTrigger, SessionCallback, PurityLevel,
+    EventHandler, EventManager, IdleTimeout, LoginTrigger, LogoffTrigger, PurityLevel,
+    SessionCallback, SessionEvent, SessionEventManager, SessionTrigger,
 };
 
 // Re-export manager
-pub use manager::{
-    SessionManager, SessionConfig,
-};
+pub use manager::{SessionConfig, SessionManager};

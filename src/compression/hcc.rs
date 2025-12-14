@@ -1,14 +1,17 @@
 // Hybrid Columnar Compression (HCC) - Oracle-like Implementation
 // Provides columnar compression for OLAP workloads with excellent compression ratios
 
-use std::collections::HashSet;
+use super::algorithms::{
+    CascadedCompressor, DeltaEncoder, DictionaryCompressor, LZ4Compressor, RLEEncoder,
+    ZstdCompressor,
+};
 use super::*;
-use super::algorithms::{LZ4Compressor, ZstdCompressor, DictionaryCompressor, CascadedCompressor, DeltaEncoder, RLEEncoder};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
-use std::time::UNIX_EPOCH;
 use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
 
 // Compression Unit (CU) - basic unit of HCC compression
 // Contains multiple rows organized in columnar format
@@ -89,9 +92,9 @@ impl HCCStrategy {
 
     pub fn cu_size(&self) -> usize {
         match self {
-            HCCStrategy::QueryLow => 32 * 1024,    // 32K rows
-            HCCStrategy::QueryHigh => 64 * 1024,   // 64K rows
-            HCCStrategy::ArchiveLow => 128 * 1024, // 128K rows
+            HCCStrategy::QueryLow => 32 * 1024,     // 32K rows
+            HCCStrategy::QueryHigh => 64 * 1024,    // 64K rows
+            HCCStrategy::ArchiveLow => 128 * 1024,  // 128K rows
             HCCStrategy::ArchiveHigh => 256 * 1024, // 256K rows
         }
     }
@@ -124,8 +127,11 @@ impl HCCEngine {
     }
 
     // Compress column using type-specific encoding (NEW!)
-    pub fn compress_column_typed(&self, column: &[u8], col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
-
+    pub fn compress_column_typed(
+        &self,
+        column: &[u8],
+        col_type: &ColumnDataType,
+    ) -> CompressionResult<Vec<u8>> {
         match col_type {
             ColumnDataType::Integer | ColumnDataType::BigInt => {
                 // Convert bytes to u32/u64 and use cascaded compression
@@ -142,7 +148,8 @@ impl HCCEngine {
                     Ok(result)
                 } else {
                     // Fall back to LZ4 for odd sizes
-                    let mut output = vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
+                    let mut output =
+                        vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
                     let size = self.lz4_compressor.compress(column, &mut output)?;
                     output.truncate(size);
                     let mut result = vec![0u8]; // Marker: generic compression
@@ -165,7 +172,8 @@ impl HCCEngine {
                     result.extend_from_slice(&delta_encoder.encode(&values)?);
                     Ok(result)
                 } else {
-                    let mut output = vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
+                    let mut output =
+                        vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
                     let size = self.lz4_compressor.compress(column, &mut output)?;
                     output.truncate(size);
                     let mut result = vec![0u8];
@@ -190,7 +198,8 @@ impl HCCEngine {
                 if unique_count < total_chunks / 3 {
                     // Low cardinality - use dictionary encoding
                     // For simplicity, use Zstd which has dictionary support
-                    let mut output = vec![0u8; self.zstd_compressor.max_compressed_size(column.len())];
+                    let mut output =
+                        vec![0u8; self.zstd_compressor.max_compressed_size(column.len())];
                     let size = self.zstd_compressor.compress(column, &mut output)?;
                     output.truncate(size);
                     let mut result = vec![4u8]; // Marker: dictionary/zstd
@@ -198,7 +207,8 @@ impl HCCEngine {
                     Ok(result)
                 } else {
                     // High cardinality - use LZ4
-                    let mut output = vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
+                    let mut output =
+                        vec![0u8; self.lz4_compressor.max_compressed_size(column.len())];
                     let size = self.lz4_compressor.compress(column, &mut output)?;
                     output.truncate(size);
                     let mut result = vec![0u8];
@@ -220,8 +230,11 @@ impl HCCEngine {
     }
 
     // Decompress column using type-specific encoding (NEW!)
-    pub fn decompress_column_typed(&self, compressed: &[u8], _col_type: &ColumnDataType) -> CompressionResult<Vec<u8>> {
-
+    pub fn decompress_column_typed(
+        &self,
+        compressed: &[u8],
+        _col_type: &ColumnDataType,
+    ) -> CompressionResult<Vec<u8>> {
         if compressed.is_empty() {
             return Ok(Vec::new());
         }
@@ -270,11 +283,10 @@ impl HCCEngine {
                 output.truncate(size);
                 Ok(output)
             }
-            _ => {
-                Err(CompressionError::UnsupportedAlgorithm(
-                    format!("Unknown compression marker: {}", marker)
-                ))
-            }
+            _ => Err(CompressionError::UnsupportedAlgorithm(format!(
+                "Unknown compression marker: {}",
+                marker
+            ))),
         }
     }
 
@@ -283,9 +295,11 @@ impl HCCEngine {
     }
 
     // Transform row-major data to columnar format for compression
-    pub fn transform_to_columnar(&self, rows: &[Vec<u8>], column_types: &Vec<ColumnDataType>)
-        -> CompressionResult<Vec<Vec<u8>>> {
-
+    pub fn transform_to_columnar(
+        &self,
+        rows: &[Vec<u8>],
+        column_types: &Vec<ColumnDataType>,
+    ) -> CompressionResult<Vec<Vec<u8>>> {
         if rows.is_empty() {
             return Ok(Vec::new());
         }
@@ -315,9 +329,12 @@ impl HCCEngine {
     }
 
     // Transform columnar data back to row-major format
-    pub fn transform_to_rows(&self, columns: &[Vec<u8>], column_types: &Vec<ColumnDataType>,
-                             numrows: usize) -> CompressionResult<Vec<Vec<u8>>> {
-
+    pub fn transform_to_rows(
+        &self,
+        columns: &[Vec<u8>],
+        column_types: &Vec<ColumnDataType>,
+        numrows: usize,
+    ) -> CompressionResult<Vec<Vec<u8>>> {
         let mut rows = vec![Vec::new(); numrows];
 
         for (column, col_type) in columns.iter().zip(column_types.iter()) {
@@ -335,15 +352,19 @@ impl HCCEngine {
     }
 
     // Create a Compression Unit from rows
-    pub fn create_cu(&self, rows: Vec<Vec<u8>>, column_types: Vec<ColumnDataType>)
-        -> CompressionResult<CompressionUnit> {
-
+    pub fn create_cu(
+        &self,
+        rows: Vec<Vec<u8>>,
+        column_types: Vec<ColumnDataType>,
+    ) -> CompressionResult<CompressionUnit> {
         let start = Instant::now();
         let num_rows = rows.len();
         let num_columns = column_types.len();
 
         if num_rows == 0 || num_columns == 0 {
-            return Err(CompressionError::InvalidInput("Empty rows or columns".to_string()));
+            return Err(CompressionError::InvalidInput(
+                "Empty rows or columns".to_string(),
+            ));
         }
 
         // Transform to columnar format
@@ -354,7 +375,8 @@ impl HCCEngine {
         let mut column_metadata = Vec::new();
 
         for (col_idx, (column, col_type)) in columns.iter().zip(column_types.iter()).enumerate() {
-            let (compressed, metadata) = self.compress_column_with_metadata(column, col_type, col_idx)?;
+            let (compressed, metadata) =
+                self.compress_column_with_metadata(column, col_type, col_idx)?;
             compressed_columns.push(compressed);
             column_metadata.push(metadata);
         }
@@ -385,7 +407,8 @@ impl HCCEngine {
 
         // Update statistics
         let mut stats = self.stats.write().unwrap();
-        let total_uncompressed: usize = cu.column_metadata.iter().map(|m| m.uncompressed_size).sum();
+        let total_uncompressed: usize =
+            cu.column_metadata.iter().map(|m| m.uncompressed_size).sum();
         let total_compressed: usize = cu.column_metadata.iter().map(|m| m.compressed_size).sum();
 
         stats.uncompressed_size += total_uncompressed;
@@ -400,27 +423,26 @@ impl HCCEngine {
     }
 
     // Compress a single column with optimal algorithm and metadata
-    fn compress_column_with_metadata(&self, column: &[u8], col_type: &ColumnDataType, col_idx: usize)
-        -> CompressionResult<(Vec<u8>, ColumnMetadata)> {
-
+    fn compress_column_with_metadata(
+        &self,
+        column: &[u8],
+        col_type: &ColumnDataType,
+        col_idx: usize,
+    ) -> CompressionResult<(Vec<u8>, ColumnMetadata)> {
         let uncompressed_size = column.len();
         let algorithm = self.select_column_algorithm(column, col_type);
 
         let mut compressed = vec![0u8; self.max_compressed_size(column.len())];
 
         let compressed_size = match algorithm {
-            CompressionAlgorithm::LZ4 => {
-                self.lz4_compressor.compress(column, &mut compressed)?
-            }
+            CompressionAlgorithm::LZ4 => self.lz4_compressor.compress(column, &mut compressed)?,
             CompressionAlgorithm::Zstandard => {
                 self.zstd_compressor.compress(column, &mut compressed)?
             }
             CompressionAlgorithm::Dictionary => {
                 self.dict_compressor.compress(column, &mut compressed)?
             }
-            _ => {
-                self.lz4_compressor.compress(column, &mut compressed)?
-            }
+            _ => self.lz4_compressor.compress(column, &mut compressed)?,
         };
 
         compressed.truncate(compressed_size);
@@ -457,18 +479,18 @@ impl HCCEngine {
             let mut decompressed = vec![0u8; metadata.uncompressed_size];
 
             let decomp_size = match metadata.algorithm {
-                CompressionAlgorithm::LZ4 => {
-                    self.lz4_compressor.decompress(compressed_col, &mut decompressed)?
-                }
-                CompressionAlgorithm::Zstandard => {
-                    self.zstd_compressor.decompress(compressed_col, &mut decompressed)?
-                }
-                CompressionAlgorithm::Dictionary => {
-                    self.dict_compressor.decompress(compressed_col, &mut decompressed)?
-                }
-                _ => {
-                    self.lz4_compressor.decompress(compressed_col, &mut decompressed)?
-                }
+                CompressionAlgorithm::LZ4 => self
+                    .lz4_compressor
+                    .decompress(compressed_col, &mut decompressed)?,
+                CompressionAlgorithm::Zstandard => self
+                    .zstd_compressor
+                    .decompress(compressed_col, &mut decompressed)?,
+                CompressionAlgorithm::Dictionary => self
+                    .dict_compressor
+                    .decompress(compressed_col, &mut decompressed)?,
+                _ => self
+                    .lz4_compressor
+                    .decompress(compressed_col, &mut decompressed)?,
             };
 
             decompressed.truncate(decomp_size);
@@ -476,9 +498,11 @@ impl HCCEngine {
             // Verify checksum
             let checksum = utils::crc32(&decompressed);
             if checksum != metadata.checksum {
-                return Err(CompressionError::CorruptedData(
-                    format!("Checksum mismatch for column {}", metadata.column_id)
-                ).into());
+                return Err(CompressionError::CorruptedData(format!(
+                    "Checksum mismatch for column {}",
+                    metadata.column_id
+                ))
+                .into());
             }
 
             decompressed_columns.push(decompressed);
@@ -492,17 +516,21 @@ impl HCCEngine {
     }
 
     // Query-aware decompression - decompress only requested columns
-    pub fn decompress_columns(&self, cu: &CompressionUnit, column_indices: &[usize])
-        -> CompressionResult<Vec<Vec<u8>>> {
-
+    pub fn decompress_columns(
+        &self,
+        cu: &CompressionUnit,
+        column_indices: &[usize],
+    ) -> CompressionResult<Vec<Vec<u8>>> {
         let start = Instant::now();
         let mut decompressed_columns = Vec::new();
 
         for &col_idx in column_indices {
             if col_idx >= cu.num_columns {
-                return Err(CompressionError::InvalidInput(
-                    format!("Column index {} out of range", col_idx)
-                ).into());
+                return Err(CompressionError::InvalidInput(format!(
+                    "Column index {} out of range",
+                    col_idx
+                ))
+                .into());
             }
 
             let compressed_col = &cu.compressed_columns[col_idx];
@@ -510,18 +538,18 @@ impl HCCEngine {
             let mut decompressed = vec![0u8; metadata.uncompressed_size];
 
             let decomp_size = match metadata.algorithm {
-                CompressionAlgorithm::LZ4 => {
-                    self.lz4_compressor.decompress(compressed_col, &mut decompressed)?
-                }
-                CompressionAlgorithm::Zstandard => {
-                    self.zstd_compressor.decompress(compressed_col, &mut decompressed)?
-                }
-                CompressionAlgorithm::Dictionary => {
-                    self.dict_compressor.decompress(compressed_col, &mut decompressed)?
-                }
-                _ => {
-                    self.lz4_compressor.decompress(compressed_col, &mut decompressed)?
-                }
+                CompressionAlgorithm::LZ4 => self
+                    .lz4_compressor
+                    .decompress(compressed_col, &mut decompressed)?,
+                CompressionAlgorithm::Zstandard => self
+                    .zstd_compressor
+                    .decompress(compressed_col, &mut decompressed)?,
+                CompressionAlgorithm::Dictionary => self
+                    .dict_compressor
+                    .decompress(compressed_col, &mut decompressed)?,
+                _ => self
+                    .lz4_compressor
+                    .decompress(compressed_col, &mut decompressed)?,
             };
 
             decompressed.truncate(decomp_size);
@@ -535,9 +563,11 @@ impl HCCEngine {
     }
 
     // Select optimal compression algorithm for a column
-    fn select_column_algorithm(&self, column: &[u8], col_type: &ColumnDataType)
-        -> CompressionAlgorithm {
-
+    fn select_column_algorithm(
+        &self,
+        column: &[u8],
+        col_type: &ColumnDataType,
+    ) -> CompressionAlgorithm {
         match self.strategy {
             HCCStrategy::QueryLow => CompressionAlgorithm::LZ4,
             HCCStrategy::QueryHigh | HCCStrategy::ArchiveLow => {
@@ -550,7 +580,7 @@ impl HCCEngine {
                             CompressionAlgorithm::Zstandard
                         }
                     }
-                    _ => CompressionAlgorithm::LZ4
+                    _ => CompressionAlgorithm::LZ4,
                 }
             }
             HCCStrategy::ArchiveHigh => {
@@ -561,9 +591,11 @@ impl HCCEngine {
     }
 
     // Direct path load optimization - bulk load data into HCC format
-    pub fn direct_path_load(&self, rows: Vec<Vec<u8>>, column_types: Vec<ColumnDataType>)
-        -> CompressionResult<Vec<u64>> {
-
+    pub fn direct_path_load(
+        &self,
+        rows: Vec<Vec<u8>>,
+        column_types: Vec<ColumnDataType>,
+    ) -> CompressionResult<Vec<u64>> {
         let cu_size = self.strategy.cu_size();
         let mut cu_ids = Vec::new();
 
@@ -585,10 +617,10 @@ impl HCCEngine {
     // Get compression ratio for a CU
     pub fn get_cu_compression_ratio(&self, cu_id: u64) -> Option<f64> {
         self.get_cu(cu_id).map(|cu| {
-            let total_uncompressed: usize = cu.column_metadata.iter()
-                .map(|m| m.uncompressed_size).sum();
-            let total_compressed: usize = cu.column_metadata.iter()
-                .map(|m| m.compressed_size).sum();
+            let total_uncompressed: usize =
+                cu.column_metadata.iter().map(|m| m.uncompressed_size).sum();
+            let total_compressed: usize =
+                cu.column_metadata.iter().map(|m| m.compressed_size).sum();
 
             if total_compressed == 0 {
                 0.0
@@ -601,10 +633,10 @@ impl HCCEngine {
     // Get CU statistics
     pub fn get_cu_stats(&self, cu_id: u64) -> Option<CUStats> {
         self.get_cu(cu_id).map(|cu| {
-            let total_uncompressed: usize = cu.column_metadata.iter()
-                .map(|m| m.uncompressed_size).sum();
-            let total_compressed: usize = cu.column_metadata.iter()
-                .map(|m| m.compressed_size).sum();
+            let total_uncompressed: usize =
+                cu.column_metadata.iter().map(|m| m.uncompressed_size).sum();
+            let total_compressed: usize =
+                cu.column_metadata.iter().map(|m| m.compressed_size).sum();
 
             CUStats {
                 cu_id,
@@ -612,17 +644,23 @@ impl HCCEngine {
                 num_columns: cu.num_columns,
                 uncompressed_size: total_uncompressed,
                 compressed_size: total_compressed,
-                compression_ratio: if total_compressed == 0 { 0.0 } else {
+                compression_ratio: if total_compressed == 0 {
+                    0.0
+                } else {
                     total_uncompressed as f64 / total_compressed as f64
                 },
-                column_stats: cu.column_metadata.iter().map(|m| ColumnStats {
-                    column_id: m.column_id,
-                    uncompressed_size: m.uncompressed_size,
-                    compressed_size: m.compressed_size,
-                    null_count: m.null_count,
-                    distinct_values: m.distinct_values.unwrap_or(0),
-                    algorithm: m.algorithm,
-                }).collect(),
+                column_stats: cu
+                    .column_metadata
+                    .iter()
+                    .map(|m| ColumnStats {
+                        column_id: m.column_id,
+                        uncompressed_size: m.uncompressed_size,
+                        compressed_size: m.compressed_size,
+                        null_count: m.null_count,
+                        distinct_values: m.distinct_values.unwrap_or(0),
+                        algorithm: m.algorithm,
+                    })
+                    .collect(),
             }
         })
     }
@@ -674,9 +712,11 @@ impl HCCEngine {
 }
 
 impl ColumnarCompressor for HCCEngine {
-    fn transform_to_columnar(&self, rows: &[Vec<u8>], numcolumns: usize)
-        -> CompressionResult<Vec<Vec<u8>>> {
-
+    fn transform_to_columnar(
+        &self,
+        rows: &[Vec<u8>],
+        numcolumns: usize,
+    ) -> CompressionResult<Vec<Vec<u8>>> {
         if rows.is_empty() {
             return Ok(Vec::new());
         }
@@ -699,9 +739,11 @@ impl ColumnarCompressor for HCCEngine {
         Ok(columns)
     }
 
-    fn transform_to_rows(&self, columns: &[Vec<u8>], numrows: usize)
-        -> CompressionResult<Vec<Vec<u8>>> {
-
+    fn transform_to_rows(
+        &self,
+        columns: &[Vec<u8>],
+        numrows: usize,
+    ) -> CompressionResult<Vec<Vec<u8>>> {
         if columns.is_empty() {
             return Ok(Vec::new());
         }
@@ -789,16 +831,20 @@ pub struct HCCAdvisor {
 
 impl HCCAdvisor {
     pub fn new() -> Self {
-        Self {
-            sample_size: 10000,
-        }
+        Self { sample_size: 10000 }
     }
 
     // Analyze data and recommend HCC strategy
-    pub fn recommend_strategy(&self, rows: &[Vec<u8>], column_types: &Vec<ColumnDataType>)
-        -> HCCStrategy {
-
-        let sample = rows.iter().take(self.sample_size).cloned().collect::<Vec<_>>();
+    pub fn recommend_strategy(
+        &self,
+        rows: &[Vec<u8>],
+        column_types: &Vec<ColumnDataType>,
+    ) -> HCCStrategy {
+        let sample = rows
+            .iter()
+            .take(self.sample_size)
+            .cloned()
+            .collect::<Vec<_>>();
 
         if sample.is_empty() {
             return HCCStrategy::QueryHigh;
@@ -822,9 +868,11 @@ impl HCCAdvisor {
         }
     }
 
-    fn estimate_avg_compressibility(&self, rows: &[Vec<u8>], _column_types: &[ColumnDataType])
-        -> f64 {
-
+    fn estimate_avg_compressibility(
+        &self,
+        rows: &[Vec<u8>],
+        _column_types: &[ColumnDataType],
+    ) -> f64 {
         let mut total_compressibility = 0.0;
 
         for row in rows.iter().take(100) {
@@ -857,7 +905,7 @@ impl Default for HCCAdvisor {
 
 #[cfg(test)]
 mod tests {
-    use crate::compression::hcc::{HCCAdvisor, HCCEngine, HCCStrategy, ColumnDataType};
+    use crate::compression::hcc::{ColumnDataType, HCCAdvisor, HCCEngine, HCCStrategy};
 
     #[test]
     fn test_hcc_compression() {
@@ -866,16 +914,15 @@ mod tests {
         let mut rows = Vec::new();
         for i in 0..1000 {
             let row = vec![
-                (i % 256) as u8, ((i / 256) % 256) as u8,
-                (i % 100) as u8, ((i / 100) % 256) as u8,
+                (i % 256) as u8,
+                ((i / 256) % 256) as u8,
+                (i % 100) as u8,
+                ((i / 100) % 256) as u8,
             ];
             rows.push(row);
         }
 
-        let column_types = vec![
-            ColumnDataType::Integer,
-            ColumnDataType::Integer,
-        ];
+        let column_types = vec![ColumnDataType::Integer, ColumnDataType::Integer];
 
         let cu = engine.create_cu(rows, column_types).unwrap();
         assert_eq!(cu.num_rows, 1000);
@@ -889,18 +936,14 @@ mod tests {
     fn test_columnar_transformation() {
         let engine = HCCEngine::new(HCCStrategy::QueryHigh);
 
-        let rows = vec![
-            vec![1, 2, 3, 4],
-            vec![5, 6, 7, 8],
-            vec![9, 10, 11, 12],
-        ];
+        let rows = vec![vec![1, 2, 3, 4], vec![5, 6, 7, 8], vec![9, 10, 11, 12]];
 
-        let column_types = vec![
-            ColumnDataType::Integer,
-        ];
+        let column_types = vec![ColumnDataType::Integer];
 
         let columns = engine.transform_to_columnar(&rows, &column_types).unwrap();
-        let restored = engine.transform_to_rows(&columns, &column_types, rows.len()).unwrap();
+        let restored = engine
+            .transform_to_rows(&columns, &column_types, rows.len())
+            .unwrap();
 
         assert_eq!(rows.len(), restored.len());
     }
@@ -913,7 +956,10 @@ mod tests {
         let column_types = vec![ColumnDataType::Integer];
 
         let strategy = advisor.recommend_strategy(&rows, &column_types);
-        assert!(matches!(strategy, HCCStrategy::QueryLow | HCCStrategy::QueryHigh));
+        assert!(matches!(
+            strategy,
+            HCCStrategy::QueryLow | HCCStrategy::QueryHigh
+        ));
     }
 
     #[test]
@@ -927,8 +973,12 @@ mod tests {
             column.extend_from_slice(&v.to_le_bytes());
         }
 
-        let compressed = engine.compress_column_typed(&column, &ColumnDataType::Integer).unwrap();
-        let decompressed = engine.decompress_column_typed(&compressed, &ColumnDataType::Integer).unwrap();
+        let compressed = engine
+            .compress_column_typed(&column, &ColumnDataType::Integer)
+            .unwrap();
+        let decompressed = engine
+            .decompress_column_typed(&compressed, &ColumnDataType::Integer)
+            .unwrap();
 
         assert_eq!(column, decompressed);
 
@@ -949,8 +999,12 @@ mod tests {
             column.extend_from_slice(&ts.to_le_bytes());
         }
 
-        let compressed = engine.compress_column_typed(&column, &ColumnDataType::Timestamp).unwrap();
-        let decompressed = engine.decompress_column_typed(&compressed, &ColumnDataType::Timestamp).unwrap();
+        let compressed = engine
+            .compress_column_typed(&column, &ColumnDataType::Timestamp)
+            .unwrap();
+        let decompressed = engine
+            .decompress_column_typed(&compressed, &ColumnDataType::Timestamp)
+            .unwrap();
 
         assert_eq!(column, decompressed);
 
@@ -967,8 +1021,12 @@ mod tests {
         // Create column of booleans (perfect for RLE)
         let booleans = vec![1u8; 1000];
 
-        let compressed = engine.compress_column_typed(&booleans, &ColumnDataType::Boolean).unwrap();
-        let decompressed = engine.decompress_column_typed(&compressed, &ColumnDataType::Boolean).unwrap();
+        let compressed = engine
+            .compress_column_typed(&booleans, &ColumnDataType::Boolean)
+            .unwrap();
+        let decompressed = engine
+            .decompress_column_typed(&compressed, &ColumnDataType::Boolean)
+            .unwrap();
 
         assert_eq!(booleans, decompressed);
 

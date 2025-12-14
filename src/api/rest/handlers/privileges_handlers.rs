@@ -2,15 +2,15 @@
 //
 // REST API endpoints for granting, revoking, and analyzing user privileges.
 
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::security_vault::SecurityVaultManager;
 use axum::{
-    extract::{State, Path},
+    extract::{Path, State},
     response::Json,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::api::rest::types::{ApiState, ApiResult, ApiError};
-use crate::security_vault::SecurityVaultManager;
 
 // Request/Response Types
 
@@ -123,16 +123,15 @@ pub async fn grant_privilege(
 
         Ok(Json(PrivilegeResult {
             success: true,
-            message: format!(
-                "Granted {} to {}",
-                privilege_name,
-                request.grantee
-            ),
+            message: format!("Granted {} to {}", privilege_name, request.grantee),
             grantee: request.grantee,
             privilege: privilege_name,
         }))
     } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(ApiError::new(
+            "VAULT_NOT_INITIALIZED",
+            "Security vault not initialized",
+        ))
     }
 }
 
@@ -155,16 +154,15 @@ pub async fn revoke_privilege(
 
         Ok(Json(PrivilegeResult {
             success: true,
-            message: format!(
-                "Revoked {} from {}",
-                privilege_name,
-                request.grantee
-            ),
+            message: format!("Revoked {} from {}", privilege_name, request.grantee),
             grantee: request.grantee,
             privilege: privilege_name,
         }))
     } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(ApiError::new(
+            "VAULT_NOT_INITIALIZED",
+            "Security vault not initialized",
+        ))
     }
 }
 
@@ -184,35 +182,32 @@ pub async fn get_user_privileges(
 
         Ok(Json(UserPrivileges {
             user_id: user_id.clone(),
-            direct_privileges: vec![
-                PrivilegeInfo {
+            direct_privileges: vec![PrivilegeInfo {
+                privilege_type: "SYSTEM".to_string(),
+                privilege_name: "CREATE TABLE".to_string(),
+                object_name: None,
+                granted_by: "ADMIN".to_string(),
+                granted_at: chrono::Utc::now().timestamp(),
+                with_grant_option: false,
+            }],
+            role_privileges: vec![RolePrivilegeInfo {
+                role_name: "DBA".to_string(),
+                privileges: vec![PrivilegeInfo {
                     privilege_type: "SYSTEM".to_string(),
-                    privilege_name: "CREATE TABLE".to_string(),
+                    privilege_name: "DROP ANY TABLE".to_string(),
                     object_name: None,
-                    granted_by: "ADMIN".to_string(),
+                    granted_by: "SYSTEM".to_string(),
                     granted_at: chrono::Utc::now().timestamp(),
-                    with_grant_option: false,
-                },
-            ],
-            role_privileges: vec![
-                RolePrivilegeInfo {
-                    role_name: "DBA".to_string(),
-                    privileges: vec![
-                        PrivilegeInfo {
-                            privilege_type: "SYSTEM".to_string(),
-                            privilege_name: "DROP ANY TABLE".to_string(),
-                            object_name: None,
-                            granted_by: "SYSTEM".to_string(),
-                            granted_at: chrono::Utc::now().timestamp(),
-                            with_grant_option: true,
-                        },
-                    ],
-                },
-            ],
+                    with_grant_option: true,
+                }],
+            }],
             total_privileges: 2,
         }))
     } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(ApiError::new(
+            "VAULT_NOT_INITIALIZED",
+            "Security vault not initialized",
+        ))
     }
 }
 
@@ -239,43 +234,81 @@ pub async fn analyze_user_privileges(
                     match rec {
                         PrivilegeRecommendation::RevokeUnused { privilege, .. } => {
                             let priv_name = match privilege {
-                                crate::security_vault::privileges::PrivilegeType::System(name) => name,
-                                crate::security_vault::privileges::PrivilegeType::Object { privilege, object_name, .. } => {
+                                crate::security_vault::privileges::PrivilegeType::System(name) => {
+                                    name
+                                }
+                                crate::security_vault::privileges::PrivilegeType::Object {
+                                    privilege,
+                                    object_name,
+                                    ..
+                                } => {
                                     format!("{} ON {}", privilege, object_name)
                                 }
-                                crate::security_vault::privileges::PrivilegeType::Role(name) => format!("ROLE {}", name),
+                                crate::security_vault::privileges::PrivilegeType::Role(name) => {
+                                    format!("ROLE {}", name)
+                                }
                             };
                             unused_privs.push(priv_name.clone());
-                            recommendation_msgs.push(format!("Consider revoking unused privilege: {}", priv_name));
+                            recommendation_msgs
+                                .push(format!("Consider revoking unused privilege: {}", priv_name));
                         }
-                        PrivilegeRecommendation::GrantMissing { privilege, reason, .. } => {
+                        PrivilegeRecommendation::GrantMissing {
+                            privilege, reason, ..
+                        } => {
                             let priv_name = match privilege {
-                                crate::security_vault::privileges::PrivilegeType::System(name) => name,
-                                crate::security_vault::privileges::PrivilegeType::Object { privilege, object_name, .. } => {
+                                crate::security_vault::privileges::PrivilegeType::System(name) => {
+                                    name
+                                }
+                                crate::security_vault::privileges::PrivilegeType::Object {
+                                    privilege,
+                                    object_name,
+                                    ..
+                                } => {
                                     format!("{} ON {}", privilege, object_name)
                                 }
-                                crate::security_vault::privileges::PrivilegeType::Role(name) => format!("ROLE {}", name),
+                                crate::security_vault::privileges::PrivilegeType::Role(name) => {
+                                    format!("ROLE {}", name)
+                                }
                             };
-                            recommendation_msgs.push(format!("Grant missing privilege {}: {}", priv_name, reason));
+                            recommendation_msgs
+                                .push(format!("Grant missing privilege {}: {}", priv_name, reason));
                         }
                         PrivilegeRecommendation::ConsolidateToRole { suggested_role, .. } => {
-                            recommendation_msgs.push(format!("Consider consolidating privileges to role: {}", suggested_role));
+                            recommendation_msgs.push(format!(
+                                "Consider consolidating privileges to role: {}",
+                                suggested_role
+                            ));
                         }
                         PrivilegeRecommendation::CreateRole { role_name, .. } => {
-                            recommendation_msgs.push(format!("Consider creating role: {}", role_name));
+                            recommendation_msgs
+                                .push(format!("Consider creating role: {}", role_name));
                         }
-                        PrivilegeRecommendation::PrivilegeEscalation { privilege, risk_level, reason, .. } => {
+                        PrivilegeRecommendation::PrivilegeEscalation {
+                            privilege,
+                            risk_level,
+                            reason,
+                            ..
+                        } => {
                             let priv_name = match privilege {
-                                crate::security_vault::privileges::PrivilegeType::System(name) => name,
-                                crate::security_vault::privileges::PrivilegeType::Object { privilege, object_name, .. } => {
+                                crate::security_vault::privileges::PrivilegeType::System(name) => {
+                                    name
+                                }
+                                crate::security_vault::privileges::PrivilegeType::Object {
+                                    privilege,
+                                    object_name,
+                                    ..
+                                } => {
                                     format!("{} ON {}", privilege, object_name)
                                 }
-                                crate::security_vault::privileges::PrivilegeType::Role(name) => format!("ROLE {}", name),
+                                crate::security_vault::privileges::PrivilegeType::Role(name) => {
+                                    format!("ROLE {}", name)
+                                }
                             };
                             if risk_level > 7 {
                                 high_risk_privs.push(priv_name.clone());
                             }
-                            recommendation_msgs.push(format!("High-risk privilege {}: {}", priv_name, reason));
+                            recommendation_msgs
+                                .push(format!("High-risk privilege {}: {}", priv_name, reason));
                         }
                     }
                 }
@@ -291,7 +324,10 @@ pub async fn analyze_user_privileges(
             Err(e) => Err(ApiError::new("ANALYSIS_ERROR", e.to_string())),
         }
     } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(ApiError::new(
+            "VAULT_NOT_INITIALIZED",
+            "Security vault not initialized",
+        ))
     }
 }
 
@@ -307,18 +343,19 @@ pub async fn get_role_privileges(
 
     if let Some(_vault) = vault_guard.as_ref() {
         // In a real implementation, we'd query the role's privileges
-        Ok(Json(vec![
-            PrivilegeInfo {
-                privilege_type: "SYSTEM".to_string(),
-                privilege_name: format!("Role {} privileges", role_name),
-                object_name: None,
-                granted_by: "SYSTEM".to_string(),
-                granted_at: chrono::Utc::now().timestamp(),
-                with_grant_option: false,
-            },
-        ]))
+        Ok(Json(vec![PrivilegeInfo {
+            privilege_type: "SYSTEM".to_string(),
+            privilege_name: format!("Role {} privileges", role_name),
+            object_name: None,
+            granted_by: "SYSTEM".to_string(),
+            granted_at: chrono::Utc::now().timestamp(),
+            with_grant_option: false,
+        }]))
     } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(ApiError::new(
+            "VAULT_NOT_INITIALIZED",
+            "Security vault not initialized",
+        ))
     }
 }
 
@@ -334,18 +371,19 @@ pub async fn get_object_privileges(
 
     if let Some(_vault) = vault_guard.as_ref() {
         // In a real implementation, we'd query object privileges
-        Ok(Json(vec![
-            PrivilegeInfo {
-                privilege_type: "OBJECT".to_string(),
-                privilege_name: "SELECT".to_string(),
-                object_name: Some(object_name.clone()),
-                granted_by: "OWNER".to_string(),
-                granted_at: chrono::Utc::now().timestamp(),
-                with_grant_option: false,
-            },
-        ]))
+        Ok(Json(vec![PrivilegeInfo {
+            privilege_type: "OBJECT".to_string(),
+            privilege_name: "SELECT".to_string(),
+            object_name: Some(object_name.clone()),
+            granted_by: "OWNER".to_string(),
+            granted_at: chrono::Utc::now().timestamp(),
+            with_grant_option: false,
+        }]))
     } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(ApiError::new(
+            "VAULT_NOT_INITIALIZED",
+            "Security vault not initialized",
+        ))
     }
 }
 
@@ -372,6 +410,9 @@ pub async fn validate_privilege(
             "checked_at": chrono::Utc::now().timestamp(),
         })))
     } else {
-        Err(ApiError::new("VAULT_NOT_INITIALIZED", "Security vault not initialized"))
+        Err(ApiError::new(
+            "VAULT_NOT_INITIALIZED",
+            "Security vault not initialized",
+        ))
     }
 }

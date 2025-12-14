@@ -71,24 +71,24 @@
 
 use crate::common::NodeId;
 use crate::error::Result;
-use std::time::Duration;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
-pub mod manager;
-pub mod node_pool;
-pub mod multiplexing;
 pub mod channel;
-pub mod warmup;
 pub mod eviction;
+pub mod manager;
 pub mod metrics;
+pub mod multiplexing;
+pub mod node_pool;
+pub mod warmup;
 
+pub use channel::{ChannelPool, ChannelRequest, RequestChannel};
+pub use eviction::{EvictionManager, EvictionPolicy};
 pub use manager::{PoolManager, PooledConnection};
-pub use node_pool::{NodePool, NodeConnection, ConnectionState};
+pub use metrics::{ConnectionMetrics, PoolMetrics, StreamMetrics};
 pub use multiplexing::{MultiplexedConnection, Stream, StreamId, StreamPriority};
-pub use channel::{ChannelPool, RequestChannel, ChannelRequest};
-pub use warmup::{WarmupStrategy, WarmupManager};
-pub use eviction::{EvictionPolicy, EvictionManager};
-pub use metrics::{PoolMetrics, ConnectionMetrics, StreamMetrics};
+pub use node_pool::{ConnectionState, NodeConnection, NodePool};
+pub use warmup::{WarmupManager, WarmupStrategy};
 
 // ============================================================================
 // Configuration
@@ -178,25 +178,25 @@ impl PoolConfig {
     pub fn validate(&self) -> Result<()> {
         if self.min_connections > self.max_connections {
             return Err(crate::error::DbError::Configuration(
-                "min_connections cannot exceed max_connections".to_string()
+                "min_connections cannot exceed max_connections".to_string(),
             ));
         }
 
         if self.warmup_connections > self.max_connections {
             return Err(crate::error::DbError::Configuration(
-                "warmup_connections cannot exceed max_connections".to_string()
+                "warmup_connections cannot exceed max_connections".to_string(),
             ));
         }
 
         if self.scale_up_threshold <= self.scale_down_threshold {
             return Err(crate::error::DbError::Configuration(
-                "scale_up_threshold must be greater than scale_down_threshold".to_string()
+                "scale_up_threshold must be greater than scale_down_threshold".to_string(),
             ));
         }
 
         if self.max_streams_per_connection == 0 && self.enable_multiplexing {
             return Err(crate::error::DbError::Configuration(
-                "max_streams_per_connection must be > 0 when multiplexing is enabled".to_string()
+                "max_streams_per_connection must be > 0 when multiplexing is enabled".to_string(),
             ));
         }
 
@@ -279,10 +279,7 @@ impl PoolConfigBuilder {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PoolEvent {
     /// Connection created to a node
-    ConnectionCreated {
-        node_id: NodeId,
-        connection_id: u64,
-    },
+    ConnectionCreated { node_id: NodeId, connection_id: u64 },
 
     /// Connection closed
     ConnectionClosed {

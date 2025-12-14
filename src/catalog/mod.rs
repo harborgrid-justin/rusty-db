@@ -1,9 +1,9 @@
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
 use std::sync::Arc;
-use crate::Result;
-use crate::error::DbError;
 
 // Column definition
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -81,7 +81,10 @@ impl Catalog {
         let mut schemas = self.schemas.write();
 
         if schemas.contains_key(&schema.name) {
-            return Err(DbError::Catalog(format!("Table {} already exists", schema.name)));
+            return Err(DbError::Catalog(format!(
+                "Table {} already exists",
+                schema.name
+            )));
         }
 
         schemas.insert(schema.name.clone(), schema);
@@ -91,7 +94,8 @@ impl Catalog {
     pub fn get_table(&self, name: &str) -> Result<Schema> {
         let schemas = self.schemas.read();
 
-        schemas.get(name)
+        schemas
+            .get(name)
             .cloned()
             .ok_or_else(|| DbError::Catalog(format!("Table {} not found", name)))
     }
@@ -99,7 +103,8 @@ impl Catalog {
     pub fn drop_table(&self, name: &str) -> Result<()> {
         let mut schemas = self.schemas.write();
 
-        schemas.remove(name)
+        schemas
+            .remove(name)
             .ok_or_else(|| DbError::Catalog(format!("Table {} not found", name)))?;
 
         Ok(())
@@ -123,7 +128,8 @@ impl Catalog {
     pub fn get_view(&self, name: &str) -> Result<View> {
         let views = self.views.read();
 
-        views.get(name)
+        views
+            .get(name)
             .cloned()
             .ok_or_else(|| DbError::Catalog(format!("View {} not found", name)))
     }
@@ -131,7 +137,8 @@ impl Catalog {
     pub fn drop_view(&self, name: &str) -> Result<()> {
         let mut views = self.views.write();
 
-        views.remove(name)
+        views
+            .remove(name)
             .ok_or_else(|| DbError::Catalog(format!("View {} not found", name)))?;
 
         Ok(())

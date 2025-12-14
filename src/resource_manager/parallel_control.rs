@@ -3,18 +3,18 @@
 // This module implements parallel degree limits, parallel statement queuing,
 // auto DOP calculation, parallel downgrade, and cross-instance coordination.
 
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Mutex;
-use std::collections::HashSet;
-use std::time::SystemTime;
-use std::time::Instant;
-use std::collections::{HashMap};
 use std::sync::{Arc, RwLock};
-use serde::{Deserialize, Serialize};
+use std::time::Instant;
+use std::time::SystemTime;
 
-use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
 use super::session_control::SessionId;
+use crate::error::{DbError, Result};
 
 // Parallel query identifier
 pub type ParallelQueryId = u64;
@@ -397,7 +397,8 @@ impl ParallelExecutionController {
             ParallelMode::Manual => requested_dop,
             ParallelMode::Automatic | ParallelMode::Adaptive => {
                 let available = self.get_available_servers();
-                self.auto_dop_calculator.calculate_dop(estimated_cost, estimated_rows, available)
+                self.auto_dop_calculator
+                    .calculate_dop(estimated_cost, estimated_rows, available)
             }
         };
 
@@ -418,7 +419,11 @@ impl ParallelExecutionController {
             session_id,
             group_id,
             requested_dop: final_dop,
-            min_dop: if mode == ParallelMode::Manual { final_dop } else { 1 },
+            min_dop: if mode == ParallelMode::Manual {
+                final_dop
+            } else {
+                1
+            },
             mode,
             estimated_cost,
             estimated_rows,
@@ -460,7 +465,9 @@ impl ParallelExecutionController {
 
         // If downgrade allowed, try lower DOPs
         if request.allow_downgrade && self.downgrade_enabled {
-            let downgraded_dop = available_dop.min(request.requested_dop).max(request.min_dop);
+            let downgraded_dop = available_dop
+                .min(request.requested_dop)
+                .max(request.min_dop);
             if downgraded_dop >= request.min_dop {
                 return Some(downgraded_dop);
             }
@@ -520,7 +527,8 @@ impl ParallelExecutionController {
 
             let total_queries = stats.total_parallel_queries + stats.total_serial_queries;
             stats.avg_dop_granted = (stats.avg_dop_granted * (total_queries - 1) as f64
-                + granted_dop as f64) / total_queries as f64;
+                + granted_dop as f64)
+                / total_queries as f64;
 
             let current_dop = *self.current_total_dop.read().unwrap();
             stats.peak_total_dop = stats.peak_total_dop.max(current_dop);
@@ -549,7 +557,7 @@ impl ParallelExecutionController {
                 }
             }
             return Err(DbError::ResourceExhausted(
-                "Not enough parallel servers available".to_string()
+                "Not enough parallel servers available".to_string(),
             ));
         }
 
@@ -560,7 +568,8 @@ impl ParallelExecutionController {
     pub fn complete_execution(&self, query_id: ParallelQueryId) -> Result<()> {
         let execution = {
             let mut executions = self.active_executions.write().unwrap();
-            executions.remove(&query_id)
+            executions
+                .remove(&query_id)
                 .ok_or_else(|| DbError::NotFound(format!("Query {} not found", query_id)))?
         };
 
@@ -678,16 +687,20 @@ mod tests {
     #[test]
     fn test_parallel_execution() {
         let controller = ParallelExecutionController::new(16, 32, 128);
-        controller.create_server_pool("DEFAULT".to_string(), 16, 64).unwrap();
+        controller
+            .create_server_pool("DEFAULT".to_string(), 16, 64)
+            .unwrap();
 
-        let query_id = controller.request_parallel_execution(
-            1,
-            1,
-            8,
-            ParallelMode::Automatic,
-            Some(100000.0),
-            Some(1000000),
-        ).unwrap();
+        let query_id = controller
+            .request_parallel_execution(
+                1,
+                1,
+                8,
+                ParallelMode::Automatic,
+                Some(100000.0),
+                Some(1000000),
+            )
+            .unwrap();
 
         assert!(query_id > 0);
     }

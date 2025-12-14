@@ -34,14 +34,14 @@
 // └──────────────────────────────────────────────────────────────────────┘
 // ```
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // Re-export commonly used types for other modules
-pub use std::collections::{HashMap, VecDeque, BTreeMap};
-pub use std::sync::atomic::{AtomicU64, AtomicUsize, AtomicBool, Ordering};
+pub use parking_lot::{Mutex, RwLock as PRwLock};
+pub use std::collections::{BTreeMap, HashMap, VecDeque};
+pub use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 pub use std::sync::Arc;
 pub use std::time::{Duration, Instant};
-pub use parking_lot::{Mutex, RwLock as PRwLock};
 
 // ============================================================================
 // SECTION 1: MULTI-TIER BUFFER POOL (700+ lines)
@@ -56,7 +56,10 @@ pub struct PageId {
 
 impl PageId {
     pub fn new(tablespace_id: u32, page_number: u64) -> Self {
-        Self { tablespace_id, page_number }
+        Self {
+            tablespace_id,
+            page_number,
+        }
     }
 }
 
@@ -248,16 +251,16 @@ impl Default for BufferPoolConfig {
     fn default() -> Self {
         Self {
             total_size: 1024 * 1024 * 1024, // 1GB
-            page_size: 8192,                 // 8KB pages
-            hot_tier_ratio: 0.2,             // 20% hot
-            warm_tier_ratio: 0.5,            // 50% warm
+            page_size: 8192,                // 8KB pages
+            hot_tier_ratio: 0.2,            // 20% hot
+            warm_tier_ratio: 0.5,           // 50% warm
             numa_aware: false,
             numa_nodes: Vec::new(),
             tablespace_pools: HashMap::new(),
-            keep_pool_size: 64 * 1024 * 1024,    // 64MB
+            keep_pool_size: 64 * 1024 * 1024,     // 64MB
             recycle_pool_size: 128 * 1024 * 1024, // 128MB
             promotion_threshold: 10,
-            demotion_threshold_secs: 300,    // 5 minutes
+            demotion_threshold_secs: 300, // 5 minutes
         }
     }
 }

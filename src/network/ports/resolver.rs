@@ -10,12 +10,12 @@
 // - **Caching**: TTL-based caching for performance
 
 use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 
 /// Resolved endpoint with metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -172,7 +172,8 @@ impl AddressResolver {
         let addrs = tokio::task::spawn_blocking({
             let address = address.to_string();
             move || {
-                address.to_socket_addrs()
+                address
+                    .to_socket_addrs()
                     .map(|iter| iter.collect::<Vec<_>>())
             }
         })
@@ -181,7 +182,10 @@ impl AddressResolver {
         .map_err(|e| DbError::Network(format!("DNS resolution failed for {}: {}", address, e)))?;
 
         if addrs.is_empty() {
-            return Err(DbError::Network(format!("No addresses found for {}", address)));
+            return Err(DbError::Network(format!(
+                "No addresses found for {}",
+                address
+            )));
         }
 
         // Convert to resolved endpoints
@@ -191,8 +195,8 @@ impl AddressResolver {
             .map(|(_i, addr)| {
                 ResolvedEndpoint::new(
                     addr,
-                    0,                                          // All have same priority
-                    1,                                          // Equal weight
+                    0, // All have same priority
+                    1, // Equal weight
                     Duration::from_secs(self.config.cache_ttl),
                 )
             })
@@ -202,7 +206,10 @@ impl AddressResolver {
     }
 
     /// Resolve multiple addresses
-    pub async fn resolve_many(&mut self, addresses: &[String]) -> Result<HashMap<String, Vec<ResolvedEndpoint>>> {
+    pub async fn resolve_many(
+        &mut self,
+        addresses: &[String],
+    ) -> Result<HashMap<String, Vec<ResolvedEndpoint>>> {
         let mut results = HashMap::new();
 
         for address in addresses {
@@ -220,7 +227,10 @@ impl AddressResolver {
     }
 
     /// Select an endpoint using round-robin from resolved endpoints
-    pub fn select_round_robin(endpoints: &[ResolvedEndpoint], counter: &mut usize) -> Option<SocketAddr> {
+    pub fn select_round_robin(
+        endpoints: &[ResolvedEndpoint],
+        counter: &mut usize,
+    ) -> Option<SocketAddr> {
         if endpoints.is_empty() {
             return None;
         }
@@ -265,10 +275,7 @@ impl AddressResolver {
 
     /// Select an endpoint by priority (lowest priority value first)
     pub fn select_by_priority(endpoints: &[ResolvedEndpoint]) -> Option<SocketAddr> {
-        endpoints
-            .iter()
-            .min_by_key(|e| e.priority)
-            .map(|e| e.addr)
+        endpoints.iter().min_by_key(|e| e.priority).map(|e| e.addr)
     }
 
     /// Clear the cache
@@ -298,13 +305,21 @@ impl AddressResolver {
     }
 
     /// Resolve SRV record (placeholder for future implementation)
-    pub async fn resolve_srv(&mut self, service: &str, proto: &str, domain: &str) -> Result<Vec<ResolvedEndpoint>> {
+    pub async fn resolve_srv(
+        &mut self,
+        service: &str,
+        proto: &str,
+        domain: &str,
+    ) -> Result<Vec<ResolvedEndpoint>> {
         // SRV record format: _service._proto.domain
         let srv_name = format!("_{}._{}.{}", service, proto, domain);
 
         // For now, return not implemented
         // A full implementation would use a DNS library to query SRV records
-        Err(DbError::NotImplemented(format!("SRV resolution for {} not yet implemented", srv_name)))
+        Err(DbError::NotImplemented(format!(
+            "SRV resolution for {} not yet implemented",
+            srv_name
+        )))
     }
 }
 
@@ -334,9 +349,24 @@ mod tests {
     #[test]
     fn test_round_robin_selection() {
         let endpoints = vec![
-            ResolvedEndpoint::new("127.0.0.1:5432".parse().unwrap(), 0, 1, Duration::from_secs(300)),
-            ResolvedEndpoint::new("127.0.0.1:5433".parse().unwrap(), 0, 1, Duration::from_secs(300)),
-            ResolvedEndpoint::new("127.0.0.1:5434".parse().unwrap(), 0, 1, Duration::from_secs(300)),
+            ResolvedEndpoint::new(
+                "127.0.0.1:5432".parse().unwrap(),
+                0,
+                1,
+                Duration::from_secs(300),
+            ),
+            ResolvedEndpoint::new(
+                "127.0.0.1:5433".parse().unwrap(),
+                0,
+                1,
+                Duration::from_secs(300),
+            ),
+            ResolvedEndpoint::new(
+                "127.0.0.1:5434".parse().unwrap(),
+                0,
+                1,
+                Duration::from_secs(300),
+            ),
         ];
 
         let mut counter = 0;
@@ -355,9 +385,24 @@ mod tests {
     #[test]
     fn test_priority_selection() {
         let endpoints = vec![
-            ResolvedEndpoint::new("127.0.0.1:5432".parse().unwrap(), 10, 1, Duration::from_secs(300)),
-            ResolvedEndpoint::new("127.0.0.1:5433".parse().unwrap(), 5, 1, Duration::from_secs(300)),
-            ResolvedEndpoint::new("127.0.0.1:5434".parse().unwrap(), 20, 1, Duration::from_secs(300)),
+            ResolvedEndpoint::new(
+                "127.0.0.1:5432".parse().unwrap(),
+                10,
+                1,
+                Duration::from_secs(300),
+            ),
+            ResolvedEndpoint::new(
+                "127.0.0.1:5433".parse().unwrap(),
+                5,
+                1,
+                Duration::from_secs(300),
+            ),
+            ResolvedEndpoint::new(
+                "127.0.0.1:5434".parse().unwrap(),
+                20,
+                1,
+                Duration::from_secs(300),
+            ),
         ];
 
         let addr = AddressResolver::select_by_priority(&endpoints).unwrap();
@@ -400,8 +445,18 @@ mod tests {
     #[test]
     fn test_weighted_random_selection() {
         let endpoints = vec![
-            ResolvedEndpoint::new("127.0.0.1:5432".parse().unwrap(), 0, 10, Duration::from_secs(300)),
-            ResolvedEndpoint::new("127.0.0.1:5433".parse().unwrap(), 0, 5, Duration::from_secs(300)),
+            ResolvedEndpoint::new(
+                "127.0.0.1:5432".parse().unwrap(),
+                0,
+                10,
+                Duration::from_secs(300),
+            ),
+            ResolvedEndpoint::new(
+                "127.0.0.1:5433".parse().unwrap(),
+                0,
+                5,
+                Duration::from_secs(300),
+            ),
         ];
 
         // Just verify it returns something valid

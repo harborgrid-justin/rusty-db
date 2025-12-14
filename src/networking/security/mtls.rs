@@ -5,10 +5,10 @@
 
 use crate::error::{DbError, Result};
 use crate::networking::security::AuthContext;
+use rustls::pki_types::CertificateDer;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use rustls::pki_types::CertificateDer;
 
 // Type alias for convenience
 type Certificate = CertificateDer<'static>;
@@ -297,10 +297,7 @@ impl MtlsAuthenticator {
     }
 
     /// Verify client certificate
-    pub async fn verify_certificate(
-        &self,
-        cert_chain: &[Certificate],
-    ) -> Result<ValidationResult> {
+    pub async fn verify_certificate(&self, cert_chain: &[Certificate]) -> Result<ValidationResult> {
         if cert_chain.is_empty() {
             return Ok(ValidationResult::new(
                 false,

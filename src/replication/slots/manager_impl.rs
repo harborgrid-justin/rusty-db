@@ -3,10 +3,10 @@
 use async_trait::async_trait;
 use std::time::SystemTime;
 
-use crate::replication::types::{LogSequenceNumber, ReplicaId};
 use super::errors::SlotError;
 use super::manager::{ReplicationSlotManager, SlotManager};
 use super::types::*;
+use crate::replication::types::{LogSequenceNumber, ReplicaId};
 
 #[async_trait]
 impl SlotManager for ReplicationSlotManager {
@@ -57,7 +57,10 @@ impl SlotManager for ReplicationSlotManager {
 
         {
             let mut slots = self.slots.write();
-            slots.insert(slot_name.clone(), std::sync::Arc::new(parking_lot::RwLock::new(slot_info)));
+            slots.insert(
+                slot_name.clone(),
+                std::sync::Arc::new(parking_lot::RwLock::new(slot_info)),
+            );
         }
 
         {
@@ -140,9 +143,12 @@ impl SlotManager for ReplicationSlotManager {
     ) -> Result<(), SlotError> {
         let slot_arc = {
             let slots = self.slots.read();
-            slots.get(slot_name).cloned().ok_or_else(|| SlotError::SlotNotFound {
-                slot_name: slot_name.to_string(),
-            })?
+            slots
+                .get(slot_name)
+                .cloned()
+                .ok_or_else(|| SlotError::SlotNotFound {
+                    slot_name: slot_name.to_string(),
+                })?
         };
 
         {
@@ -173,6 +179,9 @@ impl SlotManager for ReplicationSlotManager {
 
     async fn check_all_slots_health(&self) -> Result<Vec<SlotHealth>, SlotError> {
         let slots = self.list_slots().await?;
-        Ok(slots.iter().map(|info| self.calculate_slot_health(info)).collect())
+        Ok(slots
+            .iter()
+            .map(|info| self.calculate_slot_health(info))
+            .collect())
     }
 }

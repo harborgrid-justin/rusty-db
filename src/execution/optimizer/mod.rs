@@ -19,8 +19,8 @@ pub use cost_model::{
 };
 
 pub use plan_transformation::{
-    AdaptiveStatistics, CardinalityError, EquivalenceClass, ExpressionHash, ExecutionFeedback,
-    MaterializedView, MemoTable, BitSet,
+    AdaptiveStatistics, BitSet, CardinalityError, EquivalenceClass, ExecutionFeedback,
+    ExpressionHash, MaterializedView, MemoTable,
 };
 
 pub use rules::{JoinOrderingStrategy, Optimizer};
@@ -49,10 +49,7 @@ mod tests {
 
         // Add some statistics
         let mut table_stats = SingleTableStatistics::new(10000, 100);
-        table_stats.add_column_stats(
-            "id".to_string(),
-            ColumnStatistics::new(10000, 0),
-        );
+        table_stats.add_column_stats("id".to_string(), ColumnStatistics::new(10000, 0));
 
         optimizer.update_statistics("users".to_string(), table_stats);
 

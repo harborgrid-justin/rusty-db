@@ -30,9 +30,10 @@ pub enum TransactionError {
     // =========================================================================
     // Lock-related errors
     // =========================================================================
-
     /// Lock acquisition timed out.
-    #[error("Lock timeout: transaction {txn_id} timed out waiting for {lock_mode} lock on '{resource}'")]
+    #[error(
+        "Lock timeout: transaction {txn_id} timed out waiting for {lock_mode} lock on '{resource}'"
+    )]
     LockTimeout {
         txn_id: TransactionId,
         resource: String,
@@ -50,7 +51,10 @@ pub enum TransactionError {
     },
 
     /// Deadlock detected between transactions.
-    #[error("Deadlock detected: cycle involves transactions {}", format_txn_cycle(cycle))]
+    #[error(
+        "Deadlock detected: cycle involves transactions {}",
+        format_txn_cycle(cycle)
+    )]
     Deadlock {
         /// The transactions involved in the deadlock cycle.
         cycle: Vec<TransactionId>,
@@ -69,13 +73,14 @@ pub enum TransactionError {
     // =========================================================================
     // Transaction state errors
     // =========================================================================
-
     /// Transaction not found.
     #[error("Transaction {0} not found")]
     TransactionNotFound(TransactionId),
 
     /// Invalid state transition.
-    #[error("Invalid state transition: transaction {txn_id} cannot transition from {from:?} to {to:?}")]
+    #[error(
+        "Invalid state transition: transaction {txn_id} cannot transition from {from:?} to {to:?}"
+    )]
     InvalidStateTransition {
         txn_id: TransactionId,
         from: TransactionState,
@@ -97,7 +102,6 @@ pub enum TransactionError {
     // =========================================================================
     // Validation errors
     // =========================================================================
-
     /// Savepoint not found.
     #[error("Savepoint '{name}' not found in transaction {txn_id}")]
     SavepointNotFound { txn_id: TransactionId, name: String },
@@ -138,7 +142,6 @@ pub enum TransactionError {
     // =========================================================================
     // I/O and persistence errors
     // =========================================================================
-
     /// WAL write failed.
     #[error("Failed to write to WAL: {0}")]
     WalWriteError(#[source] io::Error),
@@ -162,7 +165,6 @@ pub enum TransactionError {
     // =========================================================================
     // Recovery errors
     // =========================================================================
-
     /// Recovery failed.
     #[error("Recovery failed: {0}")]
     RecoveryFailed(String),
@@ -186,7 +188,6 @@ pub enum TransactionError {
     // =========================================================================
     // Distributed transaction errors
     // =========================================================================
-
     /// Two-phase commit prepare failed.
     #[error("Prepare phase failed for transaction {txn_id}: participant '{participant}' did not respond")]
     PreparePhaseTimeout {
@@ -203,12 +204,14 @@ pub enum TransactionError {
 
     /// Distributed transaction coordination error.
     #[error("Coordination error for global transaction {txn_id}: {reason}")]
-    CoordinationError { txn_id: TransactionId, reason: String },
+    CoordinationError {
+        txn_id: TransactionId,
+        reason: String,
+    },
 
     // =========================================================================
     // Internal errors
     // =========================================================================
-
     /// Internal error (should not occur in normal operation).
     #[error("Internal error: {0}")]
     InternalError(String),
@@ -220,7 +223,11 @@ pub enum TransactionError {
 
 impl TransactionError {
     /// Creates a lock timeout error.
-    pub fn lock_timeout(txn_id: TransactionId, resource: impl Into<String>, lock_mode: LockMode) -> Self {
+    pub fn lock_timeout(
+        txn_id: TransactionId,
+        resource: impl Into<String>,
+        lock_mode: LockMode,
+    ) -> Self {
         TransactionError::LockTimeout {
             txn_id,
             resource: resource.into(),
@@ -256,7 +263,11 @@ impl TransactionError {
     }
 
     /// Creates an invalid state transition error.
-    pub fn invalid_state(txn_id: TransactionId, from: TransactionState, to: TransactionState) -> Self {
+    pub fn invalid_state(
+        txn_id: TransactionId,
+        from: TransactionState,
+        to: TransactionState,
+    ) -> Self {
         TransactionError::InvalidStateTransition { txn_id, from, to }
     }
 
@@ -354,7 +365,7 @@ impl From<serde_json::Error> for TransactionError {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Duration;
+    use std::time::Duration;
 
     #[test]
     fn test_lock_timeout_error() {

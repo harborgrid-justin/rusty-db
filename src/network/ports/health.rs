@@ -10,13 +10,13 @@
 // - **Periodic Health Checks**: Automated health monitoring
 
 use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::{SocketAddr, TcpListener as StdTcpListener, UdpSocket as StdUdpSocket};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use tokio::time::interval;
-use serde::{Deserialize, Serialize};
 
 /// Health status for a port
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -141,13 +141,11 @@ impl PortAvailabilityChecker {
 
         match StdTcpListener::bind(&addr) {
             Ok(_) => HealthStatus::Healthy,
-            Err(e) => {
-                match e.kind() {
-                    std::io::ErrorKind::AddrInUse => HealthStatus::InUse,
-                    std::io::ErrorKind::PermissionDenied => HealthStatus::PermissionDenied,
-                    _ => HealthStatus::BindError,
-                }
-            }
+            Err(e) => match e.kind() {
+                std::io::ErrorKind::AddrInUse => HealthStatus::InUse,
+                std::io::ErrorKind::PermissionDenied => HealthStatus::PermissionDenied,
+                _ => HealthStatus::BindError,
+            },
         }
     }
 
@@ -157,19 +155,18 @@ impl PortAvailabilityChecker {
 
         match StdUdpSocket::bind(&addr) {
             Ok(_) => HealthStatus::Healthy,
-            Err(e) => {
-                match e.kind() {
-                    std::io::ErrorKind::AddrInUse => HealthStatus::InUse,
-                    std::io::ErrorKind::PermissionDenied => HealthStatus::PermissionDenied,
-                    _ => HealthStatus::BindError,
-                }
-            }
+            Err(e) => match e.kind() {
+                std::io::ErrorKind::AddrInUse => HealthStatus::InUse,
+                std::io::ErrorKind::PermissionDenied => HealthStatus::PermissionDenied,
+                _ => HealthStatus::BindError,
+            },
         }
     }
 
     /// Check multiple TCP ports
     pub fn check_tcp_ports(ports: &[u16]) -> Vec<(u16, HealthStatus)> {
-        ports.iter()
+        ports
+            .iter()
             .map(|&port| (port, Self::check_tcp_available(port)))
             .collect()
     }
@@ -178,13 +175,11 @@ impl PortAvailabilityChecker {
     pub fn check_addr_available(addr: &SocketAddr) -> HealthStatus {
         match StdTcpListener::bind(addr) {
             Ok(_) => HealthStatus::Healthy,
-            Err(e) => {
-                match e.kind() {
-                    std::io::ErrorKind::AddrInUse => HealthStatus::InUse,
-                    std::io::ErrorKind::PermissionDenied => HealthStatus::PermissionDenied,
-                    _ => HealthStatus::BindError,
-                }
-            }
+            Err(e) => match e.kind() {
+                std::io::ErrorKind::AddrInUse => HealthStatus::InUse,
+                std::io::ErrorKind::PermissionDenied => HealthStatus::PermissionDenied,
+                _ => HealthStatus::BindError,
+            },
         }
     }
 }
@@ -224,7 +219,8 @@ impl ConflictDetector {
     /// Get all active ports
     pub async fn get_active_ports(&self) -> Vec<(u16, String)> {
         let active = self.active_ports.read().await;
-        active.iter()
+        active
+            .iter()
             .map(|(&port, service)| (port, service.clone()))
             .collect()
     }
@@ -232,10 +228,9 @@ impl ConflictDetector {
     /// Detect conflicts in a port list
     pub async fn detect_conflicts(&self, ports: &[u16]) -> Vec<(u16, String)> {
         let active = self.active_ports.read().await;
-        ports.iter()
-            .filter_map(|&port| {
-                active.get(&port).map(|service| (port, service.clone()))
-            })
+        ports
+            .iter()
+            .filter_map(|&port| active.get(&port).map(|service| (port, service.clone())))
             .collect()
     }
 }
@@ -350,23 +345,22 @@ impl PortHealthChecker {
     pub async fn check_port(&self, port: u16) -> Result<HealthCheckResult> {
         let start_time = SystemTime::now();
 
-        let status = tokio::task::spawn_blocking(move || {
-            PortAvailabilityChecker::check_tcp_available(port)
-        })
-        .await
-        .map_err(|e| DbError::Internal(format!("Health check task failed: {}", e)))?;
+        let status =
+            tokio::task::spawn_blocking(move || PortAvailabilityChecker::check_tcp_available(port))
+                .await
+                .map_err(|e| DbError::Internal(format!("Health check task failed: {}", e)))?;
 
         let response_time = SystemTime::now()
             .duration_since(start_time)
             .unwrap_or(Duration::from_secs(0))
             .as_millis() as u64;
 
-        let result = HealthCheckResult::new(port, status)
-            .with_response_time(response_time);
+        let result = HealthCheckResult::new(port, status).with_response_time(response_time);
 
         // Store in history
         let mut history = self.health_history.write().await;
-        history.entry(port)
+        history
+            .entry(port)
             .or_insert_with(Vec::new)
             .push(result.clone());
 
@@ -419,9 +413,7 @@ impl PortHealthChecker {
                     let result = HealthCheckResult::new(port, status);
 
                     let mut history = health_history.write().await;
-                    history.entry(port)
-                        .or_insert_with(Vec::new)
-                        .push(result);
+                    history.entry(port).or_insert_with(Vec::new).push(result);
 
                     // Keep only last 100 results
                     if let Some(results) = history.get_mut(&port) {

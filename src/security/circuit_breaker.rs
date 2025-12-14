@@ -23,20 +23,20 @@
 //                          FallbackHandler
 // ```
 
-use std::time::{SystemTime};
-use std::collections::VecDeque;
-use std::time::Instant;
 use crate::DbError;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::Mutex;
-use std::time::{Duration};
 use parking_lot::RwLock;
+use rand::Rng;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 use tokio::sync::Semaphore;
 use tokio::time::timeout;
-use rand::Rng;
 
 // ============================================================================
 // Constants
@@ -243,7 +243,9 @@ impl CircuitBreaker {
     // Handle successful call
     fn on_success(&self, duration: Duration) {
         self.success_count.fetch_add(1, Ordering::Relaxed);
-        self.metrics.successful_calls.fetch_add(1, Ordering::Relaxed);
+        self.metrics
+            .successful_calls
+            .fetch_add(1, Ordering::Relaxed);
         self.metrics.record_latency(duration);
 
         // Add to sliding window
@@ -317,7 +319,8 @@ impl CircuitBreaker {
             return false;
         }
 
-        let failures = outcomes.iter()
+        let failures = outcomes
+            .iter()
             .filter(|o| matches!(o, CallOutcome::Failure))
             .count() as u64;
 
@@ -334,7 +337,9 @@ impl CircuitBreaker {
         *self.last_transition.write() = Instant::now();
         self.consecutive_successes.store(0, Ordering::Relaxed);
         self.half_open_requests.store(0, Ordering::Relaxed);
-        self.metrics.state_transitions.fetch_add(1, Ordering::Relaxed);
+        self.metrics
+            .state_transitions
+            .fetch_add(1, Ordering::Relaxed);
 
         tracing::warn!(
             circuit_breaker = %self.name,
@@ -348,7 +353,9 @@ impl CircuitBreaker {
         *self.last_transition.write() = Instant::now();
         self.consecutive_successes.store(0, Ordering::Relaxed);
         self.half_open_requests.store(0, Ordering::Relaxed);
-        self.metrics.state_transitions.fetch_add(1, Ordering::Relaxed);
+        self.metrics
+            .state_transitions
+            .fetch_add(1, Ordering::Relaxed);
 
         tracing::info!(
             circuit_breaker = %self.name,
@@ -363,7 +370,9 @@ impl CircuitBreaker {
         self.failure_count.store(0, Ordering::Relaxed);
         self.consecutive_successes.store(0, Ordering::Relaxed);
         self.half_open_requests.store(0, Ordering::Relaxed);
-        self.metrics.state_transitions.fetch_add(1, Ordering::Relaxed);
+        self.metrics
+            .state_transitions
+            .fetch_add(1, Ordering::Relaxed);
 
         tracing::info!(
             circuit_breaker = %self.name,
@@ -531,8 +540,10 @@ impl Bulkhead {
         // Acquire permit with timeout
         let _permit = match timeout(
             self.config.acquire_timeout,
-            self.semaphore.clone().acquire_owned()
-        ).await {
+            self.semaphore.clone().acquire_owned(),
+        )
+        .await
+        {
             Ok(Ok(permit)) => permit,
             Ok(Err(_)) => {
                 self.metrics.rejected_calls.fetch_add(1, Ordering::Relaxed);
@@ -559,7 +570,8 @@ impl Bulkhead {
 
     // Get bulkhead metrics
     pub fn metrics(&self) -> BulkheadMetricsSnapshot {
-        self.metrics.snapshot(self.queue_size.load(Ordering::Relaxed))
+        self.metrics
+            .snapshot(self.queue_size.load(Ordering::Relaxed))
     }
 }
 
@@ -619,7 +631,8 @@ impl BulkheadMetrics {
 
     fn record_call(&self, duration: Duration) {
         self.total_calls.fetch_add(1, Ordering::Relaxed);
-        self.total_wait_time.fetch_add(duration.as_micros() as u64, Ordering::Relaxed);
+        self.total_wait_time
+            .fetch_add(duration.as_micros() as u64, Ordering::Relaxed);
     }
 
     fn snapshot(&self, current_queue_size: usize) -> BulkheadMetricsSnapshot {
@@ -743,7 +756,8 @@ impl TimeoutManager {
             sorted.sort_unstable();
 
             let p_latency = percentile(&sorted, self.config.percentile);
-            let adaptive = Duration::from_micros((p_latency as f64 * self.config.multiplier) as u64);
+            let adaptive =
+                Duration::from_micros((p_latency as f64 * self.config.multiplier) as u64);
 
             // Clamp to min/max
             adaptive.clamp(self.config.min_timeout, self.config.max_timeout)
@@ -755,7 +769,9 @@ impl TimeoutManager {
     // Record latency sample
     fn record_latency(&self, endpoint: &str, duration: Duration) {
         let mut latencies = self.latencies.write();
-        let samples = latencies.entry(endpoint.to_string()).or_insert_with(VecDeque::new);
+        let samples = latencies
+            .entry(endpoint.to_string())
+            .or_insert_with(VecDeque::new);
 
         samples.push_back(duration);
         if samples.len() > LATENCY_WINDOW_SIZE {
@@ -764,14 +780,18 @@ impl TimeoutManager {
 
         // Update metrics
         let mut metrics = self.metrics.write();
-        let endpoint_metrics = metrics.entry(endpoint.to_string()).or_insert_with(TimeoutMetrics::new);
+        let endpoint_metrics = metrics
+            .entry(endpoint.to_string())
+            .or_insert_with(TimeoutMetrics::new);
         endpoint_metrics.total_calls += 1;
     }
 
     // Record timeout
     fn record_timeout(&self, endpoint: &str) {
         let mut metrics = self.metrics.write();
-        let endpoint_metrics = metrics.entry(endpoint.to_string()).or_insert_with(TimeoutMetrics::new);
+        let endpoint_metrics = metrics
+            .entry(endpoint.to_string())
+            .or_insert_with(TimeoutMetrics::new);
         endpoint_metrics.timeout_count += 1;
     }
 
@@ -866,23 +886,26 @@ impl RetryPolicy {
             match operation().await {
                 Ok(result) => {
                     if attempt > 1 {
-                        self.metrics.successful_retries.fetch_add(1, Ordering::Relaxed);
+                        self.metrics
+                            .successful_retries
+                            .fetch_add(1, Ordering::Relaxed);
                     }
                     return Ok(result);
                 }
                 Err(e) => {
                     if attempt >= self.config.max_attempts {
-                        self.metrics.exhausted_retries.fetch_add(1, Ordering::Relaxed);
+                        self.metrics
+                            .exhausted_retries
+                            .fetch_add(1, Ordering::Relaxed);
                         return Err(e);
                     }
 
                     // Calculate backoff
                     let backoff = self.calculate_backoff(attempt);
 
-                    self.metrics.total_backoff_time.fetch_add(
-                        backoff.as_micros() as u64,
-                        Ordering::Relaxed
-                    );
+                    self.metrics
+                        .total_backoff_time
+                        .fetch_add(backoff.as_micros() as u64, Ordering::Relaxed);
 
                     tokio::time::sleep(backoff).await;
                 }
@@ -1015,7 +1038,9 @@ impl<T: Clone + Send + Sync> FallbackHandler<T> {
         let cache = self.cache.read();
 
         if let Some((value, cached_at)) = cache.get(key) {
-            let age = SystemTime::now().duration_since(*cached_at).unwrap_or_default();
+            let age = SystemTime::now()
+                .duration_since(*cached_at)
+                .unwrap_or_default();
 
             if age < self.cache_ttl {
                 self.metrics.cache_hits.fetch_add(1, Ordering::Relaxed);
@@ -1175,7 +1200,9 @@ impl CascadePreventor {
                 let until = Instant::now() + self.config.fast_fail_duration;
                 *self.fast_fail_until.write() = Some(until);
 
-                self.metrics.cascade_preventions.fetch_add(1, Ordering::Relaxed);
+                self.metrics
+                    .cascade_preventions
+                    .fetch_add(1, Ordering::Relaxed);
 
                 tracing::warn!(
                     error_rate = %error_rate,
@@ -1289,7 +1316,9 @@ impl LoadShedder {
 
         // Always admit critical requests
         if priority == RequestPriority::Critical {
-            self.metrics.admitted_requests.fetch_add(1, Ordering::Relaxed);
+            self.metrics
+                .admitted_requests
+                .fetch_add(1, Ordering::Relaxed);
             return true;
         }
 
@@ -1303,7 +1332,9 @@ impl LoadShedder {
                 }
 
                 // Shed normal priority if severely overloaded
-                if queue_depth >= self.config.queue_depth_threshold * 2 && priority == RequestPriority::Normal {
+                if queue_depth >= self.config.queue_depth_threshold * 2
+                    && priority == RequestPriority::Normal
+                {
                     self.metrics.shed_requests.fetch_add(1, Ordering::Relaxed);
                     return false;
                 }
@@ -1314,7 +1345,9 @@ impl LoadShedder {
             }
         }
 
-        self.metrics.admitted_requests.fetch_add(1, Ordering::Relaxed);
+        self.metrics
+            .admitted_requests
+            .fetch_add(1, Ordering::Relaxed);
         true
     }
 
@@ -1330,7 +1363,8 @@ impl LoadShedder {
 
     // Get load shedder metrics
     pub fn metrics(&self) -> LoadShedderMetricsSnapshot {
-        self.metrics.snapshot(self.queue_depth.load(Ordering::Relaxed))
+        self.metrics
+            .snapshot(self.queue_depth.load(Ordering::Relaxed))
     }
 }
 
@@ -1456,8 +1490,8 @@ impl From<DbError> for String {
 
 #[cfg(test)]
 mod tests {
-    use std::thread::sleep;
     use super::*;
+    use std::thread::sleep;
 
     #[tokio::test]
     async fn test_circuit_breaker_closed_state() {
@@ -1502,24 +1536,22 @@ mod tests {
             b1.call(async {
                 tokio::time::sleep(Duration::from_millis(100)).await.await;
                 Ok::<_, DbError>(())
-            }).await
+            })
+            .await
         });
 
         let handle2 = tokio::spawn(async move {
             b2.call(async {
                 tokio::time::sleep(Duration::from_millis(100)).await.await;
                 Ok::<_, DbError>(())
-            }).await
+            })
+            .await
         });
 
         // Third should be blocked
         tokio::time::sleep(Duration::from_millis(10)).await.await;
 
-        let handle3 = tokio::spawn(async move {
-            b3.call(async {
-                Ok::<_, DbError>(())
-            }).await
-        });
+        let handle3 = tokio::spawn(async move { b3.call(async { Ok::<_, DbError>(()) }).await });
 
         handle1.await.unwrap().unwrap();
         handle2.await.unwrap().unwrap();
@@ -1536,14 +1568,16 @@ mod tests {
         let retry = RetryPolicy::new(config);
 
         let mut attempt = 0;
-        let result = retry.call(|| async {
-            attempt += 1;
-            if attempt < 3 {
-                Err::<(), DbError>(DbError::Network("temporary failure".to_string()))
-            } else {
-                Ok(())
-            }
-        }).await;
+        let result = retry
+            .call(|| async {
+                attempt += 1;
+                if attempt < 3 {
+                    Err::<(), DbError>(DbError::Network("temporary failure".to_string()))
+                } else {
+                    Ok(())
+                }
+            })
+            .await;
 
         assert!(result.is_ok());
         assert_eq!(attempt, 3);

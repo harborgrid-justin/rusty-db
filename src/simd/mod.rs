@@ -53,10 +53,10 @@
 // The engine automatically detects CPU capabilities and falls back to scalar
 // implementations when SIMD is not available.
 
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
 #[cfg(target_arch = "x86")]
 use std::arch::x86::*;
+#[cfg(target_arch = "x86_64")]
+use std::arch::x86_64::*;
 
 /// SIMD filter operations
 pub mod filter;
@@ -365,9 +365,7 @@ impl ComparisonMask {
     /// Negate the mask
     #[inline(always)]
     pub fn not(&self) -> ComparisonMask {
-        ComparisonMask {
-            mask: !self.mask,
-        }
+        ComparisonMask { mask: !self.mask }
     }
 }
 
@@ -548,7 +546,7 @@ mod tests {
 
     #[test]
     fn test_alignment() {
-        use super::align::{align_up, align_down};
+        use super::align::{align_down, align_up};
 
         assert_eq!(align_up(10, 16), 16);
         assert_eq!(align_up(16, 16), 16);

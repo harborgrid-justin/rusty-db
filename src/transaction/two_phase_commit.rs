@@ -20,11 +20,11 @@
 // }
 // ```
 
-use std::fmt;
-use std::time::SystemTime;
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
@@ -171,12 +171,13 @@ impl TwoPhaseCommitCoordinator {
     pub fn prepare_phase(&self, txn_id: TransactionId) -> TransactionResult<bool> {
         let mut participants = self.participants.write();
 
-        let participant_list = participants.get_mut(&txn_id).ok_or_else(|| {
-            TransactionError::ParticipantNotFound {
-                txn_id,
-                participant: "any".to_string(),
-            }
-        })?;
+        let participant_list =
+            participants
+                .get_mut(&txn_id)
+                .ok_or_else(|| TransactionError::ParticipantNotFound {
+                    txn_id,
+                    participant: "any".to_string(),
+                })?;
 
         // Send prepare to all participants
         for participant in participant_list.iter_mut() {
@@ -218,12 +219,13 @@ impl TwoPhaseCommitCoordinator {
     pub fn commit_phase(&self, txn_id: TransactionId) -> TransactionResult<()> {
         let mut participants = self.participants.write();
 
-        let participant_list = participants.get_mut(&txn_id).ok_or_else(|| {
-            TransactionError::ParticipantNotFound {
-                txn_id,
-                participant: "any".to_string(),
-            }
-        })?;
+        let participant_list =
+            participants
+                .get_mut(&txn_id)
+                .ok_or_else(|| TransactionError::ParticipantNotFound {
+                    txn_id,
+                    participant: "any".to_string(),
+                })?;
 
         for participant in participant_list.iter_mut() {
             // In production: send commit message

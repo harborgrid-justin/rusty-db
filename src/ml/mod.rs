@@ -57,45 +57,43 @@
 // **Target LOC:** 3,000+ lines across all submodules
 
 use std::fmt;
-pub mod engine;
 pub mod algorithms;
-pub mod preprocessing;
+pub mod engine;
 pub mod inference;
-pub mod sql_integration;
 pub mod optimizers;
-pub mod simd_ops;
+pub mod preprocessing;
 pub mod quantization;
+pub mod simd_ops;
+pub mod sql_integration;
 
 // Re-export key types for convenience
-pub use engine::{MLEngine, ModelRegistry, ModelMetadata, TrainingJob, ModelVersion, ModelStatus, StoredModel};
 pub use algorithms::{
-    Algorithm, LinearRegression, LogisticRegression, DecisionTree, RandomForest,
-    KMeansClustering, NaiveBayes, ModelType,
+    Algorithm, DecisionTree, KMeansClustering, LinearRegression, LogisticRegression, ModelType,
+    NaiveBayes, RandomForest,
 };
-pub use preprocessing::{
-    Preprocessor, Scaler, StandardScaler, MinMaxScaler, Encoder, OneHotEncoder,
-    FeatureSelector, DataSplitter, ImputationStrategy,
+pub use engine::{
+    MLEngine, ModelMetadata, ModelRegistry, ModelStatus, ModelVersion, StoredModel, TrainingJob,
 };
 pub use inference::{
-    InferenceEngine, PredictionResult, BatchPredictor, ModelCache,
-    FeatureImportance, ConfidenceScore,
-};
-pub use sql_integration::{
-    MLSqlParser, CreateModelStatement, PredictFunction, ModelTable,
+    BatchPredictor, ConfidenceScore, FeatureImportance, InferenceEngine, ModelCache,
+    PredictionResult,
 };
 pub use optimizers::{
-    Optimizer, SGDMomentum, AdamOptimizer, LRScheduler, LRSchedule, OptimizerType,
+    AdamOptimizer, LRSchedule, LRScheduler, Optimizer, OptimizerType, SGDMomentum,
 };
-pub use simd_ops::{
-    simd_dot_product, simd_matrix_vector_multiply, simd_euclidean_distance,
+pub use preprocessing::{
+    DataSplitter, Encoder, FeatureSelector, ImputationStrategy, MinMaxScaler, OneHotEncoder,
+    Preprocessor, Scaler, StandardScaler,
 };
 pub use quantization::{
-    QuantizedWeights, QuantizationConfig, QuantizationMethod, QuantizedLinearModel,
-    quantize_weights, dequantize_weights,
+    dequantize_weights, quantize_weights, QuantizationConfig, QuantizationMethod,
+    QuantizedLinearModel, QuantizedWeights,
 };
+pub use simd_ops::{simd_dot_product, simd_euclidean_distance, simd_matrix_vector_multiply};
+pub use sql_integration::{CreateModelStatement, MLSqlParser, ModelTable, PredictFunction};
 
-use crate::error::{Result, DbError};
-use serde::{Serialize, Deserialize};
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 // ML-specific error types
@@ -131,7 +129,11 @@ impl fmt::Display for MLError {
             MLError::TrainingFailed(msg) => write!(f, "Training failed: {}", msg),
             MLError::PredictionFailed(msg) => write!(f, "Prediction failed: {}", msg),
             MLError::FeatureMismatch { expected, got } => {
-                write!(f, "Feature mismatch: expected {} features, got {}", expected, got)
+                write!(
+                    f,
+                    "Feature mismatch: expected {} features, got {}",
+                    expected, got
+                )
             }
             MLError::InsufficientData(msg) => write!(f, "Insufficient data: {}", msg),
             MLError::UnsupportedAlgorithm(algo) => write!(f, "Unsupported algorithm: {}", algo),
@@ -203,10 +205,13 @@ impl Dataset {
         let num_features = self.num_features();
         for (i, row) in self.features.iter().enumerate() {
             if row.len() != num_features {
-                return Err(MLError::InvalidConfiguration(
-                    format!("Inconsistent feature count at row {}: expected {}, got {}",
-                            i, num_features, row.len())
-                ).into());
+                return Err(MLError::InvalidConfiguration(format!(
+                    "Inconsistent feature count at row {}: expected {}, got {}",
+                    i,
+                    num_features,
+                    row.len()
+                ))
+                .into());
             }
         }
 
@@ -215,16 +220,19 @@ impl Dataset {
                 return Err(MLError::FeatureMismatch {
                     expected: self.num_samples(),
                     got: target.len(),
-                }.into());
+                }
+                .into());
             }
         }
 
         if let Some(ref weights) = self.weights {
             if weights.len() != self.num_samples() {
-                return Err(MLError::InvalidConfiguration(
-                    format!("Weight vector length {} doesn't match sample count {}",
-                            weights.len(), self.num_samples())
-                ).into());
+                return Err(MLError::InvalidConfiguration(format!(
+                    "Weight vector length {} doesn't match sample count {}",
+                    weights.len(),
+                    self.num_samples()
+                ))
+                .into());
             }
         }
 
@@ -262,22 +270,26 @@ impl Hyperparameters {
 
     // Set a float parameter
     pub fn set_float(&mut self, key: &str, value: f64) {
-        self.params.insert(key.to_string(), HyperparameterValue::Float(value));
+        self.params
+            .insert(key.to_string(), HyperparameterValue::Float(value));
     }
 
     // Set an integer parameter
     pub fn set_int(&mut self, key: &str, value: i64) {
-        self.params.insert(key.to_string(), HyperparameterValue::Int(value));
+        self.params
+            .insert(key.to_string(), HyperparameterValue::Int(value));
     }
 
     // Set a string parameter
     pub fn set_string(&mut self, key: &str, value: String) {
-        self.params.insert(key.to_string(), HyperparameterValue::String(value));
+        self.params
+            .insert(key.to_string(), HyperparameterValue::String(value));
     }
 
     // Set a boolean parameter
     pub fn set_bool(&mut self, key: &str, value: bool) {
-        self.params.insert(key.to_string(), HyperparameterValue::Bool(value));
+        self.params
+            .insert(key.to_string(), HyperparameterValue::Bool(value));
     }
 
     // Get a float parameter
@@ -356,10 +368,7 @@ mod tests {
 
     #[test]
     fn test_dataset_creation() {
-        let features = vec![
-            vec![1.0, 2.0, 3.0],
-            vec![4.0, 5.0, 6.0],
-        ];
+        let features = vec![vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]];
         let target = Some(vec![0.0, 1.0]);
         let feature_names = vec!["f1".to_string(), "f2".to_string(), "f3".to_string()];
 
@@ -370,10 +379,7 @@ mod tests {
 
     #[test]
     fn test_dataset_validation() {
-        let features = vec![
-            vec![1.0, 2.0],
-            vec![3.0, 4.0],
-        ];
+        let features = vec![vec![1.0, 2.0], vec![3.0, 4.0]];
         let target = Some(vec![0.0, 1.0]);
         let feature_names = vec!["f1".to_string(), "f2".to_string()];
 

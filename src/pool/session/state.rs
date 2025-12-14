@@ -3,12 +3,12 @@
 // This module handles the core session state including variables, settings,
 // transactions, cursors, and prepared statements.
 
-use std::fmt;
-use std::collections::HashSet;
-use super::types::{SessionId, CursorId, StatementId, Username, SchemaName};
+use super::types::{CursorId, SchemaName, SessionId, StatementId, Username};
 use crate::common::{TransactionId, Value};
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fmt;
 use std::time::SystemTime;
 
 // Session state representing all context for a database session
@@ -427,7 +427,7 @@ impl ResourceUsage {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Duration;
+    use std::time::Duration;
 
     #[test]
     fn test_session_state_creation() {

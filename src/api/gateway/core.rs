@@ -2,15 +2,18 @@
 //
 // Part of the API Gateway and Security system for RustyDB
 
+use super::types::*;
+use crate::api::gateway::{
+    AuditLogger, AuthenticationManager, AuthorizationEngine, SecurityEvent, SecurityEventType,
+    SecurityFilter,
+};
+use crate::api::RateLimiter;
+use crate::error::DbError;
+use parking_lot::RwLock;
+use reqwest::Client;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
-use parking_lot::RwLock;
-use reqwest::Client;
-use crate::api::gateway::{AuthorizationEngine, SecurityEvent, SecurityEventType, SecurityFilter, AuthenticationManager, AuditLogger};
-use crate::api::RateLimiter;
-use crate::error::DbError;
-use super::types::*;
 
 impl ApiGateway {
     pub fn new(config: GatewayConfig) -> Self {
@@ -94,7 +97,10 @@ impl ApiGateway {
         {
             let mut metrics = self.metrics.write();
             metrics.total_requests += 1;
-            *metrics.requests_by_protocol.entry(request.protocol).or_insert(0) += 1;
+            *metrics
+                .requests_by_protocol
+                .entry(request.protocol)
+                .or_insert(0) += 1;
         }
 
         // Log request
@@ -106,13 +112,16 @@ impl ApiGateway {
             metrics.security_blocks += 1;
             metrics.failed_requests += 1;
 
-            self.audit_logger.lock().unwrap().log_security_event(&SecurityEvent {
-                event_type: SecurityEventType::RequestBlocked,
-                request_id: request.request_id.clone(),
-                client_ip: request.client_ip,
-                reason: format!("Security filter: {}", e),
-                timestamp: SystemTime::now(),
-            });
+            self.audit_logger
+                .lock()
+                .unwrap()
+                .log_security_event(&SecurityEvent {
+                    event_type: SecurityEventType::RequestBlocked,
+                    request_id: request.request_id.clone(),
+                    client_ip: request.client_ip,
+                    reason: format!("Security filter: {}", e),
+                    timestamp: SystemTime::now(),
+                });
 
             return Ok(ApiResponse {
                 status_code: 403,
@@ -141,7 +150,10 @@ impl ApiGateway {
         // Update route metrics
         {
             let mut metrics = self.metrics.write();
-            *metrics.requests_by_route.entry(route.id.clone()).or_insert(0) += 1;
+            *metrics
+                .requests_by_route
+                .entry(route.id.clone())
+                .or_insert(0) += 1;
         }
 
         // Authentication
@@ -150,20 +162,28 @@ impl ApiGateway {
                 Ok(session) => {
                     // Authorization
                     if !route.required_permissions.is_empty() {
-                        match self.authz_engine.authorize(&session, &route.required_permissions) {
-                            Ok(true) => {},
+                        match self
+                            .authz_engine
+                            .authorize(&session, &route.required_permissions)
+                        {
+                            Ok(true) => {}
                             Ok(false) | Err(_) => {
                                 let mut metrics = self.metrics.write();
                                 metrics.authz_failures += 1;
                                 metrics.failed_requests += 1;
 
-                                self.audit_logger.lock().unwrap().log_security_event(&SecurityEvent {
-                                    event_type: SecurityEventType::AuthorizationFailed,
-                                    request_id: request.request_id.clone(),
-                                    client_ip: request.client_ip,
-                                    reason: format!("Missing permissions: {:?}", route.required_permissions),
-                                    timestamp: SystemTime::now(),
-                                });
+                                self.audit_logger.lock().unwrap().log_security_event(
+                                    &SecurityEvent {
+                                        event_type: SecurityEventType::AuthorizationFailed,
+                                        request_id: request.request_id.clone(),
+                                        client_ip: request.client_ip,
+                                        reason: format!(
+                                            "Missing permissions: {:?}",
+                                            route.required_permissions
+                                        ),
+                                        timestamp: SystemTime::now(),
+                                    },
+                                );
 
                                 return Ok(ApiResponse {
                                     status_code: 403,
@@ -174,19 +194,22 @@ impl ApiGateway {
                             }
                         }
                     }
-                },
+                }
                 Err(_) => {
                     let mut metrics = self.metrics.write();
                     metrics.auth_failures += 1;
                     metrics.failed_requests += 1;
 
-                    self.audit_logger.lock().unwrap().log_security_event(&SecurityEvent {
-                        event_type: SecurityEventType::AuthenticationFailed,
-                        request_id: request.request_id.clone(),
-                        client_ip: request.client_ip,
-                        reason: "Authentication failed".to_string(),
-                        timestamp: SystemTime::now(),
-                    });
+                    self.audit_logger
+                        .lock()
+                        .unwrap()
+                        .log_security_event(&SecurityEvent {
+                            event_type: SecurityEventType::AuthenticationFailed,
+                            request_id: request.request_id.clone(),
+                            client_ip: request.client_ip,
+                            reason: "Authentication failed".to_string(),
+                            timestamp: SystemTime::now(),
+                        });
 
                     return Ok(ApiResponse {
                         status_code: 401,
@@ -200,10 +223,10 @@ impl ApiGateway {
 
         // Rate limiting
         let rate_limit_key = format!("{}:{}", request.client_ip, route.id);
-        if let Err(_) = self.rate_limiter.check_rate_limit(
-            &rate_limit_key,
-            route.rate_limit.as_ref()
-        ) {
+        if let Err(_) = self
+            .rate_limiter
+            .check_rate_limit(&rate_limit_key, route.rate_limit.as_ref())
+        {
             let mut metrics = self.metrics.write();
             metrics.rate_limit_hits += 1;
             metrics.failed_requests += 1;
@@ -220,7 +243,9 @@ impl ApiGateway {
         let transformed_request = self.transform_request(&request, &route);
 
         // Forward to backend
-        let response = self.forward_to_backend(&transformed_request, &route).await?;
+        let response = self
+            .forward_to_backend(&transformed_request, &route)
+            .await?;
 
         // Transform response
         let transformed_response = self.transform_response(response, &route);
@@ -252,20 +277,25 @@ impl ApiGateway {
 
             // Apply path rewrites
             for rewrite in &transform.path_rewrites {
-                transformed.path = transformed.path.replace(&rewrite.pattern, &rewrite.replacement);
+                transformed.path = transformed
+                    .path
+                    .replace(&rewrite.pattern, &rewrite.replacement);
             }
 
             // Apply query transformations
             for query_transform in &transform.query_transforms {
                 match &query_transform.transform_type {
                     QueryTransformType::Add(value) => {
-                        transformed.query_params.insert(query_transform.name.clone(), value.clone());
-                    },
+                        transformed
+                            .query_params
+                            .insert(query_transform.name.clone(), value.clone());
+                    }
                     QueryTransformType::Remove => {
                         transformed.query_params.remove(&query_transform.name);
-                    },
+                    }
                     QueryTransformType::Rename(new_name) => {
-                        if let Some(value) = transformed.query_params.remove(&query_transform.name) {
+                        if let Some(value) = transformed.query_params.remove(&query_transform.name)
+                        {
                             transformed.query_params.insert(new_name.clone(), value);
                         }
                     }
@@ -294,7 +324,11 @@ impl ApiGateway {
     }
 
     // Forward request to backend service
-    async fn forward_to_backend(&self, request: &ApiRequest, route: &Route) -> Result<ApiResponse, DbError> {
+    async fn forward_to_backend(
+        &self,
+        request: &ApiRequest,
+        route: &Route,
+    ) -> Result<ApiResponse, DbError> {
         // Select endpoint using load balancing
         let endpoint = self.select_endpoint(&route.backend)?;
 
@@ -324,13 +358,17 @@ impl ApiGateway {
                 }
 
                 let start = Instant::now();
-                let response = req_builder.send().await
+                let response = req_builder
+                    .send()
+                    .await
                     .map_err(|e| DbError::Network(e.to_string()))?;
                 let duration = start.elapsed();
 
                 let status = response.status();
                 let headers = response.headers().clone();
-                let body = response.bytes().await
+                let body = response
+                    .bytes()
+                    .await
                     .map_err(|e| DbError::Network(e.to_string()))?
                     .to_vec();
 
@@ -347,20 +385,24 @@ impl ApiGateway {
                     body,
                     duration,
                 })
-            },
-            _ => Err(DbError::InvalidOperation("Protocol not supported".to_string())),
+            }
+            _ => Err(DbError::InvalidOperation(
+                "Protocol not supported".to_string(),
+            )),
         }
     }
 
     // Select backend endpoint using load balancing strategy
     fn select_endpoint(&self, backend: &BackendService) -> Result<ServiceEndpoint, DbError> {
-        let healthy_endpoints: Vec<_> = backend.endpoints.iter()
+        let healthy_endpoints: Vec<_> = backend
+            .endpoints
+            .iter()
             .filter(|e| *e.healthy.read())
             .collect();
 
         if healthy_endpoints.is_empty() {
             return Err(DbError::InvalidOperation(
-                "No healthy endpoints available".to_string()
+                "No healthy endpoints available".to_string(),
             ));
         }
 
@@ -369,11 +411,11 @@ impl ApiGateway {
                 use rand::Rng;
                 let idx = rand::rng().random_range(0..healthy_endpoints.len());
                 Ok(healthy_endpoints[idx].clone())
-            },
+            }
             LoadBalancingStrategy::RoundRobin => {
                 // Simplified round-robin
                 Ok(healthy_endpoints[0].clone())
-            },
+            }
             _ => Ok(healthy_endpoints[0].clone()),
         }
     }
@@ -422,11 +464,16 @@ impl ApiGateway {
             Protocol::Http => {
                 let client = Client::new();
                 let url = format!("http://{}:{}/health", endpoint.host, endpoint.port);
-                match client.get(&url).timeout(Duration::from_secs(5)).send().await {
+                match client
+                    .get(&url)
+                    .timeout(Duration::from_secs(5))
+                    .send()
+                    .await
+                {
                     Ok(resp) => resp.status().is_success(),
                     Err(_) => false,
                 }
-            },
+            }
             _ => true, // Assume healthy for other protocols for now
         }
     }

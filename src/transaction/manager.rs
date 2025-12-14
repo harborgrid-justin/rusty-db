@@ -12,8 +12,8 @@
 // manager.commit(txn_id)?;
 // ```
 
-use std::fmt;
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
 
 use parking_lot::{Mutex, RwLock};
@@ -361,7 +361,10 @@ mod tests {
         let tm = TransactionManager::new();
 
         let result = tm.commit(999);
-        assert!(matches!(result, Err(TransactionError::TransactionNotFound(999))));
+        assert!(matches!(
+            result,
+            Err(TransactionError::TransactionNotFound(999))
+        ));
     }
 
     #[test]
@@ -373,7 +376,10 @@ mod tests {
 
         // Transaction is removed after commit, so it's not found
         let result = tm.commit(txn_id);
-        assert!(matches!(result, Err(TransactionError::TransactionNotFound(_))));
+        assert!(matches!(
+            result,
+            Err(TransactionError::TransactionNotFound(_))
+        ));
     }
 
     #[test]

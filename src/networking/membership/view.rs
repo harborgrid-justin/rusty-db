@@ -7,14 +7,14 @@
 // - Quorum calculations
 // - Split-brain detection
 
-use crate::error::Result;
 use crate::common::NodeId;
+use crate::error::Result;
 use crate::networking::membership::{NodeInfo, NodeStatus};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use std::time::SystemTime;
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 
 /// Membership view - a consistent snapshot of cluster state
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -405,8 +405,12 @@ mod tests {
         for i in 1..=3 {
             let node = NodeInfo::new(
                 format!("node{}", i),
-                format!("127.0.0.1:{}", 7000 + i).parse::<SocketAddr>().unwrap(),
-                format!("127.0.0.1:{}", 5432 + i).parse::<SocketAddr>().unwrap(),
+                format!("127.0.0.1:{}", 7000 + i)
+                    .parse::<SocketAddr>()
+                    .unwrap(),
+                format!("127.0.0.1:{}", 5432 + i)
+                    .parse::<SocketAddr>()
+                    .unwrap(),
                 NodeMetadata::default(),
             );
             view.nodes.insert(node.id.clone(), node.clone());

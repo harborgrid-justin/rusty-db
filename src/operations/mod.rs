@@ -1,10 +1,10 @@
 pub mod resources;
 
+use crate::Result;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
-use crate::Result;
 
 // Connection pool configuration
 #[derive(Debug, Clone)]

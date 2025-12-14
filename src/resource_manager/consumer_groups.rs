@@ -3,13 +3,13 @@
 // This module implements Oracle-like consumer groups for workload classification,
 // user-to-group mapping, dynamic group switching, and priority management.
 
-use std::time::SystemTime;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
-use serde::{Deserialize, Serialize};
+use std::time::Duration;
+use std::time::SystemTime;
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 
 // Consumer group identifier
 pub type ConsumerGroupId = u64;
@@ -28,7 +28,7 @@ impl PriorityLevel {
     pub fn new(level: u8) -> Result<Self> {
         if level > 7 {
             return Err(DbError::Configuration(
-                "Priority level must be between 0 and 7".to_string()
+                "Priority level must be between 0 and 7".to_string(),
             ));
         }
         Ok(PriorityLevel(level))
@@ -151,9 +151,10 @@ impl ConsumerGroup {
     // Increment session count
     pub fn increment_sessions(&mut self) -> Result<()> {
         if !self.can_accept_session() {
-            return Err(DbError::ResourceExhausted(
-                format!("Consumer group {} has reached max sessions", self.name)
-            ));
+            return Err(DbError::ResourceExhausted(format!(
+                "Consumer group {} has reached max sessions",
+                self.name
+            )));
         }
         self.current_sessions += 1;
         Ok(())
@@ -232,7 +233,10 @@ impl RuleCondition {
             RuleCondition::ModuleName(name) => {
                 attrs.module_name.as_ref().map_or(false, |m| m == name)
             }
-            RuleCondition::TimeOfDay { start_hour: _, end_hour: _ } => {
+            RuleCondition::TimeOfDay {
+                start_hour: _,
+                end_hour: _,
+            } => {
                 let _now = SystemTime::now();
                 // Simplified time check (would need proper time handling)
                 true // Placeholder
@@ -241,12 +245,8 @@ impl RuleCondition {
                 // Simplified day of week check
                 true // Placeholder
             }
-            RuleCondition::And(conditions) => {
-                conditions.iter().all(|c| c.evaluate(attrs))
-            }
-            RuleCondition::Or(conditions) => {
-                conditions.iter().any(|c| c.evaluate(attrs))
-            }
+            RuleCondition::And(conditions) => conditions.iter().all(|c| c.evaluate(attrs)),
+            RuleCondition::Or(conditions) => conditions.iter().any(|c| c.evaluate(attrs)),
             RuleCondition::Not(condition) => !condition.evaluate(attrs),
         }
     }
@@ -395,15 +395,17 @@ impl ConsumerGroupManager {
         let mut groups_by_name = self.groups_by_name.write().unwrap();
 
         if groups.contains_key(&id) {
-            return Err(DbError::AlreadyExists(
-                format!("Consumer group with ID {} already exists", id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Consumer group with ID {} already exists",
+                id
+            )));
         }
 
         if groups_by_name.contains_key(&name) {
-            return Err(DbError::AlreadyExists(
-                format!("Consumer group with name {} already exists", name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Consumer group with name {} already exists",
+                name
+            )));
         }
 
         groups_by_name.insert(name, id);
@@ -432,9 +434,10 @@ impl ConsumerGroupManager {
             let mut groups_by_name = self.groups_by_name.write().unwrap();
 
             if groups_by_name.contains_key(&name) {
-                return Err(DbError::AlreadyExists(
-                    format!("Consumer group {} already exists", name)
-                ));
+                return Err(DbError::AlreadyExists(format!(
+                    "Consumer group {} already exists",
+                    name
+                )));
             }
 
             groups_by_name.insert(name, id);
@@ -447,20 +450,18 @@ impl ConsumerGroupManager {
     // Get consumer group by ID
     pub fn get_group(&self, group_id: ConsumerGroupId) -> Result<ConsumerGroup> {
         let groups = self.groups.read().unwrap();
-        groups.get(&group_id)
+        groups
+            .get(&group_id)
             .cloned()
-            .ok_or_else(|| DbError::NotFound(
-                format!("Consumer group {} not found", group_id)
-            ))
+            .ok_or_else(|| DbError::NotFound(format!("Consumer group {} not found", group_id)))
     }
 
     // Get consumer group by name
     pub fn get_group_by_name(&self, name: &str) -> Result<ConsumerGroup> {
         let groups_by_name = self.groups_by_name.read().unwrap();
-        let group_id = groups_by_name.get(name)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Consumer group {} not found", name)
-            ))?;
+        let group_id = groups_by_name
+            .get(name)
+            .ok_or_else(|| DbError::NotFound(format!("Consumer group {} not found", name)))?;
         self.get_group(*group_id)
     }
 
@@ -470,10 +471,9 @@ impl ConsumerGroupManager {
         F: FnOnce(&mut ConsumerGroup),
     {
         let mut groups = self.groups.write().unwrap();
-        let group = groups.get_mut(&group_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Consumer group {} not found", group_id)
-            ))?;
+        let group = groups
+            .get_mut(&group_id)
+            .ok_or_else(|| DbError::NotFound(format!("Consumer group {} not found", group_id)))?;
 
         update_fn(group);
         group.modified_at = SystemTime::now();
@@ -485,17 +485,16 @@ impl ConsumerGroupManager {
         // Don't allow deleting system groups
         if group_id < 100 {
             return Err(DbError::PermissionDenied(
-                "Cannot delete system consumer groups".to_string()
+                "Cannot delete system consumer groups".to_string(),
             ));
         }
 
         let mut groups = self.groups.write().unwrap();
         let mut groups_by_name = self.groups_by_name.write().unwrap();
 
-        let group = groups.remove(&group_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Consumer group {} not found", group_id)
-            ))?;
+        let group = groups
+            .remove(&group_id)
+            .ok_or_else(|| DbError::NotFound(format!("Consumer group {} not found", group_id)))?;
 
         groups_by_name.remove(&group.name);
         Ok(())
@@ -528,10 +527,9 @@ impl ConsumerGroupManager {
     // Remove user to group mapping
     pub fn unmap_user(&self, user_id: UserId) -> Result<()> {
         let mut user_mappings = self.user_mappings.write().unwrap();
-        user_mappings.remove(&user_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("User {} mapping not found", user_id)
-            ))?;
+        user_mappings
+            .remove(&user_id)
+            .ok_or_else(|| DbError::NotFound(format!("User {} mapping not found", user_id)))?;
         Ok(())
     }
 
@@ -595,10 +593,9 @@ impl ConsumerGroupManager {
         self.get_group(new_group_id)?;
 
         let mut session_mappings = self.session_mappings.write().unwrap();
-        let mapping = session_mappings.get_mut(&session_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Session {} not found", session_id)
-            ))?;
+        let mapping = session_mappings
+            .get_mut(&session_id)
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         let old_group_id = mapping.group_id;
         if old_group_id == new_group_id {
@@ -632,10 +629,9 @@ impl ConsumerGroupManager {
     // Remove session mapping
     pub fn remove_session(&self, session_id: SessionId) -> Result<()> {
         let mut session_mappings = self.session_mappings.write().unwrap();
-        let mapping = session_mappings.remove(&session_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Session {} not found", session_id)
-            ))?;
+        let mapping = session_mappings
+            .remove(&session_id)
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         // Decrement session count
         let mut groups = self.groups.write().unwrap();
@@ -708,11 +704,10 @@ impl ConsumerGroupManager {
     // Get session's current consumer group
     pub fn get_session_group(&self, session_id: SessionId) -> Result<ConsumerGroupId> {
         let session_mappings = self.session_mappings.read().unwrap();
-        session_mappings.get(&session_id)
+        session_mappings
+            .get(&session_id)
             .map(|m| m.group_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Session {} not found", session_id)
-            ))
+            .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))
     }
 
     // Get statistics for a consumer group
@@ -754,11 +749,13 @@ mod tests {
     #[test]
     fn test_consumer_group_creation() {
         let manager = ConsumerGroupManager::new().unwrap();
-        let group_id = manager.create_group(
-            "TEST_GROUP".to_string(),
-            PriorityLevel::medium(),
-            GroupCategory::Interactive,
-        ).unwrap();
+        let group_id = manager
+            .create_group(
+                "TEST_GROUP".to_string(),
+                PriorityLevel::medium(),
+                GroupCategory::Interactive,
+            )
+            .unwrap();
 
         let group = manager.get_group(group_id).unwrap();
         assert_eq!(group.name, "TEST_GROUP");
@@ -767,13 +764,17 @@ mod tests {
     #[test]
     fn test_user_mapping() {
         let manager = ConsumerGroupManager::new().unwrap();
-        let group_id = manager.create_group(
-            "TEST_GROUP".to_string(),
-            PriorityLevel::medium(),
-            GroupCategory::Interactive,
-        ).unwrap();
+        let group_id = manager
+            .create_group(
+                "TEST_GROUP".to_string(),
+                PriorityLevel::medium(),
+                GroupCategory::Interactive,
+            )
+            .unwrap();
 
-        manager.map_user_to_group(1, "testuser".to_string(), group_id, true).unwrap();
+        manager
+            .map_user_to_group(1, "testuser".to_string(), group_id, true)
+            .unwrap();
 
         let attrs = SessionAttributes {
             username: "testuser".to_string(),

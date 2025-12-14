@@ -2,14 +2,14 @@
 //
 // Linear regression implementation with gradient descent and advanced optimizers.
 
-use crate::error::Result;
-use super::super::{Dataset, Vector, Matrix, Hyperparameters, MLError};
-use super::super::simd_ops::{simd_dot_product};
-use super::super::optimizers::{Optimizer, AdamOptimizer, LRScheduler, LRSchedule};
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
-use bincode::{Encode, Decode};
+use super::super::optimizers::{AdamOptimizer, LRSchedule, LRScheduler, Optimizer};
+use super::super::simd_ops::simd_dot_product;
+use super::super::{Dataset, Hyperparameters, MLError, Matrix, Vector};
 use super::{Algorithm, ModelType};
+use crate::error::Result;
+use bincode::{Decode, Encode};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // ============================================================================
 // Linear Regression
@@ -41,11 +41,14 @@ impl LinearRegression {
 
     // Compute predictions with current weights (SIMD-accelerated)
     fn predict_internal(&self, features: &Matrix) -> Vector {
-        features.iter().map(|sample| {
-            // Use SIMD dot product for faster computation
-            let pred = simd_dot_product(&self.weights, sample) + self.intercept;
-            pred
-        }).collect()
+        features
+            .iter()
+            .map(|sample| {
+                // Use SIMD dot product for faster computation
+                let pred = simd_dot_product(&self.weights, sample) + self.intercept;
+                pred
+            })
+            .collect()
     }
 
     // Compute predictions for a single sample (SIMD-accelerated)
@@ -55,17 +58,20 @@ impl LinearRegression {
 
     // Compute mean squared error
     fn mse(&self, predictions: &Vector, targets: &Vector) -> f64 {
-        predictions.iter()
+        predictions
+            .iter()
             .zip(targets.iter())
             .map(|(pred, target)| (pred - target).powi(2))
-            .sum::<f64>() / predictions.len() as f64
+            .sum::<f64>()
+            / predictions.len() as f64
     }
 
     // Compute R² score
     fn r2_score(&self, predictions: &Vector, targets: &Vector) -> f64 {
         let mean_target = targets.iter().sum::<f64>() / targets.len() as f64;
         let ss_tot: f64 = targets.iter().map(|&y| (y - mean_target).powi(2)).sum();
-        let ss_res: f64 = predictions.iter()
+        let ss_res: f64 = predictions
+            .iter()
             .zip(targets.iter())
             .map(|(pred, target)| (target - pred).powi(2))
             .sum();
@@ -74,11 +80,7 @@ impl LinearRegression {
 
     // Helper: Accumulate weight gradients for a sample (eliminates duplication)
     #[inline]
-    fn accumulate_weight_gradients(
-        weight_gradients: &mut [f64],
-        error: f64,
-        features: &[f64],
-    ) {
+    fn accumulate_weight_gradients(weight_gradients: &mut [f64], error: f64, features: &[f64]) {
         for (j, &feature) in features.iter().enumerate() {
             weight_gradients[j] += error * feature;
         }
@@ -109,7 +111,9 @@ impl LinearRegression {
     ) -> Result<()> {
         dataset.validate()?;
 
-        let target = dataset.target.as_ref()
+        let target = dataset
+            .target
+            .as_ref()
             .ok_or_else(|| MLError::InvalidConfiguration("No target provided".to_string()))?;
 
         let learning_rate = params.get_float("learning_rate").unwrap_or(0.001);
@@ -127,10 +131,8 @@ impl LinearRegression {
 
         // Create Adam optimizer for faster convergence
         let mut optimizer = AdamOptimizer::new(learning_rate);
-        let mut scheduler = LRScheduler::new(
-            learning_rate,
-            LRSchedule::ExponentialDecay { gamma: 0.995 },
-        );
+        let mut scheduler =
+            LRScheduler::new(learning_rate, LRSchedule::ExponentialDecay { gamma: 0.995 });
 
         let mut prev_loss = f64::INFINITY;
         let mut convergence_count = 0;
@@ -152,7 +154,11 @@ impl LinearRegression {
                     let error = prediction - target[i];
                     epoch_loss += error * error;
 
-                    Self::accumulate_weight_gradients(&mut weight_gradients, error, &dataset.features[i]);
+                    Self::accumulate_weight_gradients(
+                        &mut weight_gradients,
+                        error,
+                        &dataset.features[i],
+                    );
                     if fit_intercept {
                         intercept_gradient += error;
                     }
@@ -192,7 +198,12 @@ impl LinearRegression {
             prev_loss = loss;
 
             if epoch % 50 == 0 {
-                tracing::debug!("Epoch {}: loss = {:.6}, lr = {:.6}", epoch, loss, scheduler.get_lr());
+                tracing::debug!(
+                    "Epoch {}: loss = {:.6}, lr = {:.6}",
+                    epoch,
+                    loss,
+                    scheduler.get_lr()
+                );
             }
         }
 
@@ -212,7 +223,9 @@ impl Algorithm for LinearRegression {
     fn fit(&mut self, dataset: &Dataset, params: &Hyperparameters) -> Result<()> {
         dataset.validate()?;
 
-        let target = dataset.target.as_ref()
+        let target = dataset
+            .target
+            .as_ref()
             .ok_or_else(|| MLError::InvalidConfiguration("No target provided".to_string()))?;
 
         let learning_rate = params.get_float("learning_rate").unwrap_or(0.01);
@@ -239,7 +252,11 @@ impl Algorithm for LinearRegression {
 
             for i in 0..n_samples {
                 let error = predictions[i] - target[i];
-                Self::accumulate_weight_gradients(&mut weight_gradients, error, &dataset.features[i]);
+                Self::accumulate_weight_gradients(
+                    &mut weight_gradients,
+                    error,
+                    &dataset.features[i],
+                );
                 if fit_intercept {
                     intercept_gradient += error;
                 }
@@ -282,14 +299,17 @@ impl Algorithm for LinearRegression {
     }
 
     fn serialize(&self) -> Result<Vec<u8>> {
-        bincode::encode_to_vec(self, bincode::config::standard())
-            .map_err(|e| MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into())
+        bincode::encode_to_vec(self, bincode::config::standard()).map_err(|e| {
+            MLError::InvalidConfiguration(format!("Serialization failed: {}", e)).into()
+        })
     }
 
     fn deserialize(bytes: &[u8]) -> Result<Self> {
         bincode::decode_from_slice(bytes, bincode::config::standard())
             .map(|(model, _)| model)
-            .map_err(|e| MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into())
+            .map_err(|e| {
+                MLError::InvalidConfiguration(format!("Deserialization failed: {}", e)).into()
+            })
     }
 
     fn feature_importance(&self) -> Option<Vector> {
@@ -304,12 +324,7 @@ mod tests {
 
     #[test]
     fn test_linear_regression() {
-        let features = vec![
-            vec![1.0],
-            vec![2.0],
-            vec![3.0],
-            vec![4.0],
-        ];
+        let features = vec![vec![1.0], vec![2.0], vec![3.0], vec![4.0]];
         let target = Some(vec![2.0, 4.0, 6.0, 8.0]);
         let dataset = Dataset::new(features, target, vec!["x".to_string()]);
 

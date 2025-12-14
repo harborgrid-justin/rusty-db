@@ -72,82 +72,79 @@
 // # }
 // ```
 
+use crate::error::DbError;
+use crate::Result;
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::Result;
-use crate::error::DbError;
 
 // Re-export all submodules
-pub mod rbac;
-pub mod fgac;
-pub mod encryption;
-pub mod encryption_engine;
 pub mod audit;
 pub mod authentication;
-pub mod privileges;
-pub mod labels;
-pub mod bounds_protection;
-pub mod secure_gc;
-pub mod injection_prevention;
-pub mod network_hardening;
-pub mod insider_threat;
 pub mod auto_recovery;
-pub mod memory_hardening;
+pub mod bounds_protection;
 pub mod circuit_breaker;
+pub mod encryption;
+pub mod encryption_engine;
+pub mod fgac;
+pub mod injection_prevention;
+pub mod insider_threat;
+pub mod labels;
+pub mod memory_hardening;
+pub mod network_hardening;
+pub mod privileges;
+pub mod rbac;
+pub mod secure_gc;
 
 // Re-export commonly used types
-pub use rbac::{RbacManager, Role, RoleAssignment, SeparationOfDutiesConstraint};
-pub use fgac::{FgacManager, RowLevelPolicy, ColumnPolicy, SecurityContext as FgacContext};
-pub use encryption::{EncryptionManager, EncryptionKey, TdeConfig, ColumnEncryption};
-pub use encryption_engine::{
-    EncryptionEngine, KeyManager, SecureKey, SecureKeyMaterial, ColumnEncryptor,
-    TransparentEncryption, KeyRotator, EncryptedIndex, SecureKeyStore, CryptoRandom,
-    Algorithm, Ciphertext, KeyDerivation,
-};
-pub use audit::{AuditManager, AuditRecord, AuditAction, AuditPolicy};
+pub use audit::{AuditAction, AuditManager, AuditPolicy, AuditRecord};
 pub use authentication::{
-    AuthenticationManager, UserAccount, AuthSession, PasswordPolicy, LoginCredentials, LoginResult
-};
-pub use privileges::{PrivilegeManager, SystemPrivilege, ObjectPrivilege, PrivilegeGrant};
-pub use labels::{LabelManager, SecurityLabel, ClassificationLevel, UserClearance};
-pub use bounds_protection::{
-    BoundsCheckedBuffer, SafeSlice, SafeSliceMut, SafeIndex, OverflowGuard,
-    StackCanary, SafeString, ArrayBoundsChecker,
-};
-pub use secure_gc::{
-    SecureDrop, SensitiveData, MemorySanitizer, CryptoErase, SecurePool,
-    ReferenceTracker, DelayedSanitizer, HeapGuard,
-};
-pub use injection_prevention::{
-    InjectionPreventionGuard, InputSanitizer, DangerousPatternDetector,
-    SQLValidator, ParameterizedQueryBuilder, UnicodeNormalizer,
-    EscapeValidator, QueryWhitelister, ThreatDetection, ThreatType,
-    Severity, PreparedStatement, Parameter, ParameterValue, ParameterType,
-};
-pub use network_hardening::{
-    NetworkHardeningManager, AdaptiveRateLimiter, ConnectionGuard, DDoSMitigator,
-    ProtocolValidator, TLSEnforcer, NetworkAnomalyDetector, IPReputationChecker,
-    DDoSAttackType, ViolationType, AnomalyType, NetworkHardeningStats,
-};
-pub use insider_threat::{
-    InsiderThreatManager, ThreatScorer, BehaviorAnalyzer, AnomalyDetector,
-    DataExfiltrationGuard, PrivilegeEscalationDetector, QuerySanitizer, ForensicLogger,
-    QueryRiskAssessment, ThreatAction, InsiderThreatConfig, ThreatStatistics,
-    UserBehaviorBaseline, AnomalyScore, ExfiltrationAttempt, PrivilegeEscalationAttempt,
-    ThreatLevel as InsiderThreatLevel,
+    AuthSession, AuthenticationManager, LoginCredentials, LoginResult, PasswordPolicy, UserAccount,
 };
 pub use auto_recovery::{
-    AutoRecoveryManager, AutoRecoveryConfig, CrashDetector, TransactionRollbackManager,
-    CorruptionDetector, DataRepairer, StateSnapshotManager, HealthMonitor, SelfHealer,
+    AutoRecoveryConfig, AutoRecoveryManager, CorruptionDetector, CrashDetector, DataRepairer,
+    HealthMonitor, SelfHealer, StateSnapshotManager, TransactionRollbackManager,
 };
-pub use memory_hardening::{
-    SecureBuffer, GuardedMemory, SecureZeroingAllocator, MemoryCanary,
-    IsolatedHeap, MemoryHardeningConfig, CanaryCheckFrequency,
-    AllocatorStatsSnapshot, IsolatedHeapStatsSnapshot, PAGE_SIZE, CANARY_SIZE,
-    SecurityMetrics as MemorySecurityMetrics,
+pub use bounds_protection::{
+    ArrayBoundsChecker, BoundsCheckedBuffer, OverflowGuard, SafeIndex, SafeSlice, SafeSliceMut,
+    SafeString, StackCanary,
 };
 pub use circuit_breaker::{
-    CircuitBreaker, CircuitBreakerConfig, CircuitState, CircuitBreakerMetrics,
+    CircuitBreaker, CircuitBreakerConfig, CircuitBreakerMetrics, CircuitState,
+};
+pub use encryption::{ColumnEncryption, EncryptionKey, EncryptionManager, TdeConfig};
+pub use encryption_engine::{
+    Algorithm, Ciphertext, ColumnEncryptor, CryptoRandom, EncryptedIndex, EncryptionEngine,
+    KeyDerivation, KeyManager, KeyRotator, SecureKey, SecureKeyMaterial, SecureKeyStore,
+    TransparentEncryption,
+};
+pub use fgac::{ColumnPolicy, FgacManager, RowLevelPolicy, SecurityContext as FgacContext};
+pub use injection_prevention::{
+    DangerousPatternDetector, EscapeValidator, InjectionPreventionGuard, InputSanitizer, Parameter,
+    ParameterType, ParameterValue, ParameterizedQueryBuilder, PreparedStatement, QueryWhitelister,
+    SQLValidator, Severity, ThreatDetection, ThreatType, UnicodeNormalizer,
+};
+pub use insider_threat::{
+    AnomalyDetector, AnomalyScore, BehaviorAnalyzer, DataExfiltrationGuard, ExfiltrationAttempt,
+    ForensicLogger, InsiderThreatConfig, InsiderThreatManager, PrivilegeEscalationAttempt,
+    PrivilegeEscalationDetector, QueryRiskAssessment, QuerySanitizer, ThreatAction,
+    ThreatLevel as InsiderThreatLevel, ThreatScorer, ThreatStatistics, UserBehaviorBaseline,
+};
+pub use labels::{ClassificationLevel, LabelManager, SecurityLabel, UserClearance};
+pub use memory_hardening::{
+    AllocatorStatsSnapshot, CanaryCheckFrequency, GuardedMemory, IsolatedHeap,
+    IsolatedHeapStatsSnapshot, MemoryCanary, MemoryHardeningConfig, SecureBuffer,
+    SecureZeroingAllocator, SecurityMetrics as MemorySecurityMetrics, CANARY_SIZE, PAGE_SIZE,
+};
+pub use network_hardening::{
+    AdaptiveRateLimiter, AnomalyType, ConnectionGuard, DDoSAttackType, DDoSMitigator,
+    IPReputationChecker, NetworkAnomalyDetector, NetworkHardeningManager, NetworkHardeningStats,
+    ProtocolValidator, TLSEnforcer, ViolationType,
+};
+pub use privileges::{ObjectPrivilege, PrivilegeGrant, PrivilegeManager, SystemPrivilege};
+pub use rbac::{RbacManager, Role, RoleAssignment, SeparationOfDutiesConstraint};
+pub use secure_gc::{
+    CryptoErase, DelayedSanitizer, HeapGuard, MemorySanitizer, ReferenceTracker, SecureDrop,
+    SecurePool, SensitiveData,
 };
 
 // Integrated security manager combining all security subsystems
@@ -212,9 +209,7 @@ impl IntegratedSecurityManager {
 
                 Ok(session)
             }
-            LoginResult::MfaRequired { .. } => {
-                Err(DbError::Network("MFA required".to_string()))
-            }
+            LoginResult::MfaRequired { .. } => Err(DbError::Network("MFA required".to_string())),
             LoginResult::PasswordChangeRequired { .. } => {
                 Err(DbError::Network("Password change required".to_string()))
             }
@@ -246,9 +241,7 @@ impl IntegratedSecurityManager {
 
                 Err(DbError::Network("Invalid credentials".to_string()))
             }
-            LoginResult::AccountDisabled => {
-                Err(DbError::Network("Account disabled".to_string()))
-            }
+            LoginResult::AccountDisabled => Err(DbError::Network("Account disabled".to_string())),
         }
     }
 
@@ -295,11 +288,13 @@ impl IntegratedSecurityManager {
         let session = self.authentication.validate_session(session_id)?;
 
         // Apply label-based filtering
-        let label_filtered = if let Ok(_clearance) = self.labels.get_user_clearance(&session.user_id) {
-            self.labels.filter_readable_rows(&session.user_id, table_id, row_ids)?
-        } else {
-            row_ids
-        };
+        let label_filtered =
+            if let Ok(_clearance) = self.labels.get_user_clearance(&session.user_id) {
+                self.labels
+                    .filter_readable_rows(&session.user_id, table_id, row_ids)?
+            } else {
+                row_ids
+            };
 
         // Additional FGAC filtering could be applied here
 
@@ -437,19 +432,22 @@ pub struct SecurityStatistics {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
     use super::*;
+    use std::collections::HashSet;
 
     #[test]
     fn test_integrated_security() {
         let security = IntegratedSecurityManager::new();
 
         // Create a user
-        let user_id = security.authentication.create_user(
-            "testuser".to_string(),
-            "TestPassword123!".to_string(),
-            Some("test@example.com".to_string()),
-        ).unwrap();
+        let user_id = security
+            .authentication
+            .create_user(
+                "testuser".to_string(),
+                "TestPassword123!".to_string(),
+                Some("test@example.com".to_string()),
+            )
+            .unwrap();
 
         // Update user status to active
         {
@@ -469,18 +467,20 @@ mod tests {
         let security = IntegratedSecurityManager::new();
 
         // Grant system privilege
-        let grant_id = security.privileges.grant_system_privilege(
-            "SYSTEM".to_string(),
-            "user1".to_string(),
-            SystemPrivilege::CreateTable,
-            false,
-        ).unwrap();
+        let grant_id = security
+            .privileges
+            .grant_system_privilege(
+                "SYSTEM".to_string(),
+                "user1".to_string(),
+                SystemPrivilege::CreateTable,
+                false,
+            )
+            .unwrap();
 
         // Check privilege
-        let result = security.privileges.check_system_privilege(
-            &"user1".to_string(),
-            &SystemPrivilege::CreateTable,
-        );
+        let result = security
+            .privileges
+            .check_system_privilege(&"user1".to_string(), &SystemPrivilege::CreateTable);
 
         assert!(result.has_privilege);
     }
@@ -489,15 +489,18 @@ mod tests {
     fn test_audit_logging() {
         let security = IntegratedSecurityManager::new();
 
-        let id = security.audit.log_event(
-            "testuser".to_string(),
-            Some("session1".to_string()),
-            AuditAction::Select,
-            Some("users".to_string()),
-            Some(audit::ObjectType::Table),
-            true,
-            HashMap::new(),
-        ).unwrap();
+        let id = security
+            .audit
+            .log_event(
+                "testuser".to_string(),
+                Some("session1".to_string()),
+                AuditAction::Select,
+                Some("users".to_string()),
+                Some(audit::ObjectType::Table),
+                true,
+                HashMap::new(),
+            )
+            .unwrap();
 
         assert!(id > 0);
     }
@@ -508,14 +511,20 @@ mod tests {
 
         // Initialize master key
         let master_key = vec![0u8; 32];
-        security.encryption.initialize_master_key(master_key).unwrap();
+        security
+            .encryption
+            .initialize_master_key(master_key)
+            .unwrap();
 
         // Generate table encryption key
-        let key_id = security.encryption.generate_key(
-            encryption::KeyType::TableEncryption,
-            encryption::EncryptionAlgorithm::Aes256Gcm,
-            Some("MASTER_KEY".to_string()),
-        ).unwrap();
+        let key_id = security
+            .encryption
+            .generate_key(
+                encryption::KeyType::TableEncryption,
+                encryption::EncryptionAlgorithm::Aes256Gcm,
+                Some("MASTER_KEY".to_string()),
+            )
+            .unwrap();
 
         assert!(key_id.starts_with("KEY_"));
     }
@@ -580,14 +589,12 @@ mod tests {
 }
 pub mod security_core;
 pub use security_core::{
-    UnifiedSecurityCore, SecurityPolicyEngine, DefenseOrchestrator,
-    SecurityEventCorrelator, ThreatIntelligence, ComplianceValidator,
-    SecurityMetrics as CoreSecurityMetrics, PenetrationTestHarness, SecurityDashboard,
-    SecurityPolicy, PolicyType, PolicyEffect, PolicyDecision,
-    DefenseLayer, ThreatLevel as CoreThreatLevel, DefenseCoverageReport,
-    SecurityIncident, IncidentStatus, EventSeverity,
-    IndicatorOfCompromise, IocType, ThreatActor,
-    ComplianceFramework, ComplianceControl, ComplianceStatus, ComplianceSummary,
-    SecurityPostureScore, PenTestReport, PenTestSummary,
-    DashboardView, ExecutiveSummary, SecurityStatus,
+    ComplianceControl, ComplianceFramework, ComplianceStatus, ComplianceSummary,
+    ComplianceValidator, DashboardView, DefenseCoverageReport, DefenseLayer, DefenseOrchestrator,
+    EventSeverity, ExecutiveSummary, IncidentStatus, IndicatorOfCompromise, IocType, PenTestReport,
+    PenTestSummary, PenetrationTestHarness, PolicyDecision, PolicyEffect, PolicyType,
+    SecurityDashboard, SecurityEventCorrelator, SecurityIncident,
+    SecurityMetrics as CoreSecurityMetrics, SecurityPolicy, SecurityPolicyEngine,
+    SecurityPostureScore, SecurityStatus, ThreatActor, ThreatIntelligence,
+    ThreatLevel as CoreThreatLevel, UnifiedSecurityCore,
 };

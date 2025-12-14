@@ -3,12 +3,7 @@
 // This example demonstrates the comprehensive buffer pool management system
 // including multi-tier pools, caching, replacement policies, and dirty page management.
 
-use rusty_db::memory::buffer_pool::{
-    BufferPoolManager,
-    BufferPoolConfig,
-    PageId,
-    PoolType,
-};
+use rusty_db::memory::buffer_pool::{BufferPoolConfig, BufferPoolManager, PageId, PoolType};
 
 fn main() {
     println!("=== RustyDB Buffer Pool Management Demo ===\n");
@@ -31,7 +26,10 @@ fn main() {
     println!("   - Total size: {}MB", config.total_size / 1024 / 1024);
     println!("   - Page size: {} bytes", config.page_size);
     println!("   - Hot tier: {}%", (config.hot_tier_ratio * 100.0) as u32);
-    println!("   - Warm tier: {}%", (config.warm_tier_ratio * 100.0) as u32);
+    println!(
+        "   - Warm tier: {}%",
+        (config.warm_tier_ratio * 100.0) as u32
+    );
     println!();
 
     let manager = BufferPoolManager::new(config);
@@ -69,14 +67,20 @@ fn main() {
     println!("6. Memory Pressure");
     let pressure = manager.api_get_memory_pressure();
     println!("   - Current usage: {} bytes", pressure.current_usage);
-    println!("   - Pressure level: {:.2}%", pressure.pressure_level * 100.0);
+    println!(
+        "   - Pressure level: {:.2}%",
+        pressure.pressure_level * 100.0
+    );
     println!("   - Under pressure: {}", pressure.under_pressure);
     println!();
 
     // Export Prometheus metrics
     println!("7. Prometheus Metrics Export");
     let prometheus = manager.api_export_prometheus();
-    println!("{}", prometheus.lines().take(10).collect::<Vec<_>>().join("\n"));
+    println!(
+        "{}",
+        prometheus.lines().take(10).collect::<Vec<_>>().join("\n")
+    );
     println!("   ... (truncated)");
     println!();
 

@@ -4,15 +4,15 @@
 
 use axum::{
     extract::{Path, Query, State},
-    response::{Json as AxumJson},
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use parking_lot::RwLock;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
 use uuid::Uuid;
-use parking_lot::RwLock;
 
 use super::super::types::*;
 use crate::monitoring::MonitoringSystem;
@@ -75,7 +75,10 @@ pub async fn get_config(
     let response = ConfigResponse {
         settings,
         version: "1.0.0".to_string(),
-        updated_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        updated_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
     };
 
     Ok(AxumJson(response))
@@ -98,13 +101,20 @@ pub async fn update_config(
 ) -> ApiResult<StatusCode> {
     // Validate configuration values
     let valid_keys = [
-        "max_connections", "buffer_pool_size", "wal_enabled",
-        "checkpoint_interval_secs", "log_level", "query_timeout_secs"
+        "max_connections",
+        "buffer_pool_size",
+        "wal_enabled",
+        "checkpoint_interval_secs",
+        "log_level",
+        "query_timeout_secs",
     ];
 
     for key in settings.keys() {
         if !valid_keys.contains(&key.as_str()) {
-            return Err(ApiError::new("INVALID_INPUT", format!("Unknown configuration key: {}", key)));
+            return Err(ApiError::new(
+                "INVALID_INPUT",
+                format!("Unknown configuration key: {}", key),
+            ));
         }
     }
 
@@ -112,10 +122,16 @@ pub async fn update_config(
     if let Some(max_conn) = settings.get("max_connections") {
         if let Some(n) = max_conn.as_u64() {
             if n < 1 || n > 10000 {
-                return Err(ApiError::new("INVALID_INPUT", "max_connections must be between 1 and 10000"));
+                return Err(ApiError::new(
+                    "INVALID_INPUT",
+                    "max_connections must be between 1 and 10000",
+                ));
             }
         } else {
-            return Err(ApiError::new("INVALID_INPUT", "max_connections must be a positive integer"));
+            return Err(ApiError::new(
+                "INVALID_INPUT",
+                "max_connections must be a positive integer",
+            ));
         }
     }
 
@@ -123,7 +139,10 @@ pub async fn update_config(
         if let Some(level) = log_level.as_str() {
             let valid_levels = ["trace", "debug", "info", "warn", "error"];
             if !valid_levels.contains(&level) {
-                return Err(ApiError::new("INVALID_INPUT", format!("log_level must be one of: {:?}", valid_levels)));
+                return Err(ApiError::new(
+                    "INVALID_INPUT",
+                    format!("log_level must be one of: {:?}", valid_levels),
+                ));
             }
         }
     }
@@ -156,7 +175,10 @@ pub async fn create_backup(
     let response = BackupResponse {
         backup_id: backup_id.to_string(),
         status: "in_progress".to_string(),
-        started_at: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        started_at: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         completed_at: None,
         size_bytes: None,
         location: "/backups/".to_string() + &backup_id.to_string(),
@@ -179,17 +201,29 @@ pub async fn get_health(
 ) -> ApiResult<AxumJson<HealthResponse>> {
     let mut checks = HashMap::new();
 
-    checks.insert("database".to_string(), ComponentHealth {
-        status: "healthy".to_string(),
-        message: Some("Database is operational".to_string()),
-        last_check: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    checks.insert(
+        "database".to_string(),
+        ComponentHealth {
+            status: "healthy".to_string(),
+            message: Some("Database is operational".to_string()),
+            last_check: SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    checks.insert("storage".to_string(), ComponentHealth {
-        status: "healthy".to_string(),
-        message: None,
-        last_check: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    checks.insert(
+        "storage".to_string(),
+        ComponentHealth {
+            status: "healthy".to_string(),
+            message: None,
+            last_check: SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
     let response = HealthResponse {
         status: "healthy".to_string(),
@@ -227,7 +261,10 @@ pub async fn run_maintenance(
             });
             Ok(StatusCode::ACCEPTED)
         }
-        _ => Err(ApiError::new("INVALID_INPUT", "Invalid maintenance operation")),
+        _ => Err(ApiError::new(
+            "INVALID_INPUT",
+            "Invalid maintenance operation",
+        )),
     }
 }
 
@@ -287,14 +324,20 @@ pub async fn create_user(
     }
 
     if request.username.len() < 3 || request.username.len() > 64 {
-        return Err(ApiError::new("INVALID_INPUT", "Username must be between 3 and 64 characters"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "Username must be between 3 and 64 characters",
+        ));
     }
 
     // Check if username already exists
     {
         let users = USERS_STORE.read();
         if users.values().any(|u| u.username == request.username) {
-            return Err(ApiError::new("CONFLICT", format!("User '{}' already exists", request.username)));
+            return Err(ApiError::new(
+                "CONFLICT",
+                format!("User '{}' already exists", request.username),
+            ));
         }
     }
 
@@ -303,7 +346,10 @@ pub async fn create_user(
         let roles = ROLES_STORE.read();
         for role in &request.roles {
             if !roles.values().any(|r| &r.role_name == role) {
-                return Err(ApiError::new("INVALID_INPUT", format!("Role '{}' does not exist", role)));
+                return Err(ApiError::new(
+                    "INVALID_INPUT",
+                    format!("Role '{}' does not exist", role),
+                ));
             }
         }
     }
@@ -321,7 +367,10 @@ pub async fn create_user(
         username: request.username.clone(),
         roles: request.roles,
         enabled: request.enabled.unwrap_or(true),
-        created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
+        created_at: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         last_login: None,
     };
 
@@ -353,7 +402,8 @@ pub async fn get_user(
 ) -> ApiResult<AxumJson<UserResponse>> {
     let users = USERS_STORE.read();
 
-    users.get(&id)
+    users
+        .get(&id)
         .cloned()
         .map(AxumJson)
         .ok_or_else(|| ApiError::new("NOT_FOUND", format!("User {} not found", id)))
@@ -387,7 +437,10 @@ pub async fn update_user(
             let roles = ROLES_STORE.read();
             for role in &request.roles {
                 if !roles.values().any(|r| &r.role_name == role) {
-                    return Err(ApiError::new("INVALID_INPUT", format!("Role '{}' does not exist", role)));
+                    return Err(ApiError::new(
+                        "INVALID_INPUT",
+                        format!("Role '{}' does not exist", role),
+                    ));
                 }
             }
         }
@@ -470,15 +523,24 @@ pub async fn create_role(
     {
         let roles = ROLES_STORE.read();
         if roles.values().any(|r| r.role_name == request.role_name) {
-            return Err(ApiError::new("CONFLICT", format!("Role '{}' already exists", request.role_name)));
+            return Err(ApiError::new(
+                "CONFLICT",
+                format!("Role '{}' already exists", request.role_name),
+            ));
         }
     }
 
     // Validate permissions
-    let valid_permissions = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER", "INDEX", "EXECUTE", "ALL"];
+    let valid_permissions = [
+        "SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER", "INDEX", "EXECUTE",
+        "ALL",
+    ];
     for perm in &request.permissions {
         if !valid_permissions.contains(&perm.to_uppercase().as_str()) {
-            return Err(ApiError::new("INVALID_INPUT", format!("Invalid permission: '{}'", perm)));
+            return Err(ApiError::new(
+                "INVALID_INPUT",
+                format!("Invalid permission: '{}'", perm),
+            ));
         }
     }
 
@@ -495,7 +557,10 @@ pub async fn create_role(
         role_name: request.role_name,
         permissions: request.permissions,
         description: request.description,
-        created_at: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
+        created_at: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
     };
 
     // Store the role
@@ -526,7 +591,8 @@ pub async fn get_role(
 ) -> ApiResult<AxumJson<RoleResponse>> {
     let roles = ROLES_STORE.read();
 
-    roles.get(&id)
+    roles
+        .get(&id)
         .cloned()
         .map(AxumJson)
         .ok_or_else(|| ApiError::new("NOT_FOUND", format!("Role {} not found", id)))
@@ -556,10 +622,16 @@ pub async fn update_role(
 
     if let Some(role) = roles.get_mut(&id) {
         // Validate permissions
-        let valid_permissions = ["SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER", "INDEX", "EXECUTE", "ALL"];
+        let valid_permissions = [
+            "SELECT", "INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER", "INDEX", "EXECUTE",
+            "ALL",
+        ];
         for perm in &request.permissions {
             if !valid_permissions.contains(&perm.to_uppercase().as_str()) {
-                return Err(ApiError::new("INVALID_INPUT", format!("Invalid permission: '{}'", perm)));
+                return Err(ApiError::new(
+                    "INVALID_INPUT",
+                    format!("Invalid permission: '{}'", perm),
+                ));
             }
         }
 
@@ -599,7 +671,10 @@ pub async fn delete_role(
     if let Some(name) = role_name {
         let users = USERS_STORE.read();
         if users.values().any(|u| u.roles.contains(&name)) {
-            return Err(ApiError::new("CONFLICT", format!("Role '{}' is still assigned to users", name)));
+            return Err(ApiError::new(
+                "CONFLICT",
+                format!("Role '{}' is still assigned to users", name),
+            ));
         }
     } else {
         return Err(ApiError::new("NOT_FOUND", format!("Role {} not found", id)));
@@ -628,14 +703,20 @@ pub async fn get_metrics(
 ) -> ApiResult<AxumJson<MetricsResponse>> {
     let mut metric_data = HashMap::new();
 
-    metric_data.insert("total_requests".to_string(), MetricData {
-        value: 0.0,
-        unit: "count".to_string(),
-        labels: HashMap::new(),
-    });
+    metric_data.insert(
+        "total_requests".to_string(),
+        MetricData {
+            value: 0.0,
+            unit: "count".to_string(),
+            labels: HashMap::new(),
+        },
+    );
 
     let response = MetricsResponse {
-        timestamp: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
+        timestamp: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
         metrics: metric_data,
         prometheus_format: None,
     };

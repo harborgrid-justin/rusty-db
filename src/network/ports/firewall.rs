@@ -10,11 +10,11 @@
 // - **WebSocket Upgrade**: Use WebSocket for bi-directional communication
 
 use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use std::time::Duration;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
-use serde::{Deserialize, Serialize};
 
 /// Firewall configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -110,23 +110,26 @@ impl PortProbe {
     pub async fn probe_parallel(&self, addrs: &[SocketAddr]) -> Vec<(SocketAddr, ProbeResult)> {
         use futures::future::join_all;
 
-        let probes: Vec<_> = addrs.iter().map(|&addr| {
-            let timeout_duration = self.timeout_duration;
-            async move {
-                let result = match timeout(timeout_duration, TcpStream::connect(addr)).await {
-                    Ok(Ok(_)) => ProbeResult::Accessible,
-                    Ok(Err(e)) => {
-                        if e.kind() == std::io::ErrorKind::ConnectionRefused {
-                            ProbeResult::Refused
-                        } else {
-                            ProbeResult::Error
+        let probes: Vec<_> = addrs
+            .iter()
+            .map(|&addr| {
+                let timeout_duration = self.timeout_duration;
+                async move {
+                    let result = match timeout(timeout_duration, TcpStream::connect(addr)).await {
+                        Ok(Ok(_)) => ProbeResult::Accessible,
+                        Ok(Err(e)) => {
+                            if e.kind() == std::io::ErrorKind::ConnectionRefused {
+                                ProbeResult::Refused
+                            } else {
+                                ProbeResult::Error
+                            }
                         }
-                    }
-                    Err(_) => ProbeResult::Timeout,
-                };
-                (addr, result)
-            }
-        }).collect();
+                        Err(_) => ProbeResult::Timeout,
+                    };
+                    (addr, result)
+                }
+            })
+            .collect();
 
         join_all(probes).await
     }
@@ -279,10 +282,7 @@ impl FirewallManager {
     pub fn new(config: FirewallConfig) -> Self {
         let probe = PortProbe::new(config.probe_timeout_ms);
         let fallback_selector = FallbackPortSelector::default();
-        let tunneling = TunnelingSupport::new(
-            config.enable_tunneling,
-            config.enable_tunneling,
-        );
+        let tunneling = TunnelingSupport::new(config.enable_tunneling, config.enable_tunneling);
 
         Self {
             config,
@@ -305,7 +305,8 @@ impl FirewallManager {
     /// Find the best accessible port from a list
     pub async fn find_accessible_port(&self, addrs: &[SocketAddr]) -> Result<SocketAddr> {
         if !self.config.enable_probing {
-            return addrs.first()
+            return addrs
+                .first()
                 .copied()
                 .ok_or_else(|| DbError::InvalidInput("No addresses provided".to_string()));
         }
@@ -314,14 +315,18 @@ impl FirewallManager {
         let results = self.probe.probe_parallel(addrs).await;
 
         // Select the best port
-        self.fallback_selector.select_best(&results)
+        self.fallback_selector
+            .select_best(&results)
             .ok_or_else(|| DbError::Network("No accessible ports found".to_string()))
     }
 
     /// Get probe results for multiple addresses
     pub async fn get_probe_results(&self, addrs: &[SocketAddr]) -> Vec<(SocketAddr, ProbeResult)> {
         if !self.config.enable_probing {
-            return addrs.iter().map(|&addr| (addr, ProbeResult::Accessible)).collect();
+            return addrs
+                .iter()
+                .map(|&addr| (addr, ProbeResult::Accessible))
+                .collect();
         }
 
         self.probe.probe_parallel(addrs).await

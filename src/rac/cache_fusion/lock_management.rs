@@ -3,19 +3,19 @@
 // Distributed lock management for Oracle RAC-like Cache Fusion.
 // Manages resource locks, deadlock detection, and lock conversion across cluster instances.
 
-use tokio::sync::oneshot;
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::time::Instant;
-use std::collections::HashSet;
-use crate::error::DbError;
+use super::global_cache::{LockValueBlock, ResourceId};
 use crate::common::NodeId;
+use crate::error::DbError;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::time::Duration;
-use parking_lot::RwLock;
-use super::global_cache::{ResourceId, LockValueBlock};
+use std::time::Instant;
+use tokio::sync::oneshot;
 
 // Lock conversion timeout
 pub const LOCK_CONVERSION_TIMEOUT: Duration = Duration::from_secs(10);
@@ -177,8 +177,7 @@ impl GlobalEnqueueService {
                 let elapsed = wait_start.elapsed().as_micros() as u64;
                 let mut stats = self.stats.write();
                 stats.successful_grants += 1;
-                stats.avg_lock_wait_time_us =
-                    (stats.avg_lock_wait_time_us + elapsed) / 2;
+                stats.avg_lock_wait_time_us = (stats.avg_lock_wait_time_us + elapsed) / 2;
                 Ok(grant)
             }
             Ok(Ok(Err(e))) => Err(e),
@@ -195,15 +194,15 @@ impl GlobalEnqueueService {
     ) -> Result<Option<LockGrant>, DbError> {
         let mut registry = self.lock_registry.write();
 
-        let state = registry.entry(resource_id.clone()).or_insert_with(|| {
-            LockState {
+        let state = registry
+            .entry(resource_id.clone())
+            .or_insert_with(|| LockState {
                 _resource_id: resource_id.clone(),
                 lock_type: LockType::Null,
                 holders: HashSet::new(),
                 granted_time: Instant::now(),
                 _conversion_queue: Vec::new(),
-            }
-        });
+            });
 
         // Check compatibility
         if state.lock_type.is_compatible(lock_type) {
@@ -246,10 +245,10 @@ impl GlobalEnqueueService {
         let mut queue = self.wait_queue.lock().unwrap();
 
         while let Some(waiter) = queue.pop_front() {
-            if let Some(grant) = self.try_grant_lock(
-                &waiter.resource_id,
-                &waiter.requested_lock,
-            ).await? {
+            if let Some(grant) = self
+                .try_grant_lock(&waiter.resource_id, &waiter.requested_lock)
+                .await?
+            {
                 let _ = waiter.response_tx.send(Ok(grant));
             } else {
                 // Put back in queue

@@ -8,17 +8,17 @@
 // - Distributed cache coordination
 // - Cache statistics and monitoring
 
-use std::time::SystemTime;
-use std::time::Instant;
-use std::collections::VecDeque;
 use crate::error::Result;
 use crate::execution::QueryResult;
-use std::collections::{HashMap};
-use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration};
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // Multi-level cache manager
 pub struct MultiLevelCache {
@@ -347,12 +347,7 @@ impl DependencyAwareCache {
     }
 
     // Cache query result with table dependencies
-    pub fn cache_query(
-        &self,
-        query: String,
-        result: QueryResult,
-        tables: Vec<String>,
-    ) {
+    pub fn cache_query(&self, query: String, result: QueryResult, tables: Vec<String>) {
         let query_hash = Self::hash_query(&query);
 
         // Store query result
@@ -378,7 +373,10 @@ impl DependencyAwareCache {
     // Get cached query result
     pub fn get_cached(&self, query: &str) -> Option<QueryResult> {
         let query_hash = Self::hash_query(query);
-        self.cache.read().get(&query_hash).map(|cq| cq.result.clone())
+        self.cache
+            .read()
+            .get(&query_hash)
+            .map(|cq| cq.result.clone())
     }
 
     // Invalidate all queries dependent on a table
@@ -422,7 +420,10 @@ impl CacheWarmer {
 
     // Register query for cache warming
     pub fn register_warming_query(&mut self, query: String, schedule: WarmingSchedule) {
-        self.warming_queries.push(WarmingQuery { _query: query, _schedule: schedule });
+        self.warming_queries.push(WarmingQuery {
+            _query: query,
+            _schedule: schedule,
+        });
     }
 
     // Execute cache warming
@@ -751,7 +752,8 @@ impl SemanticQueryCache {
     // Invalidate queries matching pattern
     pub fn invalidate_pattern(&self, pattern: &str) -> usize {
         let mut cache = self.cache.write();
-        let keys_to_remove: Vec<_> = cache.keys()
+        let keys_to_remove: Vec<_> = cache
+            .keys()
             .filter(|k| k.contains(pattern))
             .cloned()
             .collect();
@@ -820,9 +822,7 @@ impl QueryNormalizer {
             NormalizationRule::RemoveWhitespace => {
                 Ok(query.split_whitespace().collect::<Vec<_>>().join(" "))
             }
-            NormalizationRule::Lowercase => {
-                Ok(query.to_lowercase())
-            }
+            NormalizationRule::Lowercase => Ok(query.to_lowercase()),
             NormalizationRule::SortPredicates => {
                 // Simplified - would parse and sort WHERE predicates
                 Ok(query.to_string())
@@ -831,12 +831,11 @@ impl QueryNormalizer {
                 // Simplified - would resolve aliases and use canonical names
                 Ok(query.to_string())
             }
-            NormalizationRule::RemoveComments => {
-                Ok(query.lines()
-                    .filter(|line| !line.trim_start().starts_with("--"))
-                    .collect::<Vec<_>>()
-                    .join("\n"))
-            }
+            NormalizationRule::RemoveComments => Ok(query
+                .lines()
+                .filter(|line| !line.trim_start().starts_with("--"))
+                .collect::<Vec<_>>()
+                .join("\n")),
         }
     }
 }
@@ -1015,10 +1014,7 @@ mod semantic_tests {
     fn test_semantic_cache() {
         let cache = SemanticQueryCache::new();
 
-        let result = QueryResult::new(
-            vec!["id".to_string()],
-            vec![vec!["1".to_string()]],
-        );
+        let result = QueryResult::new(vec!["id".to_string()], vec![vec!["1".to_string()]]);
 
         cache.put("SELECT * FROM users", result.clone()).unwrap();
 

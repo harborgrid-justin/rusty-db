@@ -3,12 +3,12 @@
 // Pure Rust implementations of core ML algorithms optimized for in-database execution.
 // All algorithms support incremental updates and zero-copy integration with the query engine.
 
+use super::Dataset;
 use crate::error::Result;
-use super::{Dataset};
+use rand::prelude::SliceRandom;
+use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use rand::Rng;
-use rand::prelude::SliceRandom;
 // ============================================================================
 // Linear Regression
 // ============================================================================
@@ -38,8 +38,9 @@ impl LinearRegression {
 
     // Train using normal equation: w = (X^T X)^-1 X^T y
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
-        let targets = dataset.targets.as_ref()
-            .ok_or_else(|| crate::DbError::InvalidInput("Targets required for regression".into()))?;
+        let targets = dataset.targets.as_ref().ok_or_else(|| {
+            crate::DbError::InvalidInput("Targets required for regression".into())
+        })?;
 
         let n_samples = dataset.num_samples();
         let n_features = dataset.num_features();
@@ -104,12 +105,16 @@ impl LinearRegression {
         let mut predictions = Vec::with_capacity(features.len());
         for sample in features {
             if sample.len() != self.coefficients.len() {
-                return Err(crate::DbError::InvalidInput("Feature dimension mismatch".into()));
+                return Err(crate::DbError::InvalidInput(
+                    "Feature dimension mismatch".into(),
+                ));
             }
-            let pred: f64 = sample.iter()
+            let pred: f64 = sample
+                .iter()
                 .zip(&self.coefficients)
                 .map(|(x, c)| x * c)
-                .sum::<f64>() + self.intercept;
+                .sum::<f64>()
+                + self.intercept;
             predictions.push(pred);
         }
 
@@ -172,7 +177,11 @@ impl LinearRegression {
         let mean_target: f64 = targets.iter().sum::<f64>() / targets.len() as f64;
 
         let ss_tot: f64 = targets.iter().map(|&y| (y - mean_target).powi(2)).sum();
-        let ss_res: f64 = targets.iter().zip(&predictions).map(|(&y, &pred)| (y - pred).powi(2)).sum();
+        let ss_res: f64 = targets
+            .iter()
+            .zip(&predictions)
+            .map(|(&y, &pred)| (y - pred).powi(2))
+            .sum();
 
         Ok(1.0 - ss_res / ss_tot)
     }
@@ -216,7 +225,9 @@ impl LogisticRegression {
 
     // Train using gradient descent
     pub fn fit(&mut self, dataset: &Dataset, max_iterations: usize) -> Result<()> {
-        let targets = dataset.targets.as_ref()
+        let targets = dataset
+            .targets
+            .as_ref()
             .ok_or_else(|| crate::DbError::InvalidInput("Targets required".into()))?;
 
         let n_features = dataset.num_features();
@@ -241,9 +252,8 @@ impl LogisticRegression {
             // Update weights with L2 regularization
             let n_samples = dataset.num_samples() as f64;
             for i in 0..n_features {
-                self.weights[i] -= self.learning_rate * (
-                    weight_gradient[i] / n_samples + self.regularization * self.weights[i]
-                );
+                self.weights[i] -= self.learning_rate
+                    * (weight_gradient[i] / n_samples + self.regularization * self.weights[i]);
             }
             self.intercept -= self.learning_rate * intercept_gradient / n_samples;
         }
@@ -253,19 +263,28 @@ impl LogisticRegression {
 
     // Predict class probabilities
     pub fn predict_proba(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
-        Ok(features.iter().map(|sample| self.predict_proba_single(sample)).collect())
+        Ok(features
+            .iter()
+            .map(|sample| self.predict_proba_single(sample))
+            .collect())
     }
 
     // Predict classes (0 or 1)
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
-        Ok(self.predict_proba(features)?.iter().map(|&p| if p >= 0.5 { 1.0 } else { 0.0 }).collect())
+        Ok(self
+            .predict_proba(features)?
+            .iter()
+            .map(|&p| if p >= 0.5 { 1.0 } else { 0.0 })
+            .collect())
     }
 
     fn predict_proba_single(&self, sample: &[f64]) -> f64 {
-        let logit: f64 = sample.iter()
+        let logit: f64 = sample
+            .iter()
             .zip(&self.weights)
             .map(|(x, w)| x * w)
-            .sum::<f64>() + self.intercept;
+            .sum::<f64>()
+            + self.intercept;
         Self::sigmoid(logit)
     }
 
@@ -312,7 +331,12 @@ pub struct TreeNode {
 }
 
 impl DecisionTree {
-    pub fn new(max_depth: usize, min_samples_split: usize, min_samples_leaf: usize, is_classification: bool) -> Self {
+    pub fn new(
+        max_depth: usize,
+        min_samples_split: usize,
+        min_samples_leaf: usize,
+        is_classification: bool,
+    ) -> Self {
         Self {
             root: None,
             max_depth,
@@ -323,7 +347,9 @@ impl DecisionTree {
     }
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
-        let targets = dataset.targets.as_ref()
+        let targets = dataset
+            .targets
+            .as_ref()
             .ok_or_else(|| crate::DbError::InvalidInput("Targets required".into()))?;
 
         let indices: Vec<usize> = (0..dataset.num_samples()).collect();
@@ -349,10 +375,7 @@ impl DecisionTree {
         };
 
         // Check stopping criteria
-        if depth >= self.max_depth
-            || n_samples < self.min_samples_split
-            || impurity < 1e-7
-        {
+        if depth >= self.max_depth || n_samples < self.min_samples_split || impurity < 1e-7 {
             return Ok(TreeNode {
                 feature_idx: None,
                 threshold: None,
@@ -371,8 +394,10 @@ impl DecisionTree {
             if left_indices.len() >= self.min_samples_leaf
                 && right_indices.len() >= self.min_samples_leaf
             {
-                let left = Box::new(self.build_tree(features, targets, &left_indices, depth + 1)?);
-                let right = Box::new(self.build_tree(features, targets, &right_indices, depth + 1)?);
+                let left =
+                    Box::new(self.build_tree(features, targets, &left_indices, depth + 1)?);
+                let right =
+                    Box::new(self.build_tree(features, targets, &right_indices, depth + 1)?);
 
                 return Ok(TreeNode {
                     feature_idx: Some(feature_idx),
@@ -416,14 +441,13 @@ impl DecisionTree {
 
         for feature_idx in 0..n_features {
             // Get unique values for this feature
-            let mut values: Vec<f64> = indices.iter()
-                .map(|&i| features[i][feature_idx])
-                .collect();
+            let mut values: Vec<f64> = indices.iter().map(|&i| features[i][feature_idx]).collect();
             values.sort_by(|a, b| a.partial_cmp(b).unwrap());
             values.dedup();
 
             for &threshold in &values {
-                let (left, right): (Vec<_>, Vec<_>) = indices.iter()
+                let (left, right): (Vec<_>, Vec<_>) = indices
+                    .iter()
                     .partition(|&&i| features[i][feature_idx] <= threshold);
 
                 if left.is_empty() || right.is_empty() {
@@ -446,7 +470,8 @@ impl DecisionTree {
                 let n_right = right.len() as f64;
                 let n_total = indices.len() as f64;
 
-                let weighted_impurity = (n_left * left_impurity + n_right * right_impurity) / n_total;
+                let weighted_impurity =
+                    (n_left * left_impurity + n_right * right_impurity) / n_total;
                 let gain = parent_impurity - weighted_impurity;
 
                 if gain > best_gain {
@@ -470,11 +495,14 @@ impl DecisionTree {
         }
 
         let n = indices.len() as f64;
-        let gini: f64 = 1.0 - counts.values()
-            .map(|&count| (count as f64 / n).powi(2))
-            .sum::<f64>();
+        let gini: f64 = 1.0
+            - counts
+                .values()
+                .map(|&count| (count as f64 / n).powi(2))
+                .sum::<f64>();
 
-        let majority_class = counts.iter()
+        let majority_class = counts
+            .iter()
             .max_by_key(|&(_, &count)| count)
             .map(|(&class, _)| class as f64)
             .unwrap_or(0.0);
@@ -488,18 +516,25 @@ impl DecisionTree {
         }
 
         let mean = indices.iter().map(|&i| targets[i]).sum::<f64>() / indices.len() as f64;
-        let mse = indices.iter()
+        let mse = indices
+            .iter()
             .map(|&i| (targets[i] - mean).powi(2))
-            .sum::<f64>() / indices.len() as f64;
+            .sum::<f64>()
+            / indices.len() as f64;
 
         (mse, mean)
     }
 
     pub fn predict(&self, features: &[Vec<f64>]) -> Result<Vec<f64>> {
-        let root = self.root.as_ref()
+        let root = self
+            .root
+            .as_ref()
             .ok_or_else(|| crate::DbError::InvalidInput("Model not trained".into()))?;
 
-        Ok(features.iter().map(|sample| self.predict_single(root, sample)).collect())
+        Ok(features
+            .iter()
+            .map(|sample| self.predict_single(root, sample))
+            .collect())
     }
 
     fn predict_single(&self, node: &TreeNode, sample: &[f64]) -> f64 {
@@ -570,9 +605,11 @@ impl RandomForest {
             feature_indices.truncate(features_per_tree);
 
             // Create subset dataset
-            let subset_features: Vec<Vec<f64>> = bootstrap_indices.iter()
+            let subset_features: Vec<Vec<f64>> = bootstrap_indices
+                .iter()
                 .map(|&i| {
-                    feature_indices.iter()
+                    feature_indices
+                        .iter()
                         .map(|&j| dataset.features[i][j])
                         .collect()
                 })
@@ -587,7 +624,8 @@ impl RandomForest {
             let subset_dataset = Dataset {
                 features: subset_features,
                 targets: subset_targets,
-                feature_names: feature_indices.iter()
+                feature_names: feature_indices
+                    .iter()
                     .map(|&i| dataset.feature_names[i].clone())
                     .collect(),
                 target_name: dataset.target_name.clone(),
@@ -654,7 +692,6 @@ impl KMeans {
     }
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
-
         let mut rng = rand::rng();
         let n_features = dataset.num_features();
 
@@ -667,14 +704,17 @@ impl KMeans {
         for _ in 1..self.k {
             let mut distances = Vec::with_capacity(dataset.num_samples());
             for sample in &dataset.features {
-                let min_dist = self.centroids.iter()
+                let min_dist = self
+                    .centroids
+                    .iter()
                     .map(|centroid| self.euclidean_distance(sample, centroid))
                     .min_by(|a, b| a.partial_cmp(b).unwrap())
                     .unwrap_or(0.0);
                 distances.push(min_dist);
             }
 
-            let max_idx = distances.iter()
+            let max_idx = distances
+                .iter()
                 .enumerate()
                 .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
                 .map(|(idx, _)| idx)
@@ -731,13 +771,19 @@ impl KMeans {
             return Err(crate::DbError::InvalidInput("Model not trained".into()));
         }
 
-        Ok(self.assign_clusters(features).iter().map(|&c| c as f64).collect())
+        Ok(self
+            .assign_clusters(features)
+            .iter()
+            .map(|&c| c as f64)
+            .collect())
     }
 
     fn assign_clusters(&self, features: &[Vec<f64>]) -> Vec<usize> {
-        features.iter()
+        features
+            .iter()
             .map(|sample| {
-                self.centroids.iter()
+                self.centroids
+                    .iter()
                     .enumerate()
                     .map(|(i, centroid)| (i, self.euclidean_distance(sample, centroid)))
                     .min_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
@@ -781,7 +827,9 @@ impl NaiveBayes {
     }
 
     pub fn fit(&mut self, dataset: &Dataset) -> Result<()> {
-        let targets = dataset.targets.as_ref()
+        let targets = dataset
+            .targets
+            .as_ref()
             .ok_or_else(|| crate::DbError::InvalidInput("Targets required".into()))?;
 
         let n_features = dataset.num_features();
@@ -801,7 +849,9 @@ impl NaiveBayes {
 
         // Compute means and variances per class
         for &class in class_counts.keys() {
-            let class_samples: Vec<&Vec<f64>> = dataset.features.iter()
+            let class_samples: Vec<&Vec<f64>> = dataset
+                .features
+                .iter()
                 .zip(targets)
                 .filter(|(_, &t)| t as i64 == class)
                 .map(|(s, _)| s)
@@ -813,9 +863,8 @@ impl NaiveBayes {
             for i in 0..n_features {
                 let values: Vec<f64> = class_samples.iter().map(|s| s[i]).collect();
                 let mean = values.iter().sum::<f64>() / values.len() as f64;
-                let variance = values.iter()
-                    .map(|&x| (x - mean).powi(2))
-                    .sum::<f64>() / values.len() as f64;
+                let variance =
+                    values.iter().map(|&x| (x - mean).powi(2)).sum::<f64>() / values.len() as f64;
 
                 means[i] = mean;
                 variances[i] = variance + 1e-9; // Add small constant for numerical stability

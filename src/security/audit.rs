@@ -12,15 +12,15 @@
 // - Audit log archival and rotation
 // - Real-time audit event streaming
 
-use std::collections::VecDeque;
-use std::collections::HashSet;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use crate::error::DbError;
+use crate::Result;
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
-use crate::error::DbError;
 
 // Audit record identifier
 pub type AuditId = u64;
@@ -392,9 +392,10 @@ impl AuditManager {
         let mut policies = self.policies.write();
 
         if policies.contains_key(&policy.id) {
-            return Err(DbError::AlreadyExists(
-                format!("Audit policy {} already exists", policy.id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Audit policy {} already exists",
+                policy.id
+            )));
         }
 
         policies.insert(policy.id.clone(), policy);
@@ -406,9 +407,10 @@ impl AuditManager {
         let mut policies = self.policies.write();
 
         if policies.remove(policy_id).is_none() {
-            return Err(DbError::NotFound(
-                format!("Audit policy {} not found", policy_id)
-            ));
+            return Err(DbError::NotFound(format!(
+                "Audit policy {} not found",
+                policy_id
+            )));
         }
 
         Ok(())
@@ -416,7 +418,8 @@ impl AuditManager {
 
     // Get an audit policy
     pub fn get_policy(&self, policy_id: &str) -> Result<AuditPolicy> {
-        self.policies.read()
+        self.policies
+            .read()
             .get(policy_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound(format!("Audit policy {} not found", policy_id)))
@@ -430,7 +433,8 @@ impl AuditManager {
     // Query audit records
     pub fn query(&self, filter: AuditFilter) -> Vec<AuditRecord> {
         let records = self.records.read();
-        let mut results: Vec<AuditRecord> = records.iter()
+        let mut results: Vec<AuditRecord> = records
+            .iter()
             .filter(|r| self.matches_filter(r, &filter))
             .cloned()
             .collect();
@@ -448,20 +452,13 @@ impl AuditManager {
 
     // Get a specific audit record by ID
     pub fn get_record(&self, id: AuditId) -> Option<AuditRecord> {
-        self.records.read()
-            .iter()
-            .find(|r| r.id == id)
-            .cloned()
+        self.records.read().iter().find(|r| r.id == id).cloned()
     }
 
     // Get recent audit records
     pub fn get_recent(&self, limit: usize) -> Vec<AuditRecord> {
         let records = self.records.read();
-        records.iter()
-            .rev()
-            .take(limit)
-            .cloned()
-            .collect()
+        records.iter().rev().take(limit).cloned().collect()
     }
 
     // Flush in-memory records to persistent storage
@@ -539,16 +536,21 @@ impl AuditManager {
         let now = current_timestamp();
         let today_start = now - (now % 86400);
 
-        let records_today = records.iter()
+        let records_today = records
+            .iter()
             .filter(|r| r.timestamp / 1_000_000 >= today_start)
             .count() as u64;
 
-        let failed_actions_today = records.iter()
+        let failed_actions_today = records
+            .iter()
             .filter(|r| !r.success && r.timestamp / 1_000_000 >= today_start)
             .count() as u64;
 
-        let critical_events_today = records.iter()
-            .filter(|r| r.severity == AuditSeverity::Critical && r.timestamp / 1_000_000 >= today_start)
+        let critical_events_today = records
+            .iter()
+            .filter(|r| {
+                r.severity == AuditSeverity::Critical && r.timestamp / 1_000_000 >= today_start
+            })
             .count() as u64;
 
         // Top actions
@@ -664,10 +666,13 @@ impl AuditManager {
                     AuditSeverity::Warning
                 }
             }
-            AuditAction::CreateUser | AuditAction::DropUser |
-            AuditAction::Grant | AuditAction::Revoke => AuditSeverity::Warning,
-            AuditAction::EnableEncryption | AuditAction::DisableEncryption |
-            AuditAction::KeyRotation => AuditSeverity::Warning,
+            AuditAction::CreateUser
+            | AuditAction::DropUser
+            | AuditAction::Grant
+            | AuditAction::Revoke => AuditSeverity::Warning,
+            AuditAction::EnableEncryption
+            | AuditAction::DisableEncryption
+            | AuditAction::KeyRotation => AuditSeverity::Warning,
             _ => {
                 if success {
                     AuditSeverity::Info
@@ -680,7 +685,7 @@ impl AuditManager {
 
     fn calculate_integrity_hash(&self, record: &AuditRecord) -> String {
         // Simplified hash calculation - would use SHA256 in production
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
 
         let previous = self.previous_hash.read().clone().unwrap_or_default();
 
@@ -775,15 +780,17 @@ mod tests {
     fn test_audit_logging() {
         let manager = AuditManager::new();
 
-        let id = manager.log_event(
-            "testuser".to_string(),
-            Some("session1".to_string()),
-            AuditAction::Select,
-            Some("users".to_string()),
-            Some(ObjectType::Table),
-            true,
-            HashMap::new(),
-        ).unwrap();
+        let id = manager
+            .log_event(
+                "testuser".to_string(),
+                Some("session1".to_string()),
+                AuditAction::Select,
+                Some("users".to_string()),
+                Some(ObjectType::Table),
+                true,
+                HashMap::new(),
+            )
+            .unwrap();
 
         assert!(id > 0);
 
@@ -822,25 +829,29 @@ mod tests {
         let manager = AuditManager::new();
 
         // Log some events
-        manager.log_event(
-            "user1".to_string(),
-            None,
-            AuditAction::Select,
-            None,
-            None,
-            true,
-            HashMap::new(),
-        ).unwrap();
+        manager
+            .log_event(
+                "user1".to_string(),
+                None,
+                AuditAction::Select,
+                None,
+                None,
+                true,
+                HashMap::new(),
+            )
+            .unwrap();
 
-        manager.log_event(
-            "user2".to_string(),
-            None,
-            AuditAction::Insert,
-            None,
-            None,
-            true,
-            HashMap::new(),
-        ).unwrap();
+        manager
+            .log_event(
+                "user2".to_string(),
+                None,
+                AuditAction::Insert,
+                None,
+                None,
+                true,
+                HashMap::new(),
+            )
+            .unwrap();
 
         let filter = AuditFilter {
             start_time: None,

@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use bincode::{Encode, Decode};
-use std::mem::size_of;
+use bincode::{Decode, Encode};
 use crc32fast::Hasher;
+use serde::{Deserialize, Serialize};
+use std::mem::size_of;
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
@@ -215,8 +215,7 @@ impl SlottedPage {
         };
 
         // Write record data
-        self.page.data[record_offset..record_offset + record_size]
-            .copy_from_slice(data);
+        self.page.data[record_offset..record_offset + record_size].copy_from_slice(data);
 
         // Update slot
         let slot = Slot::new(record_offset as u16, record_size as u16);
@@ -320,7 +319,8 @@ impl SlottedPage {
 
     // Compact the page to reclaim fragmented space
     pub fn compact(&mut self) {
-        let records: Vec<_> = self.collect_valid_records()
+        let records: Vec<_> = self
+            .collect_valid_records()
             .into_iter()
             .enumerate()
             .collect();
@@ -332,7 +332,10 @@ impl SlottedPage {
         // Reinsert records
         for (original_slot_id, data) in records {
             let new_slot_id = self.insert_record(&data);
-            assert_eq!(Some(original_slot_id as usize), new_slot_id.map(|id| id as usize));
+            assert_eq!(
+                Some(original_slot_id as usize),
+                new_slot_id.map(|id| id as usize)
+            );
         }
 
         self.page.mark_dirty();
@@ -384,8 +387,7 @@ impl SlottedPage {
     fn write_slot(&mut self, slot_id: SlotId, slot: &Slot) {
         let offset = PAGE_HEADER_SIZE + (slot_id as usize * SLOT_SIZE);
         let bytes = bincode::encode_to_vec(slot, bincode::config::standard()).unwrap();
-        self.page.data[offset..offset + SLOT_SIZE]
-            .copy_from_slice(&bytes[..SLOT_SIZE]);
+        self.page.data[offset..offset + SLOT_SIZE].copy_from_slice(&bytes[..SLOT_SIZE]);
     }
 
     fn get_last_record_offset(&self) -> usize {
@@ -462,12 +464,7 @@ impl PageMerger {
     }
 
     // Check if two pages should be merged
-    pub fn should_merge(
-        &self,
-        page1: &SlottedPage,
-        page2: &SlottedPage,
-        page_size: usize,
-    ) -> bool {
+    pub fn should_merge(&self, page1: &SlottedPage, page2: &SlottedPage, page_size: usize) -> bool {
         let total_free = page1.free_space() as usize + page2.free_space() as usize;
         let utilization = 1.0 - (total_free as f64 / (2.0 * page_size as f64));
         utilization < self.threshold

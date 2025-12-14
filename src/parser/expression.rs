@@ -71,10 +71,7 @@ pub enum Expression {
     },
 
     /// Function call
-    Function {
-        name: String,
-        args: Vec<Expression>,
-    },
+    Function { name: String, args: Vec<Expression> },
 
     /// Subquery (for EXISTS, IN, etc.)
     Subquery(String),
@@ -181,12 +178,11 @@ impl ExpressionEvaluator {
     /// Evaluate an expression to a literal value
     pub fn evaluate(&self, expr: &Expression) -> Result<LiteralValue> {
         match expr {
-            Expression::Column(name) => {
-                self.row_data
-                    .get(name)
-                    .cloned()
-                    .ok_or_else(|| DbError::Execution(format!("Column {} not found", name)))
-            }
+            Expression::Column(name) => self
+                .row_data
+                .get(name)
+                .cloned()
+                .ok_or_else(|| DbError::Execution(format!("Column {} not found", name))),
 
             Expression::Literal(value) => Ok(value.clone()),
 
@@ -201,11 +197,18 @@ impl ExpressionEvaluator {
                 self.evaluate_unary_op(*op, &val)
             }
 
-            Expression::Case { operand, conditions, else_result } => {
-                self.evaluate_case(operand.as_deref(), conditions, else_result.as_deref())
-            }
+            Expression::Case {
+                operand,
+                conditions,
+                else_result,
+            } => self.evaluate_case(operand.as_deref(), conditions, else_result.as_deref()),
 
-            Expression::Between { expr, low, high, negated } => {
+            Expression::Between {
+                expr,
+                low,
+                high,
+                negated,
+            } => {
                 let val = self.evaluate(expr)?;
                 let low_val = self.evaluate(low)?;
                 let high_val = self.evaluate(high)?;
@@ -213,10 +216,18 @@ impl ExpressionEvaluator {
                 let result = self.compare_values(&val, &low_val)? >= 0
                     && self.compare_values(&val, &high_val)? <= 0;
 
-                Ok(LiteralValue::Boolean(if *negated { !result } else { result }))
+                Ok(LiteralValue::Boolean(if *negated {
+                    !result
+                } else {
+                    result
+                }))
             }
 
-            Expression::In { expr, list, negated } => {
+            Expression::In {
+                expr,
+                list,
+                negated,
+            } => {
                 let val = self.evaluate(expr)?;
                 let mut found = false;
 
@@ -234,10 +245,19 @@ impl ExpressionEvaluator {
             Expression::IsNull { expr, negated } => {
                 let val = self.evaluate(expr)?;
                 let is_null = matches!(val, LiteralValue::Null);
-                Ok(LiteralValue::Boolean(if *negated { !is_null } else { is_null }))
+                Ok(LiteralValue::Boolean(if *negated {
+                    !is_null
+                } else {
+                    is_null
+                }))
             }
 
-            Expression::Like { expr, pattern, escape: _, negated } => {
+            Expression::Like {
+                expr,
+                pattern,
+                escape: _,
+                negated,
+            } => {
                 let val = self.evaluate(expr)?;
                 let pattern_val = self.evaluate(pattern)?;
 
@@ -245,16 +265,20 @@ impl ExpressionEvaluator {
                 let pattern_str = pattern_val.to_string();
 
                 let matches = self.match_like_pattern(&text, &pattern_str);
-                Ok(LiteralValue::Boolean(if *negated { !matches } else { matches }))
+                Ok(LiteralValue::Boolean(if *negated {
+                    !matches
+                } else {
+                    matches
+                }))
             }
 
-            Expression::Function { name, args } => {
-                self.evaluate_function(name, args)
-            }
+            Expression::Function { name, args } => self.evaluate_function(name, args),
 
             Expression::Subquery(_) => {
                 // Subqueries would need the full executor context
-                Err(DbError::Execution("Subquery evaluation not implemented in expression context".to_string()))
+                Err(DbError::Execution(
+                    "Subquery evaluation not implemented in expression context".to_string(),
+                ))
             }
         }
     }
@@ -322,14 +346,18 @@ impl ExpressionEvaluator {
                 if let (Some(l), Some(r)) = (left.as_f64(), right.as_f64()) {
                     Ok(LiteralValue::Float(l - r))
                 } else {
-                    Err(DbError::Execution("Type mismatch in subtraction".to_string()))
+                    Err(DbError::Execution(
+                        "Type mismatch in subtraction".to_string(),
+                    ))
                 }
             }
             BinaryOperator::Multiply => {
                 if let (Some(l), Some(r)) = (left.as_f64(), right.as_f64()) {
                     Ok(LiteralValue::Float(l * r))
                 } else {
-                    Err(DbError::Execution("Type mismatch in multiplication".to_string()))
+                    Err(DbError::Execution(
+                        "Type mismatch in multiplication".to_string(),
+                    ))
                 }
             }
             BinaryOperator::Divide => {
@@ -356,45 +384,47 @@ impl ExpressionEvaluator {
             }
 
             // Comparison operations
-            BinaryOperator::Equal => {
-                Ok(LiteralValue::Boolean(self.values_equal(left, right)))
-            }
-            BinaryOperator::NotEqual => {
-                Ok(LiteralValue::Boolean(!self.values_equal(left, right)))
-            }
+            BinaryOperator::Equal => Ok(LiteralValue::Boolean(self.values_equal(left, right))),
+            BinaryOperator::NotEqual => Ok(LiteralValue::Boolean(!self.values_equal(left, right))),
             BinaryOperator::LessThan => {
                 Ok(LiteralValue::Boolean(self.compare_values(left, right)? < 0))
             }
-            BinaryOperator::LessThanOrEqual => {
-                Ok(LiteralValue::Boolean(self.compare_values(left, right)? <= 0))
-            }
+            BinaryOperator::LessThanOrEqual => Ok(LiteralValue::Boolean(
+                self.compare_values(left, right)? <= 0,
+            )),
             BinaryOperator::GreaterThan => {
                 Ok(LiteralValue::Boolean(self.compare_values(left, right)? > 0))
             }
-            BinaryOperator::GreaterThanOrEqual => {
-                Ok(LiteralValue::Boolean(self.compare_values(left, right)? >= 0))
-            }
+            BinaryOperator::GreaterThanOrEqual => Ok(LiteralValue::Boolean(
+                self.compare_values(left, right)? >= 0,
+            )),
 
             // Logical operations
             BinaryOperator::And => {
                 if let (Some(l), Some(r)) = (left.as_bool(), right.as_bool()) {
                     Ok(LiteralValue::Boolean(l && r))
                 } else {
-                    Err(DbError::Execution("Type mismatch in AND operation".to_string()))
+                    Err(DbError::Execution(
+                        "Type mismatch in AND operation".to_string(),
+                    ))
                 }
             }
             BinaryOperator::Or => {
                 if let (Some(l), Some(r)) = (left.as_bool(), right.as_bool()) {
                     Ok(LiteralValue::Boolean(l || r))
                 } else {
-                    Err(DbError::Execution("Type mismatch in OR operation".to_string()))
+                    Err(DbError::Execution(
+                        "Type mismatch in OR operation".to_string(),
+                    ))
                 }
             }
 
             // String concatenation
-            BinaryOperator::Concat => {
-                Ok(LiteralValue::String(format!("{}{}", left.to_string(), right.to_string())))
-            }
+            BinaryOperator::Concat => Ok(LiteralValue::String(format!(
+                "{}{}",
+                left.to_string(),
+                right.to_string()
+            ))),
         }
     }
 
@@ -405,7 +435,9 @@ impl ExpressionEvaluator {
                 if let Some(b) = val.as_bool() {
                     Ok(LiteralValue::Boolean(!b))
                 } else {
-                    Err(DbError::Execution("Type mismatch in NOT operation".to_string()))
+                    Err(DbError::Execution(
+                        "Type mismatch in NOT operation".to_string(),
+                    ))
                 }
             }
             UnaryOperator::Negate => {
@@ -455,7 +487,9 @@ impl ExpressionEvaluator {
                 } else if let Some(f) = val.as_f64() {
                     Ok(LiteralValue::Float(f.abs()))
                 } else {
-                    Err(DbError::Execution("ABS expects numeric argument".to_string()))
+                    Err(DbError::Execution(
+                        "ABS expects numeric argument".to_string(),
+                    ))
                 }
             }
             "COALESCE" => {
@@ -488,22 +522,44 @@ impl ExpressionEvaluator {
     /// Compare two values, returning -1, 0, or 1
     fn compare_values(&self, left: &LiteralValue, right: &LiteralValue) -> Result<i32> {
         match (left, right) {
-            (LiteralValue::Integer(l), LiteralValue::Integer(r)) => {
-                Ok(if l < r { -1 } else if l > r { 1 } else { 0 })
-            }
-            (LiteralValue::Float(l), LiteralValue::Float(r)) => {
-                Ok(if l < r { -1 } else if l > r { 1 } else { 0 })
-            }
-            (LiteralValue::String(l), LiteralValue::String(r)) => {
-                Ok(if l < r { -1 } else if l > r { 1 } else { 0 })
-            }
-            (LiteralValue::Date(l), LiteralValue::Date(r)) => {
-                Ok(if l < r { -1 } else if l > r { 1 } else { 0 })
-            }
-            (LiteralValue::Timestamp(l), LiteralValue::Timestamp(r)) => {
-                Ok(if l < r { -1 } else if l > r { 1 } else { 0 })
-            }
-            _ => Err(DbError::Execution("Type mismatch in comparison".to_string())),
+            (LiteralValue::Integer(l), LiteralValue::Integer(r)) => Ok(if l < r {
+                -1
+            } else if l > r {
+                1
+            } else {
+                0
+            }),
+            (LiteralValue::Float(l), LiteralValue::Float(r)) => Ok(if l < r {
+                -1
+            } else if l > r {
+                1
+            } else {
+                0
+            }),
+            (LiteralValue::String(l), LiteralValue::String(r)) => Ok(if l < r {
+                -1
+            } else if l > r {
+                1
+            } else {
+                0
+            }),
+            (LiteralValue::Date(l), LiteralValue::Date(r)) => Ok(if l < r {
+                -1
+            } else if l > r {
+                1
+            } else {
+                0
+            }),
+            (LiteralValue::Timestamp(l), LiteralValue::Timestamp(r)) => Ok(if l < r {
+                -1
+            } else if l > r {
+                1
+            } else {
+                0
+            }),
+            _ => Err(DbError::Execution(
+                "Type mismatch in comparison".to_string(),
+            )),
         }
     }
 
@@ -516,7 +572,13 @@ impl ExpressionEvaluator {
     }
 
     /// Recursive LIKE pattern matching
-    fn like_match_recursive(&self, text: &[char], pattern: &[char], t_idx: usize, p_idx: usize) -> bool {
+    fn like_match_recursive(
+        &self,
+        text: &[char],
+        pattern: &[char],
+        t_idx: usize,
+        p_idx: usize,
+    ) -> bool {
         if p_idx >= pattern.len() {
             return t_idx >= text.len();
         }
@@ -527,7 +589,8 @@ impl ExpressionEvaluator {
                 if self.like_match_recursive(text, pattern, t_idx, p_idx + 1) {
                     return true;
                 }
-                if t_idx < text.len() && self.like_match_recursive(text, pattern, t_idx + 1, p_idx) {
+                if t_idx < text.len() && self.like_match_recursive(text, pattern, t_idx + 1, p_idx)
+                {
                     return true;
                 }
                 false
@@ -575,7 +638,9 @@ mod tests {
                     Expression::Literal(LiteralValue::String("Inactive".to_string())),
                 ),
             ],
-            else_result: Some(Box::new(Expression::Literal(LiteralValue::String("Unknown".to_string())))),
+            else_result: Some(Box::new(Expression::Literal(LiteralValue::String(
+                "Unknown".to_string(),
+            )))),
         };
 
         let result = evaluator.evaluate(&case_expr).unwrap();
@@ -603,7 +668,10 @@ mod tests {
     #[test]
     fn test_in_expression() {
         let mut row_data = HashMap::new();
-        row_data.insert("category".to_string(), LiteralValue::String("A".to_string()));
+        row_data.insert(
+            "category".to_string(),
+            LiteralValue::String("A".to_string()),
+        );
 
         let evaluator = ExpressionEvaluator::new(row_data);
 
@@ -624,13 +692,18 @@ mod tests {
     #[test]
     fn test_like_expression() {
         let mut row_data = HashMap::new();
-        row_data.insert("name".to_string(), LiteralValue::String("John Doe".to_string()));
+        row_data.insert(
+            "name".to_string(),
+            LiteralValue::String("John Doe".to_string()),
+        );
 
         let evaluator = ExpressionEvaluator::new(row_data);
 
         let like_expr = Expression::Like {
             expr: Box::new(Expression::Column("name".to_string())),
-            pattern: Box::new(Expression::Literal(LiteralValue::String("John%".to_string()))),
+            pattern: Box::new(Expression::Literal(LiteralValue::String(
+                "John%".to_string(),
+            ))),
             escape: None,
             negated: false,
         };

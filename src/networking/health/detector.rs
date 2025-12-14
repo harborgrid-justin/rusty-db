@@ -3,11 +3,11 @@
 // Implements Phi Accrual failure detection algorithm with adaptive thresholds
 // and historical analysis for accurate distributed failure detection.
 
-use crate::error::{DbError, Result};
 use crate::common::NodeId;
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::time::{Duration, Instant};
-use serde::{Deserialize, Serialize};
 
 /// Failure detector trait
 pub trait FailureDetector: Send + Sync {
@@ -153,7 +153,9 @@ impl PhiAccrualState {
         // Using error function approximation
         let t = 1.0 / (1.0 + 0.2316419 * z.abs());
         let d = 0.3989423 * (-z * z / 2.0).exp();
-        let p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+        let p = d
+            * t
+            * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
 
         if z > 0.0 {
             1.0 - p
@@ -173,7 +175,8 @@ impl PhiAccrualState {
         self.mean = sum.as_secs_f64() / self.heartbeat_history.len() as f64;
 
         // Calculate variance
-        let variance_sum: f64 = self.heartbeat_history
+        let variance_sum: f64 = self
+            .heartbeat_history
             .iter()
             .map(|d| {
                 let diff = d.as_secs_f64() - self.mean;
@@ -297,7 +300,9 @@ impl PhiAccrualDetector {
             mean_interval: Duration::from_secs_f64(state.mean),
             variance: state.variance,
             sample_count: state.sample_count,
-            last_heartbeat: state.last_heartbeat.map(|instant| instant.elapsed().as_millis() as u64),
+            last_heartbeat: state
+                .last_heartbeat
+                .map(|instant| instant.elapsed().as_millis() as u64),
             current_phi: self.get_phi(node_id).unwrap_or(0.0),
             suspicion_level: SuspicionLevel::from_phi(self.get_phi(node_id).unwrap_or(0.0)),
         })
@@ -306,7 +311,8 @@ impl PhiAccrualDetector {
 
 impl FailureDetector for PhiAccrualDetector {
     fn record_heartbeat(&mut self, node_id: NodeId, timestamp: Instant) -> Result<()> {
-        let state = self.states
+        let state = self
+            .states
             .entry(node_id)
             .or_insert_with(|| PhiAccrualState::new(self.window_size));
 
@@ -315,7 +321,9 @@ impl FailureDetector for PhiAccrualDetector {
     }
 
     fn get_phi(&self, node_id: &NodeId) -> Result<f64> {
-        let state = self.states.get(node_id)
+        let state = self
+            .states
+            .get(node_id)
             .ok_or_else(|| DbError::NotFound(format!("Node {} not found", node_id)))?;
 
         Ok(state.calculate_phi(Instant::now()))
@@ -323,11 +331,14 @@ impl FailureDetector for PhiAccrualDetector {
 
     fn is_suspected(&self, node_id: &NodeId) -> bool {
         let threshold = self.get_threshold(node_id);
-        self.get_phi(node_id).map(|phi| phi > threshold).unwrap_or(false)
+        self.get_phi(node_id)
+            .map(|phi| phi > threshold)
+            .unwrap_or(false)
     }
 
     fn get_suspected_nodes(&self) -> Vec<NodeId> {
-        self.states.keys()
+        self.states
+            .keys()
             .filter(|node_id| self.is_suspected(node_id))
             .cloned()
             .collect()
@@ -392,7 +403,9 @@ mod tests {
         // Record several heartbeats at regular intervals
         for i in 0..10 {
             let timestamp = now + Duration::from_millis(i * 100);
-            detector.record_heartbeat(node_id.clone(), timestamp).unwrap();
+            detector
+                .record_heartbeat(node_id.clone(), timestamp)
+                .unwrap();
         }
 
         // Immediately after, phi should be low
@@ -414,7 +427,9 @@ mod tests {
         let mut detector = PhiAccrualDetector::new(8.0, 100);
         let node_id = "node1".to_string();
 
-        assert!(detector.record_heartbeat(node_id.clone(), Instant::now()).is_ok());
+        assert!(detector
+            .record_heartbeat(node_id.clone(), Instant::now())
+            .is_ok());
         assert!(!detector.is_suspected(&node_id));
         assert_eq!(detector.get_suspected_nodes().len(), 0);
     }

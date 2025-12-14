@@ -14,16 +14,16 @@
 // - Immutable forensic logging
 // - Geographic and temporal anomaly detection
 
-use std::collections::VecDeque;
-use std::collections::HashSet;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use crate::error::DbError;
+use crate::Result;
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
-use crate::error::DbError;
-use sha2::{Sha256, Digest};
 
 // Threat score (0-100)
 pub type ThreatScore = u8;
@@ -511,18 +511,20 @@ impl ThreatScorer {
     ) -> QueryRiskAssessment {
         let (pattern_risk, mut risk_factors) = self.calculate_pattern_risk(query);
         let (volume_risk, volume_factors) = self.calculate_volume_risk(estimated_rows);
-        let (temporal_risk, temporal_factors) = self.calculate_temporal_risk(timestamp, user_baseline);
-        let (behavioral_risk, behavioral_factors) = self.calculate_behavioral_risk(query, tables, user_baseline);
+        let (temporal_risk, temporal_factors) =
+            self.calculate_temporal_risk(timestamp, user_baseline);
+        let (behavioral_risk, behavioral_factors) =
+            self.calculate_behavioral_risk(query, tables, user_baseline);
 
         risk_factors.extend(volume_factors);
         risk_factors.extend(temporal_factors);
         risk_factors.extend(behavioral_factors);
 
         // Weighted scoring
-        let total_score = ((pattern_risk as f64 * 0.25) +
-                          (volume_risk as f64 * 0.30) +
-                          (temporal_risk as f64 * 0.20) +
-                          (behavioral_risk as f64 * 0.25) * 4.0) as u8;
+        let total_score = ((pattern_risk as f64 * 0.25)
+            + (volume_risk as f64 * 0.30)
+            + (temporal_risk as f64 * 0.20)
+            + (behavioral_risk as f64 * 0.25) * 4.0) as u8;
 
         let threat_level = ThreatLevel::from_score(total_score);
 
@@ -670,7 +672,10 @@ impl BehaviorAnalyzer {
 
         for entry in user_history.iter() {
             // Pattern frequency
-            *baseline.common_patterns.entry(entry.normalized_pattern.clone()).or_insert(0) += 1;
+            *baseline
+                .common_patterns
+                .entry(entry.normalized_pattern.clone())
+                .or_insert(0) += 1;
 
             // Time distribution
             let hour = ((entry.timestamp % 86400) / 3600) as usize;
@@ -698,16 +703,19 @@ impl BehaviorAnalyzer {
 
         // Calculate statistics
         if !row_sizes.is_empty() {
-            baseline.avg_result_set_size = row_sizes.iter().sum::<u64>() as f64 / row_sizes.len() as f64;
+            baseline.avg_result_set_size =
+                row_sizes.iter().sum::<u64>() as f64 / row_sizes.len() as f64;
             baseline.max_result_set_size = *row_sizes.iter().max().unwrap();
 
             // Calculate standard deviation
-            let variance = row_sizes.iter()
+            let variance = row_sizes
+                .iter()
                 .map(|&x| {
                     let diff = x as f64 - baseline.avg_result_set_size;
                     diff * diff
                 })
-                .sum::<f64>() / row_sizes.len() as f64;
+                .sum::<f64>()
+                / row_sizes.len() as f64;
             baseline.result_set_stddev = variance.sqrt();
         }
 
@@ -725,7 +733,9 @@ impl BehaviorAnalyzer {
     fn normalize_query(&self, query: &str) -> String {
         // Simplified normalization
         let normalized = regex::Regex::new(r"\d+").unwrap().replace_all(query, "?");
-        let normalized = regex::Regex::new(r"'[^']*'").unwrap().replace_all(&normalized, "?");
+        let normalized = regex::Regex::new(r"'[^']*'")
+            .unwrap()
+            .replace_all(&normalized, "?");
         normalized.to_string()
     }
 }
@@ -753,15 +763,22 @@ impl AnomalyDetector {
 
         // Z-score for result set size
         if baseline.result_set_stddev > 0.0 {
-            let z_score = (result_rows as f64 - baseline.avg_result_set_size) / baseline.result_set_stddev;
+            let z_score =
+                (result_rows as f64 - baseline.avg_result_set_size) / baseline.result_set_stddev;
             z_scores.insert("result_set_size".to_string(), z_score);
 
             if z_score.abs() > 3.0 {
                 score += 30.0;
-                anomalies.push(format!("Result set size {} is {} std devs from mean", result_rows, z_score));
+                anomalies.push(format!(
+                    "Result set size {} is {} std devs from mean",
+                    result_rows, z_score
+                ));
             } else if z_score.abs() > 2.0 {
                 score += 15.0;
-                anomalies.push(format!("Result set size moderately anomalous (z-score: {:.2})", z_score));
+                anomalies.push(format!(
+                    "Result set size moderately anomalous (z-score: {:.2})",
+                    z_score
+                ));
             }
         }
 
@@ -817,8 +834,10 @@ impl DataExfiltrationGuard {
                 estimated_rows,
                 tables_accessed: tables.to_vec(),
                 blocked: true,
-                reason: format!("Query attempts to access {} rows, exceeding limit of {}",
-                    estimated_rows, config.max_rows_without_justification),
+                reason: format!(
+                    "Query attempts to access {} rows, exceeding limit of {}",
+                    estimated_rows, config.max_rows_without_justification
+                ),
             };
 
             self.attempts.write().push(attempt.clone());
@@ -851,7 +870,10 @@ impl DataExfiltrationGuard {
                 estimated_rows: total_rows,
                 tables_accessed: tables.to_vec(),
                 blocked: true,
-                reason: format!("User has accessed ~{}MB of data in the last hour", volume_mb_estimate),
+                reason: format!(
+                    "User has accessed ~{}MB of data in the last hour",
+                    volume_mb_estimate
+                ),
             };
 
             self.attempts.write().push(attempt.clone());
@@ -865,7 +887,11 @@ impl DataExfiltrationGuard {
     pub fn get_recent_attempts(&self, user_id: Option<&UserId>) -> Vec<ExfiltrationAttempt> {
         let attempts = self.attempts.read();
         match user_id {
-            Some(uid) => attempts.iter().filter(|a| &a.user_id == uid).cloned().collect(),
+            Some(uid) => attempts
+                .iter()
+                .filter(|a| &a.user_id == uid)
+                .cloned()
+                .collect(),
             None => attempts.clone(),
         }
     }
@@ -882,17 +908,50 @@ pub struct PrivilegeEscalationDetector {
 impl PrivilegeEscalationDetector {
     pub fn new() -> Self {
         let dangerous_patterns = vec![
-            (regex::Regex::new(r"(?i)GRANT\s+").unwrap(), EscalationType::GrantAttempt),
-            (regex::Regex::new(r"(?i)REVOKE\s+").unwrap(), EscalationType::GrantAttempt),
-            (regex::Regex::new(r"(?i)CREATE\s+USER").unwrap(), EscalationType::BackdoorCreation),
-            (regex::Regex::new(r"(?i)ALTER\s+USER").unwrap(), EscalationType::BackdoorCreation),
-            (regex::Regex::new(r"(?i)DROP\s+USER").unwrap(), EscalationType::BackdoorCreation),
-            (regex::Regex::new(r"(?i)CREATE\s+ROLE").unwrap(), EscalationType::RoleManipulation),
-            (regex::Regex::new(r"(?i)ALTER\s+ROLE").unwrap(), EscalationType::RoleManipulation),
-            (regex::Regex::new(r"(?i)UPDATE\s+.*\bsys").unwrap(), EscalationType::SystemTableModification),
-            (regex::Regex::new(r"(?i)DELETE\s+FROM\s+.*\bsys").unwrap(), EscalationType::SystemTableModification),
-            (regex::Regex::new(r"(?i)DISABLE\s+AUDIT").unwrap(), EscalationType::AuditTampering),
-            (regex::Regex::new(r"(?i)UNION\s+SELECT").unwrap(), EscalationType::SqlInjection),
+            (
+                regex::Regex::new(r"(?i)GRANT\s+").unwrap(),
+                EscalationType::GrantAttempt,
+            ),
+            (
+                regex::Regex::new(r"(?i)REVOKE\s+").unwrap(),
+                EscalationType::GrantAttempt,
+            ),
+            (
+                regex::Regex::new(r"(?i)CREATE\s+USER").unwrap(),
+                EscalationType::BackdoorCreation,
+            ),
+            (
+                regex::Regex::new(r"(?i)ALTER\s+USER").unwrap(),
+                EscalationType::BackdoorCreation,
+            ),
+            (
+                regex::Regex::new(r"(?i)DROP\s+USER").unwrap(),
+                EscalationType::BackdoorCreation,
+            ),
+            (
+                regex::Regex::new(r"(?i)CREATE\s+ROLE").unwrap(),
+                EscalationType::RoleManipulation,
+            ),
+            (
+                regex::Regex::new(r"(?i)ALTER\s+ROLE").unwrap(),
+                EscalationType::RoleManipulation,
+            ),
+            (
+                regex::Regex::new(r"(?i)UPDATE\s+.*\bsys").unwrap(),
+                EscalationType::SystemTableModification,
+            ),
+            (
+                regex::Regex::new(r"(?i)DELETE\s+FROM\s+.*\bsys").unwrap(),
+                EscalationType::SystemTableModification,
+            ),
+            (
+                regex::Regex::new(r"(?i)DISABLE\s+AUDIT").unwrap(),
+                EscalationType::AuditTampering,
+            ),
+            (
+                regex::Regex::new(r"(?i)UNION\s+SELECT").unwrap(),
+                EscalationType::SqlInjection,
+            ),
         ];
 
         Self {
@@ -902,7 +961,11 @@ impl PrivilegeEscalationDetector {
     }
 
     // Check for privilege escalation attempt
-    pub fn check_escalation(&self, user_id: &UserId, query: &str) -> Option<PrivilegeEscalationAttempt> {
+    pub fn check_escalation(
+        &self,
+        user_id: &UserId,
+        query: &str,
+    ) -> Option<PrivilegeEscalationAttempt> {
         let mut patterns_matched = Vec::new();
         let mut escalation_type = None;
 
@@ -935,7 +998,11 @@ impl PrivilegeEscalationDetector {
     pub fn get_recent_attempts(&self, user_id: Option<&UserId>) -> Vec<PrivilegeEscalationAttempt> {
         let attempts = self.attempts.read();
         match user_id {
-            Some(uid) => attempts.iter().filter(|a| &a.user_id == uid).cloned().collect(),
+            Some(uid) => attempts
+                .iter()
+                .filter(|a| &a.user_id == uid)
+                .cloned()
+                .collect(),
             None => attempts.clone(),
         }
     }
@@ -964,9 +1031,10 @@ impl QuerySanitizer {
         // Check for blocked keywords
         for keyword in &self.blocked_keywords {
             if query_upper.contains(&keyword.to_uppercase()) {
-                return Err(DbError::InvalidInput(
-                    format!("Query contains blocked keyword: {}", keyword)
-                ));
+                return Err(DbError::InvalidInput(format!(
+                    "Query contains blocked keyword: {}",
+                    keyword
+                )));
             }
         }
 
@@ -1069,7 +1137,13 @@ impl ForensicLogger {
 
     // Get recent records
     pub fn get_recent_records(&self, limit: usize) -> Vec<ForensicRecord> {
-        self.records.read().iter().rev().take(limit).cloned().collect()
+        self.records
+            .read()
+            .iter()
+            .rev()
+            .take(limit)
+            .cloned()
+            .collect()
     }
 
     // Verify audit trail integrity
@@ -1187,12 +1261,9 @@ impl InsiderThreatManager {
         }
 
         // Check for data exfiltration
-        let exfiltration_attempt = self.exfiltration_guard.check_exfiltration(
-            user_id,
-            query,
-            estimated_rows,
-            &tables,
-        );
+        let exfiltration_attempt =
+            self.exfiltration_guard
+                .check_exfiltration(user_id, query, estimated_rows, &tables);
 
         if let Some(ref attempt) = exfiltration_attempt {
             if attempt.blocked {
@@ -1251,7 +1322,10 @@ impl InsiderThreatManager {
 
         // Detect anomalies
         let anomaly_score = if let Some(ref baseline) = baseline {
-            Some(self.anomaly_detector.detect_anomalies(estimated_rows, baseline))
+            Some(
+                self.anomaly_detector
+                    .detect_anomalies(estimated_rows, baseline),
+            )
         } else {
             None
         };
@@ -1281,11 +1355,12 @@ impl InsiderThreatManager {
         );
 
         // Check if we should block
-        if assessment.threat_level == ThreatLevel::Critical && self.config.read().auto_block_critical {
+        if assessment.threat_level == ThreatLevel::Critical
+            && self.config.read().auto_block_critical
+        {
             return Err(DbError::InvalidOperation(format!(
                 "Query blocked due to critical threat score ({}). Risk factors: {:?}",
-                assessment.total_score,
-                assessment.risk_factors
+                assessment.total_score, assessment.risk_factors
             )));
         }
 
@@ -1297,19 +1372,24 @@ impl InsiderThreatManager {
         let forensic_records = self.forensic_logger.get_recent_records(1000);
 
         let total_assessments = forensic_records.len();
-        let critical_threats = forensic_records.iter()
+        let critical_threats = forensic_records
+            .iter()
             .filter(|r| r.assessment.threat_level == ThreatLevel::Critical)
             .count();
-        let high_threats = forensic_records.iter()
+        let high_threats = forensic_records
+            .iter()
             .filter(|r| r.assessment.threat_level == ThreatLevel::High)
             .count();
-        let blocked_queries = forensic_records.iter()
+        let blocked_queries = forensic_records
+            .iter()
             .filter(|r| r.assessment.action == ThreatAction::Blocked)
             .count();
-        let exfiltration_attempts = forensic_records.iter()
+        let exfiltration_attempts = forensic_records
+            .iter()
             .filter(|r| r.exfiltration_attempt.is_some())
             .count();
-        let escalation_attempts = forensic_records.iter()
+        let escalation_attempts = forensic_records
+            .iter()
             .filter(|r| r.escalation_attempt.is_some())
             .count();
 
@@ -1385,7 +1465,10 @@ mod tests {
         );
 
         assert!(assessment.total_score > 30);
-        assert_eq!(assessment.threat_level, ThreatLevel::from_score(assessment.total_score));
+        assert_eq!(
+            assessment.threat_level,
+            ThreatLevel::from_score(assessment.total_score)
+        );
     }
 
     #[test]
@@ -1398,7 +1481,10 @@ mod tests {
         );
 
         assert!(attempt.is_some());
-        assert_eq!(attempt.unwrap().escalation_type, EscalationType::GrantAttempt);
+        assert_eq!(
+            attempt.unwrap().escalation_type,
+            EscalationType::GrantAttempt
+        );
     }
 
     #[test]

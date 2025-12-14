@@ -8,12 +8,12 @@
 // - Spatial aggregation and statistics
 // - Hot spot analysis
 
-use std::collections::HashSet;
 use crate::error::{DbError, Result};
-use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, Point, Polygon, LinearRing};
+use crate::spatial::geometry::{BoundingBox, Coordinate, Geometry, LinearRing, Point, Polygon};
 use crate::spatial::indexes::SpatialIndex;
-use crate::spatial::operators::{SetOps, ConvexHullOps, TransformOps};
+use crate::spatial::operators::{ConvexHullOps, SetOps, TransformOps};
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 // Nearest neighbor search results
 #[derive(Debug, Clone)]
@@ -98,21 +98,19 @@ impl KNearestNeighbors {
     fn geometry_distance(&self, point: &Coordinate, geom: &Geometry) -> f64 {
         match geom {
             Geometry::Point(p) => point.distance_2d(&p.coord),
-            Geometry::LineString(ls) => {
-                ls.coords
-                    .iter()
-                    .map(|c| point.distance_2d(c))
-                    .min_by(|a, b| a.partial_cmp(b).unwrap())
-                    .unwrap_or(f64::INFINITY)
-            }
-            Geometry::Polygon(poly) => {
-                poly.exterior
-                    .coords
-                    .iter()
-                    .map(|c| point.distance_2d(c))
-                    .min_by(|a, b| a.partial_cmp(b).unwrap())
-                    .unwrap_or(f64::INFINITY)
-            }
+            Geometry::LineString(ls) => ls
+                .coords
+                .iter()
+                .map(|c| point.distance_2d(c))
+                .min_by(|a, b| a.partial_cmp(b).unwrap())
+                .unwrap_or(f64::INFINITY),
+            Geometry::Polygon(poly) => poly
+                .exterior
+                .coords
+                .iter()
+                .map(|c| point.distance_2d(c))
+                .min_by(|a, b| a.partial_cmp(b).unwrap())
+                .unwrap_or(f64::INFINITY),
             _ => f64::INFINITY,
         }
     }
@@ -133,7 +131,10 @@ pub struct Cluster {
 
 impl DbscanClusterer {
     pub fn new(epsilon: f64, min_points: usize) -> Self {
-        Self { epsilon, min_points }
+        Self {
+            epsilon,
+            min_points,
+        }
     }
 
     // Perform DBSCAN clustering on points
@@ -151,14 +152,8 @@ impl DbscanClusterer {
             let neighbors = self.region_query(points, coord);
 
             if neighbors.len() >= self.min_points {
-                let cluster = self.expand_cluster(
-                    points,
-                    *id,
-                    *coord,
-                    neighbors,
-                    &mut visited,
-                    cluster_id,
-                );
+                let cluster =
+                    self.expand_cluster(points, *id, *coord, neighbors, &mut visited, cluster_id);
                 clusters.push(cluster);
                 cluster_id += 1;
             }
@@ -218,7 +213,11 @@ impl DbscanClusterer {
             .collect()
     }
 
-    fn calculate_centroid(&self, point_ids: &[u64], all_points: &[(u64, Coordinate)]) -> Coordinate {
+    fn calculate_centroid(
+        &self,
+        point_ids: &[u64],
+        all_points: &[(u64, Coordinate)],
+    ) -> Coordinate {
         let mut sum_x = 0.0;
         let mut sum_y = 0.0;
         let mut count = 0;
@@ -407,37 +406,25 @@ impl VoronoiDiagram {
             let t = i as f64 / resolution as f64;
 
             // Top edge
-            let test = Coordinate::new(
-                self.bounds.min_x + t * width,
-                self.bounds.max_y,
-            );
+            let test = Coordinate::new(self.bounds.min_x + t * width, self.bounds.max_y);
             if self.closest_site(&test) == site_idx {
                 vertices.push(test);
             }
 
             // Right edge
-            let test = Coordinate::new(
-                self.bounds.max_x,
-                self.bounds.max_y - t * height,
-            );
+            let test = Coordinate::new(self.bounds.max_x, self.bounds.max_y - t * height);
             if self.closest_site(&test) == site_idx {
                 vertices.push(test);
             }
 
             // Bottom edge
-            let test = Coordinate::new(
-                self.bounds.max_x - t * width,
-                self.bounds.min_y,
-            );
+            let test = Coordinate::new(self.bounds.max_x - t * width, self.bounds.min_y);
             if self.closest_site(&test) == site_idx {
                 vertices.push(test);
             }
 
             // Left edge
-            let test = Coordinate::new(
-                self.bounds.min_x,
-                self.bounds.min_y + t * height,
-            );
+            let test = Coordinate::new(self.bounds.min_x, self.bounds.min_y + t * height);
             if self.closest_site(&test) == site_idx {
                 vertices.push(test);
             }
@@ -575,9 +562,9 @@ impl DelaunayTriangulation {
         let super_vertices = super_triangle.vertices;
         triangles.retain(|t| {
             !t.vertices.iter().any(|v| {
-                super_vertices.iter().any(|sv| {
-                    (v.x - sv.x).abs() < 1e-10 && (v.y - sv.y).abs() < 1e-10
-                })
+                super_vertices
+                    .iter()
+                    .any(|sv| (v.x - sv.x).abs() < 1e-10 && (v.y - sv.y).abs() < 1e-10)
             })
         });
 
@@ -684,7 +671,9 @@ impl SpatialAggregation {
         }
 
         if count == 0 {
-            return Err(DbError::InvalidInput("No valid centroids found".to_string()));
+            return Err(DbError::InvalidInput(
+                "No valid centroids found".to_string(),
+            ));
         }
 
         Ok(Point::new(Coordinate::new(
@@ -740,7 +729,7 @@ impl HotSpotAnalysis {
                 gi_star,
                 z_score,
                 p_value,
-                is_hot: z_score > 1.96,  // 95% confidence
+                is_hot: z_score > 1.96, // 95% confidence
                 is_cold: z_score < -1.96,
             });
         }

@@ -4,14 +4,14 @@
 
 use axum::{
     extract::{Path, State},
-    response::{Json as AxumJson},
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use parking_lot::RwLock;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use parking_lot::RwLock;
 
 use super::super::types::*;
 use std::time::UNIX_EPOCH;
@@ -51,16 +51,25 @@ pub async fn get_cluster_nodes(
     let nodes = CLUSTER_NODES.read();
 
     // Update uptime and heartbeat for local node
-    let uptime = SystemTime::now().duration_since(*CLUSTER_START_TIME).unwrap_or_default().as_secs();
+    let uptime = SystemTime::now()
+        .duration_since(*CLUSTER_START_TIME)
+        .unwrap_or_default()
+        .as_secs();
 
-    let node_list: Vec<ClusterNodeInfo> = nodes.values().map(|node| {
-        let mut n = node.clone();
-        if n.node_id == "node-local" {
-            n.uptime_seconds = uptime;
-            n.last_heartbeat = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
-        }
-        n
-    }).collect();
+    let node_list: Vec<ClusterNodeInfo> = nodes
+        .values()
+        .map(|node| {
+            let mut n = node.clone();
+            if n.node_id == "node-local" {
+                n.uptime_seconds = uptime;
+                n.last_heartbeat = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64;
+            }
+            n
+        })
+        .collect();
 
     Ok(AxumJson(node_list))
 }
@@ -83,7 +92,10 @@ pub async fn add_cluster_node(
     {
         let nodes = CLUSTER_NODES.read();
         if nodes.contains_key(&request.node_id) {
-            return Err(ApiError::new("CONFLICT", format!("Node '{}' already exists", request.node_id)));
+            return Err(ApiError::new(
+                "CONFLICT",
+                format!("Node '{}' already exists", request.node_id),
+            ));
         }
     }
 
@@ -94,7 +106,10 @@ pub async fn add_cluster_node(
         status: "initializing".to_string(),
         version: "1.0.0".to_string(),
         uptime_seconds: 0,
-        last_heartbeat: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+        last_heartbeat: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
     };
 
     // Persist the node to the CLUSTER_NODES state
@@ -114,13 +129,20 @@ pub async fn get_cluster_node(
 ) -> ApiResult<AxumJson<ClusterNodeInfo>> {
     let nodes = CLUSTER_NODES.read();
 
-    nodes.get(&id)
+    nodes
+        .get(&id)
         .cloned()
         .map(|mut node| {
             // Update uptime for local node
             if node.node_id == "node-local" {
-                node.uptime_seconds = SystemTime::now().duration_since(*CLUSTER_START_TIME).unwrap_or_default().as_secs();
-                node.last_heartbeat = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+                node.uptime_seconds = SystemTime::now()
+                    .duration_since(*CLUSTER_START_TIME)
+                    .unwrap_or_default()
+                    .as_secs();
+                node.last_heartbeat = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64;
             }
             AxumJson(node)
         })
@@ -143,7 +165,10 @@ pub async fn remove_cluster_node(
         log::info!("Removed cluster node: {}", id);
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Node '{}' not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Node '{}' not found", id),
+        ))
     }
 }
 
@@ -160,19 +185,29 @@ pub async fn get_cluster_topology(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<TopologyResponse>> {
     let nodes = CLUSTER_NODES.read();
-    let uptime = SystemTime::now().duration_since(*CLUSTER_START_TIME).unwrap_or_default().as_secs();
+    let uptime = SystemTime::now()
+        .duration_since(*CLUSTER_START_TIME)
+        .unwrap_or_default()
+        .as_secs();
 
-    let node_list: Vec<ClusterNodeInfo> = nodes.values().map(|node| {
-        let mut n = node.clone();
-        if n.node_id == "node-local" {
-            n.uptime_seconds = uptime;
-            n.last_heartbeat = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
-        }
-        n
-    }).collect();
+    let node_list: Vec<ClusterNodeInfo> = nodes
+        .values()
+        .map(|node| {
+            let mut n = node.clone();
+            if n.node_id == "node-local" {
+                n.uptime_seconds = uptime;
+                n.last_heartbeat = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs() as i64;
+            }
+            n
+        })
+        .collect();
 
     // Find leader node
-    let leader_node = node_list.iter()
+    let leader_node = node_list
+        .iter()
         .find(|n| n.role == "leader")
         .map(|n| n.node_id.clone());
 
@@ -208,12 +243,18 @@ pub async fn trigger_failover(
     if let Some(ref target) = request.target_node {
         let nodes = CLUSTER_NODES.read();
         if !nodes.contains_key(target) {
-            return Err(ApiError::new("NOT_FOUND", format!("Target node '{}' not found", target)));
+            return Err(ApiError::new(
+                "NOT_FOUND",
+                format!("Target node '{}' not found", target),
+            ));
         }
 
         let node = nodes.get(target).unwrap();
         if node.status != "healthy" {
-            return Err(ApiError::new("INVALID_INPUT", format!("Target node '{}' is not healthy", target)));
+            return Err(ApiError::new(
+                "INVALID_INPUT",
+                format!("Target node '{}' is not healthy", target),
+            ));
         }
     }
 
@@ -223,14 +264,20 @@ pub async fn trigger_failover(
     let quorum = (nodes.len() / 2) + 1;
 
     if healthy_count < quorum {
-        return Err(ApiError::new("FORBIDDEN", format!(
-            "Cannot initiate failover: insufficient healthy nodes ({} of {} required)",
-            healthy_count, quorum
-        )));
+        return Err(ApiError::new(
+            "FORBIDDEN",
+            format!(
+                "Cannot initiate failover: insufficient healthy nodes ({} of {} required)",
+                healthy_count, quorum
+            ),
+        ));
     }
 
-    log::info!("Failover initiated, target: {:?}, force: {:?}",
-        request.target_node, request.force.unwrap_or(false));
+    log::info!(
+        "Failover initiated, target: {:?}, force: {:?}",
+        request.target_node,
+        request.force.unwrap_or(false)
+    );
 
     Ok(StatusCode::ACCEPTED)
 }
@@ -250,13 +297,15 @@ pub async fn get_replication_status(
     let nodes = CLUSTER_NODES.read();
 
     // Find the primary (leader) node
-    let primary_node = nodes.values()
+    let primary_node = nodes
+        .values()
         .find(|n| n.role == "leader")
         .map(|n| n.node_id.clone())
         .unwrap_or_else(|| "unknown".to_string());
 
     // Build replica status for follower nodes
-    let replicas: Vec<ReplicaStatus> = nodes.values()
+    let replicas: Vec<ReplicaStatus> = nodes
+        .values()
         .filter(|n| n.role == "follower")
         .map(|n| {
             let state = match n.status.as_str() {
@@ -279,7 +328,10 @@ pub async fn get_replication_status(
 
     let sync_state = if replicas.is_empty() {
         "single_node"
-    } else if replicas.iter().all(|r| r.state == "streaming" && r.lag_ms < 100) {
+    } else if replicas
+        .iter()
+        .all(|r| r.state == "streaming" && r.lag_ms < 100)
+    {
         "synchronous"
     } else {
         "asynchronous"
@@ -319,13 +371,19 @@ pub async fn update_cluster_config(
 ) -> ApiResult<StatusCode> {
     // Validate configuration keys
     let valid_keys = [
-        "cluster_name", "replication_factor", "heartbeat_interval_ms",
-        "election_timeout_ms", "sync_replication"
+        "cluster_name",
+        "replication_factor",
+        "heartbeat_interval_ms",
+        "election_timeout_ms",
+        "sync_replication",
     ];
 
     for key in new_config.keys() {
         if !valid_keys.contains(&key.as_str()) {
-            return Err(ApiError::new("INVALID_INPUT", format!("Unknown configuration key: {}", key)));
+            return Err(ApiError::new(
+                "INVALID_INPUT",
+                format!("Unknown configuration key: {}", key),
+            ));
         }
     }
 
@@ -333,7 +391,10 @@ pub async fn update_cluster_config(
     if let Some(rf) = new_config.get("replication_factor") {
         if let Some(n) = rf.as_u64() {
             if n < 1 || n > 7 {
-                return Err(ApiError::new("INVALID_INPUT", "replication_factor must be between 1 and 7"));
+                return Err(ApiError::new(
+                    "INVALID_INPUT",
+                    "replication_factor must be between 1 and 7",
+                ));
             }
         }
     }
@@ -341,7 +402,10 @@ pub async fn update_cluster_config(
     if let Some(hb) = new_config.get("heartbeat_interval_ms") {
         if let Some(n) = hb.as_u64() {
             if n < 100 || n > 10000 {
-                return Err(ApiError::new("INVALID_INPUT", "heartbeat_interval_ms must be between 100 and 10000"));
+                return Err(ApiError::new(
+                    "INVALID_INPUT",
+                    "heartbeat_interval_ms must be between 100 and 10000",
+                ));
             }
         }
     }
@@ -354,4 +418,76 @@ pub async fn update_cluster_config(
 
     log::info!("Cluster configuration updated");
     Ok(StatusCode::OK)
+}
+
+// ============================================================================
+// Node Migration Handler
+// ============================================================================
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct MigrateNodeRequest {
+    pub source_node: String,
+    pub target_node: String,
+    pub migrate_data: Option<bool>,
+    pub migrate_connections: Option<bool>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct MigrateNodeResponse {
+    pub migration_id: String,
+    pub status: String,
+    pub source_node: String,
+    pub target_node: String,
+    pub estimated_duration_secs: u64,
+}
+
+/// Migrate node resources to another node
+#[utoipa::path(
+    post,
+    path = "/api/v1/cluster/migrate",
+    tag = "cluster",
+    request_body = MigrateNodeRequest,
+    responses(
+        (status = 202, description = "Migration initiated", body = MigrateNodeResponse),
+    )
+)]
+pub async fn migrate_node(
+    State(_state): State<Arc<ApiState>>,
+    AxumJson(request): AxumJson<MigrateNodeRequest>,
+) -> ApiResult<(StatusCode, AxumJson<MigrateNodeResponse>)> {
+    // Validate nodes exist
+    {
+        let nodes = CLUSTER_NODES.read();
+        if !nodes.contains_key(&request.source_node) {
+            return Err(ApiError::new(
+                "NOT_FOUND",
+                format!("Source node '{}' not found", request.source_node),
+            ));
+        }
+        if !nodes.contains_key(&request.target_node) {
+            return Err(ApiError::new(
+                "NOT_FOUND",
+                format!("Target node '{}' not found", request.target_node),
+            ));
+        }
+    }
+
+    use uuid::Uuid;
+    let migration_id = Uuid::new_v4().to_string();
+
+    log::info!(
+        "Initiating node migration from {} to {}",
+        request.source_node,
+        request.target_node
+    );
+
+    let response = MigrateNodeResponse {
+        migration_id,
+        status: "initiated".to_string(),
+        source_node: request.source_node,
+        target_node: request.target_node,
+        estimated_duration_secs: 300,
+    };
+
+    Ok((StatusCode::ACCEPTED, AxumJson(response)))
 }

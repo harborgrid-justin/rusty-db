@@ -48,10 +48,7 @@ pub enum SamplingMethod {
 impl SamplingMethod {
     // Returns whether the method preserves distribution characteristics.
     pub fn preserves_distribution(&self) -> bool {
-        matches!(
-            self,
-            SamplingMethod::Stratified | SamplingMethod::Cluster
-        )
+        matches!(self, SamplingMethod::Stratified | SamplingMethod::Cluster)
     }
 
     // Returns whether the method works with streaming data.
@@ -152,8 +149,7 @@ impl<T> SampledResult<T> {
 
         // Finite population correction
         let fpc = if self.population_size > 0 {
-            ((self.population_size - self.sample_size) as f64
-                / (self.population_size - 1) as f64)
+            ((self.population_size - self.sample_size) as f64 / (self.population_size - 1) as f64)
                 .sqrt()
         } else {
             1.0
@@ -313,17 +309,14 @@ impl QueryResultSampler {
 
         // Calculate sample variance
         let mean = sample.data.iter().sum::<f64>() / sample.data.len() as f64;
-        let variance: f64 = sample
-            .data
-            .iter()
-            .map(|x| (x - mean).powi(2))
-            .sum::<f64>()
+        let variance: f64 = sample.data.iter().map(|x| (x - mean).powi(2)).sum::<f64>()
             / (sample.data.len() - 1).max(1) as f64;
 
         let std_dev = variance.sqrt();
         let z_score = self.z_score_for_confidence(confidence_level);
 
-        let margin = z_score * std_dev * sample.expansion_factor() * sample.standard_error_multiplier();
+        let margin =
+            z_score * std_dev * sample.expansion_factor() * sample.standard_error_multiplier();
 
         (estimate - margin, estimate + margin)
     }
@@ -518,7 +511,7 @@ impl ApproximateResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::Instant;
+    use std::time::Instant;
 
     #[test]
     fn test_random_sampling() {

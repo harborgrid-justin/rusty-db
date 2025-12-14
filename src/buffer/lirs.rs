@@ -35,10 +35,10 @@
 
 use crate::buffer::eviction::{EvictionPolicy, EvictionStats};
 use crate::buffer::page_cache::{BufferFrame, FrameId};
+use parking_lot::Mutex;
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use parking_lot::Mutex;
 
 // ============================================================================
 // LIRS Entry Types
@@ -277,9 +277,7 @@ impl LirsState {
     fn resident_count(&self) -> usize {
         self.directory
             .values()
-            .filter(|e| {
-                e.status == BlockStatus::Lir || e.status == BlockStatus::ResidentHir
-            })
+            .filter(|e| e.status == BlockStatus::Lir || e.status == BlockStatus::ResidentHir)
             .count()
     }
 }

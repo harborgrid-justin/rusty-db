@@ -2,14 +2,14 @@
 //
 // Adaptive rate limiting and DDoS attack detection and mitigation.
 
-use std::time::Instant;
-use std::collections::{HashSet, VecDeque, HashMap};
 use crate::Result;
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::Duration;
-use serde::{Serialize, Deserialize};
+use std::time::Instant;
 
 use super::firewall_rules::IPReputationChecker;
 
@@ -266,7 +266,9 @@ impl TrafficPattern {
         }
 
         let window = Duration::from_secs(DDOS_DETECTION_WINDOW);
-        let recent = self.requests.iter()
+        let recent = self
+            .requests
+            .iter()
             .filter(|&&t| t.elapsed() < window)
             .count();
 
@@ -398,7 +400,9 @@ impl DDoSMitigator {
             return Ok(DDoSAnalysisResult::Suspicious);
         }
 
-        if pattern.requests.len() > 1000 && pattern.endpoints.len() < self.thresholds.min_unique_endpoints {
+        if pattern.requests.len() > 1000
+            && pattern.endpoints.len() < self.thresholds.min_unique_endpoints
+        {
             self.detect_attack(
                 ip,
                 DDoSAttackType::ApplicationLayer,
@@ -412,7 +416,13 @@ impl DDoSMitigator {
 
     fn detect_attack(&self, ip: IpAddr, attack_type: DDoSAttackType, reason: String) {
         let mut attacks = self.active_attacks.write();
-        let attack_id = format!("{}_{:?}_{}_{}", ip, attack_type, Instant::now().elapsed().as_secs(), reason.len());
+        let attack_id = format!(
+            "{}_{:?}_{}_{}",
+            ip,
+            attack_type,
+            Instant::now().elapsed().as_secs(),
+            reason.len()
+        );
 
         let attack = DDoSAttack {
             attack_id: attack_id.clone(),

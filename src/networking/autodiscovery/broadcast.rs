@@ -27,20 +27,13 @@ use tokio::time::interval;
 #[serde(tag = "type")]
 enum BroadcastMessage {
     /// Announcement of node presence
-    Announce {
-        node: NodeInfo,
-        timestamp: u64,
-    },
+    Announce { node: NodeInfo, timestamp: u64 },
 
     /// Request for all nodes to announce
-    Probe {
-        from: NodeInfo,
-    },
+    Probe { from: NodeInfo },
 
     /// Graceful leave notification
-    Leave {
-        node: NodeInfo,
-    },
+    Leave { node: NodeInfo },
 }
 
 /// Discovered node with last seen timestamp
@@ -62,23 +55,24 @@ pub struct BroadcastDiscovery {
 
 impl BroadcastDiscovery {
     /// Create a new broadcast discovery instance
-    pub fn new(
-        config: DiscoveryConfig,
-        event_tx: mpsc::Sender<DiscoveryEvent>,
-    ) -> Result<Self> {
+    pub fn new(config: DiscoveryConfig, event_tx: mpsc::Sender<DiscoveryEvent>) -> Result<Self> {
         // Create UDP socket
         let socket = std::net::UdpSocket::bind((Ipv4Addr::UNSPECIFIED, config.bind_addr.port()))
             .map_err(|e| DbError::Network(format!("Failed to bind socket: {}", e)))?;
 
         // Enable broadcast
-        socket.set_broadcast(true)
+        socket
+            .set_broadcast(true)
             .map_err(|e| DbError::Network(format!("Failed to enable broadcast: {}", e)))?;
 
-        socket.set_nonblocking(true)
+        socket
+            .set_nonblocking(true)
             .map_err(|e| DbError::Network(format!("Failed to set nonblocking: {}", e)))?;
 
-        let socket = Arc::new(UdpSocket::from_std(socket)
-            .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?);
+        let socket = Arc::new(
+            UdpSocket::from_std(socket)
+                .map_err(|e| DbError::Network(format!("Failed to create tokio socket: {}", e)))?,
+        );
 
         // Default broadcast address
         let broadcast_addr = SocketAddr::new(
@@ -129,7 +123,9 @@ impl BroadcastDiscovery {
         let json = serde_json::to_vec(msg)
             .map_err(|e| DbError::Serialization(format!("Failed to serialize: {}", e)))?;
 
-        self.socket.send_to(&json, self.broadcast_addr).await
+        self.socket
+            .send_to(&json, self.broadcast_addr)
+            .await
             .map_err(|e| DbError::Network(format!("Failed to send broadcast: {}", e)))?;
 
         Ok(())
@@ -332,10 +328,7 @@ mod tests {
 
     #[test]
     fn test_broadcast_message_serialization() {
-        let node = NodeInfo::new(
-            "test-node".to_string(),
-            "127.0.0.1:7946".parse().unwrap(),
-        );
+        let node = NodeInfo::new("test-node".to_string(), "127.0.0.1:7946".parse().unwrap());
 
         let msg = BroadcastMessage::Announce {
             node,

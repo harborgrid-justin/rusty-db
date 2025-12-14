@@ -18,11 +18,10 @@
 
 use crate::error::{DbError, Result};
 use parking_lot::RwLock;
-use std::collections::BTreeMap;
-use std::sync::Arc;
-use std::hash::{Hash, Hasher};
 use std::collections::hash_map::DefaultHasher;
-
+use std::collections::BTreeMap;
+use std::hash::{Hash, Hasher};
+use std::sync::Arc;
 
 // LSM Tree Index
 pub struct LSMTreeIndex<K: Ord + Clone + Hash, V: Clone> {
@@ -186,10 +185,8 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         }
 
         // Swap memtable with new one
-        let old_memtable = std::mem::replace(
-            &mut *memtable,
-            MemTable::new(self.config.memtable_size),
-        );
+        let old_memtable =
+            std::mem::replace(&mut *memtable, MemTable::new(self.config.memtable_size));
 
         *immutable = Some(old_memtable);
         drop(memtable);
@@ -422,9 +419,7 @@ impl<K: Ord + Clone, V: Clone> MemTable<K, V> {
     }
 
     fn range(&self, start: &K, end: &K) -> Vec<(&K, &MemTableEntry<V>)> {
-        self.entries
-            .range(start.clone()..=end.clone())
-            .collect()
+        self.entries.range(start.clone()..=end.clone()).collect()
     }
 
     fn is_full(&self) -> bool {
@@ -565,8 +560,7 @@ impl<K: Ord + Clone + Hash, V: Clone> Level<K, V> {
     }
 
     fn max_size(&self) -> usize {
-        self.config.memtable_size
-            * self.config.level_size_multiplier.pow(self.level as u32)
+        self.config.memtable_size * self.config.level_size_multiplier.pow(self.level as u32)
     }
 
     fn take_tables_for_compaction(&mut self) -> Vec<SSTable<K, V>> {
@@ -623,7 +617,7 @@ struct BlockedBloomFilter {
 #[repr(align(64))]
 #[derive(Clone, Copy)]
 struct BloomBlock {
-    bits: [u64; 8],  // 8 * 64 = 512 bits per block
+    bits: [u64; 8], // 8 * 64 = 512 bits per block
 }
 
 impl Default for BloomBlock {
@@ -732,20 +726,16 @@ impl BlockedBloomFilter {
 
         let mut hashes = [0u64; 8];
         for i in 0..8 {
-            hashes[i] = h1.wrapping_add(
-                (i as u64).wrapping_mul(h2)
-            ).wrapping_add(
-                (i as u64).wrapping_mul(i as u64)
-            );
+            hashes[i] = h1
+                .wrapping_add((i as u64).wrapping_mul(h2))
+                .wrapping_add((i as u64).wrapping_mul(i as u64));
         }
         hashes
     }
 
     /// Reserved for bloom filter stats
 
-
     #[allow(dead_code)]
-
 
     fn estimated_fpr(&self) -> f64 {
         // FPR ≈ (1 - e^(-k*n/m))^k where k=hashes, n=items, m=bits
@@ -787,7 +777,7 @@ pub struct LSMStats {
     pub total_sstable_size: (),
     pub total_entries: (),
     pub level_count: (),
-    pub bloom_filter_hit_rate: ()
+    pub bloom_filter_hit_rate: (),
 }
 
 // Level statistics

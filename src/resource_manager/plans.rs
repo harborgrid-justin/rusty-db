@@ -3,15 +3,15 @@
 // This module implements Oracle-like resource plans with directives, sub-plans,
 // time-based switching, and maintenance windows.
 
-use std::time::SystemTime;
-use std::collections::{HashMap};
-use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use chrono::{DateTime, Datelike, NaiveTime, Timelike, Utc};
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc, Timelike, NaiveTime, Datelike};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
+use std::time::SystemTime;
 
-use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
+use crate::error::{DbError, Result};
 
 // Resource plan identifier
 pub type ResourcePlanId = u64;
@@ -119,11 +119,7 @@ pub struct ResourcePlanDirective {
 
 impl ResourcePlanDirective {
     // Create a new directive
-    pub fn new(
-        id: DirectiveId,
-        plan_id: ResourcePlanId,
-        group_id: ConsumerGroupId,
-    ) -> Self {
+    pub fn new(id: DirectiveId, plan_id: ResourcePlanId, group_id: ConsumerGroupId) -> Self {
         Self {
             id,
             plan_id,
@@ -186,11 +182,8 @@ impl PlanSchedule {
         }
 
         // Check time range
-        let current_time = NaiveTime::from_hms_opt(
-            time.hour(),
-            time.minute(),
-            time.second()
-        ).unwrap();
+        let current_time =
+            NaiveTime::from_hms_opt(time.hour(), time.minute(), time.second()).unwrap();
 
         if self.start_time <= self.end_time {
             // Normal range (e.g., 9:00 to 17:00)
@@ -364,15 +357,17 @@ impl ResourcePlanManager {
         let mut plans_by_name = self.plans_by_name.write().unwrap();
 
         if plans.contains_key(&id) {
-            return Err(DbError::AlreadyExists(
-                format!("Resource plan with ID {} already exists", id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Resource plan with ID {} already exists",
+                id
+            )));
         }
 
         if plans_by_name.contains_key(&name) {
-            return Err(DbError::AlreadyExists(
-                format!("Resource plan {} already exists", name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Resource plan {} already exists",
+                name
+            )));
         }
 
         plans_by_name.insert(name, id);
@@ -398,9 +393,10 @@ impl ResourcePlanManager {
         let is_top_plan = if let Some(parent_id) = parent_plan_id {
             let plans = self.plans.read().unwrap();
             if !plans.contains_key(&parent_id) {
-                return Err(DbError::NotFound(
-                    format!("Parent plan {} not found", parent_id)
-                ));
+                return Err(DbError::NotFound(format!(
+                    "Parent plan {} not found",
+                    parent_id
+                )));
             }
             false
         } else {
@@ -427,9 +423,10 @@ impl ResourcePlanManager {
         let mut plans_by_name = self.plans_by_name.write().unwrap();
 
         if plans_by_name.contains_key(&name) {
-            return Err(DbError::AlreadyExists(
-                format!("Resource plan {} already exists", name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Resource plan {} already exists",
+                name
+            )));
         }
 
         plans_by_name.insert(name, id);
@@ -441,20 +438,18 @@ impl ResourcePlanManager {
     // Get resource plan by ID
     pub fn get_plan(&self, plan_id: ResourcePlanId) -> Result<ResourcePlan> {
         let plans = self.plans.read().unwrap();
-        plans.get(&plan_id)
+        plans
+            .get(&plan_id)
             .cloned()
-            .ok_or_else(|| DbError::NotFound(
-                format!("Resource plan {} not found", plan_id)
-            ))
+            .ok_or_else(|| DbError::NotFound(format!("Resource plan {} not found", plan_id)))
     }
 
     // Get resource plan by name
     pub fn get_plan_by_name(&self, name: &str) -> Result<ResourcePlan> {
         let plans_by_name = self.plans_by_name.read().unwrap();
-        let plan_id = plans_by_name.get(name)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Resource plan {} not found", name)
-            ))?;
+        let plan_id = plans_by_name
+            .get(name)
+            .ok_or_else(|| DbError::NotFound(format!("Resource plan {} not found", name)))?;
         self.get_plan(*plan_id)
     }
 
@@ -464,10 +459,9 @@ impl ResourcePlanManager {
         F: FnOnce(&mut ResourcePlan),
     {
         let mut plans = self.plans.write().unwrap();
-        let plan = plans.get_mut(&plan_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Resource plan {} not found", plan_id)
-            ))?;
+        let plan = plans
+            .get_mut(&plan_id)
+            .ok_or_else(|| DbError::NotFound(format!("Resource plan {} not found", plan_id)))?;
 
         update_fn(plan);
         plan.modified_at = SystemTime::now();
@@ -479,7 +473,7 @@ impl ResourcePlanManager {
         // Don't allow deleting system plans
         if plan_id < 100 {
             return Err(DbError::PermissionDenied(
-                "Cannot delete system resource plans".to_string()
+                "Cannot delete system resource plans".to_string(),
             ));
         }
 
@@ -488,7 +482,7 @@ impl ResourcePlanManager {
             let active_id = self.active_plan_id.read().unwrap();
             if *active_id == Some(plan_id) {
                 return Err(DbError::Conflict(
-                    "Cannot delete active resource plan".to_string()
+                    "Cannot delete active resource plan".to_string(),
                 ));
             }
         }
@@ -496,10 +490,9 @@ impl ResourcePlanManager {
         let mut plans = self.plans.write().unwrap();
         let mut plans_by_name = self.plans_by_name.write().unwrap();
 
-        let plan = plans.remove(&plan_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Resource plan {} not found", plan_id)
-            ))?;
+        let plan = plans
+            .remove(&plan_id)
+            .ok_or_else(|| DbError::NotFound(format!("Resource plan {} not found", plan_id)))?;
 
         plans_by_name.remove(&plan.name);
 
@@ -546,16 +539,14 @@ impl ResourcePlanManager {
         F: FnOnce(&mut ResourcePlanDirective),
     {
         let mut directives = self.directives.write().unwrap();
-        let plan_directives = directives.get_mut(&plan_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("No directives for plan {}", plan_id)
-            ))?;
+        let plan_directives = directives
+            .get_mut(&plan_id)
+            .ok_or_else(|| DbError::NotFound(format!("No directives for plan {}", plan_id)))?;
 
-        let directive = plan_directives.iter_mut()
+        let directive = plan_directives
+            .iter_mut()
             .find(|d| d.id == directive_id)
-            .ok_or_else(|| DbError::NotFound(
-                format!("Directive {} not found", directive_id)
-            ))?;
+            .ok_or_else(|| DbError::NotFound(format!("Directive {} not found", directive_id)))?;
 
         update_fn(directive);
         Ok(())
@@ -564,9 +555,7 @@ impl ResourcePlanManager {
     // Get directives for a plan
     pub fn get_plan_directives(&self, plan_id: ResourcePlanId) -> Vec<ResourcePlanDirective> {
         let directives = self.directives.read().unwrap();
-        directives.get(&plan_id)
-            .cloned()
-            .unwrap_or_default()
+        directives.get(&plan_id).cloned().unwrap_or_default()
     }
 
     // Activate a resource plan
@@ -574,9 +563,10 @@ impl ResourcePlanManager {
         // Verify plan exists
         let plan = self.get_plan(plan_id)?;
         if !plan.is_enabled {
-            return Err(DbError::Configuration(
-                format!("Cannot activate disabled plan {}", plan.name)
-            ));
+            return Err(DbError::Configuration(format!(
+                "Cannot activate disabled plan {}",
+                plan.name
+            )));
         }
 
         // Deactivate current plan
@@ -731,19 +721,14 @@ impl ResourcePlanManager {
                 continue;
             }
 
-            let current_time = NaiveTime::from_hms_opt(
-                now.hour(),
-                now.minute(),
-                now.second()
-            ).unwrap();
+            let current_time =
+                NaiveTime::from_hms_opt(now.hour(), now.minute(), now.second()).unwrap();
 
             let end_time = {
                 let total_seconds = window.start_time.num_seconds_from_midnight() as u64
                     + window.duration.as_secs();
-                NaiveTime::from_num_seconds_from_midnight_opt(
-                    (total_seconds % 86400) as u32,
-                    0
-                ).unwrap()
+                NaiveTime::from_num_seconds_from_midnight_opt((total_seconds % 86400) as u32, 0)
+                    .unwrap()
             };
 
             if current_time >= window.start_time && current_time < end_time {
@@ -769,15 +754,13 @@ impl ResourcePlanManager {
         // Validate CPU allocation totals
         match plan.cpu_method {
             CpuManagementMethod::Emphasis | CpuManagementMethod::Ratio => {
-                let total_pct: u32 = directives.iter()
+                let total_pct: u32 = directives
+                    .iter()
                     .filter_map(|d| d.cpu_pct.map(|p| p as u32))
                     .sum();
 
                 if total_pct > 100 {
-                    warnings.push(format!(
-                        "Total CPU allocation exceeds 100%: {}%",
-                        total_pct
-                    ));
+                    warnings.push(format!("Total CPU allocation exceeds 100%: {}%", total_pct));
                 } else if total_pct < 100 {
                     warnings.push(format!(
                         "Total CPU allocation is less than 100%: {}%",
@@ -817,11 +800,9 @@ mod tests {
     #[test]
     fn test_plan_creation() {
         let manager = ResourcePlanManager::new().unwrap();
-        let plan_id = manager.create_plan(
-            "TEST_PLAN".to_string(),
-            CpuManagementMethod::Shares,
-            None,
-        ).unwrap();
+        let plan_id = manager
+            .create_plan("TEST_PLAN".to_string(), CpuManagementMethod::Shares, None)
+            .unwrap();
 
         let plan = manager.get_plan(plan_id).unwrap();
         assert_eq!(plan.name, "TEST_PLAN");
@@ -831,11 +812,9 @@ mod tests {
     #[test]
     fn test_plan_activation() {
         let manager = ResourcePlanManager::new().unwrap();
-        let plan_id = manager.create_plan(
-            "TEST_PLAN".to_string(),
-            CpuManagementMethod::Shares,
-            None,
-        ).unwrap();
+        let plan_id = manager
+            .create_plan("TEST_PLAN".to_string(), CpuManagementMethod::Shares, None)
+            .unwrap();
 
         manager.activate_plan(plan_id).unwrap();
         assert_eq!(manager.get_active_plan(), Some(plan_id));
@@ -850,20 +829,20 @@ mod tests {
         let start_time = NaiveTime::from_hms_opt(0, 0, 0).unwrap();
         let end_time = NaiveTime::from_hms_opt(23, 59, 59).unwrap();
 
-        let plan_id = manager.create_plan(
-            "TEST_PLAN".to_string(),
-            CpuManagementMethod::Shares,
-            None,
-        ).unwrap();
+        let plan_id = manager
+            .create_plan("TEST_PLAN".to_string(), CpuManagementMethod::Shares, None)
+            .unwrap();
 
-        manager.add_schedule(
-            "TEST_SCHEDULE".to_string(),
-            None, // All days
-            start_time,
-            end_time,
-            plan_id,
-            1,
-        ).unwrap();
+        manager
+            .add_schedule(
+                "TEST_SCHEDULE".to_string(),
+                None, // All days
+                start_time,
+                end_time,
+                plan_id,
+                1,
+            )
+            .unwrap();
 
         let switched = manager.check_and_switch_plan().unwrap();
         assert!(switched || manager.get_active_plan() == Some(plan_id));

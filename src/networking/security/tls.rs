@@ -45,8 +45,12 @@ impl CipherSuite {
     /// Convert to rustls cipher suite
     pub fn to_rustls_suite(&self) -> rustls::SupportedCipherSuite {
         match self {
-            CipherSuite::Tls13Aes256GcmSha384 => rustls::crypto::ring::cipher_suite::TLS13_AES_256_GCM_SHA384,
-            CipherSuite::Tls13Aes128GcmSha256 => rustls::crypto::ring::cipher_suite::TLS13_AES_128_GCM_SHA256,
+            CipherSuite::Tls13Aes256GcmSha384 => {
+                rustls::crypto::ring::cipher_suite::TLS13_AES_256_GCM_SHA384
+            }
+            CipherSuite::Tls13Aes128GcmSha256 => {
+                rustls::crypto::ring::cipher_suite::TLS13_AES_128_GCM_SHA256
+            }
             CipherSuite::Tls13Chacha20Poly1305Sha256 => {
                 rustls::crypto::ring::cipher_suite::TLS13_CHACHA20_POLY1305_SHA256
             }
@@ -161,9 +165,8 @@ impl TlsConfig {
 
     /// Load certificate chain from file
     pub fn load_certs(&self) -> Result<Vec<CertificateDer<'static>>> {
-        let cert_file = std::fs::File::open(&self.cert_path).map_err(|e| {
-            DbError::Configuration(format!("Failed to open cert file: {}", e))
-        })?;
+        let cert_file = std::fs::File::open(&self.cert_path)
+            .map_err(|e| DbError::Configuration(format!("Failed to open cert file: {}", e)))?;
 
         let mut reader = std::io::BufReader::new(cert_file);
         let certs = rustls_pemfile::certs(&mut reader)
@@ -175,9 +178,8 @@ impl TlsConfig {
 
     /// Load private key from file
     pub fn load_private_key(&self) -> Result<PrivateKeyDer<'static>> {
-        let key_file = std::fs::File::open(&self.key_path).map_err(|e| {
-            DbError::Configuration(format!("Failed to open key file: {}", e))
-        })?;
+        let key_file = std::fs::File::open(&self.key_path)
+            .map_err(|e| DbError::Configuration(format!("Failed to open key file: {}", e)))?;
 
         let mut reader = std::io::BufReader::new(key_file);
 
@@ -191,9 +193,8 @@ impl TlsConfig {
         }
 
         // Reset reader
-        let key_file = std::fs::File::open(&self.key_path).map_err(|e| {
-            DbError::Configuration(format!("Failed to open key file: {}", e))
-        })?;
+        let key_file = std::fs::File::open(&self.key_path)
+            .map_err(|e| DbError::Configuration(format!("Failed to open key file: {}", e)))?;
         let mut reader = std::io::BufReader::new(key_file);
 
         // Try RSA private key
@@ -213,9 +214,8 @@ impl TlsConfig {
     /// Load CA certificates from file
     pub fn load_ca_certs(&self) -> Result<Vec<CertificateDer<'static>>> {
         if let Some(ca_path) = &self.ca_path {
-            let ca_file = std::fs::File::open(ca_path).map_err(|e| {
-                DbError::Configuration(format!("Failed to open CA file: {}", e))
-            })?;
+            let ca_file = std::fs::File::open(ca_path)
+                .map_err(|e| DbError::Configuration(format!("Failed to open CA file: {}", e)))?;
 
             let mut reader = std::io::BufReader::new(ca_file);
             let certs = rustls_pemfile::certs(&mut reader)
@@ -382,13 +382,10 @@ mod tests {
 
     #[test]
     fn test_tls_config_builder() {
-        let config = TlsConfig::new(
-            PathBuf::from("./test.crt"),
-            PathBuf::from("./test.key"),
-        )
-        .with_verify_peer(false)
-        .with_min_version(TlsVersion::Tls13)
-        .with_server_name("example.com".to_string());
+        let config = TlsConfig::new(PathBuf::from("./test.crt"), PathBuf::from("./test.key"))
+            .with_verify_peer(false)
+            .with_min_version(TlsVersion::Tls13)
+            .with_server_name("example.com".to_string());
 
         assert_eq!(config.cert_path, PathBuf::from("./test.crt"));
         assert_eq!(config.key_path, PathBuf::from("./test.key"));

@@ -6,12 +6,12 @@
 // - Result aggregation and merging
 // - Cross-shard join strategies
 
-use std::fmt;
-use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo};
-use std::collections::HashMap;
-use std::sync::Arc;
+use crate::error::DbError;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
+use std::sync::Arc;
 
 // Trait for distributed query execution
 pub trait DistributedQueryProcessor {
@@ -64,14 +64,16 @@ impl DistributedQueryProcessor for DistributedQueryExecutor {
     fn create_execution_plan(&self, _query: &str) -> Result<ExecutionPlan, DbError> {
         // Simplified implementation
         let nodes = self.coordinator.get_healthy_nodes()?;
-        let shards = nodes.into_iter().enumerate().map(|(i, node)| {
-            ShardPlan {
+        let shards = nodes
+            .into_iter()
+            .enumerate()
+            .map(|(i, node)| ShardPlan {
                 shard_id: i,
                 node_id: node.id,
                 query_fragment: format!("SELECT * FROM table_{}", i),
                 estimated_rows: 1000,
-            }
-        }).collect();
+            })
+            .collect();
 
         Ok(ExecutionPlan {
             query_id: uuid::Uuid::new_v4().to_string(),
@@ -109,7 +111,8 @@ impl QueryRouter {
     }
 
     pub fn determine_strategy(&self, query_type: QueryType) -> ExecutionStrategy {
-        self.strategies.get(&query_type)
+        self.strategies
+            .get(&query_type)
             .copied()
             .unwrap_or(ExecutionStrategy::Scatter)
     }
@@ -154,10 +157,10 @@ pub struct DistributedQueryResult {
 // Query execution strategies
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ExecutionStrategy {
-    Scatter,    // Send query to all nodes
-    Broadcast,  // Broadcast small table, join with large
-    MapReduce,  // Map-reduce style processing
-    CoLocated,  // Data is already co-located
+    Scatter,   // Send query to all nodes
+    Broadcast, // Broadcast small table, join with large
+    MapReduce, // Map-reduce style processing
+    CoLocated, // Data is already co-located
 }
 
 // Query types for routing decisions

@@ -41,7 +41,10 @@ impl CloudDiscovery {
 #[async_trait]
 impl ServiceDiscovery for CloudDiscovery {
     async fn initialize(&mut self) -> Result<()> {
-        tracing::info!("Initializing cloud discovery for: {:?}", self.config.provider);
+        tracing::info!(
+            "Initializing cloud discovery for: {:?}",
+            self.config.provider
+        );
         self.backend.initialize().await
     }
 
@@ -112,7 +115,10 @@ impl AwsDiscovery {
 
     /// Discovers instances via EC2 describe-instances API
     async fn discover_ec2_instances(&self) -> Result<Vec<Node>> {
-        tracing::debug!("Discovering EC2 instances in region: {}", self.config.region);
+        tracing::debug!(
+            "Discovering EC2 instances in region: {}",
+            self.config.region
+        );
 
         // In production, use aws-sdk-ec2:
         // let aws_config = aws_config::from_env()
@@ -214,7 +220,10 @@ impl AwsDiscovery {
 #[async_trait]
 impl CloudDiscoveryBackend for AwsDiscovery {
     async fn initialize(&mut self) -> Result<()> {
-        tracing::info!("Initializing AWS discovery in region: {}", self.config.region);
+        tracing::info!(
+            "Initializing AWS discovery in region: {}",
+            self.config.region
+        );
 
         // Verify AWS credentials and region configuration
         // In production, validate by calling STS GetCallerIdentity
@@ -401,8 +410,8 @@ impl CloudDiscoveryBackend for GcpDiscovery {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
     use super::*;
+    use std::collections::HashMap;
 
     #[tokio::test]
     async fn test_aws_discovery_creation() {

@@ -4,8 +4,8 @@
 // These traits provide standard interfaces for transport, service discovery, health
 // monitoring, load balancing, and cluster membership management.
 
-use crate::error::Result;
 use crate::common::{Component, HealthStatus};
+use crate::error::Result;
 use async_trait::async_trait;
 use std::collections::HashMap;
 use tokio::sync::mpsc::Receiver;

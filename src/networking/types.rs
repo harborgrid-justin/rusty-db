@@ -272,10 +272,7 @@ pub enum ClusterMessage {
     },
 
     /// Notification that a node is leaving
-    LeaveNotification {
-        node_id: NodeId,
-        reason: String,
-    },
+    LeaveNotification { node_id: NodeId, reason: String },
 
     /// Gossip message for membership dissemination
     Gossip {
@@ -316,25 +313,16 @@ pub enum ClusterMessage {
     },
 
     /// Transaction commit message (2PC)
-    TransactionCommit {
-        transaction_id: u64,
-    },
+    TransactionCommit { transaction_id: u64 },
 
     /// Transaction abort message (2PC)
-    TransactionAbort {
-        transaction_id: u64,
-        reason: String,
-    },
+    TransactionAbort { transaction_id: u64, reason: String },
 
     /// Request for node metadata
-    MetadataRequest {
-        keys: Vec<String>,
-    },
+    MetadataRequest { keys: Vec<String> },
 
     /// Response with node metadata
-    MetadataResponse {
-        metadata: HashMap<String, String>,
-    },
+    MetadataResponse { metadata: HashMap<String, String> },
 
     /// Generic data transfer
     DataTransfer {
@@ -345,10 +333,7 @@ pub enum ClusterMessage {
     },
 
     /// Error message
-    Error {
-        error_code: String,
-        message: String,
-    },
+    Error { error_code: String, message: String },
 }
 
 impl ClusterMessage {

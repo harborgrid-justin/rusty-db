@@ -92,13 +92,7 @@ impl RewriteRule {
 
     // Creates a constant folding rule.
     pub fn constant_folding() -> Self {
-        Self::new(
-            "const_fold",
-            "Constant Folding",
-            "$a + 0",
-            "$a",
-        )
-        .with_priority(50)
+        Self::new("const_fold", "Constant Folding", "$a + 0", "$a").with_priority(50)
     }
 
     // Creates a redundant join elimination rule.
@@ -557,9 +551,9 @@ pub struct ViewDelta {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
-use std::time::Instant;
-use std::time::SystemTime;
+    use std::time::Instant;
+    use std::time::SystemTime;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_rewrite_rule_creation() {
@@ -611,12 +605,15 @@ use std::time::SystemTime;
         values.insert("id".to_string(), "1".to_string());
         values.insert("amount".to_string(), "100".to_string());
 
-        ivm.record_change("orders", DeltaRow {
-            operation: DeltaOperation::Insert,
-            values,
-            old_values: None,
-            timestamp: 0,
-        });
+        ivm.record_change(
+            "orders",
+            DeltaRow {
+                operation: DeltaOperation::Insert,
+                values,
+                old_values: None,
+                timestamp: 0,
+            },
+        );
 
         assert!(ivm.needs_refresh("order_totals"));
     }

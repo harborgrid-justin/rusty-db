@@ -6,16 +6,15 @@
 // - Node replacement
 // - Split-brain prevention
 
-use crate::error::{DbError, Result};
 use crate::common::NodeId;
-use crate::networking::membership::{
-    NodeInfo, NodeStatus, MembershipEvent, MembershipConfig,
-    RaftMembership, SwimMembership,
-};
+use crate::error::{DbError, Result};
 use crate::networking::membership::view::ViewManager;
+use crate::networking::membership::{
+    MembershipConfig, MembershipEvent, NodeInfo, NodeStatus, RaftMembership, SwimMembership,
+};
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 
 /// Membership coordinator - orchestrates join/leave operations
 pub struct MembershipCoordinator {
@@ -90,11 +89,7 @@ impl MembershipCoordinator {
     }
 
     /// Initialize the coordinator
-    pub async fn initialize(
-        &mut self,
-        raft: RaftMembership,
-        swim: SwimMembership,
-    ) -> Result<()> {
+    pub async fn initialize(&mut self, raft: RaftMembership, swim: SwimMembership) -> Result<()> {
         let mut raft_guard = self.raft.write().await;
         *raft_guard = Some(raft);
         drop(raft_guard);
@@ -137,7 +132,8 @@ impl MembershipCoordinator {
 
         // Check if we have Raft consensus
         let raft_guard = self.raft.read().await;
-        let raft = raft_guard.as_ref()
+        let raft = raft_guard
+            .as_ref()
             .ok_or_else(|| DbError::InvalidState("Raft not initialized".to_string()))?;
 
         // Only leader can accept join requests
@@ -176,10 +172,13 @@ impl MembershipCoordinator {
         self.view_manager.add_node(node_info.clone()).await?;
 
         // Broadcast event
-        let _ = self.event_tx.send(MembershipEvent::NodeJoined {
-            node_id: node_info.id.clone(),
-            node_info,
-        }).await;
+        let _ = self
+            .event_tx
+            .send(MembershipEvent::NodeJoined {
+                node_id: node_info.id.clone(),
+                node_info,
+            })
+            .await;
 
         Ok(JoinResponse {
             accepted: true,
@@ -197,7 +196,8 @@ impl MembershipCoordinator {
 
         // Check if we have Raft consensus
         let raft_guard = self.raft.read().await;
-        let raft = raft_guard.as_ref()
+        let raft = raft_guard
+            .as_ref()
             .ok_or_else(|| DbError::InvalidState("Raft not initialized".to_string()))?;
 
         // Only leader can handle leave requests
@@ -223,13 +223,18 @@ impl MembershipCoordinator {
         drop(raft_guard);
 
         // Update view
-        self.view_manager.update_node_status(&node_id, NodeStatus::Leaving).await?;
+        self.view_manager
+            .update_node_status(&node_id, NodeStatus::Leaving)
+            .await?;
 
         // Broadcast event
-        let _ = self.event_tx.send(MembershipEvent::NodeLeft {
-            node_id,
-            graceful: true,
-        }).await;
+        let _ = self
+            .event_tx
+            .send(MembershipEvent::NodeLeft {
+                node_id,
+                graceful: true,
+            })
+            .await;
 
         Ok(())
     }
@@ -261,12 +266,17 @@ impl MembershipCoordinator {
         );
 
         // Update view
-        self.view_manager.update_node_status(&node_id, NodeStatus::Failed).await?;
+        self.view_manager
+            .update_node_status(&node_id, NodeStatus::Failed)
+            .await?;
 
         // Broadcast event
-        let _ = self.event_tx.send(MembershipEvent::NodeFailed {
-            node_id: node_id.clone(),
-        }).await;
+        let _ = self
+            .event_tx
+            .send(MembershipEvent::NodeFailed {
+                node_id: node_id.clone(),
+            })
+            .await;
 
         // Check if we need to trigger replacement
         self.check_and_trigger_replacement().await?;
@@ -404,10 +414,7 @@ mod tests {
         let (mut coordinator, _rx) = MembershipCoordinator::new(config.clone(), view_manager);
 
         // Initialize with Raft and SWIM
-        let (raft, _raft_rx) = RaftMembership::new(
-            config.node_id.clone(),
-            RaftConfig::default(),
-        );
+        let (raft, _raft_rx) = RaftMembership::new(config.node_id.clone(), RaftConfig::default());
 
         let local_node = NodeInfo::new(
             config.node_id.clone(),
@@ -416,11 +423,8 @@ mod tests {
             NodeMetadata::default(),
         );
 
-        let (swim, _swim_rx) = SwimMembership::new(
-            config.node_id.clone(),
-            local_node,
-            SwimConfig::default(),
-        );
+        let (swim, _swim_rx) =
+            SwimMembership::new(config.node_id.clone(), local_node, SwimConfig::default());
 
         coordinator.initialize(raft, swim).await.unwrap();
 

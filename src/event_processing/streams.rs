@@ -4,18 +4,15 @@
 // partitioning, retention, compaction, and consumer group coordination with
 // exactly-once processing semantics.
 
-use std::fmt;
-use std::sync::Mutex;
-use std::time::SystemTime;
-use super::{
-    Event, EventBatch, EventProcessingConfig, StreamMetrics,
-    StreamPosition, Watermark,
-};
+use super::{Event, EventBatch, EventProcessingConfig, StreamMetrics, StreamPosition, Watermark};
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, HashMap};
+use std::fmt;
+use std::sync::Mutex;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
+use std::time::SystemTime;
 
 /// Stream identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -59,19 +56,13 @@ pub enum StreamLifecycleState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RetentionPolicy {
     /// Keep events for a specific duration
-    TimeBased {
-        retention: Duration,
-    },
+    TimeBased { retention: Duration },
 
     /// Keep a specific number of events per partition
-    SizeBased {
-        max_events: u64,
-    },
+    SizeBased { max_events: u64 },
 
     /// Keep events until total size limit
-    ByteBased {
-        max_bytes: u64,
-    },
+    ByteBased { max_bytes: u64 },
 
     /// Composite policy (all conditions must be met)
     Composite {
@@ -81,9 +72,7 @@ pub enum RetentionPolicy {
     },
 
     /// Custom retention logic
-    Custom {
-        policy_name: String,
-    },
+    Custom { policy_name: String },
 }
 
 impl RetentionPolicy {
@@ -131,33 +120,23 @@ pub enum CompactionStrategy {
     Tombstone,
 
     /// Custom compaction logic
-    Custom {
-        strategy_name: String,
-    },
+    Custom { strategy_name: String },
 }
 
 /// Partitioning strategy
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum PartitionStrategy {
     /// Hash-based partitioning on partition key
-    Hash {
-        num_partitions: u32,
-    },
+    Hash { num_partitions: u32 },
 
     /// Range-based partitioning
-    Range {
-        ranges: Vec<String>,
-    },
+    Range { ranges: Vec<String> },
 
     /// Round-robin partitioning
-    RoundRobin {
-        num_partitions: u32,
-    },
+    RoundRobin { num_partitions: u32 },
 
     /// Custom partitioning logic
-    Custom {
-        strategy_name: String,
-    },
+    Custom { strategy_name: String },
 }
 
 impl PartitionStrategy {
@@ -318,7 +297,10 @@ impl EventStream {
 
         // Determine partition
         let mut counter = self.partition_counter.lock().unwrap();
-        let partition_id = self.config.partition_strategy.get_partition(&event, &mut counter);
+        let partition_id = self
+            .config
+            .partition_strategy
+            .get_partition(&event, &mut counter);
         drop(counter);
 
         // Set ingestion time
@@ -500,10 +482,8 @@ impl LateEventBuffer {
     fn drain_up_to(&mut self, watermark: SystemTime) -> Vec<Event> {
         let mut drained = Vec::new();
 
-        let times_to_remove: Vec<SystemTime> = self.events
-            .range(..=watermark)
-            .map(|(t, _)| *t)
-            .collect();
+        let times_to_remove: Vec<SystemTime> =
+            self.events.range(..=watermark).map(|(t, _)| *t).collect();
 
         for time in times_to_remove {
             if let Some(events) = self.events.remove(&time) {
@@ -638,7 +618,11 @@ impl LazyWatermarkManager {
     }
 
     /// Generate watermark based on strategy
-    pub fn generate_watermark(&mut self, partition: u32, latest_event_time: SystemTime) -> Option<Watermark> {
+    pub fn generate_watermark(
+        &mut self,
+        partition: u32,
+        latest_event_time: SystemTime,
+    ) -> Option<Watermark> {
         match self.strategy {
             WatermarkStrategy::Periodic(_interval) => {
                 // Generate watermark = latest_event_time - max_lateness
@@ -846,7 +830,11 @@ impl StreamPartition {
         let mut to_remove = Vec::new();
 
         for (&offset, event) in &self.log {
-            if !self.config.retention_policy.should_retain(event, current_time) {
+            if !self
+                .config
+                .retention_policy
+                .should_retain(event, current_time)
+            {
                 to_remove.push(offset);
             }
         }
@@ -904,11 +892,7 @@ pub struct ConsumerGroup {
 }
 
 impl ConsumerGroup {
-    fn new(
-        id: String,
-        num_partitions: u32,
-        partitions: Vec<Arc<Mutex<StreamPartition>>>,
-    ) -> Self {
+    fn new(id: String, num_partitions: u32, partitions: Vec<Arc<Mutex<StreamPartition>>>) -> Self {
         Self {
             id,
             num_partitions,

@@ -29,15 +29,14 @@
 // └────────────────────────────────────────────────┘
 // ```
 
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt;
-use std::collections::HashSet;
-use std::collections::{HashMap};
-
 
 use tracing::{debug, info};
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 
 // Node in the dependency graph
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -275,12 +274,9 @@ impl DependencyGraph {
 
         for node_id in self.nodes.keys() {
             if !visited.contains(node_id) {
-                if let Some(cycle) = self.find_cycle_util(
-                    node_id,
-                    &mut visited,
-                    &mut rec_stack,
-                    &mut path,
-                ) {
+                if let Some(cycle) =
+                    self.find_cycle_util(node_id, &mut visited, &mut rec_stack, &mut path)
+                {
                     return Some(cycle);
                 }
             }
@@ -308,9 +304,7 @@ impl DependencyGraph {
                 }
 
                 if !visited.contains(&edge.to) {
-                    if let Some(cycle) =
-                        self.find_cycle_util(&edge.to, visited, rec_stack, path)
-                    {
+                    if let Some(cycle) = self.find_cycle_util(&edge.to, visited, rec_stack, path) {
                         return Some(cycle);
                     }
                 } else if rec_stack.contains(&edge.to) {
@@ -598,13 +592,25 @@ mod tests {
 
         // Create a cycle: a -> b -> c -> a
         graph
-            .add_edge(DependencyEdge::new("a".into(), "b".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "a".into(),
+                "b".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
         graph
-            .add_edge(DependencyEdge::new("b".into(), "c".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "b".into(),
+                "c".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
         graph
-            .add_edge(DependencyEdge::new("c".into(), "a".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "c".into(),
+                "a".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
 
         assert!(graph.has_cycles());
@@ -634,16 +640,32 @@ mod tests {
             .unwrap();
 
         graph
-            .add_edge(DependencyEdge::new("a".into(), "b".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "a".into(),
+                "b".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
         graph
-            .add_edge(DependencyEdge::new("a".into(), "c".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "a".into(),
+                "c".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
         graph
-            .add_edge(DependencyEdge::new("b".into(), "d".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "b".into(),
+                "d".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
         graph
-            .add_edge(DependencyEdge::new("c".into(), "d".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "c".into(),
+                "d".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
 
         let order = graph.topological_sort().unwrap();
@@ -672,10 +694,18 @@ mod tests {
             .unwrap();
 
         graph
-            .add_edge(DependencyEdge::new("a".into(), "c".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "a".into(),
+                "c".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
         graph
-            .add_edge(DependencyEdge::new("b".into(), "c".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "b".into(),
+                "c".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
 
         let impact = graph.get_impact_set("c");
@@ -696,7 +726,11 @@ mod tests {
             .unwrap();
 
         graph
-            .add_edge(DependencyEdge::new("a".into(), "b".into(), DependencyType::Hard))
+            .add_edge(DependencyEdge::new(
+                "a".into(),
+                "b".into(),
+                DependencyType::Hard,
+            ))
             .unwrap();
 
         let stats = graph.statistics();

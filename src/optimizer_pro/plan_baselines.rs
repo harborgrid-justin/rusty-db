@@ -7,13 +7,13 @@
 // - Plan history and comparison
 // - Automatic plan regression detection
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use crate::optimizer_pro::{PhysicalPlan, PlanId, QueryFingerprint};
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
+use std::time::SystemTime;
 
 // ============================================================================
 // Plan Baseline Manager
@@ -121,7 +121,10 @@ impl PlanBaselineManager {
 
                 for candidate in candidates {
                     // Check for regression
-                    if !self.regression_detector.is_regression(&candidate, baseline)? {
+                    if !self
+                        .regression_detector
+                        .is_regression(&candidate, baseline)?
+                    {
                         baseline.add_accepted_plan(candidate);
                         evolved_count += 1;
                     }
@@ -135,7 +138,10 @@ impl PlanBaselineManager {
     }
 
     /// Load baseline from disk (simplified)
-    pub fn load_baseline(&self, _fingerprint: &QueryFingerprint) -> Result<Option<SqlPlanBaseline>> {
+    pub fn load_baseline(
+        &self,
+        _fingerprint: &QueryFingerprint,
+    ) -> Result<Option<SqlPlanBaseline>> {
         // In production, this would load from persistent storage
         Ok(None)
     }
@@ -189,9 +195,17 @@ impl PlanBaselineManager {
     }
 
     /// Check if plan should be added to baseline
-    fn should_add_to_baseline(&self, plan: &PhysicalPlan, baseline: &SqlPlanBaseline) -> Result<bool> {
+    fn should_add_to_baseline(
+        &self,
+        plan: &PhysicalPlan,
+        baseline: &SqlPlanBaseline,
+    ) -> Result<bool> {
         // Don't add if plan already exists
-        if baseline.accepted_plans.iter().any(|p| p.plan_id == plan.plan_id) {
+        if baseline
+            .accepted_plans
+            .iter()
+            .any(|p| p.plan_id == plan.plan_id)
+        {
             return Ok(false);
         }
 
@@ -286,7 +300,8 @@ impl SqlPlanBaseline {
     pub fn add_accepted_plan(&mut self, plan: PhysicalPlan) {
         self.accepted_plans.push(plan);
         // Sort by cost in-place, unstable for better performance
-        self.accepted_plans.sort_unstable_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap());
+        self.accepted_plans
+            .sort_unstable_by(|a, b| a.cost.partial_cmp(&b.cost).unwrap());
     }
 
     /// Remove plan
@@ -370,7 +385,10 @@ impl PlanHistory {
 
         for historical in &self.plans {
             // Skip if already in baseline
-            if current_plans.iter().any(|p| p.plan_id == historical.plan.plan_id) {
+            if current_plans
+                .iter()
+                .any(|p| p.plan_id == historical.plan.plan_id)
+            {
                 continue;
             }
 
@@ -393,7 +411,8 @@ impl PlanHistory {
 
     /// Get plan statistics
     pub fn get_statistics(&self, plan_id: PlanId) -> Option<PlanStatistics> {
-        self.plans.iter()
+        self.plans
+            .iter()
             .find(|p| p.plan.plan_id == plan_id)
             .map(|p| PlanStatistics {
                 plan_id: p.plan.plan_id,

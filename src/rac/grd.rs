@@ -17,17 +17,17 @@
 // access to that resource. The directory automatically rebalances resources to optimize
 // for access patterns and load distribution.
 
-use std::collections::VecDeque;
-use std::collections::HashSet;
-use std::time::Instant;
-use crate::error::DbError;
 use crate::common::NodeId;
-use crate::rac::cache_fusion::{ResourceId, LockValueBlock, BlockMode};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::time::{Duration};
+use crate::error::DbError;
+use crate::rac::cache_fusion::{BlockMode, LockValueBlock, ResourceId};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
 use tokio::sync::mpsc;
 
 // ============================================================================
@@ -178,8 +178,7 @@ impl AffinityScore {
         if self.avg_latency_us == 0 {
             self.avg_latency_us = latency_us;
         } else {
-            self.avg_latency_us =
-                (self.avg_latency_us * 9 + latency_us) / 10;
+            self.avg_latency_us = (self.avg_latency_us * 9 + latency_us) / 10;
         }
 
         // Compute score: access frequency / latency
@@ -340,9 +339,9 @@ impl Default for GrdConfig {
             remaster_threshold: REMASTER_THRESHOLD,
             affinity_decay: 0.95,
             load_balance_interval: Duration::from_secs(300),
-            consistent_hashing: true,                        // Enable consistent hashing
-            virtual_nodes: VIRTUAL_NODES_PER_NODE,           // 256 virtual nodes
-            proactive_balancing: true,                       // Proactive rebalancing
+            consistent_hashing: true, // Enable consistent hashing
+            virtual_nodes: VIRTUAL_NODES_PER_NODE, // 256 virtual nodes
+            proactive_balancing: true, // Proactive rebalancing
             load_imbalance_threshold: LOAD_IMBALANCE_THRESHOLD, // 20% threshold
         }
     }
@@ -445,7 +444,8 @@ impl GlobalResourceDirectory {
         let member_count = cluster_members.len().max(1);
         for i in 0..HASH_BUCKETS {
             let master_idx = i % member_count;
-            let master = cluster_members.get(master_idx)
+            let master = cluster_members
+                .get(master_idx)
                 .cloned()
                 .unwrap_or_else(|| node_id.clone());
 
@@ -474,7 +474,8 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(resource_id);
         let buckets = self.buckets.read();
 
-        let bucket = buckets.get(bucket_id)
+        let bucket = buckets
+            .get(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
         // Check if resource exists in bucket
@@ -495,7 +496,8 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(&resource_id);
         let mut buckets = self.buckets.write();
 
-        let bucket = buckets.get_mut(bucket_id)
+        let bucket = buckets
+            .get_mut(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
         let entry = ResourceEntry {
@@ -527,7 +529,8 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
 
-        let bucket = buckets.get_mut(bucket_id)
+        let bucket = buckets
+            .get_mut(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
         if let Some(entry) = bucket.resources.get_mut(resource_id) {
@@ -535,7 +538,9 @@ impl GlobalResourceDirectory {
             entry.access_stats.total_accesses += 1;
             entry.access_stats.last_access = Some(Instant::now());
 
-            let count = entry.access_stats.accesses_by_instance
+            let count = entry
+                .access_stats
+                .accesses_by_instance
                 .entry(accessor.clone())
                 .or_insert(0);
             *count += 1;
@@ -552,7 +557,8 @@ impl GlobalResourceDirectory {
             }
 
             // Update affinity score
-            let affinity = entry.affinity
+            let affinity = entry
+                .affinity
                 .entry(accessor)
                 .or_insert_with(AffinityScore::default);
             affinity.update(latency_us);
@@ -574,7 +580,8 @@ impl GlobalResourceDirectory {
 
     // Classify access pattern based on statistics
     fn classify_access_pattern(&self, stats: &AccessStatistics) -> AccessPattern {
-        let elapsed = stats.last_access
+        let elapsed = stats
+            .last_access
             .map(|t| t.elapsed().as_secs())
             .unwrap_or(u64::MAX);
 
@@ -594,7 +601,8 @@ impl GlobalResourceDirectory {
         // Check if remote accesses exceed threshold
         if entry.access_stats.remote_accesses > self.config.remaster_threshold {
             // Find instance with highest affinity
-            if let Some((best_instance, best_score)) = entry.affinity
+            if let Some((best_instance, best_score)) = entry
+                .affinity
                 .iter()
                 .max_by(|a, b| a.1.score.partial_cmp(&b.1.score).unwrap())
             {
@@ -616,12 +624,14 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(&resource_id);
         let buckets = self.buckets.read();
 
-        let bucket = buckets.get(bucket_id)
+        let bucket = buckets
+            .get(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
         if let Some(entry) = bucket.resources.get(&resource_id) {
             // Determine new master based on affinity
-            let new_master = if let Some((instance, _)) = entry.affinity
+            let new_master = if let Some((instance, _)) = entry
+                .affinity
                 .iter()
                 .filter(|(inst, _)| *inst != &entry.master_instance)
                 .max_by(|a, b| a.1.score.partial_cmp(&b.1.score).unwrap())
@@ -668,8 +678,7 @@ impl GlobalResourceDirectory {
             let elapsed = start.elapsed().as_micros() as u64;
             let mut stats = self.stats.write();
             stats.total_remasters += 1;
-            stats.avg_remaster_time_us =
-                (stats.avg_remaster_time_us + elapsed) / 2;
+            stats.avg_remaster_time_us = (stats.avg_remaster_time_us + elapsed) / 2;
 
             match req.reason {
                 RemasterReason::Affinity => stats.affinity_remasters += 1,
@@ -687,7 +696,8 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(&request.resource_id);
         let mut buckets = self.buckets.write();
 
-        let bucket = buckets.get_mut(bucket_id)
+        let bucket = buckets
+            .get_mut(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
         if let Some(entry) = bucket.resources.get_mut(&request.resource_id) {
@@ -717,7 +727,8 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
 
-        let bucket = buckets.get_mut(bucket_id)
+        let bucket = buckets
+            .get_mut(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
         if let Some(entry) = bucket.resources.get_mut(resource_id) {
@@ -732,7 +743,8 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
 
-        let bucket = buckets.get_mut(bucket_id)
+        let bucket = buckets
+            .get_mut(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
         if let Some(entry) = bucket.resources.get_mut(resource_id) {
@@ -758,7 +770,8 @@ impl GlobalResourceDirectory {
         let mut resource_counts: HashMap<NodeId, usize> = HashMap::new();
 
         for bucket in buckets.iter() {
-            *resource_counts.entry(bucket.master_instance.clone())
+            *resource_counts
+                .entry(bucket.master_instance.clone())
                 .or_insert(0) += bucket.resources.len();
         }
 
@@ -767,17 +780,20 @@ impl GlobalResourceDirectory {
         let avg_resources = total_resources / member_count;
 
         // NEW: Calculate variance for monitoring
-        let variance: f64 = resource_counts.values()
+        let variance: f64 = resource_counts
+            .values()
             .map(|&count| {
                 let diff = count as f64 - avg_resources as f64;
                 diff * diff
             })
-            .sum::<f64>() / member_count as f64;
+            .sum::<f64>()
+            / member_count as f64;
 
         self.stats.write().load_variance = variance;
 
         // NEW: Proactive balancing threshold
-        let imbalance_threshold = (avg_resources as f64 * self.config.load_imbalance_threshold) as usize;
+        let imbalance_threshold =
+            (avg_resources as f64 * self.config.load_imbalance_threshold) as usize;
 
         for bucket in buckets.iter_mut() {
             let current_count = *resource_counts.get(&bucket.master_instance).unwrap_or(&0);
@@ -785,7 +801,8 @@ impl GlobalResourceDirectory {
             // Check if significantly overloaded
             if current_count > avg_resources + imbalance_threshold {
                 // Find underloaded instance
-                let target_opt: Option<NodeId> = resource_counts.iter()
+                let target_opt: Option<NodeId> = resource_counts
+                    .iter()
                     .filter(|(_, &count)| count < avg_resources - imbalance_threshold)
                     .min_by_key(|(_, &count)| count)
                     .map(|(k, _)| k.clone());
@@ -833,7 +850,9 @@ impl GlobalResourceDirectory {
         drop(members);
 
         if remaining_members.is_empty() {
-            return Err(DbError::Internal("No remaining cluster members".to_string()));
+            return Err(DbError::Internal(
+                "No remaining cluster members".to_string(),
+            ));
         }
 
         // Remaster all resources owned by failed node
@@ -850,7 +869,8 @@ impl GlobalResourceDirectory {
             for entry in bucket.resources.values_mut() {
                 if &entry.master_instance == node_id {
                     // Use shadow master if available, otherwise pick from remaining
-                    entry.master_instance = entry.shadow_master
+                    entry.master_instance = entry
+                        .shadow_master
                         .take()
                         .or_else(|| remaining_members.first().cloned())
                         .unwrap_or_else(|| self.node_id.clone());
@@ -936,10 +956,13 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(resource_id);
         let buckets = self.buckets.read();
 
-        let bucket = buckets.get(bucket_id)
+        let bucket = buckets
+            .get(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
-        bucket.resources.get(resource_id)
+        bucket
+            .resources
+            .get(resource_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound("Resource not found".to_string()))
     }
@@ -949,7 +972,8 @@ impl GlobalResourceDirectory {
         let bucket_id = self.hash_resource(resource_id);
         let mut buckets = self.buckets.write();
 
-        let bucket = buckets.get_mut(bucket_id)
+        let bucket = buckets
+            .get_mut(bucket_id)
             .ok_or_else(|| DbError::Internal("Invalid bucket".to_string()))?;
 
         if let Some(entry) = bucket.resources.get_mut(resource_id) {
@@ -980,7 +1004,8 @@ impl GlobalResourceDirectory {
         let mut resources_per_master: HashMap<NodeId, u64> = HashMap::new();
 
         for bucket in buckets.iter() {
-            *resources_per_master.entry(bucket.master_instance.clone())
+            *resources_per_master
+                .entry(bucket.master_instance.clone())
                 .or_insert(0) += bucket.resources.len() as u64;
         }
 
@@ -1001,13 +1026,13 @@ pub struct ClusterTopology {
     pub resources_per_master: HashMap<NodeId, u64>,
     pub total_resources: u64,
     pub total_buckets: usize,
-    pub hash_ring_buckets: ()
+    pub hash_ring_buckets: (),
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::rac::cache_fusion::ResourceClass;
     use super::*;
+    use crate::rac::cache_fusion::ResourceClass;
 
     #[test]
     fn test_hash_distribution() {

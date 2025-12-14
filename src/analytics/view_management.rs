@@ -2,11 +2,11 @@
 //
 // Provides management for regular views and materialized views
 
-use crate::{Result, error::DbError, catalog::Schema};
+use crate::{catalog::Schema, error::DbError, Result};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use parking_lot::RwLock;
 use std::time::{Duration, SystemTime};
 
 // View definition
@@ -103,7 +103,10 @@ impl ViewManager {
     pub fn create_view(&self, view: View) -> Result<()> {
         let mut views = self.views.write();
         if views.contains_key(&view.name) {
-            return Err(DbError::Catalog(format!("View {} already exists", view.name)));
+            return Err(DbError::Catalog(format!(
+                "View {} already exists",
+                view.name
+            )));
         }
         views.insert(view.name.clone(), view);
         Ok(())
@@ -117,7 +120,8 @@ impl ViewManager {
 
     pub fn get_view(&self, name: &str) -> Result<View> {
         let views = self.views.read();
-        views.get(name)
+        views
+            .get(name)
             .cloned()
             .ok_or_else(|| DbError::NotFound(format!("View {} not found", name)))
     }
@@ -130,7 +134,10 @@ impl ViewManager {
     pub fn create_materialized_view(&self, mv: MaterializedView) -> Result<()> {
         let mut mvs = self.materialized_views.write();
         if mvs.contains_key(&mv.name) {
-            return Err(DbError::Catalog(format!("Materialized view {} already exists", mv.name)));
+            return Err(DbError::Catalog(format!(
+                "Materialized view {} already exists",
+                mv.name
+            )));
         }
         mvs.insert(mv.name.clone(), mv);
         Ok(())
@@ -157,7 +164,10 @@ impl ViewManager {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Materialized view {} not found", name)))
+            Err(DbError::NotFound(format!(
+                "Materialized view {} not found",
+                name
+            )))
         }
     }
 
@@ -189,7 +199,7 @@ impl Default for ViewManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::catalog::{Schema, Column, DataType};
+    use crate::catalog::{Column, DataType, Schema};
 
     #[test]
     fn test_view_management() {
@@ -197,14 +207,12 @@ mod tests {
 
         let schema = Schema {
             name: "test_view".to_string(),
-            columns: vec![
-                Column {
-                    name: "id".to_string(),
-                    data_type: DataType::Integer,
-                    nullable: false,
-                    default: None,
-                },
-            ],
+            columns: vec![Column {
+                name: "id".to_string(),
+                data_type: DataType::Integer,
+                nullable: false,
+                default: None,
+            }],
             primary_key: None,
         };
 

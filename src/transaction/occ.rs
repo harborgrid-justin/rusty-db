@@ -16,9 +16,9 @@
 // Scalability: Near-linear to 128+ cores for read-heavy workloads
 
 use crate::error::DbError;
-use std::collections::HashSet;
 use parking_lot::RwLock;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -294,7 +294,9 @@ impl OccManager {
         let txn = Arc::new(RwLock::new(OccTransaction::new(txn_id)));
 
         self.active_txns.write().insert(txn_id, txn);
-        self.stats.transactions_started.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .transactions_started
+            .fetch_add(1, Ordering::Relaxed);
 
         txn_id
     }
@@ -302,7 +304,8 @@ impl OccManager {
     /// Read a value (Phase 1: Read)
     pub fn read(&self, txn_id: TxnId, key: &Key) -> Result<Option<Value>, DbError> {
         let active_txns = self.active_txns.read();
-        let txn_arc = active_txns.get(&txn_id)
+        let txn_arc = active_txns
+            .get(&txn_id)
             .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
 
         let mut txn = txn_arc.write();
@@ -337,7 +340,8 @@ impl OccManager {
     /// Write a value (Phase 1: Read, deferred write)
     pub fn write(&self, txn_id: TxnId, key: Key, value: Value) -> Result<(), DbError> {
         let active_txns = self.active_txns.read();
-        let txn_arc = active_txns.get(&txn_id)
+        let txn_arc = active_txns
+            .get(&txn_id)
             .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?;
 
         let mut txn = txn_arc.write();
@@ -361,7 +365,8 @@ impl OccManager {
 
         // Get transaction
         let active_txns = self.active_txns.read();
-        let txn_arc = active_txns.get(&txn_id)
+        let txn_arc = active_txns
+            .get(&txn_id)
             .ok_or_else(|| DbError::Transaction(format!("Transaction {} not found", txn_id)))?
             .clone();
         drop(active_txns);
@@ -380,7 +385,9 @@ impl OccManager {
             txn.state = TxnState::Committed;
             txn.commit_time = Some(Instant::now());
             self.stats.read_only_txns.fetch_add(1, Ordering::Relaxed);
-            self.stats.transactions_committed.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .transactions_committed
+                .fetch_add(1, Ordering::Relaxed);
             return Ok(());
         }
 
@@ -390,15 +397,21 @@ impl OccManager {
 
         if !self.validate_transaction(&txn)? {
             txn.state = TxnState::Aborted;
-            self.stats.validations_failed.fetch_add(1, Ordering::Relaxed);
-            self.stats.transactions_aborted.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .validations_failed
+                .fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .transactions_aborted
+                .fetch_add(1, Ordering::Relaxed);
             return Err(DbError::Transaction(format!(
                 "Transaction {} validation failed",
                 txn_id
             )));
         }
 
-        self.stats.validations_passed.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .validations_passed
+            .fetch_add(1, Ordering::Relaxed);
 
         // Phase 3: Write
         txn.state = TxnState::Writing;
@@ -412,12 +425,16 @@ impl OccManager {
         self.committed_txns.write().push(Arc::new((*txn).clone()));
 
         // Update statistics
-        self.stats.transactions_committed.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .transactions_committed
+            .fetch_add(1, Ordering::Relaxed);
 
         let elapsed = start.elapsed().as_micros() as u64;
         let current_avg = self.stats.avg_validation_time_us.load(Ordering::Relaxed);
         let new_avg = (current_avg + elapsed) / 2;
-        self.stats.avg_validation_time_us.store(new_avg, Ordering::Relaxed);
+        self.stats
+            .avg_validation_time_us
+            .store(new_avg, Ordering::Relaxed);
 
         Ok(())
     }
@@ -517,7 +534,8 @@ impl OccManager {
         let mut db = self.database.write();
 
         for write_rec in &txn.write_set {
-            let data = db.entry(write_rec.key.clone())
+            let data = db
+                .entry(write_rec.key.clone())
                 .or_insert_with(|| VersionedData::new(Vec::new()));
 
             data.value = write_rec.value.clone();
@@ -535,7 +553,9 @@ impl OccManager {
         if let Some(txn_arc) = active_txns.get(&txn_id) {
             let mut txn = txn_arc.write();
             txn.state = TxnState::Aborted;
-            self.stats.transactions_aborted.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .transactions_aborted
+                .fetch_add(1, Ordering::Relaxed);
         }
 
         Ok(())
@@ -602,7 +622,8 @@ mod tests {
         let occ = OccManager::new(ValidationStrategy::Backward, OccConfig::default());
 
         let txn1 = occ.begin_transaction();
-        occ.write(txn1, "key1".to_string(), b"value1".to_vec()).unwrap();
+        occ.write(txn1, "key1".to_string(), b"value1".to_vec())
+            .unwrap();
         occ.commit(txn1).unwrap();
 
         let txn2 = occ.begin_transaction();
@@ -615,7 +636,8 @@ mod tests {
         let occ = OccManager::new(ValidationStrategy::Backward, OccConfig::default());
 
         let txn1 = occ.begin_transaction();
-        occ.write(txn1, "key1".to_string(), b"value1".to_vec()).unwrap();
+        occ.write(txn1, "key1".to_string(), b"value1".to_vec())
+            .unwrap();
         occ.commit(txn1).unwrap();
 
         let txn2 = occ.begin_transaction();
@@ -633,8 +655,10 @@ mod tests {
         let txn1 = occ.begin_transaction();
         let txn2 = occ.begin_transaction();
 
-        occ.write(txn1, "key1".to_string(), b"value1".to_vec()).unwrap();
-        occ.write(txn2, "key1".to_string(), b"value2".to_vec()).unwrap();
+        occ.write(txn1, "key1".to_string(), b"value1".to_vec())
+            .unwrap();
+        occ.write(txn2, "key1".to_string(), b"value2".to_vec())
+            .unwrap();
 
         // One should succeed, one should fail
         let result1 = occ.commit(txn1);
@@ -644,5 +668,3 @@ mod tests {
         assert!(result1.is_err() || result2.is_err());
     }
 }
-
-

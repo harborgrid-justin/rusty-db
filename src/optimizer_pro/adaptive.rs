@@ -7,17 +7,17 @@
 // - Cardinality feedback loop
 // - SQL Plan Directives
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
-use std::time::Instant;
-use crate::common::{TableId, IndexId, Value};
+use crate::common::{IndexId, TableId, Value};
 use crate::error::Result;
 use crate::optimizer_pro::{
-    PhysicalPlan, PhysicalOperator, Expression, JoinType, PlanId, ExecutionResult,
+    ExecutionResult, Expression, JoinType, PhysicalOperator, PhysicalPlan, PlanId,
 };
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // ============================================================================
 // Adaptive Executor
@@ -69,27 +69,20 @@ impl AdaptiveExecutor {
         let runtime_stats = self.stats_collector.stop_execution(execution_id);
 
         // Update cardinality feedback loop
-        self.feedback_loop.record_actual_cardinality(
-            plan.plan_id,
-            plan.cardinality,
-            rows.len(),
-        );
+        self.feedback_loop
+            .record_actual_cardinality(plan.plan_id, plan.cardinality, rows.len());
 
         // Check if plan needs correction
         if self.should_correct_plan(&runtime_stats, plan)? {
             let corrected_plan = self.plan_corrector.correct_plan(plan, &runtime_stats)?;
             corrections.push(format!(
                 "Plan corrected: switched from {:?} to {:?}",
-                plan.operator,
-                corrected_plan.operator
+                plan.operator, corrected_plan.operator
             ));
 
             // Re-execute with corrected plan
-            let corrected_rows = self.execute_with_monitoring(
-                &corrected_plan,
-                &execution_id,
-                &mut corrections,
-            )?;
+            let corrected_rows =
+                self.execute_with_monitoring(&corrected_plan, &execution_id, &mut corrections)?;
 
             return Ok(ExecutionResult {
                 rows: corrected_rows,
@@ -149,7 +142,13 @@ impl AdaptiveExecutor {
                     corrections.push(format!("Adaptive join switch: {:?}", better_method));
                 }
 
-                self.execute_nested_loop_join(left, right, condition.as_ref(), *join_type, execution_id)
+                self.execute_nested_loop_join(
+                    left,
+                    right,
+                    condition.as_ref(),
+                    *join_type,
+                    execution_id,
+                )
             }
             PhysicalOperator::HashJoin {
                 left,
@@ -157,14 +156,28 @@ impl AdaptiveExecutor {
                 hash_keys,
                 condition,
                 join_type,
-            } => self.execute_hash_join(left, right, hash_keys, condition.as_ref(), *join_type, execution_id),
+            } => self.execute_hash_join(
+                left,
+                right,
+                hash_keys,
+                condition.as_ref(),
+                *join_type,
+                execution_id,
+            ),
             PhysicalOperator::MergeJoin {
                 left,
                 right,
                 merge_keys,
                 condition,
                 join_type,
-            } => self.execute_merge_join(left, right, merge_keys, condition.as_ref(), *join_type, execution_id),
+            } => self.execute_merge_join(
+                left,
+                right,
+                merge_keys,
+                condition.as_ref(),
+                *join_type,
+                execution_id,
+            ),
             _ => Ok(vec![]),
         }
     }
@@ -177,13 +190,15 @@ impl AdaptiveExecutor {
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
         // Record operator start
-        self.stats_collector.record_operator_start(execution_id, "SeqScan");
+        self.stats_collector
+            .record_operator_start(execution_id, "SeqScan");
 
         // Simulate execution
         let rows = vec![];
 
         // Record operator end
-        self.stats_collector.record_operator_end(execution_id, "SeqScan", rows.len());
+        self.stats_collector
+            .record_operator_end(execution_id, "SeqScan", rows.len());
 
         Ok(rows)
     }
@@ -197,12 +212,14 @@ impl AdaptiveExecutor {
         _filter: Option<&Expression>,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
-        self.stats_collector.record_operator_start(execution_id, "IndexScan");
+        self.stats_collector
+            .record_operator_start(execution_id, "IndexScan");
 
         // Simulate execution
         let rows = vec![];
 
-        self.stats_collector.record_operator_end(execution_id, "IndexScan", rows.len());
+        self.stats_collector
+            .record_operator_end(execution_id, "IndexScan", rows.len());
 
         Ok(rows)
     }
@@ -216,7 +233,8 @@ impl AdaptiveExecutor {
         _join_type: JoinType,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
-        self.stats_collector.record_operator_start(execution_id, "NestedLoopJoin");
+        self.stats_collector
+            .record_operator_start(execution_id, "NestedLoopJoin");
 
         let left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
         let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
@@ -231,7 +249,8 @@ impl AdaptiveExecutor {
         // Simulate join execution
         let rows = vec![];
 
-        self.stats_collector.record_operator_end(execution_id, "NestedLoopJoin", rows.len());
+        self.stats_collector
+            .record_operator_end(execution_id, "NestedLoopJoin", rows.len());
 
         Ok(rows)
     }
@@ -246,7 +265,8 @@ impl AdaptiveExecutor {
         _join_type: JoinType,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
-        self.stats_collector.record_operator_start(execution_id, "HashJoin");
+        self.stats_collector
+            .record_operator_start(execution_id, "HashJoin");
 
         let _left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
         let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
@@ -254,7 +274,8 @@ impl AdaptiveExecutor {
         // Simulate join execution
         let rows = vec![];
 
-        self.stats_collector.record_operator_end(execution_id, "HashJoin", rows.len());
+        self.stats_collector
+            .record_operator_end(execution_id, "HashJoin", rows.len());
 
         Ok(rows)
     }
@@ -269,7 +290,8 @@ impl AdaptiveExecutor {
         _join_type: JoinType,
         execution_id: &ExecutionId,
     ) -> Result<Vec<Vec<Value>>> {
-        self.stats_collector.record_operator_start(execution_id, "MergeJoin");
+        self.stats_collector
+            .record_operator_start(execution_id, "MergeJoin");
 
         let _left_rows = self.execute_with_monitoring(left, execution_id, &mut vec![])?;
         let _right_rows = self.execute_with_monitoring(right, execution_id, &mut vec![])?;
@@ -277,13 +299,18 @@ impl AdaptiveExecutor {
         // Simulate join execution
         let rows = vec![];
 
-        self.stats_collector.record_operator_end(execution_id, "MergeJoin", rows.len());
+        self.stats_collector
+            .record_operator_end(execution_id, "MergeJoin", rows.len());
 
         Ok(rows)
     }
 
     /// Check if plan should be corrected
-    fn should_correct_plan(&self, runtime_stats: &RuntimeStatistics, plan: &PhysicalPlan) -> Result<bool> {
+    fn should_correct_plan(
+        &self,
+        runtime_stats: &RuntimeStatistics,
+        plan: &PhysicalPlan,
+    ) -> Result<bool> {
         // Check for significant cardinality misestimation
         if let Some(actual_rows) = runtime_stats.actual_rows {
             let estimated_rows = plan.cardinality;
@@ -304,7 +331,11 @@ impl AdaptiveExecutor {
     }
 
     /// Check if should create plan directive
-    fn should_create_directive(&self, runtime_stats: &RuntimeStatistics, plan: &PhysicalPlan) -> Result<bool> {
+    fn should_create_directive(
+        &self,
+        runtime_stats: &RuntimeStatistics,
+        plan: &PhysicalPlan,
+    ) -> Result<bool> {
         // Create directive if cardinality misestimation is significant
         if let Some(actual_rows) = runtime_stats.actual_rows {
             let estimated_rows = plan.cardinality;
@@ -317,7 +348,11 @@ impl AdaptiveExecutor {
     }
 
     /// Create a plan directive
-    fn create_plan_directive(&self, plan: &PhysicalPlan, runtime_stats: &RuntimeStatistics) -> Result<()> {
+    fn create_plan_directive(
+        &self,
+        plan: &PhysicalPlan,
+        runtime_stats: &RuntimeStatistics,
+    ) -> Result<()> {
         let directive = PlanDirective {
             directive_id: DirectiveId(rand::random()),
             query_signature: format!("{:?}", plan.operator),
@@ -331,7 +366,10 @@ impl AdaptiveExecutor {
             last_used: SystemTime::now(),
         };
 
-        self.plan_directives.write().unwrap().add_directive(directive);
+        self.plan_directives
+            .write()
+            .unwrap()
+            .add_directive(directive);
 
         Ok(())
     }
@@ -383,7 +421,12 @@ impl RuntimeStatsCollector {
                 execution_id: stats.execution_id,
                 plan_id: stats._plan_id,
                 execution_time: stats.start_time.elapsed(),
-                actual_rows: stats.operator_stats.values().map(|s| s.rows_produced).sum::<usize>().into(),
+                actual_rows: stats
+                    .operator_stats
+                    .values()
+                    .map(|s| s.rows_produced)
+                    .sum::<usize>()
+                    .into(),
                 operator_stats: stats.operator_stats,
                 cardinality_mismatches: stats.cardinality_mismatches,
             };
@@ -421,7 +464,12 @@ impl RuntimeStatsCollector {
     }
 
     /// Record operator end
-    pub fn record_operator_end(&self, execution_id: &ExecutionId, operator: &str, rows_produced: usize) {
+    pub fn record_operator_end(
+        &self,
+        execution_id: &ExecutionId,
+        operator: &str,
+        rows_produced: usize,
+    ) {
         let mut executions = self.executions.write().unwrap();
 
         if let Some(stats) = executions.get_mut(execution_id) {
@@ -778,12 +826,7 @@ impl CardinalityFeedbackLoop {
     }
 
     /// Record actual cardinality
-    pub fn record_actual_cardinality(
-        &self,
-        plan_id: PlanId,
-        estimated: usize,
-        actual: usize,
-    ) {
+    pub fn record_actual_cardinality(&self, plan_id: PlanId, estimated: usize, actual: usize) {
         let mut predictions = self.predictions.write().unwrap();
 
         let prediction = predictions.entry(plan_id).or_insert(CardinalityPrediction {
@@ -858,11 +901,6 @@ mod tests {
         let method = selector.select_join_method(500, 500, &ExecutionId(1));
         assert!(method.is_ok());
 
-        selector.record_performance(
-            1000,
-            1000,
-            JoinMethod::Hash,
-            Duration::from_millis(100),
-        );
+        selector.record_performance(1000, 1000, JoinMethod::Hash, Duration::from_millis(100));
     }
 }

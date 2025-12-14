@@ -2,10 +2,10 @@
 //
 // Core session state types and management functionality
 
-use std::collections::{HashMap, HashSet};
-use std::time::{SystemTime, Duration};
-use serde::{Serialize, Deserialize};
 use crate::common::{TransactionId, Value};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use std::time::{Duration, SystemTime};
 
 // Session identifier type
 pub type SID = u64;
@@ -67,11 +67,15 @@ impl SessionState {
     }
 
     pub fn age(&self) -> Duration {
-        SystemTime::now().duration_since(self.created_at).unwrap_or_default()
+        SystemTime::now()
+            .duration_since(self.created_at)
+            .unwrap_or_default()
     }
 
     pub fn idle_time(&self) -> Duration {
-        SystemTime::now().duration_since(self.last_active).unwrap_or_default()
+        SystemTime::now()
+            .duration_since(self.last_active)
+            .unwrap_or_default()
     }
 
     pub fn is_idle(&self, timeout: Duration) -> bool {

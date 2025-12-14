@@ -2,14 +2,14 @@
 //
 // Pre-allocated, aligned buffer pool for Direct I/O operations.
 
-use std::fmt;
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use crate::io::{PAGE_SIZE, SECTOR_SIZE};
-use std::alloc::{alloc, dealloc, Layout};
-use std::ptr;
-use std::sync::Arc;
 use parking_lot::Mutex;
+use std::alloc::{alloc, dealloc, Layout};
+use std::fmt;
+use std::ptr;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
 
 // ============================================================================
 // Buffer Pool Configuration
@@ -288,7 +288,9 @@ impl BufferPool {
                         dealloc(buffer.ptr, buffer.layout);
                     }
                 }
-                return Err(DbError::Internal("Buffer pool allocation failed".to_string()));
+                return Err(DbError::Internal(
+                    "Buffer pool allocation failed".to_string(),
+                ));
             }
 
             // Zero the buffer
@@ -402,7 +404,9 @@ impl BufferPool {
                         ));
                     }
                 }
-                Err(DbError::Internal("No available buffers in pool".to_string()))
+                Err(DbError::Internal(
+                    "No available buffers in pool".to_string(),
+                ))
             }
             BufferAllocationStrategy::AlwaysNew => {
                 if self.config.enable_stats {
@@ -488,7 +492,8 @@ impl BufferPool {
         }
 
         self.allocated.store(0, Ordering::Relaxed);
-        self.available.store(self.config.pool_size, Ordering::Relaxed);
+        self.available
+            .store(self.config.pool_size, Ordering::Relaxed);
     }
 }
 

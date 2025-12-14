@@ -2,13 +2,13 @@
 //
 // Core failure detection and recovery strategy components for the auto-recovery system.
 
-use crate::{Result, DbError};
+use crate::{DbError, Result};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::time::{Duration, Instant, SystemTime};
-use parking_lot::RwLock;
 use tokio::time::sleep;
 
 // ============================================================================
@@ -163,7 +163,13 @@ impl CrashDetector {
         }
     }
 
-    pub fn update_metrics(&self, pid: u32, cpu_percent: f64, memory_bytes: u64, thread_count: usize) {
+    pub fn update_metrics(
+        &self,
+        pid: u32,
+        cpu_percent: f64,
+        memory_bytes: u64,
+        thread_count: usize,
+    ) {
         if let Some(health) = self.processes.write().get_mut(&pid) {
             health.cpu_percent = cpu_percent;
             health.memory_bytes = memory_bytes;
@@ -199,13 +205,17 @@ impl CrashDetector {
 
             for (pid, health) in crashed {
                 let elapsed = health.last_heartbeat.elapsed();
-                let reason = format!("Process {} crashed or hung (no heartbeat for {:?})", pid, elapsed);
+                let reason = format!(
+                    "Process {} crashed or hung (no heartbeat for {:?})",
+                    pid, elapsed
+                );
 
                 {
                     let mut stats = self.stats.write();
                     stats.total_crashes_detected += 1;
-                    stats.avg_detection_time_ms =
-                        (stats.avg_detection_time_ms + detection_start.elapsed().as_millis() as u64) / 2;
+                    stats.avg_detection_time_ms = (stats.avg_detection_time_ms
+                        + detection_start.elapsed().as_millis() as u64)
+                        / 2;
                 }
 
                 if let Some(ref callback) = *self.crash_callback.lock().unwrap() {
@@ -286,7 +296,8 @@ impl TransactionRollbackManager {
         undo_data: Vec<u8>,
     ) -> Result<()> {
         let mut txns = self.transactions.write();
-        let state = txns.get_mut(&txn_id)
+        let state = txns
+            .get_mut(&txn_id)
             .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?;
 
         let op = TransactionOperation {
@@ -308,7 +319,8 @@ impl TransactionRollbackManager {
 
         let state = {
             let txns = self.transactions.read();
-            txns.get(&txn_id).cloned()
+            txns.get(&txn_id)
+                .cloned()
                 .ok_or_else(|| DbError::NotFound(format!("Transaction {} not found", txn_id)))?
         };
 
@@ -325,13 +337,16 @@ impl TransactionRollbackManager {
             let mut stats = self.stats.write();
             stats.total_rollbacks += 1;
             stats.successful_rollbacks += 1;
-            stats.avg_rollback_time_ms =
-                (stats.avg_rollback_time_ms + elapsed) / 2;
+            stats.avg_rollback_time_ms = (stats.avg_rollback_time_ms + elapsed) / 2;
             stats.total_operations_undone += operations_undone;
         }
 
-        tracing::info!("Rolled back transaction {} ({} operations in {}ms)",
-            txn_id, operations_undone, elapsed);
+        tracing::info!(
+            "Rolled back transaction {} ({} operations in {}ms)",
+            txn_id,
+            operations_undone,
+            elapsed
+        );
 
         Ok(())
     }
@@ -433,7 +448,9 @@ impl CorruptionDetector {
 
         for page_id in 0..self.scan_rate {
             if let Some(corruption) = self.check_page(page_id as u64).await? {
-                self.corrupted_pages.write().insert(page_id as u64, corruption.clone());
+                self.corrupted_pages
+                    .write()
+                    .insert(page_id as u64, corruption.clone());
 
                 if let Some(ref callback) = *self.corruption_callback.lock().unwrap() {
                     callback(corruption);
@@ -479,12 +496,16 @@ impl CorruptionDetector {
             self.stats.write().total_corruptions_repaired += 1;
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Corruption for page {} not found", page_id)))
+            Err(DbError::NotFound(format!(
+                "Corruption for page {} not found",
+                page_id
+            )))
         }
     }
 
     pub fn get_corrupted_pages(&self) -> Vec<PageCorruption> {
-        self.corrupted_pages.read()
+        self.corrupted_pages
+            .read()
             .values()
             .filter(|c| !c.repaired)
             .cloned()
@@ -566,15 +587,25 @@ impl DataRepairer {
     fn select_best_replica(&self) -> Result<ReplicaInfo> {
         let replicas = self.replicas.read();
 
-        replicas.iter()
+        replicas
+            .iter()
             .filter(|r| r.is_healthy)
             .min_by_key(|r| r.lag_ms)
             .cloned()
             .ok_or_else(|| DbError::Unavailable("No healthy replicas available".to_string()))
     }
 
-    async fn fetch_page_from_replica(&self, replica: &ReplicaInfo, page_id: u64) -> Result<Vec<u8>> {
-        tracing::debug!("Fetching page {} from {}:{}", page_id, replica.host, replica.port);
+    async fn fetch_page_from_replica(
+        &self,
+        replica: &ReplicaInfo,
+        page_id: u64,
+    ) -> Result<Vec<u8>> {
+        tracing::debug!(
+            "Fetching page {} from {}:{}",
+            page_id,
+            replica.host,
+            replica.port
+        );
         sleep(Duration::from_millis(10)).await;
         Ok(vec![0u8; 4096])
     }
@@ -584,7 +615,12 @@ impl DataRepairer {
     }
 
     async fn write_page(&self, file_path: &str, page_id: u64, data: &[u8]) -> Result<()> {
-        tracing::debug!("Writing repaired page {} to {} ({} bytes)", page_id, file_path, data.len());
+        tracing::debug!(
+            "Writing repaired page {} to {} ({} bytes)",
+            page_id,
+            file_path,
+            data.len()
+        );
         sleep(Duration::from_millis(5)).await;
         Ok(())
     }

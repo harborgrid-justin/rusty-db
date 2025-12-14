@@ -21,12 +21,12 @@
 // - **Hash**: One-way hashing with salt
 
 use crate::{DbError, Result};
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use parking_lot::RwLock;
-use sha2::{Sha256, Digest};
 use rand::Rng;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 
 // Masking type enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -67,13 +67,18 @@ impl MaskingType {
             "PARTIAL_MASK" => Ok(Self::PartialMask { show_last: 4 }),
             "SHUFFLE" => Ok(Self::Shuffle),
             "NULLIFY" => Ok(Self::Nullify),
-            "HASH" => Ok(Self::Hash { salt: "default_salt".to_string() }),
+            "HASH" => Ok(Self::Hash {
+                salt: "default_salt".to_string(),
+            }),
             "FPE" | "FORMAT_PRESERVING" => Ok(Self::FormatPreserving),
             "EMAIL_MASK" => Ok(Self::EmailMask),
             "CREDIT_CARD_MASK" | "CC_MASK" => Ok(Self::CreditCardMask),
             "SSN_MASK" => Ok(Self::SsnMask),
             "PHONE_MASK" => Ok(Self::PhoneMask),
-            _ => Err(DbError::InvalidInput(format!("Unknown masking type: {}", s))),
+            _ => Err(DbError::InvalidInput(format!(
+                "Unknown masking type: {}",
+                s
+            ))),
         }
     }
 }
@@ -190,20 +195,20 @@ struct MaskingStats {
 
 impl MaskingEngine {
     // Create a new masking engine
-pub fn new() -> Result<Self> {
-                let mut engine = Self {
-                    policies: RwLock::new(HashMap::new()),
-                    substitution_tables: RwLock::new(HashMap::new()),
-                    custom_functions: RwLock::new(HashMap::new()),
-                    consistency_cache: RwLock::new(HashMap::new()),
-                    stats: RwLock::new(MaskingStats::default()),
-                };
+    pub fn new() -> Result<Self> {
+        let mut engine = Self {
+            policies: RwLock::new(HashMap::new()),
+            substitution_tables: RwLock::new(HashMap::new()),
+            custom_functions: RwLock::new(HashMap::new()),
+            consistency_cache: RwLock::new(HashMap::new()),
+            stats: RwLock::new(MaskingStats::default()),
+        };
 
-                // Initialize default substitution tables
-                engine.init_default_substitution_tables();
+        // Initialize default substitution tables
+        engine.init_default_substitution_tables();
 
-                Ok(engine)
-            }
+        Ok(engine)
+    }
 
     // Initialize default substitution tables
     fn init_default_substitution_tables(&mut self) {
@@ -211,27 +216,54 @@ pub fn new() -> Result<Self> {
         let first_names = SubstitutionTable {
             name: "FIRST_NAMES".to_string(),
             values: vec![
-                "John", "Jane", "Michael", "Sarah", "David", "Emily",
-                "Robert", "Lisa", "William", "Jennifer", "James", "Mary",
-            ].iter().map(|s| s.to_string()).collect(),
+                "John", "Jane", "Michael", "Sarah", "David", "Emily", "Robert", "Lisa", "William",
+                "Jennifer", "James", "Mary",
+            ]
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
         };
 
         // Last names
         let last_names = SubstitutionTable {
             name: "LAST_NAMES".to_string(),
             values: vec![
-                "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia",
-                "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez",
-            ].iter().map(|s| s.to_string()).collect(),
+                "Smith",
+                "Johnson",
+                "Williams",
+                "Brown",
+                "Jones",
+                "Garcia",
+                "Miller",
+                "Davis",
+                "Rodriguez",
+                "Martinez",
+                "Hernandez",
+                "Lopez",
+            ]
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
         };
 
         // Cities
         let cities = SubstitutionTable {
             name: "CITIES".to_string(),
             values: vec![
-                "New York", "Los Angeles", "Chicago", "Houston", "Phoenix",
-                "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
-            ].iter().map(|s| s.to_string()).collect(),
+                "New York",
+                "Los Angeles",
+                "Chicago",
+                "Houston",
+                "Phoenix",
+                "Philadelphia",
+                "San Antonio",
+                "San Diego",
+                "Dallas",
+                "San Jose",
+            ]
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
         };
 
         let mut tables = self.substitution_tables.write();
@@ -248,11 +280,7 @@ pub fn new() -> Result<Self> {
         masking_type: &str,
     ) -> Result<()> {
         let mask_type = MaskingType::from_str(masking_type)?;
-        let policy = MaskingPolicy::new(
-            name.to_string(),
-            column_pattern.to_string(),
-            mask_type,
-        );
+        let policy = MaskingPolicy::new(name.to_string(), column_pattern.to_string(), mask_type);
 
         self.policies.write().insert(name.to_string(), policy);
         Ok(())
@@ -275,7 +303,9 @@ pub fn new() -> Result<Self> {
 
     // Drop a masking policy
     pub fn drop_policy(&mut self, name: &str) -> Result<()> {
-        self.policies.write().remove(name)
+        self.policies
+            .write()
+            .remove(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         Ok(())
     }
@@ -283,7 +313,8 @@ pub fn new() -> Result<Self> {
     // Enable a policy
     pub fn enable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
-        let policy = policies.get_mut(name)
+        let policy = policies
+            .get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = true;
         Ok(())
@@ -292,22 +323,19 @@ pub fn new() -> Result<Self> {
     // Disable a policy
     pub fn disable_policy(&mut self, name: &str) -> Result<()> {
         let mut policies = self.policies.write();
-        let policy = policies.get_mut(name)
+        let policy = policies
+            .get_mut(name)
             .ok_or_else(|| DbError::NotFound(format!("Policy not found: {}", name)))?;
         policy.enabled = false;
         Ok(())
     }
 
     // Apply masking to a value (dynamic masking)
-    pub fn mask_value(
-        &self,
-        table: &str,
-        column: &str,
-        value: &str,
-    ) -> Result<String> {
+    pub fn mask_value(&self, table: &str, column: &str, value: &str) -> Result<String> {
         // Find applicable policies (sorted by priority)
         let policies = self.policies.read();
-        let mut applicable: Vec<&MaskingPolicy> = policies.values()
+        let mut applicable: Vec<&MaskingPolicy> = policies
+            .values()
             .filter(|p| p.enabled && p.applies_to(table, column).unwrap_or(false))
             .collect();
 
@@ -321,7 +349,11 @@ pub fn new() -> Result<Self> {
 
         // Apply first matching policy
         let policy = applicable[0];
-        let masked = self.apply_masking(&policy.masking_type, value, policy.consistency_key.as_deref())?;
+        let masked = self.apply_masking(
+            &policy.masking_type,
+            value,
+            policy.consistency_key.as_deref(),
+        )?;
 
         // Update statistics
         let mut stats = self.stats.write();
@@ -364,7 +396,11 @@ pub fn new() -> Result<Self> {
                 if value.len() <= *show_first {
                     "*".repeat(value.len())
                 } else {
-                    format!("{}{}", &value[..*show_first], "*".repeat(value.len() - show_first))
+                    format!(
+                        "{}{}",
+                        &value[..*show_first],
+                        "*".repeat(value.len() - show_first)
+                    )
                 }
             }
 
@@ -377,8 +413,9 @@ pub fn new() -> Result<Self> {
 
             MaskingType::Substitution { table } => {
                 let tables = self.substitution_tables.read();
-                let sub_table = tables.get(table)
-                    .ok_or_else(|| DbError::NotFound(format!("Substitution table not found: {}", table)))?;
+                let sub_table = tables.get(table).ok_or_else(|| {
+                    DbError::NotFound(format!("Substitution table not found: {}", table))
+                })?;
 
                 if let Some(key) = consistency_key {
                     sub_table.get_consistent(value, key).to_string()
@@ -396,30 +433,21 @@ pub fn new() -> Result<Self> {
                 format!("{:x}", hasher.finalize())
             }
 
-            MaskingType::FormatPreserving => {
-                self.format_preserving_mask(value)
-            }
+            MaskingType::FormatPreserving => self.format_preserving_mask(value),
 
-            MaskingType::EmailMask => {
-                self.mask_email(value)?
-            }
+            MaskingType::EmailMask => self.mask_email(value)?,
 
-            MaskingType::CreditCardMask => {
-                self.mask_credit_card(value)
-            }
+            MaskingType::CreditCardMask => self.mask_credit_card(value),
 
-            MaskingType::SsnMask => {
-                self.mask_ssn(value)
-            }
+            MaskingType::SsnMask => self.mask_ssn(value),
 
-            MaskingType::PhoneMask => {
-                self.mask_phone(value)
-            }
+            MaskingType::PhoneMask => self.mask_phone(value),
 
             MaskingType::Custom { function_name } => {
                 let functions = self.custom_functions.read();
-                let func = functions.get(function_name)
-                    .ok_or_else(|| DbError::NotFound(format!("Custom function not found: {}", function_name)))?;
+                let func = functions.get(function_name).ok_or_else(|| {
+                    DbError::NotFound(format!("Custom function not found: {}", function_name))
+                })?;
                 func(value)?
             }
         };
@@ -427,7 +455,9 @@ pub fn new() -> Result<Self> {
         // Cache the result if consistency key provided
         if let Some(key) = consistency_key {
             let cache_key = format!("{}:{}", key, value);
-            self.consistency_cache.write().insert(cache_key, masked.clone());
+            self.consistency_cache
+                .write()
+                .insert(cache_key, masked.clone());
         }
 
         Ok(masked)
@@ -472,7 +502,7 @@ pub fn new() -> Result<Self> {
         let digits: String = value.chars().filter(|c| c.is_ascii_digit()).collect();
         if digits.len() >= 4 {
             let prefix_len = digits.len() - 4;
-            format!("{}{}",  "*".repeat(prefix_len), &digits[prefix_len..])
+            format!("{}{}", "*".repeat(prefix_len), &digits[prefix_len..])
         } else {
             "*".repeat(digits.len())
         }
@@ -500,21 +530,22 @@ pub fn new() -> Result<Self> {
     }
 
     // Register a custom masking function
-    pub fn register_custom_function(
-        &mut self,
-        name: String,
-        function: MaskingFunction,
-    ) {
+    pub fn register_custom_function(&mut self, name: String, function: MaskingFunction) {
         self.custom_functions.write().insert(name, function);
     }
 
     // Add a substitution table
     pub fn add_substitution_table(&mut self, name: String, values: Vec<String>) -> Result<()> {
         if values.is_empty() {
-            return Err(DbError::InvalidInput("Substitution table cannot be empty".to_string()));
+            return Err(DbError::InvalidInput(
+                "Substitution table cannot be empty".to_string(),
+            ));
         }
 
-        let table = SubstitutionTable { name: name.clone(), values };
+        let table = SubstitutionTable {
+            name: name.clone(),
+            values,
+        };
         self.substitution_tables.write().insert(name, table);
         Ok(())
     }
@@ -532,7 +563,11 @@ pub fn new() -> Result<Self> {
     // Get masking statistics
     pub fn get_stats(&self) -> (u64, u64, HashMap<String, u64>) {
         let stats = self.stats.read();
-        (stats.total_masked, stats.cache_hits, stats.by_policy.clone())
+        (
+            stats.total_masked,
+            stats.cache_hits,
+            stats.by_policy.clone(),
+        )
     }
 
     // Clear consistency cache
@@ -547,7 +582,8 @@ pub fn new() -> Result<Self> {
         column: &str,
         values: Vec<String>,
     ) -> Result<Vec<String>> {
-        values.iter()
+        values
+            .iter()
             .map(|v| self.mask_value(table, column, v))
             .collect()
     }
@@ -572,7 +608,9 @@ mod tests {
     #[test]
     fn test_create_policy() {
         let mut engine = MaskingEngine::new().unwrap();
-        engine.create_policy("mask_ssn", ".*ssn.*", "SSN_MASK").unwrap();
+        engine
+            .create_policy("mask_ssn", ".*ssn.*", "SSN_MASK")
+            .unwrap();
 
         let policies = engine.list_policies();
         assert!(policies.contains(&"mask_ssn".to_string()));
@@ -581,11 +619,13 @@ mod tests {
     #[test]
     fn test_partial_masking() {
         let engine = MaskingEngine::new().unwrap();
-        let masked = engine.apply_masking(
-            &MaskingType::PartialMask { show_last: 4 },
-            "1234567890",
-            None,
-        ).unwrap();
+        let masked = engine
+            .apply_masking(
+                &MaskingType::PartialMask { show_last: 4 },
+                "1234567890",
+                None,
+            )
+            .unwrap();
 
         assert_eq!(masked, "******7890");
     }
@@ -616,16 +656,24 @@ mod tests {
     #[test]
     fn test_hash_masking() {
         let engine = MaskingEngine::new().unwrap();
-        let masked1 = engine.apply_masking(
-            &MaskingType::Hash { salt: "test".to_string() },
-            "secret",
-            None,
-        ).unwrap();
-        let masked2 = engine.apply_masking(
-            &MaskingType::Hash { salt: "test".to_string() },
-            "secret",
-            None,
-        ).unwrap();
+        let masked1 = engine
+            .apply_masking(
+                &MaskingType::Hash {
+                    salt: "test".to_string(),
+                },
+                "secret",
+                None,
+            )
+            .unwrap();
+        let masked2 = engine
+            .apply_masking(
+                &MaskingType::Hash {
+                    salt: "test".to_string(),
+                },
+                "secret",
+                None,
+            )
+            .unwrap();
 
         // Same input should produce same hash
         assert_eq!(masked1, masked2);
@@ -637,17 +685,25 @@ mod tests {
         let engine = MaskingEngine::new().unwrap();
         let consistency_key = Some("dataset1");
 
-        let masked1 = engine.apply_masking(
-            &MaskingType::Substitution { table: "FIRST_NAMES".to_string() },
-            "original_value",
-            consistency_key,
-        ).unwrap();
+        let masked1 = engine
+            .apply_masking(
+                &MaskingType::Substitution {
+                    table: "FIRST_NAMES".to_string(),
+                },
+                "original_value",
+                consistency_key,
+            )
+            .unwrap();
 
-        let masked2 = engine.apply_masking(
-            &MaskingType::Substitution { table: "FIRST_NAMES".to_string() },
-            "original_value",
-            consistency_key,
-        ).unwrap();
+        let masked2 = engine
+            .apply_masking(
+                &MaskingType::Substitution {
+                    table: "FIRST_NAMES".to_string(),
+                },
+                "original_value",
+                consistency_key,
+            )
+            .unwrap();
 
         // Same input with same consistency key should produce same output
         assert_eq!(masked1, masked2);
@@ -670,10 +726,14 @@ mod tests {
         let mut engine = MaskingEngine::new().unwrap();
 
         // Create policy for SSN columns
-        engine.create_policy("ssn_policy", "(?i)ssn|social", "SSN_MASK").unwrap();
+        engine
+            .create_policy("ssn_policy", "(?i)ssn|social", "SSN_MASK")
+            .unwrap();
 
         // Mask a value
-        let masked = engine.mask_value("customers", "ssn", "123-45-6789").unwrap();
+        let masked = engine
+            .mask_value("customers", "ssn", "123-45-6789")
+            .unwrap();
         assert_eq!(masked, "***-**-6789");
 
         // Non-matching column should not be masked
@@ -686,17 +746,20 @@ mod tests {
         let mut engine = MaskingEngine::new().unwrap();
 
         // Register custom function
-        let custom_fn: MaskingFunction = Box::new(|value: &str| {
-            Ok(format!("CUSTOM_{}", value.to_uppercase()))
-        });
+        let custom_fn: MaskingFunction =
+            Box::new(|value: &str| Ok(format!("CUSTOM_{}", value.to_uppercase())));
         engine.register_custom_function("my_mask".to_string(), custom_fn);
 
         // Use custom function
-        let masked = engine.apply_masking(
-            &MaskingType::Custom { function_name: "my_mask".to_string() },
-            "test",
-            None,
-        ).unwrap();
+        let masked = engine
+            .apply_masking(
+                &MaskingType::Custom {
+                    function_name: "my_mask".to_string(),
+                },
+                "test",
+                None,
+            )
+            .unwrap();
 
         assert_eq!(masked, "CUSTOM_TEST");
     }

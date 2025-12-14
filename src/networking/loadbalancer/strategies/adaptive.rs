@@ -55,9 +55,9 @@ impl Default for ScoringConfig {
             error_weight: 0.3,
             connection_weight: 0.2,
             throughput_weight: 0.1,
-            latency_norm: 100.0,      // 100ms baseline
-            connection_norm: 100.0,    // 100 connections baseline
-            throughput_norm: 1000.0,   // 1000 req/s baseline
+            latency_norm: 100.0,     // 100ms baseline
+            connection_norm: 100.0,  // 100 connections baseline
+            throughput_norm: 1000.0, // 1000 req/s baseline
         }
     }
 }
@@ -156,7 +156,7 @@ impl AdaptiveBalancer {
         node_id: &str,
         latency_ms: f64,
         #[allow(dead_code)] // Reserved for error rate tracking
-    error: bool,
+        error: bool,
     ) {
         let mut history = self.history.write().await;
         history.record(node_id, latency_ms, error);
@@ -218,7 +218,10 @@ impl PerformanceHistory {
             error,
         };
 
-        let samples = self.samples.entry(node_id.to_string()).or_insert_with(Vec::new);
+        let samples = self
+            .samples
+            .entry(node_id.to_string())
+            .or_insert_with(Vec::new);
         samples.push(sample);
 
         // Keep only recent samples
@@ -243,8 +246,10 @@ impl PerformanceHistory {
         let first_half = &samples[..mid];
         let second_half = &samples[mid..];
 
-        let avg_first: f64 = first_half.iter().map(|s| s.latency_ms).sum::<f64>() / first_half.len() as f64;
-        let avg_second: f64 = second_half.iter().map(|s| s.latency_ms).sum::<f64>() / second_half.len() as f64;
+        let avg_first: f64 =
+            first_half.iter().map(|s| s.latency_ms).sum::<f64>() / first_half.len() as f64;
+        let avg_second: f64 =
+            second_half.iter().map(|s| s.latency_ms).sum::<f64>() / second_half.len() as f64;
 
         // Calculate trend (normalized)
         if avg_first > 0.0 {
@@ -366,8 +371,8 @@ mod tests {
     async fn test_adaptive_selection() {
         let balancer = AdaptiveBalancer::new();
         let backends = vec![
-            create_backend("node0", 200.0, 0.1, 50),  // High latency, high error
-            create_backend("node1", 50.0, 0.01, 10),  // Good performance
+            create_backend("node0", 200.0, 0.1, 50), // High latency, high error
+            create_backend("node1", 50.0, 0.01, 10), // Good performance
             create_backend("node2", 100.0, 0.05, 20), // Medium performance
         ];
         let ctx = LoadBalancerContext::default();
@@ -379,7 +384,7 @@ mod tests {
     #[tokio::test]
     async fn test_custom_scoring_config() {
         let config = ScoringConfig {
-            latency_weight: 1.0,  // Only care about latency
+            latency_weight: 1.0, // Only care about latency
             error_weight: 0.0,
             connection_weight: 0.0,
             throughput_weight: 0.0,
@@ -420,7 +425,7 @@ mod tests {
         let balancer = LatencyAwareBalancer::default();
         let backends = vec![
             create_backend("node0", 100.0, 0.0, 10),
-            create_backend("node1", 50.0, 0.0, 5),  // Lowest latency and load
+            create_backend("node1", 50.0, 0.0, 5), // Lowest latency and load
             create_backend("node2", 75.0, 0.0, 20),
         ];
         let ctx = LoadBalancerContext::default();

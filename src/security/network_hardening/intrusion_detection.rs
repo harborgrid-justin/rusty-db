@@ -2,14 +2,14 @@
 //
 // Protocol validation, TLS enforcement, and network anomaly detection.
 
-use std::time::Instant;
-use std::collections::{HashSet, HashMap, VecDeque};
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::Arc;
-use sha2::{Sha256, Digest};
-use serde::{Serialize, Deserialize};
+use std::time::Instant;
 
 // Constants
 const MAX_REQUEST_SIZE: usize = 10 * 1024 * 1024;
@@ -103,7 +103,10 @@ impl ProtocolValidator {
         if !rules.allowed_methods.contains(method) {
             stats.validation_failed += 1;
             stats.method_violations += 1;
-            return Err(DbError::InvalidOperation(format!("Invalid method: {}", method)));
+            return Err(DbError::InvalidOperation(format!(
+                "Invalid method: {}",
+                method
+            )));
         }
 
         if uri.len() > rules.max_uri_length {
@@ -135,7 +138,9 @@ impl ProtocolValidator {
         if bodysize > rules.max_request_size {
             stats.validation_failed += 1;
             stats.size_violations += 1;
-            return Err(DbError::InvalidOperation("Request body too large".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Request body too large".to_string(),
+            ));
         }
 
         if let Some(content_type) = headers.get("Content-Type") {
@@ -143,7 +148,10 @@ impl ProtocolValidator {
             if !rules.allowed_content_types.contains(ct) {
                 stats.validation_failed += 1;
                 stats.protocol_violations += 1;
-                return Err(DbError::InvalidOperation(format!("Invalid content type: {}", ct)));
+                return Err(DbError::InvalidOperation(format!(
+                    "Invalid content type: {}",
+                    ct
+                )));
             }
         }
 
@@ -243,12 +251,17 @@ impl TLSEnforcer {
 
         if !config.allowed_ciphers.iter().any(|c| c == cipher) {
             stats.weak_cipher_rejected += 1;
-            return Err(DbError::InvalidOperation(format!("Cipher not allowed: {}", cipher)));
+            return Err(DbError::InvalidOperation(format!(
+                "Cipher not allowed: {}",
+                cipher
+            )));
         }
 
         if config.require_pfs && !Self::cipher_supports_pfs(cipher) {
             stats.weak_cipher_rejected += 1;
-            return Err(DbError::InvalidOperation("Cipher does not support PFS".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Cipher does not support PFS".to_string(),
+            ));
         }
 
         if config.enable_cert_pinning {
@@ -258,7 +271,9 @@ impl TLSEnforcer {
                 if let Some(pinned_fp) = self.pinned_certs.read().get(host) {
                     if &fingerprint != pinned_fp {
                         stats.pinning_violations += 1;
-                        return Err(DbError::InvalidOperation("Certificate pinning violation".to_string()));
+                        return Err(DbError::InvalidOperation(
+                            "Certificate pinning violation".to_string(),
+                        ));
                     }
                 }
             }
@@ -266,7 +281,9 @@ impl TLSEnforcer {
 
         if config.require_client_cert && cert_der.is_none() {
             stats.cert_validation_failures += 1;
-            return Err(DbError::InvalidOperation("Client certificate required".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Client certificate required".to_string(),
+            ));
         }
 
         stats.connections_established += 1;
@@ -310,7 +327,13 @@ impl MetricsTimeSeries {
         }
     }
 
-    fn add_sample(&mut self, request_rate: f64, response_time: f64, error_rate: f64, payloadsize: usize) {
+    fn add_sample(
+        &mut self,
+        request_rate: f64,
+        response_time: f64,
+        error_rate: f64,
+        payloadsize: usize,
+    ) {
         let now = Instant::now();
 
         self.request_rates.push_back((now, request_rate));
@@ -384,7 +407,13 @@ impl NetworkAnomalyDetector {
         }
     }
 
-    pub fn add_sample(&self, request_rate: f64, response_time: f64, error_rate: f64, payload_size: usize) {
+    pub fn add_sample(
+        &self,
+        request_rate: f64,
+        response_time: f64,
+        error_rate: f64,
+        payload_size: usize,
+    ) {
         let mut metrics = self.metrics.write();
         metrics.add_sample(request_rate, response_time, error_rate, payload_size);
 
@@ -406,7 +435,11 @@ impl NetworkAnomalyDetector {
         }
 
         let current_rr = metrics.request_rates.back().map(|(_, v)| *v).unwrap_or(0.0);
-        let current_rt = metrics.response_times.back().map(|(_, v)| *v).unwrap_or(0.0);
+        let current_rt = metrics
+            .response_times
+            .back()
+            .map(|(_, v)| *v)
+            .unwrap_or(0.0);
         let current_er = metrics.error_rates.back().map(|(_, v)| *v).unwrap_or(0.0);
 
         let rr_zscore = if baseline.stddev_request_rate > 0.0 {
@@ -434,7 +467,10 @@ impl NetworkAnomalyDetector {
                 timestamp: Instant::now(),
                 anomaly_type: AnomalyType::RequestRateSpike,
                 severity: rr_zscore.abs(),
-                description: format!("Request rate anomaly: {:.2} req/s (z-score: {:.2})", current_rr, rr_zscore),
+                description: format!(
+                    "Request rate anomaly: {:.2} req/s (z-score: {:.2})",
+                    current_rr, rr_zscore
+                ),
             });
             stats.anomalies_detected += 1;
             stats.request_rate_anomalies += 1;
@@ -445,7 +481,10 @@ impl NetworkAnomalyDetector {
                 timestamp: Instant::now(),
                 anomaly_type: AnomalyType::ResponseTimeSpike,
                 severity: rt_zscore.abs(),
-                description: format!("Response time anomaly: {:.2} ms (z-score: {:.2})", current_rt, rt_zscore),
+                description: format!(
+                    "Response time anomaly: {:.2} ms (z-score: {:.2})",
+                    current_rt, rt_zscore
+                ),
             });
             stats.anomalies_detected += 1;
             stats.response_time_anomalies += 1;
@@ -456,7 +495,11 @@ impl NetworkAnomalyDetector {
                 timestamp: Instant::now(),
                 anomaly_type: AnomalyType::ErrorRateSpike,
                 severity: er_zscore.abs(),
-                description: format!("Error rate anomaly: {:.2}% (z-score: {:.2})", current_er * 100.0, er_zscore),
+                description: format!(
+                    "Error rate anomaly: {:.2}% (z-score: {:.2})",
+                    current_er * 100.0,
+                    er_zscore
+                ),
             });
             stats.anomalies_detected += 1;
             stats.error_rate_anomalies += 1;
@@ -507,9 +550,8 @@ impl NetworkAnomalyDetector {
         if values.len() < 2 {
             return 0.0;
         }
-        let variance = values.iter()
-            .map(|v| (v - mean).powi(2))
-            .sum::<f64>() / (values.len() - 1) as f64;
+        let variance =
+            values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / (values.len() - 1) as f64;
         variance.sqrt()
     }
 

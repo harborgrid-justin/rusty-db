@@ -4,7 +4,6 @@
 
 use super::common::*;
 
-
 // Allocation tracking entry
 #[derive(Debug, Clone)]
 struct AllocationEntry {
@@ -140,16 +139,13 @@ impl MemoryDebugger {
     // Enable stack trace capture
     pub fn enable_stack_traces(&self) {
         self.stack_traces_enabled.store(true, Ordering::Relaxed);
-        self.stats.stack_traces_captured.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .stack_traces_captured
+            .fetch_add(1, Ordering::Relaxed);
     }
 
     // Track allocation
-    pub fn track_allocation(
-        &self,
-        address: usize,
-        size: usize,
-        source: AllocationSource,
-    ) {
+    pub fn track_allocation(&self, address: usize, size: usize, source: AllocationSource) {
         if !self.tracking_enabled.load(Ordering::Relaxed) {
             return;
         }
@@ -176,7 +172,9 @@ impl MemoryDebugger {
 
         // Update component stats
         let mut stats = self.component_stats.write().unwrap();
-        let component_stat = stats.entry(source).or_insert_with(ComponentMemoryStats::new);
+        let component_stat = stats
+            .entry(source)
+            .or_insert_with(ComponentMemoryStats::new);
 
         component_stat.allocations += 1;
         component_stat.bytes_allocated += size as u64;
@@ -197,7 +195,9 @@ impl MemoryDebugger {
             return Ok(());
         }
 
-        self.stats.total_deallocations.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .total_deallocations
+            .fetch_add(1, Ordering::Relaxed);
 
         let mut allocations = self.allocations.write().unwrap();
 
@@ -205,10 +205,13 @@ impl MemoryDebugger {
             // Check guards if enabled
             if self.guards_enabled.load(Ordering::Relaxed) {
                 if entry.guard_before != GUARD_PATTERN || entry.guard_after != GUARD_PATTERN {
-                    self.stats.corruption_detected.fetch_add(1, Ordering::Relaxed);
-                    return Err(DbError::Internal(
-                        format!("Memory corruption detected at address 0x{:x}", address)
-                    ));
+                    self.stats
+                        .corruption_detected
+                        .fetch_add(1, Ordering::Relaxed);
+                    return Err(DbError::Internal(format!(
+                        "Memory corruption detected at address 0x{:x}",
+                        address
+                    )));
                 }
             }
 
@@ -217,16 +220,20 @@ impl MemoryDebugger {
             if let Some(component_stat) = stats.get_mut(&entry.source) {
                 component_stat.deallocations += 1;
                 component_stat.bytes_deallocated += entry.size as u64;
-                component_stat.active_allocations = component_stat.active_allocations.saturating_sub(1);
-                component_stat.active_bytes = component_stat.active_bytes.saturating_sub(entry.size as u64);
+                component_stat.active_allocations =
+                    component_stat.active_allocations.saturating_sub(1);
+                component_stat.active_bytes = component_stat
+                    .active_bytes
+                    .saturating_sub(entry.size as u64);
             }
 
             Ok(())
         } else if self.uaf_detection_enabled.load(Ordering::Relaxed) {
             self.stats.uaf_detected.fetch_add(1, Ordering::Relaxed);
-            Err(DbError::Internal(
-                format!("Use-after-free or double-free detected at address 0x{:x}", address)
-            ))
+            Err(DbError::Internal(format!(
+                "Use-after-free or double-free detected at address 0x{:x}",
+                address
+            )))
         } else {
             Ok(())
         }

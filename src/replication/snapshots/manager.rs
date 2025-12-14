@@ -7,16 +7,19 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
-use crate::replication::types::{LogSequenceNumber, ReplicaId};
 use super::config::{CompressionType, SnapshotConfig};
 use super::errors::SnapshotError;
 use super::types::*;
+use crate::replication::types::{LogSequenceNumber, ReplicaId};
 
 // Snapshot manager trait for different implementations
 #[async_trait]
 pub trait SnapshotManager: Send + Sync {
     // Create a full snapshot
-    async fn create_full_snapshot(&self, replica_id: &ReplicaId) -> Result<SnapshotId, SnapshotError>;
+    async fn create_full_snapshot(
+        &self,
+        replica_id: &ReplicaId,
+    ) -> Result<SnapshotId, SnapshotError>;
 
     // Create an incremental snapshot
     async fn create_incremental_snapshot(
@@ -33,10 +36,16 @@ pub trait SnapshotManager: Send + Sync {
     ) -> Result<SnapshotId, SnapshotError>;
 
     // List all snapshots for a replica
-    async fn list_snapshots(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotMetadata>, SnapshotError>;
+    async fn list_snapshots(
+        &self,
+        replica_id: &ReplicaId,
+    ) -> Result<Vec<SnapshotMetadata>, SnapshotError>;
 
     // Get snapshot metadata
-    async fn get_snapshot_metadata(&self, snapshot_id: &SnapshotId) -> Result<SnapshotMetadata, SnapshotError>;
+    async fn get_snapshot_metadata(
+        &self,
+        snapshot_id: &SnapshotId,
+    ) -> Result<SnapshotMetadata, SnapshotError>;
 
     // Delete a snapshot
     async fn delete_snapshot(&self, snapshot_id: &SnapshotId) -> Result<(), SnapshotError>;
@@ -60,10 +69,16 @@ pub trait SnapshotManager: Send + Sync {
     async fn verify_snapshot(&self, snapshot_id: &SnapshotId) -> Result<bool, SnapshotError>;
 
     // Apply retention policy
-    async fn apply_retention_policy(&self, replica_id: &ReplicaId) -> Result<Vec<SnapshotId>, SnapshotError>;
+    async fn apply_retention_policy(
+        &self,
+        replica_id: &ReplicaId,
+    ) -> Result<Vec<SnapshotId>, SnapshotError>;
 
     // Get snapshot statistics
-    async fn get_statistics(&self, replica_id: Option<&ReplicaId>) -> Result<SnapshotStatistics, SnapshotError>;
+    async fn get_statistics(
+        &self,
+        replica_id: Option<&ReplicaId>,
+    ) -> Result<SnapshotStatistics, SnapshotError>;
 }
 
 // File-based snapshot manager implementation
@@ -166,12 +181,15 @@ impl FileSnapshotManager {
                 reason: e.to_string(),
             })?;
 
-        while let Some(entry) = metadata_files.next_entry()
-            .await
-            .map_err(|e| SnapshotError::StorageError {
-                operation: "read_directory_entry".to_string(),
-                reason: e.to_string(),
-            })? {
+        while let Some(entry) =
+            metadata_files
+                .next_entry()
+                .await
+                .map_err(|e| SnapshotError::StorageError {
+                    operation: "read_directory_entry".to_string(),
+                    reason: e.to_string(),
+                })?
+        {
             let path = entry.path();
             if path.extension().map_or(false, |ext| ext == "metadata") {
                 if let Ok(metadata) = self.load_snapshot_metadata(&path).await {
@@ -186,16 +204,16 @@ impl FileSnapshotManager {
     }
 
     async fn load_snapshot_metadata(&self, path: &Path) -> Result<SnapshotMetadata, SnapshotError> {
-        let contents = tokio::fs::read_to_string(path)
-            .await
-            .map_err(|e| SnapshotError::StorageError {
-                operation: "read_metadata".to_string(),
-                reason: e.to_string(),
-            })?;
-        serde_json::from_str(&contents)
-            .map_err(|e| SnapshotError::InvalidFormat {
-                reason: format!("Failed to parse metadata: {}", e),
-            })
+        let contents =
+            tokio::fs::read_to_string(path)
+                .await
+                .map_err(|e| SnapshotError::StorageError {
+                    operation: "read_metadata".to_string(),
+                    reason: e.to_string(),
+                })?;
+        serde_json::from_str(&contents).map_err(|e| SnapshotError::InvalidFormat {
+            reason: format!("Failed to parse metadata: {}", e),
+        })
     }
 
     async fn start_background_cleanup(&self) {
@@ -208,7 +226,12 @@ impl FileSnapshotManager {
                 interval.tick().await;
                 let replica_ids: Vec<ReplicaId> = {
                     let cache = metadata_cache.read();
-                    cache.values().map(|m| m.replica_id.clone()).collect::<HashSet<_>>().into_iter().collect()
+                    cache
+                        .values()
+                        .map(|m| m.replica_id.clone())
+                        .collect::<HashSet<_>>()
+                        .into_iter()
+                        .collect()
                 };
                 for _replica_id in replica_ids {
                     // Would apply retention policy here
@@ -219,12 +242,20 @@ impl FileSnapshotManager {
         *self.cleanup_handle.lock() = Some(handle);
     }
 
-    pub(super) async fn compress_data(&self, data: &[u8], _algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {
+    pub(super) async fn compress_data(
+        &self,
+        data: &[u8],
+        _algorithm: &CompressionType,
+    ) -> Result<Vec<u8>, SnapshotError> {
         // Simplified implementation - would use actual compression
         Ok(data.to_vec())
     }
 
-    pub(super) async fn decompress_data(&self, data: &[u8], _algorithm: &CompressionType) -> Result<Vec<u8>, SnapshotError> {
+    pub(super) async fn decompress_data(
+        &self,
+        data: &[u8],
+        _algorithm: &CompressionType,
+    ) -> Result<Vec<u8>, SnapshotError> {
         // Simplified implementation - would use actual decompression
         Ok(data.to_vec())
     }
@@ -239,13 +270,21 @@ impl FileSnapshotManager {
     }
 
     pub(super) fn get_snapshot_data_path(&self, snapshot_id: &SnapshotId) -> PathBuf {
-        self.config.storage_path.join(format!("{}.snapshot", snapshot_id))
+        self.config
+            .storage_path
+            .join(format!("{}.snapshot", snapshot_id))
     }
 
-    pub(super) async fn save_snapshot_metadata(&self, metadata: &SnapshotMetadata) -> Result<(), SnapshotError> {
-        let metadata_path = self.config.storage_path.join(format!("{}.metadata", metadata.snapshot_id));
-        let contents = serde_json::to_string_pretty(metadata)
-            .map_err(|e| SnapshotError::StorageError {
+    pub(super) async fn save_snapshot_metadata(
+        &self,
+        metadata: &SnapshotMetadata,
+    ) -> Result<(), SnapshotError> {
+        let metadata_path = self
+            .config
+            .storage_path
+            .join(format!("{}.metadata", metadata.snapshot_id));
+        let contents =
+            serde_json::to_string_pretty(metadata).map_err(|e| SnapshotError::StorageError {
                 operation: "serialize_metadata".to_string(),
                 reason: e.to_string(),
             })?;
@@ -266,10 +305,17 @@ impl FileSnapshotManager {
         }
 
         let total_snapshots = snapshots.len();
-        let full_snapshots = snapshots.iter().filter(|s| s.snapshot_type == SnapshotType::Full).count();
-        let incremental_snapshots = snapshots.iter().filter(|s| s.snapshot_type == SnapshotType::Incremental).count();
+        let full_snapshots = snapshots
+            .iter()
+            .filter(|s| s.snapshot_type == SnapshotType::Full)
+            .count();
+        let incremental_snapshots = snapshots
+            .iter()
+            .filter(|s| s.snapshot_type == SnapshotType::Incremental)
+            .count();
         let total_storage_bytes: u64 = snapshots.iter().map(|s| s.size_bytes).sum();
-        let compressed_storage_bytes: u64 = snapshots.iter()
+        let compressed_storage_bytes: u64 = snapshots
+            .iter()
             .map(|s| s.compressed_size_bytes.unwrap_or(s.size_bytes))
             .sum();
 
@@ -279,13 +325,17 @@ impl FileSnapshotManager {
             1.0
         };
 
-        let oldest_snapshot_age = snapshots.iter()
+        let oldest_snapshot_age = snapshots
+            .iter()
             .map(|s| s.created_at)
             .min()
             .map(|oldest| SystemTime::now().duration_since(oldest).unwrap_or_default());
 
         let success_rate = {
-            let successful = snapshots.iter().filter(|s| s.status == SnapshotStatus::Completed).count();
+            let successful = snapshots
+                .iter()
+                .filter(|s| s.status == SnapshotStatus::Completed)
+                .count();
             if total_snapshots > 0 {
                 (successful as f64 / total_snapshots as f64) * 100.0
             } else {
@@ -297,7 +347,9 @@ impl FileSnapshotManager {
             deduplication_ratio: 1.0,
             compression_effectiveness: 1.0 - average_compression_ratio,
             space_savings: if total_storage_bytes > 0 {
-                ((total_storage_bytes - compressed_storage_bytes) as f64 / total_storage_bytes as f64) * 100.0
+                ((total_storage_bytes - compressed_storage_bytes) as f64
+                    / total_storage_bytes as f64)
+                    * 100.0
             } else {
                 0.0
             },
@@ -319,7 +371,10 @@ impl FileSnapshotManager {
         };
     }
 
-    pub(super) async fn create_full_snapshot_impl(&self, replica_id: &ReplicaId) -> Result<SnapshotId, SnapshotError> {
+    pub(super) async fn create_full_snapshot_impl(
+        &self,
+        replica_id: &ReplicaId,
+    ) -> Result<SnapshotId, SnapshotError> {
         let snapshot_id = SnapshotId::generate();
 
         {
@@ -334,20 +389,25 @@ impl FileSnapshotManager {
 
         {
             let mut progress = self.progress_tracking.write();
-            progress.insert(snapshot_id.clone(), SnapshotProgress {
-                snapshot_id: snapshot_id.clone(),
-                phase: SnapshotPhase::Initializing,
-                bytes_processed: 0,
-                total_bytes: Some(1024 * 1024 * 100),
-                processing_rate: 0.0,
-                estimated_completion: None,
-                current_operation: "Initializing snapshot".to_string(),
-                progress_percentage: 0.0,
-            });
+            progress.insert(
+                snapshot_id.clone(),
+                SnapshotProgress {
+                    snapshot_id: snapshot_id.clone(),
+                    phase: SnapshotPhase::Initializing,
+                    bytes_processed: 0,
+                    total_bytes: Some(1024 * 1024 * 100),
+                    processing_rate: 0.0,
+                    estimated_completion: None,
+                    current_operation: "Initializing snapshot".to_string(),
+                    progress_percentage: 0.0,
+                },
+            );
         }
 
         let snapshot_data = b"Full snapshot data".to_vec();
-        let compressed_data = self.compress_data(&snapshot_data, &self.config.compression).await?;
+        let compressed_data = self
+            .compress_data(&snapshot_data, &self.config.compression)
+            .await?;
         let checksum = self.calculate_checksum(&compressed_data, &ChecksumAlgorithm::Sha256);
 
         let data_path = self.get_snapshot_data_path(&snapshot_id);
@@ -399,8 +459,6 @@ impl FileSnapshotManager {
 
 impl Default for FileSnapshotManager {
     fn default() -> Self {
-        futures::executor::block_on(async {
-            Self::new(SnapshotConfig::default()).await.unwrap()
-        })
+        futures::executor::block_on(async { Self::new(SnapshotConfig::default()).await.unwrap() })
     }
 }

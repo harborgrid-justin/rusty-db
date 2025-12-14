@@ -1,12 +1,12 @@
+use crate::common::PageId;
+use crate::error::{DbError, Result};
+use crate::storage::disk::DiskManager;
+use crate::storage::page::Page;
+use parking_lot::RwLock;
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use parking_lot::{RwLock};
-use crate::error::{Result, DbError};
-use crate::storage::page::Page;
-use crate::common::PageId;
-use crate::storage::disk::DiskManager;
 
 // Copy-on-Write page frame for zero-copy reads
 #[derive(Clone)]
@@ -116,7 +116,8 @@ impl LruKReplacer {
     }
 
     fn record_access(&mut self, page_id: PageId) {
-        let history = self.access_history
+        let history = self
+            .access_history
             .entry(page_id)
             .or_insert_with(|| AccessHistory::new(self.k));
         history.record_access();
@@ -161,9 +162,7 @@ impl LruKReplacer {
     }
 
     fn adjust_k(&mut self) {
-        let total_accesses: usize = self.access_history.values()
-            .map(|h| h.access_count())
-            .sum();
+        let total_accesses: usize = self.access_history.values().map(|h| h.access_count()).sum();
 
         let avg_accesses = if !self.access_history.is_empty() {
             total_accesses / self.access_history.len()
@@ -292,8 +291,9 @@ impl NumaAllocator {
 
         // In a real implementation, would migrate pages
         // For now, just log the imbalance
-        let imbalance = (self.nodes[most_util_idx].utilization() -
-                        self.nodes[least_util_idx].utilization()).abs();
+        let imbalance = (self.nodes[most_util_idx].utilization()
+            - self.nodes[least_util_idx].utilization())
+        .abs();
 
         if imbalance > 0.3 {
             // Trigger migration in production
@@ -552,11 +552,16 @@ impl BufferPoolManager {
         }
 
         // Evict a page
-        let victim_page_id = self.replacer.lock().unwrap().evict()
+        let victim_page_id = self
+            .replacer
+            .lock()
+            .unwrap()
+            .evict()
             .ok_or_else(|| DbError::Storage("No evictable frames".to_string()))?;
 
         let page_table = self.page_table.read();
-        let frame_id = *page_table.get(&victim_page_id)
+        let frame_id = *page_table
+            .get(&victim_page_id)
             .ok_or_else(|| DbError::Storage("Invalid victim".to_string()))?;
 
         // Flush if dirty

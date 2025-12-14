@@ -17,18 +17,18 @@
 // instance load, and network topology. Results are streamed back through
 // efficient data flow operators and aggregated at the coordinator.
 
-use tokio::sync::oneshot;
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::time::Instant;
-use crate::error::{Result, DbError};
-use crate::common::{NodeId, TableId, Value, Tuple};
-use crate::rac::interconnect::{ClusterInterconnect, MessageType, MessagePriority};
+use crate::common::{NodeId, TableId, Tuple, Value};
+use crate::error::{DbError, Result};
+use crate::rac::interconnect::{ClusterInterconnect, MessagePriority, MessageType};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::Arc;
-use std::time::{Duration};
-use parking_lot::{RwLock};
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use tokio::sync::oneshot;
 use tokio::sync::{mpsc, Semaphore};
 
 // ============================================================================
@@ -113,7 +113,9 @@ pub struct QueryFragment {
 }
 
 // Fragment type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode,
+)]
 pub enum FragmentType {
     // Table scan producer
     TableScan,
@@ -155,7 +157,9 @@ pub struct FilterExpression {
     pub value: Value,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode,
+)]
 pub enum FilterOperator {
     Equal,
     NotEqual,
@@ -184,7 +188,9 @@ pub struct JoinOperation {
     pub build_side: JoinSide,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode,
+)]
 pub enum JoinType {
     Inner,
     LeftOuter,
@@ -193,7 +199,9 @@ pub enum JoinType {
     Cross,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode,
+)]
 pub enum JoinSide {
     Left,
     Right,
@@ -207,7 +215,9 @@ pub struct AggregateOperation {
     pub alias: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode,
+)]
 pub enum AggregateFunction {
     Count,
     Sum,
@@ -393,7 +403,7 @@ struct WorkerPool {
 
     // Semaphore for worker allocation
     semaphore: Arc<Semaphore>,
-    max_workers: ()
+    max_workers: (),
 }
 
 type WorkerId = usize;
@@ -486,10 +496,10 @@ impl Default for ParallelQueryConfig {
             inter_instance: true,
             chunk_size: DATA_CHUNK_SIZE,
             result_buffer_size: MAX_RESULT_BUFFER,
-            enable_work_stealing: true,      // Enable work stealing
-            enable_speculation: true,         // Enable speculative execution
-            speculation_threshold: 2.0,       // 2 standard deviations
-            enable_pipelining: true,          // Enable pipeline parallelism
+            enable_work_stealing: true, // Enable work stealing
+            enable_speculation: true,   // Enable speculative execution
+            speculation_threshold: 2.0, // 2 standard deviations
+            enable_pipelining: true,    // Enable pipeline parallelism
         }
     }
 }
@@ -614,7 +624,10 @@ impl ParallelQueryCoordinator {
     }
 
     // Execute a parallel query
-    pub async fn execute_query(&self, plan: ParallelQueryPlan) -> std::result::Result<Vec<Tuple>, DbError> {
+    pub async fn execute_query(
+        &self,
+        plan: ParallelQueryPlan,
+    ) -> std::result::Result<Vec<Tuple>, DbError> {
         let query_id = plan.query_id;
         let start = Instant::now();
 
@@ -650,7 +663,9 @@ impl ParallelQueryCoordinator {
             }
             Err(_) => {
                 self.stats.write().failed_queries += 1;
-                Err(DbError::Internal("Query completion channel closed".to_string()))
+                Err(DbError::Internal(
+                    "Query completion channel closed".to_string(),
+                ))
             }
         };
 
@@ -667,7 +682,10 @@ impl ParallelQueryCoordinator {
     }
 
     // Start executing a query plan
-    async fn start_query_execution(&self, plan: ParallelQueryPlan) -> std::result::Result<(), DbError> {
+    async fn start_query_execution(
+        &self,
+        plan: ParallelQueryPlan,
+    ) -> std::result::Result<(), DbError> {
         let query_id = plan.query_id;
 
         // Update state
@@ -680,7 +698,8 @@ impl ParallelQueryCoordinator {
 
         // Distribute fragments to instances
         for (fragment_id, fragment) in plan.fragments.iter().enumerate() {
-            let instance = plan.instance_assignment
+            let instance = plan
+                .instance_assignment
                 .get(&fragment_id)
                 .cloned()
                 .unwrap_or_else(|| self.node_id.clone());
@@ -707,10 +726,12 @@ impl ParallelQueryCoordinator {
             // Execute fragment
             if instance == self.node_id {
                 // Execute locally
-                self.execute_fragment_local(query_id, fragment_id, fragment.clone()).await?;
+                self.execute_fragment_local(query_id, fragment_id, fragment.clone())
+                    .await?;
             } else {
                 // Execute remotely
-                self.execute_fragment_remote(query_id, fragment_id, fragment.clone(), instance).await?;
+                self.execute_fragment_remote(query_id, fragment_id, fragment.clone(), instance)
+                    .await?;
             }
         }
 
@@ -726,10 +747,14 @@ impl ParallelQueryCoordinator {
         fragment: QueryFragment,
     ) -> std::result::Result<(), DbError> {
         // Acquire worker
-        let worker_id = self.worker_pool.acquire_worker().await
+        let worker_id = self
+            .worker_pool
+            .acquire_worker()
+            .await
             .ok_or_else(|| DbError::Internal("No workers available".to_string()))?;
 
-        self.worker_pool.assign_worker(worker_id, query_id, fragment_id);
+        self.worker_pool
+            .assign_worker(worker_id, query_id, fragment_id);
 
         // Update state
         {
@@ -746,8 +771,7 @@ impl ParallelQueryCoordinator {
         let message_tx = self.message_tx.clone();
         let result_buffer = {
             let queries = self.active_queries.read();
-            queries.get(&query_id)
-                .map(|s| s.result_buffer.clone())
+            queries.get(&query_id).map(|s| s.result_buffer.clone())
         };
 
         let worker_pool = self.worker_pool.clone();
@@ -762,7 +786,7 @@ impl ParallelQueryCoordinator {
             // NEW: Check if this is taking too long (straggler detection)
             let elapsed = start.elapsed().as_millis() as f64;
             let mean_time_ms = 5000.0; // In production, track actual mean
-            let std_dev_ms = 1000.0;   // In production, track actual std dev
+            let std_dev_ms = 1000.0; // In production, track actual std dev
 
             // If taking > threshold * std_dev longer than mean, spawn speculative task
             if enable_speculation && elapsed > mean_time_ms + (speculation_threshold * std_dev_ms) {
@@ -834,18 +858,22 @@ impl ParallelQueryCoordinator {
         let payload = bincode::serde::encode_to_vec(&message, bincode::config::standard())
             .map_err(|e| DbError::Serialization(e.to_string()))?;
 
-        self.interconnect.send_message(
-            instance,
-            MessageType::Query,
-            payload,
-            MessagePriority::Normal,
-        ).await?;
+        self.interconnect
+            .send_message(
+                instance,
+                MessageType::Query,
+                payload,
+                MessagePriority::Normal,
+            )
+            .await?;
 
         Ok(())
     }
 
     // Execute the actual fragment work
-    async fn execute_fragment_work(fragment: QueryFragment) -> std::result::Result<(Vec<Tuple>, u64), DbError> {
+    async fn execute_fragment_work(
+        fragment: QueryFragment,
+    ) -> std::result::Result<(Vec<Tuple>, u64), DbError> {
         let mut results = Vec::new();
         let mut rows_processed = 0;
 
@@ -879,20 +907,42 @@ impl ParallelQueryCoordinator {
 
         while let Some(message) = rx.recv().await {
             match message {
-                QueryMessage::ExecuteFragment { query_id, fragment_id, fragment } => {
-                    let _ = self.execute_fragment_local(query_id, fragment_id, fragment).await;
+                QueryMessage::ExecuteFragment {
+                    query_id,
+                    fragment_id,
+                    fragment,
+                } => {
+                    let _ = self
+                        .execute_fragment_local(query_id, fragment_id, fragment)
+                        .await;
                 }
 
-                QueryMessage::DataChunk { query_id, fragment_id, chunk } => {
+                QueryMessage::DataChunk {
+                    query_id,
+                    fragment_id,
+                    chunk,
+                } => {
                     let _ = self.handle_data_chunk(query_id, fragment_id, chunk).await;
                 }
 
-                QueryMessage::FragmentComplete { query_id, fragment_id, rows_processed } => {
-                    let _ = self.handle_fragment_complete(query_id, fragment_id, rows_processed).await;
+                QueryMessage::FragmentComplete {
+                    query_id,
+                    fragment_id,
+                    rows_processed,
+                } => {
+                    let _ = self
+                        .handle_fragment_complete(query_id, fragment_id, rows_processed)
+                        .await;
                 }
 
-                QueryMessage::FragmentFailed { query_id, fragment_id, error } => {
-                    let _ = self.handle_fragment_failed(query_id, fragment_id, error).await;
+                QueryMessage::FragmentFailed {
+                    query_id,
+                    fragment_id,
+                    error,
+                } => {
+                    let _ = self
+                        .handle_fragment_failed(query_id, fragment_id, error)
+                        .await;
                 }
 
                 QueryMessage::CancelQuery { query_id } => {
@@ -940,7 +990,9 @@ impl ParallelQueryCoordinator {
             state.rows_processed += rows_processed;
 
             // Check if all workers completed
-            let all_complete = state.worker_states.values()
+            let all_complete = state
+                .worker_states
+                .values()
                 .all(|w| w.status == WorkerStatus::Completed);
 
             if all_complete {

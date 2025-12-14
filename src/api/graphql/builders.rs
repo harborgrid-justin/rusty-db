@@ -2,14 +2,14 @@
 //
 // Programmatic query construction utilities
 
+use super::models::*;
+use super::types::*;
+use crate::api::GraphQLEngine;
+use crate::error::DbError;
 use async_graphql::{Enum, Result as GqlResult, SimpleObject, ID};
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use crate::api::GraphQLEngine;
-use crate::error::DbError;
-use super::types::*;
-use super::models::*;
 
 // ============================================================================
 // ADDITIONAL UTILITIES & HELPERS
@@ -116,12 +116,26 @@ pub struct MutationBuilder {
 
 #[derive(Clone, Debug)]
 pub enum MutationOperation {
-    Insert { data: HashMap<String, Json> },
-    Update { id: ID, data: HashMap<String, Json> },
-    Delete { id: ID },
-    BulkInsert { data: Vec<HashMap<String, Json>> },
-    BulkUpdate { where_clause: WhereClause, data: HashMap<String, Json> },
-    BulkDelete { where_clause: WhereClause },
+    Insert {
+        data: HashMap<String, Json>,
+    },
+    Update {
+        id: ID,
+        data: HashMap<String, Json>,
+    },
+    Delete {
+        id: ID,
+    },
+    BulkInsert {
+        data: Vec<HashMap<String, Json>>,
+    },
+    BulkUpdate {
+        where_clause: WhereClause,
+        data: HashMap<String, Json>,
+    },
+    BulkDelete {
+        where_clause: WhereClause,
+    },
 }
 
 impl MutationBuilder {
@@ -245,14 +259,12 @@ impl SchemaIntrospector {
 
     // Get all available subscriptions
     pub async fn get_subscriptions(&self) -> GqlResult<Vec<FieldInfo>> {
-        Ok(vec![
-            FieldInfo {
-                name: "table_changes".to_string(),
-                description: Some("Subscribe to table changes".to_string()),
-                return_type: "TableChange".to_string(),
-                arguments: vec![],
-            },
-        ])
+        Ok(vec![FieldInfo {
+            name: "table_changes".to_string(),
+            description: Some("Subscribe to table changes".to_string()),
+            return_type: "TableChange".to_string(),
+            arguments: vec![],
+        }])
     }
 }
 
@@ -324,16 +336,16 @@ impl QueryOptimizer {
 
         // Check for large result sets
         if query.limit.is_none() {
-            suggestions.suggestions.push(
-                "Add a LIMIT clause to prevent retrieving too many rows".to_string(),
-            );
+            suggestions
+                .suggestions
+                .push("Add a LIMIT clause to prevent retrieving too many rows".to_string());
         }
 
         // Check for unnecessary columns
         if query.select_fields.is_empty() {
-            suggestions.suggestions.push(
-                "Specify only the columns you need instead of selecting all".to_string(),
-            );
+            suggestions
+                .suggestions
+                .push("Specify only the columns you need instead of selecting all".to_string());
         }
 
         suggestions
@@ -392,9 +404,10 @@ impl RequestValidator {
     pub fn validate(&self, query: &str) -> Result<(), DbError> {
         // Check query size
         if query.len() > self.max_query_size {
-            return Err(DbError::InvalidInput(
-                format!("Query exceeds maximum size of {} bytes", self.max_query_size),
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Query exceeds maximum size of {} bytes",
+                self.max_query_size
+            )));
         }
         Ok(())
     }

@@ -8,15 +8,15 @@
 // - Graph machine learning features
 // - Recommendation engine basics
 
-use std::collections::BTreeMap;
-use std::collections::HashSet;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use crate::error::{Result, DbError};
-use crate::common::{Value, Tuple};
-use super::property_graph::{PropertyGraph, VertexId, EdgeId, Properties};
-use super::query_engine::{GraphQuery, QueryResult, VariableBindings, PatternMatcher};
 use super::algorithms::{PageRank, PageRankConfig};
+use super::property_graph::{EdgeId, Properties, PropertyGraph, VertexId};
+use super::query_engine::{GraphQuery, PatternMatcher, QueryResult, VariableBindings};
+use crate::common::{Tuple, Value};
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::collections::HashSet;
 
 // ============================================================================
 // Graph-Relational Integration
@@ -75,10 +75,14 @@ impl GraphRelationalBridge {
         graph: &mut PropertyGraph,
         edge_label: String,
     ) -> Result<()> {
-        let source_map = self.table_vertex_map.get(&source_table)
+        let source_map = self
+            .table_vertex_map
+            .get(&source_table)
             .ok_or_else(|| DbError::Internal("Source table not mapped".to_string()))?;
 
-        let target_map = self.table_vertex_map.get(&target_table)
+        let target_map = self
+            .table_vertex_map
+            .get(&target_table)
             .ok_or_else(|| DbError::Internal("Target table not mapped".to_string()))?;
 
         let mut edge_ids = Vec::new();
@@ -99,7 +103,8 @@ impl GraphRelationalBridge {
             }
         }
 
-        self.fk_edge_map.insert((source_table, target_table), edge_ids);
+        self.fk_edge_map
+            .insert((source_table, target_table), edge_ids);
         Ok(())
     }
 
@@ -384,7 +389,10 @@ impl<'a> PathEnumerator<'a> {
         }
         impl Ord for State {
             fn cmp(&self, other: &Self) -> Ordering {
-                other.cost.partial_cmp(&self.cost).unwrap_or(Ordering::Equal)
+                other
+                    .cost
+                    .partial_cmp(&self.cost)
+                    .unwrap_or(Ordering::Equal)
             }
         }
         impl PartialOrd for State {
@@ -398,7 +406,10 @@ impl<'a> PathEnumerator<'a> {
         let mut heap = BinaryHeap::new();
 
         distances.insert(start, 0.0);
-        heap.push(State { vertex: start, cost: 0.0 });
+        heap.push(State {
+            vertex: start,
+            cost: 0.0,
+        });
 
         while let Some(State { vertex, cost }) = heap.pop() {
             if vertex == end {
@@ -432,7 +443,10 @@ impl<'a> PathEnumerator<'a> {
                 if next_cost < *distances.get(&next).unwrap_or(&f64::INFINITY) {
                     distances.insert(next, next_cost);
                     parent.insert(next, vertex);
-                    heap.push(State { vertex: next, cost: next_cost });
+                    heap.push(State {
+                        vertex: next,
+                        cost: next_cost,
+                    });
                 }
             }
         }
@@ -466,10 +480,26 @@ pub struct TemporalGraph {
 // Temporal event (vertex/edge addition or removal)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum TemporalEvent {
-    AddVertex { timestamp: i64, vertex_id: VertexId, labels: Vec<String> },
-    RemoveVertex { timestamp: i64, vertex_id: VertexId },
-    AddEdge { timestamp: i64, edge_id: EdgeId, source: VertexId, target: VertexId, label: String },
-    RemoveEdge { timestamp: i64, edge_id: EdgeId },
+    AddVertex {
+        timestamp: i64,
+        vertex_id: VertexId,
+        labels: Vec<String>,
+    },
+    RemoveVertex {
+        timestamp: i64,
+        vertex_id: VertexId,
+    },
+    AddEdge {
+        timestamp: i64,
+        edge_id: EdgeId,
+        source: VertexId,
+        target: VertexId,
+        label: String,
+    },
+    RemoveEdge {
+        timestamp: i64,
+        edge_id: EdgeId,
+    },
 }
 
 impl TemporalGraph {
@@ -492,7 +522,10 @@ impl TemporalGraph {
 
     // Get snapshot closest to a timestamp
     pub fn get_closest_snapshot(&self, timestamp: i64) -> Option<&PropertyGraph> {
-        self.snapshots.range(..=timestamp).next_back().map(|(_, graph)| graph)
+        self.snapshots
+            .range(..=timestamp)
+            .next_back()
+            .map(|(_, graph)| graph)
     }
 
     // Record a temporal event
@@ -502,7 +535,8 @@ impl TemporalGraph {
 
     // Get events in a time range
     pub fn get_events(&self, start: i64, end: i64) -> Vec<&TemporalEvent> {
-        self.event_log.iter()
+        self.event_log
+            .iter()
             .filter(|event| {
                 let ts = match event {
                     TemporalEvent::AddVertex { timestamp, .. } => *timestamp,
@@ -602,8 +636,7 @@ impl GraphEmbedding {
         let mut features = HashMap::new();
 
         for vertex in graph.vertices() {
-            let coefficient = Self::local_clustering_coefficient(graph, vertex.id)
-                .unwrap_or(0.0);
+            let coefficient = Self::local_clustering_coefficient(graph, vertex.id).unwrap_or(0.0);
             features.insert(vertex.id, vec![coefficient]);
         }
 
@@ -668,7 +701,8 @@ impl<'a> RecommendationEngine<'a> {
 
             // Calculate score based on common neighbors
             let vertex_neighbors = self.graph.get_incoming_neighbors(vertex.id)?;
-            let common = vertex_neighbors.iter()
+            let common = vertex_neighbors
+                .iter()
                 .filter(|n| user_neighbors_set.contains(n))
                 .count();
 
@@ -691,7 +725,9 @@ impl<'a> RecommendationEngine<'a> {
         item_vertex: VertexId,
         top_k: usize,
     ) -> Result<Vec<(VertexId, f64)>> {
-        let item = self.graph.get_vertex(item_vertex)
+        let item = self
+            .graph
+            .get_vertex(item_vertex)
             .ok_or_else(|| DbError::Internal("Vertex not found".to_string()))?;
 
         let mut similarities: HashMap<VertexId, f64> = HashMap::new();
@@ -739,7 +775,8 @@ impl<'a> RecommendationEngine<'a> {
                     if neighbors.is_empty() {
                         break;
                     }
-                    let idx = (rand::random::<f64>() * neighbors.len() as f64) as usize % neighbors.len();
+                    let idx =
+                        (rand::random::<f64>() * neighbors.len() as f64) as usize % neighbors.len();
                     current = neighbors[idx];
                 }
             }
@@ -792,8 +829,24 @@ mod tests {
         let v2 = graph.add_vertex(vec![], Properties::new()).unwrap();
         let v3 = graph.add_vertex(vec![], Properties::new()).unwrap();
 
-        graph.add_edge(v1, v2, "E".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
-        graph.add_edge(v2, v3, "E".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "E".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v2,
+                v3,
+                "E".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         let enumerator = PathEnumerator::new(&graph);
         let paths = enumerator.enumerate_simple_paths(v1, v3, 10).unwrap();

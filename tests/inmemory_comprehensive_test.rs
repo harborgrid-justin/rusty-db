@@ -1,12 +1,12 @@
 // Comprehensive In-Memory Module Integration Tests
 // Test ID Format: INMEM-XXX
 
-use rusty_db::inmemory::*;
 use rusty_db::inmemory::column_store::*;
 use rusty_db::inmemory::compression::*;
 use rusty_db::inmemory::join_engine::*;
 use rusty_db::inmemory::population::*;
 use rusty_db::inmemory::vectorized_ops::*;
+use rusty_db::inmemory::*;
 
 // INMEM-001: Test InMemoryStore creation and configuration
 #[test]
@@ -167,14 +167,22 @@ fn test_inmem_006_dictionary_compression() {
 
     // Compress
     let compressed = encoder.compress(&data, ColumnDataType::Int64).unwrap();
-    assert!(compressed.len() < data.len(), "Compressed data should be smaller");
+    assert!(
+        compressed.len() < data.len(),
+        "Compressed data should be smaller"
+    );
 
     // Decompress
-    let decompressed = encoder.decompress(&compressed, ColumnDataType::Int64).unwrap();
+    let decompressed = encoder
+        .decompress(&compressed, ColumnDataType::Int64)
+        .unwrap();
     assert_eq!(data, decompressed);
 
     let ratio = data.len() as f64 / compressed.len() as f64;
-    println!("INMEM-006: PASSED - Dictionary compression ratio: {:.2}x", ratio);
+    println!(
+        "INMEM-006: PASSED - Dictionary compression ratio: {:.2}x",
+        ratio
+    );
 }
 
 // INMEM-007: Test run-length encoding
@@ -194,7 +202,9 @@ fn test_inmem_007_rle_compression() {
     let compressed = encoder.compress(&data, ColumnDataType::Int64).unwrap();
     assert!(compressed.len() < data.len());
 
-    let decompressed = encoder.decompress(&compressed, ColumnDataType::Int64).unwrap();
+    let decompressed = encoder
+        .decompress(&compressed, ColumnDataType::Int64)
+        .unwrap();
     assert_eq!(data, decompressed);
 
     let ratio = data.len() as f64 / compressed.len() as f64;
@@ -213,7 +223,9 @@ fn test_inmem_008_bitpacking_compression() {
     }
 
     let compressed = packer.compress(&data, ColumnDataType::Int64).unwrap();
-    let decompressed = packer.decompress(&compressed, ColumnDataType::Int64).unwrap();
+    let decompressed = packer
+        .decompress(&compressed, ColumnDataType::Int64)
+        .unwrap();
     assert_eq!(data, decompressed);
 
     println!("INMEM-008: PASSED - Bit-packing compression/decompression");
@@ -231,7 +243,9 @@ fn test_inmem_009_delta_encoding() {
     }
 
     let compressed = encoder.compress(&data, ColumnDataType::Int64).unwrap();
-    let decompressed = encoder.decompress(&compressed, ColumnDataType::Int64).unwrap();
+    let decompressed = encoder
+        .decompress(&compressed, ColumnDataType::Int64)
+        .unwrap();
     assert_eq!(data, decompressed);
 
     println!("INMEM-009: PASSED - Delta encoding compression/decompression");
@@ -249,7 +263,9 @@ fn test_inmem_010_for_encoding() {
     }
 
     let compressed = encoder.compress(&data, ColumnDataType::Int64).unwrap();
-    let decompressed = encoder.decompress(&compressed, ColumnDataType::Int64).unwrap();
+    let decompressed = encoder
+        .decompress(&compressed, ColumnDataType::Int64)
+        .unwrap();
     assert_eq!(data, decompressed);
 
     println!("INMEM-010: PASSED - Frame-of-reference compression/decompression");
@@ -277,17 +293,24 @@ fn test_inmem_011_hybrid_compressor() {
         last_updated: 0,
     };
 
-    let result = compressor.compress(&dict_data, ColumnDataType::Int64, &stats).unwrap();
+    let result = compressor
+        .compress(&dict_data, ColumnDataType::Int64, &stats)
+        .unwrap();
     assert!(result.stats.compression_ratio > 1.0);
 
-    let decompressed = compressor.decompress(
-        &result.compressed_data,
-        result.compression_type,
-        ColumnDataType::Int64,
-    ).unwrap();
+    let decompressed = compressor
+        .decompress(
+            &result.compressed_data,
+            result.compression_type,
+            ColumnDataType::Int64,
+        )
+        .unwrap();
     assert_eq!(dict_data, decompressed);
 
-    println!("INMEM-011: PASSED - Hybrid compressor selected {:?}", result.compression_type);
+    println!(
+        "INMEM-011: PASSED - Hybrid compressor selected {:?}",
+        result.compression_type
+    );
 }
 
 // INMEM-012: Test bloom filter operations
@@ -314,9 +337,16 @@ fn test_inmem_012_bloom_filter() {
     }
 
     let false_positive_rate = false_positives as f64 / 10000.0;
-    assert!(false_positive_rate < 0.05, "False positive rate too high: {}", false_positive_rate);
+    assert!(
+        false_positive_rate < 0.05,
+        "False positive rate too high: {}",
+        false_positive_rate
+    );
 
-    println!("INMEM-012: PASSED - Bloom filter false positive rate: {:.4}", false_positive_rate);
+    println!(
+        "INMEM-012: PASSED - Bloom filter false positive rate: {:.4}",
+        false_positive_rate
+    );
 }
 
 // INMEM-013: Test hash join operations
@@ -350,8 +380,10 @@ fn test_inmem_013_hash_join() {
     assert!(stats.build_time_us > 0);
     assert!(stats.probe_time_us > 0);
 
-    println!("INMEM-013: PASSED - Hash join produced {} rows in {}μs",
-             stats.output_rows, stats.total_time_us);
+    println!(
+        "INMEM-013: PASSED - Hash join produced {} rows in {}μs",
+        stats.output_rows, stats.total_time_us
+    );
 }
 
 // INMEM-014: Test partitioned join
@@ -377,8 +409,10 @@ fn test_inmem_014_partitioned_join() {
     assert_eq!(stats.partitions_created, 4);
     assert!(stats.output_rows > 0);
 
-    println!("INMEM-014: PASSED - Partitioned join with 4 partitions, {} rows",
-             stats.output_rows);
+    println!(
+        "INMEM-014: PASSED - Partitioned join with 4 partitions, {} rows",
+        stats.output_rows
+    );
 }
 
 // INMEM-015: Test semi-join and anti-join
@@ -401,8 +435,11 @@ fn test_inmem_015_semi_anti_join() {
     let anti_results = engine.anti_join_int64(&probe_seg, &build_keys).unwrap();
     assert_eq!(anti_results.len(), 80);
 
-    println!("INMEM-015: PASSED - Semi-join: {} rows, Anti-join: {} rows",
-             semi_results.len(), anti_results.len());
+    println!(
+        "INMEM-015: PASSED - Semi-join: {} rows, Anti-join: {} rows",
+        semi_results.len(),
+        anti_results.len()
+    );
 }
 
 // INMEM-016: Test vectorized filter operations
@@ -427,7 +464,10 @@ fn test_inmem_016_vectorized_filter() {
     assert_eq!(mask.count, 1);
     assert!(mask.get(500));
 
-    println!("INMEM-016: PASSED - Vectorized filter found {} matching rows", count);
+    println!(
+        "INMEM-016: PASSED - Vectorized filter found {} matching rows",
+        count
+    );
 }
 
 // INMEM-017: Test range and IN filters
@@ -451,8 +491,10 @@ fn test_inmem_017_range_in_filters() {
     let in_mask = filter.in_filter_int64(&batch, &in_set);
     assert_eq!(in_mask.count, 5);
 
-    println!("INMEM-017: PASSED - Range filter: {} rows, IN filter: {} rows",
-             range_mask.count, in_mask.count);
+    println!(
+        "INMEM-017: PASSED - Range filter: {} rows, IN filter: {} rows",
+        range_mask.count, in_mask.count
+    );
 }
 
 // INMEM-018: Test mask operations (AND, OR, NOT)
@@ -483,8 +525,10 @@ fn test_inmem_018_mask_operations() {
     let not_mask = filter.not_mask(&mask1);
     assert_eq!(not_mask.count, 50); // 50-99
 
-    println!("INMEM-018: PASSED - Mask operations: AND={}, OR={}, NOT={}",
-             and_mask.count, or_mask.count, not_mask.count);
+    println!(
+        "INMEM-018: PASSED - Mask operations: AND={}, OR={}, NOT={}",
+        and_mask.count, or_mask.count, not_mask.count
+    );
 }
 
 // INMEM-019: Test vectorized aggregations
@@ -517,8 +561,10 @@ fn test_inmem_019_vectorized_aggregations() {
     let count = agg.count(&batch, None);
     assert_eq!(count, 100);
 
-    println!("INMEM-019: PASSED - Aggregations: sum={}, min={}, max={}, avg={}",
-             sum, min, max, avg);
+    println!(
+        "INMEM-019: PASSED - Aggregations: sum={}, min={}, max={}, avg={}",
+        sum, min, max, avg
+    );
 }
 
 // INMEM-020: Test variance and standard deviation
@@ -540,7 +586,10 @@ fn test_inmem_020_variance_stddev() {
     assert!(stddev > 0.0);
     assert!((stddev * stddev - variance).abs() < 0.01);
 
-    println!("INMEM-020: PASSED - Variance: {:.2}, Stddev: {:.2}", variance, stddev);
+    println!(
+        "INMEM-020: PASSED - Variance: {:.2}, Stddev: {:.2}",
+        variance, stddev
+    );
 }
 
 // INMEM-021: Test conditional aggregations
@@ -566,8 +615,10 @@ fn test_inmem_021_conditional_aggregations() {
     let cond_count = agg.conditional_count(&mask);
     assert_eq!(cond_count, 49); // 51-99
 
-    println!("INMEM-021: PASSED - Conditional sum: {}, Conditional count: {}",
-             cond_sum, cond_count);
+    println!(
+        "INMEM-021: PASSED - Conditional sum: {}, Conditional count: {}",
+        cond_sum, cond_count
+    );
 }
 
 // INMEM-022: Test gather/scatter operations
@@ -590,8 +641,10 @@ fn test_inmem_022_gather_scatter() {
     assert_eq!(dest[10], 10);
     assert_eq!(dest[50], 50);
 
-    println!("INMEM-022: PASSED - Gathered {} values, scattered to destination",
-             gathered.len());
+    println!(
+        "INMEM-022: PASSED - Gathered {} values, scattered to destination",
+        gathered.len()
+    );
 }
 
 // INMEM-023: Test compress/expand operations
@@ -622,8 +675,11 @@ fn test_inmem_023_compress_expand() {
         }
     }
 
-    println!("INMEM-023: PASSED - Compressed to {} values, expanded back to {}",
-             compressed.len(), expanded.len());
+    println!(
+        "INMEM-023: PASSED - Compressed to {} values, expanded back to {}",
+        compressed.len(),
+        expanded.len()
+    );
 }
 
 // INMEM-024: Test population manager
@@ -642,7 +698,10 @@ fn test_inmem_024_population_manager() {
 
     manager.shutdown();
 
-    println!("INMEM-024: PASSED - Population manager with {} tasks", stats.total_tasks);
+    println!(
+        "INMEM-024: PASSED - Population manager with {} tasks",
+        stats.total_tasks
+    );
 }
 
 // INMEM-025: Test memory pressure handling
@@ -671,8 +730,11 @@ fn test_inmem_025_memory_pressure() {
     assert_eq!(max, 10000);
     assert_eq!(pressure, 0.6);
 
-    println!("INMEM-025: PASSED - Memory pressure: {:.1}%, evictions: {}",
-             pressure * 100.0, evictions);
+    println!(
+        "INMEM-025: PASSED - Memory pressure: {:.1}%, evictions: {}",
+        pressure * 100.0,
+        evictions
+    );
 }
 
 // INMEM-026: Test population task priority
@@ -724,8 +786,11 @@ fn test_inmem_027_population_progress() {
     progress.update_bytes(100000, 50000);
     assert_eq!(progress.compression_ratio, 2.0);
 
-    println!("INMEM-027: PASSED - Progress: {:.1}%, Compression: {:.2}x",
-             progress.percentage(), progress.compression_ratio);
+    println!(
+        "INMEM-027: PASSED - Progress: {:.1}%, Compression: {:.2}x",
+        progress.percentage(),
+        progress.compression_ratio
+    );
 }
 
 // INMEM-028: Test dual format synchronization
@@ -735,10 +800,7 @@ fn test_inmem_028_dual_format() {
 
     // Insert rows
     for i in 0..100 {
-        let row = vec![
-            ColumnValue::Int64(i),
-            ColumnValue::Int64(i * 10),
-        ];
+        let row = vec![ColumnValue::Int64(i), ColumnValue::Int64(i * 10)];
         dual.insert_row(row).unwrap();
     }
 
@@ -749,14 +811,18 @@ fn test_inmem_028_dual_format() {
     assert!(version1 > 0);
 
     // Insert more
-    dual.insert_row(vec![ColumnValue::Int64(100), ColumnValue::Int64(1000)]).unwrap();
+    dual.insert_row(vec![ColumnValue::Int64(100), ColumnValue::Int64(1000)])
+        .unwrap();
     let version2 = dual.current_version();
     assert!(version2 > version1);
 
     assert!(dual.needs_sync(version1));
 
-    println!("INMEM-028: PASSED - Dual format with {} rows, version {}",
-             dual.row_count(), version2);
+    println!(
+        "INMEM-028: PASSED - Dual format with {} rows, version {}",
+        dual.row_count(),
+        version2
+    );
 }
 
 // INMEM-029: Test in-memory area operations
@@ -784,8 +850,11 @@ fn test_inmem_029_inmemory_area() {
     let segments = area.get_segments(0);
     assert_eq!(segments.len(), 3);
 
-    println!("INMEM-029: PASSED - In-memory area with {} segments, {} bytes",
-             area.segment_count(), area.memory_usage());
+    println!(
+        "INMEM-029: PASSED - In-memory area with {} segments, {} bytes",
+        area.segment_count(),
+        area.memory_usage()
+    );
 }
 
 // INMEM-030: Test segment eviction
@@ -795,12 +864,7 @@ fn test_inmem_030_segment_eviction() {
 
     // Add segments with different access patterns
     for i in 0..10 {
-        let segment = std::sync::Arc::new(ColumnSegment::new(
-            i,
-            0,
-            ColumnDataType::Int64,
-            1000,
-        ));
+        let segment = std::sync::Arc::new(ColumnSegment::new(i, 0, ColumnDataType::Int64, 1000));
 
         // Mark some as recently accessed (hot)
         if i < 5 {
@@ -819,8 +883,10 @@ fn test_inmem_030_segment_eviction() {
     assert!(after_count < before_count);
     assert_eq!(evicted, before_count - after_count);
 
-    println!("INMEM-030: PASSED - Evicted {} cold segments, {} remain",
-             evicted, after_count);
+    println!(
+        "INMEM-030: PASSED - Evicted {} cold segments, {} remain",
+        evicted, after_count
+    );
 }
 
 // INMEM-031: Test column store filtering
@@ -833,16 +899,14 @@ fn test_inmem_031_column_store_filtering() {
         cache_line_size: 64,
     };
 
-    let schema = vec![
-        ColumnMetadata {
-            name: "value".to_string(),
-            column_id: 0,
-            data_type: ColumnDataType::Int64,
-            nullable: false,
-            compression_type: None,
-            cardinality: None,
-        },
-    ];
+    let schema = vec![ColumnMetadata {
+        name: "value".to_string(),
+        column_id: 0,
+        data_type: ColumnDataType::Int64,
+        nullable: false,
+        compression_type: None,
+        cardinality: None,
+    }];
 
     let store = ColumnStore::new(config, schema);
 
@@ -922,16 +986,14 @@ fn test_inmem_033_memory_usage_tracking() {
     assert_eq!(initial_usage, 0);
 
     // Create column store
-    let schema = vec![
-        ColumnMetadata {
-            name: "data".to_string(),
-            column_id: 0,
-            data_type: ColumnDataType::Int64,
-            nullable: false,
-            compression_type: None,
-            cardinality: None,
-        },
-    ];
+    let schema = vec![ColumnMetadata {
+        name: "data".to_string(),
+        column_id: 0,
+        data_type: ColumnDataType::Int64,
+        nullable: false,
+        compression_type: None,
+        cardinality: None,
+    }];
 
     let _col_store = store.create_column_store("memory_test".to_string(), schema);
 
@@ -939,8 +1001,10 @@ fn test_inmem_033_memory_usage_tracking() {
     assert_eq!(stats.total_stores, 1);
     assert_eq!(stats.max_memory, 1024 * 1024);
 
-    println!("INMEM-033: PASSED - Memory usage: {} bytes, {} stores",
-             stats.total_memory, stats.total_stores);
+    println!(
+        "INMEM-033: PASSED - Memory usage: {} bytes, {} stores",
+        stats.total_memory, stats.total_stores
+    );
 }
 
 // INMEM-034: Test batch processor
@@ -963,8 +1027,10 @@ fn test_inmem_034_batch_processor() {
     let optimal = processor.optimal_batch_size(8);
     assert!(optimal > 0);
 
-    println!("INMEM-034: PASSED - Processed {} items in {} batches",
-             total_processed, batch_count);
+    println!(
+        "INMEM-034: PASSED - Processed {} items in {} batches",
+        total_processed, batch_count
+    );
 }
 
 // INMEM-035: Test branch-free operations
@@ -998,16 +1064,14 @@ fn test_inmem_036_column_store_aggregations() {
         cache_line_size: 64,
     };
 
-    let schema = vec![
-        ColumnMetadata {
-            name: "value".to_string(),
-            column_id: 0,
-            data_type: ColumnDataType::Int64,
-            nullable: false,
-            compression_type: None,
-            cardinality: None,
-        },
-    ];
+    let schema = vec![ColumnMetadata {
+        name: "value".to_string(),
+        column_id: 0,
+        data_type: ColumnDataType::Int64,
+        nullable: false,
+        compression_type: None,
+        cardinality: None,
+    }];
 
     let store = ColumnStore::new(config, schema);
 
@@ -1047,7 +1111,10 @@ fn test_inmem_038_compression_statistics() {
     assert_eq!(stats.compressed_size, 2500);
     assert_eq!(stats.compression_ratio, 4.0);
 
-    println!("INMEM-038: PASSED - Compression stats: {}x ratio", stats.compression_ratio);
+    println!(
+        "INMEM-038: PASSED - Compression stats: {}x ratio",
+        stats.compression_ratio
+    );
 }
 
 // INMEM-039: Test join statistics
@@ -1064,8 +1131,10 @@ fn test_inmem_039_join_statistics() {
     assert_eq!(stats.build_rows, 1000);
     assert_eq!(stats.output_rows, 500);
 
-    println!("INMEM-039: PASSED - Join stats: {} output rows in {}μs",
-             stats.output_rows, stats.total_time_us);
+    println!(
+        "INMEM-039: PASSED - Join stats: {} output rows in {}μs",
+        stats.output_rows, stats.total_time_us
+    );
 }
 
 // INMEM-040: Test cache line alignment

@@ -1,22 +1,22 @@
 // RustyDB Stored Procedures Module
 // Enterprise-grade PL/SQL-compatible stored procedures, functions, triggers, and packages
 
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
 use std::sync::Arc;
-use crate::Result;
-use crate::error::DbError;
 
 // Sub-modules
-pub mod parser;
-pub mod runtime;
-pub mod functions;
-pub mod triggers;
-pub mod packages;
-pub mod cursors;
 pub mod builtins;
 pub mod compiler;
+pub mod cursors;
+pub mod functions;
+pub mod packages;
+pub mod parser;
+pub mod runtime;
+pub mod triggers;
 
 // Parameter mode for stored procedures
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -75,9 +75,10 @@ impl ProcedureManager {
         let mut procedures = self.procedures.write();
 
         if procedures.contains_key(&procedure.name) {
-            return Err(DbError::AlreadyExists(
-                format!("Procedure '{}' already exists", procedure.name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Procedure '{}' already exists",
+                procedure.name
+            )));
         }
 
         procedures.insert(procedure.name.clone(), procedure);
@@ -89,9 +90,7 @@ impl ProcedureManager {
         let mut procedures = self.procedures.write();
 
         if procedures.remove(name).is_none() {
-            return Err(DbError::NotFound(
-                format!("Procedure '{}' not found", name)
-            ));
+            return Err(DbError::NotFound(format!("Procedure '{}' not found", name)));
         }
 
         Ok(())
@@ -101,11 +100,10 @@ impl ProcedureManager {
     pub fn get_procedure(&self, name: &str) -> Result<StoredProcedure> {
         let procedures = self.procedures.read();
 
-        procedures.get(name)
+        procedures
+            .get(name)
             .cloned()
-            .ok_or_else(|| DbError::NotFound(
-                format!("Procedure '{}' not found", name)
-            ))
+            .ok_or_else(|| DbError::NotFound(format!("Procedure '{}' not found", name)))
     }
 
     // List all stored procedures
@@ -138,9 +136,10 @@ impl ProcedureManager {
         for param in &procedure.parameters {
             if param.mode == ParameterMode::In || param.mode == ParameterMode::InOut {
                 if !context.parameters.contains_key(&param.name) {
-                    return Err(DbError::InvalidInput(
-                        format!("Missing parameter '{}'", param.name)
-                    ));
+                    return Err(DbError::InvalidInput(format!(
+                        "Missing parameter '{}'",
+                        param.name
+                    )));
                 }
             }
         }
@@ -182,14 +181,20 @@ impl ProcedureManager {
                 if let Some(into_pos) = stmt_upper.find("INTO") {
                     let after_into = &stmt[into_pos + 4..].trim();
                     // Extract variable name (until FROM or next whitespace)
-                    let var_end = after_into.find(|c: char| c.is_whitespace() || c == ',')
+                    let var_end = after_into
+                        .find(|c: char| c.is_whitespace() || c == ',')
                         .unwrap_or(after_into.len());
-                    let var_name = after_into[..var_end].trim().trim_start_matches(':').trim_start_matches('@');
+                    let var_name = after_into[..var_end]
+                        .trim()
+                        .trim_start_matches(':')
+                        .trim_start_matches('@');
 
                     // Check if this is an OUT parameter
                     for param in &procedure.parameters {
                         if param.name.eq_ignore_ascii_case(var_name)
-                            && (param.mode == ParameterMode::Out || param.mode == ParameterMode::InOut) {
+                            && (param.mode == ParameterMode::Out
+                                || param.mode == ParameterMode::InOut)
+                        {
                             // In a full implementation, execute the SELECT and get the result
                             // For now, set a placeholder value
                             output_parameters.insert(param.name.clone(), "<result>".to_string());
@@ -198,7 +203,8 @@ impl ProcedureManager {
                 }
             } else if stmt_upper.starts_with("INSERT")
                 || stmt_upper.starts_with("UPDATE")
-                || stmt_upper.starts_with("DELETE") {
+                || stmt_upper.starts_with("DELETE")
+            {
                 // DML statements affect rows
                 // In a full implementation, execute and get actual row count
                 rows_affected += 1;

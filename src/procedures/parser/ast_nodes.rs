@@ -27,7 +27,10 @@ pub struct Declaration {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum PlSqlType {
     Integer,
-    Number { precision: Option<u8>, scale: Option<u8> },
+    Number {
+        precision: Option<u8>,
+        scale: Option<u8>,
+    },
     Varchar2(usize),
     Char(usize),
     Date,
@@ -35,9 +38,15 @@ pub enum PlSqlType {
     Boolean,
     Clob,
     Blob,
-    RowType { table: String },
-    RecordType { fields: Vec<(String, PlSqlType)> },
-    TableType { element_type: Box<PlSqlType> },
+    RowType {
+        table: String,
+    },
+    RecordType {
+        fields: Vec<(String, PlSqlType)>,
+    },
+    TableType {
+        element_type: Box<PlSqlType>,
+    },
     RefCursor,
 }
 

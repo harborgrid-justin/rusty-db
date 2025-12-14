@@ -1,6 +1,9 @@
 // LZ4 Compression Implementation
 
-use crate::compression::{Compressor, CompressionLevel, CompressionAlgorithm, CompressionResult, CompressionStats, CompressionError};
+use crate::compression::{
+    CompressionAlgorithm, CompressionError, CompressionLevel, CompressionResult, CompressionStats,
+    Compressor,
+};
 use parking_lot::Mutex;
 use std::sync::Arc;
 use std::time::Instant;
@@ -102,7 +105,12 @@ impl Compressor for LZ4Compressor {
 
             if match_len >= MIN_MATCH_LENGTH {
                 if pos > literal_start {
-                    self.encode_literal_run(input, literal_start, pos - literal_start, &mut compressed);
+                    self.encode_literal_run(
+                        input,
+                        literal_start,
+                        pos - literal_start,
+                        &mut compressed,
+                    );
                 }
 
                 self.encode_match(distance, match_len, &mut compressed);
@@ -115,11 +123,19 @@ impl Compressor for LZ4Compressor {
         }
 
         if literal_start < input.len() {
-            self.encode_literal_run(input, literal_start, input.len() - literal_start, &mut compressed);
+            self.encode_literal_run(
+                input,
+                literal_start,
+                input.len() - literal_start,
+                &mut compressed,
+            );
         }
 
         if compressed.len() > output.len() {
-            return Err(CompressionError::BufferTooSmall(compressed.len(), output.len()));
+            return Err(CompressionError::BufferTooSmall(
+                compressed.len(),
+                output.len(),
+            ));
         }
 
         output[..compressed.len()].copy_from_slice(&compressed);
@@ -149,10 +165,11 @@ impl Compressor for LZ4Compressor {
             if literal_len > 0 {
                 if in_pos + literal_len > input.len() || out_pos + literal_len > output.len() {
                     return Err(CompressionError::DecompressionFailed(
-                        "Invalid literal length".to_string()
+                        "Invalid literal length".to_string(),
                     ));
                 }
-                output[out_pos..out_pos + literal_len].copy_from_slice(&input[in_pos..in_pos + literal_len]);
+                output[out_pos..out_pos + literal_len]
+                    .copy_from_slice(&input[in_pos..in_pos + literal_len]);
                 in_pos += literal_len;
                 out_pos += literal_len;
             }
@@ -165,10 +182,17 @@ impl Compressor for LZ4Compressor {
                 in_pos += 1;
 
                 if match_len == 255 && in_pos + 4 <= input.len() {
-                    match_len = 255 + usize::from_le_bytes([
-                        input[in_pos], input[in_pos + 1], input[in_pos + 2], input[in_pos + 3],
-                        0, 0, 0, 0
-                    ]);
+                    match_len = 255
+                        + usize::from_le_bytes([
+                            input[in_pos],
+                            input[in_pos + 1],
+                            input[in_pos + 2],
+                            input[in_pos + 3],
+                            0,
+                            0,
+                            0,
+                            0,
+                        ]);
                     in_pos += 4;
                 }
 
@@ -176,7 +200,10 @@ impl Compressor for LZ4Compressor {
                     let match_start = out_pos - distance;
                     for i in 0..match_len {
                         if out_pos >= output.len() {
-                            return Err(CompressionError::BufferTooSmall(out_pos + 1, output.len()));
+                            return Err(CompressionError::BufferTooSmall(
+                                out_pos + 1,
+                                output.len(),
+                            ));
                         }
                         output[out_pos] = output[match_start + i];
                         out_pos += 1;
@@ -225,7 +252,9 @@ mod tests {
         let mut decompressed = vec![0u8; input.len()];
 
         let comp_size = compressor.compress(input, &mut compressed).unwrap();
-        let decomp_size = compressor.decompress(&compressed[..comp_size], &mut decompressed).unwrap();
+        let decomp_size = compressor
+            .decompress(&compressed[..comp_size], &mut decompressed)
+            .unwrap();
 
         assert_eq!(&decompressed[..decomp_size], input);
     }

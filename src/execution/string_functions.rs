@@ -33,7 +33,7 @@ impl StringFunctionValidator {
     pub fn validate_count(count: i64) -> Result<usize> {
         if count < 0 {
             return Err(DbError::InvalidInput(
-                "Count must be non-negative".to_string()
+                "Count must be non-negative".to_string(),
             ));
         }
         if count as usize > MAX_REPLICATE_COUNT {
@@ -80,9 +80,11 @@ impl StringFunctionExecutor {
         match func {
             StringFunction::Ascii(expr) => self.exec_ascii(expr, context),
             StringFunction::Char(expr) => self.exec_char(expr, context),
-            StringFunction::CharIndex { substring, string, start_position } => {
-                self.exec_charindex(substring, string, start_position.as_ref(), context)
-            }
+            StringFunction::CharIndex {
+                substring,
+                string,
+                start_position,
+            } => self.exec_charindex(substring, string, start_position.as_ref(), context),
             StringFunction::Concat(exprs) => self.exec_concat(exprs, context),
             StringFunction::ConcatWs { separator, strings } => {
                 self.exec_concat_ws(separator, strings, context)
@@ -91,12 +93,12 @@ impl StringFunctionExecutor {
             StringFunction::Difference { string1, string2 } => {
                 self.exec_difference(string1, string2, context)
             }
-            StringFunction::Format { value, format, culture } => {
-                self.exec_format(value, format, culture.as_ref(), context)
-            }
-            StringFunction::Left { string, length } => {
-                self.exec_left(string, length, context)
-            }
+            StringFunction::Format {
+                value,
+                format,
+                culture,
+            } => self.exec_format(value, format, culture.as_ref(), context),
+            StringFunction::Left { string, length } => self.exec_left(string, length, context),
             StringFunction::Len(expr) => self.exec_len(expr, context),
             StringFunction::Lower(expr) => self.exec_lower(expr, context),
             StringFunction::LTrim(expr) => self.exec_ltrim(expr, context),
@@ -107,31 +109,40 @@ impl StringFunctionExecutor {
             StringFunction::QuoteName { string, quote_char } => {
                 self.exec_quotename(string, quote_char.as_ref(), context)
             }
-            StringFunction::Replace { string, old_substring, new_substring } => {
-                self.exec_replace(string, old_substring, new_substring, context)
-            }
+            StringFunction::Replace {
+                string,
+                old_substring,
+                new_substring,
+            } => self.exec_replace(string, old_substring, new_substring, context),
             StringFunction::Replicate { string, count } => {
                 self.exec_replicate(string, count, context)
             }
             StringFunction::Reverse(expr) => self.exec_reverse(expr, context),
-            StringFunction::Right { string, length } => {
-                self.exec_right(string, length, context)
-            }
+            StringFunction::Right { string, length } => self.exec_right(string, length, context),
             StringFunction::RTrim(expr) => self.exec_rtrim(expr, context),
             StringFunction::Soundex(expr) => self.exec_soundex(expr, context),
             StringFunction::Space(expr) => self.exec_space(expr, context),
-            StringFunction::Str { number, length, decimals } => {
-                self.exec_str(number, length.as_ref(), decimals.as_ref(), context)
-            }
-            StringFunction::Stuff { string, start, length, new_string } => {
-                self.exec_stuff(string, start, length, new_string, context)
-            }
-            StringFunction::Substring { string, start, length } => {
-                self.exec_substring(string, start, length, context)
-            }
-            StringFunction::Translate { string, characters, translations } => {
-                self.exec_translate(string, characters, translations, context)
-            }
+            StringFunction::Str {
+                number,
+                length,
+                decimals,
+            } => self.exec_str(number, length.as_ref(), decimals.as_ref(), context),
+            StringFunction::Stuff {
+                string,
+                start,
+                length,
+                new_string,
+            } => self.exec_stuff(string, start, length, new_string, context),
+            StringFunction::Substring {
+                string,
+                start,
+                length,
+            } => self.exec_substring(string, start, length, context),
+            StringFunction::Translate {
+                string,
+                characters,
+                translations,
+            } => self.exec_translate(string, characters, translations, context),
             StringFunction::Trim { string, characters } => {
                 self.exec_trim(string, characters.as_ref(), context)
             }
@@ -147,22 +158,20 @@ impl StringFunctionExecutor {
                 StringFunctionValidator::validate_length(s)?;
                 Ok(s.clone())
             }
-            StringExpr::Column(col) => {
-                context.get(col).cloned().ok_or_else(|| {
-                    DbError::InvalidInput(format!("Column '{}' not found", col))
-                })
-            }
+            StringExpr::Column(col) => context
+                .get(col)
+                .cloned()
+                .ok_or_else(|| DbError::InvalidInput(format!("Column '{}' not found", col))),
             StringExpr::Function(_func) => {
                 // Recursive evaluation - need mutable self
                 Err(DbError::NotImplemented("Nested functions".to_string()))
             }
             StringExpr::Integer(i) => Ok(i.to_string()),
             StringExpr::Float(f) => Ok(f.to_string()),
-            StringExpr::Parameter(p) => {
-                context.get(&format!("${}", p)).cloned().ok_or_else(|| {
-                    DbError::InvalidInput(format!("Parameter ${} not found", p))
-                })
-            }
+            StringExpr::Parameter(p) => context
+                .get(&format!("${}", p))
+                .cloned()
+                .ok_or_else(|| DbError::InvalidInput(format!("Parameter ${} not found", p))),
         }
     }
 
@@ -234,7 +243,11 @@ impl StringFunctionExecutor {
         }
     }
 
-    fn exec_concat(&self, exprs: &[StringExpr], context: &HashMap<String, String>) -> Result<String> {
+    fn exec_concat(
+        &self,
+        exprs: &[StringExpr],
+        context: &HashMap<String, String>,
+    ) -> Result<String> {
         let mut result = String::new();
         for expr in exprs {
             let s = self.eval_expr(expr, context)?;
@@ -264,7 +277,11 @@ impl StringFunctionExecutor {
         Ok(result)
     }
 
-    fn exec_datalength(&self, expr: &StringExpr, context: &HashMap<String, String>) -> Result<String> {
+    fn exec_datalength(
+        &self,
+        expr: &StringExpr,
+        context: &HashMap<String, String>,
+    ) -> Result<String> {
         let s = self.eval_expr(expr, context)?;
         Ok(s.len().to_string())
     }
@@ -306,7 +323,7 @@ impl StringFunctionExecutor {
         // In production, this would support complex format strings
         match fmt.as_str() {
             "C" | "c" => Ok(format!("${}", val)), // Currency
-            "D" | "d" => Ok(val), // Decimal
+            "D" | "d" => Ok(val),                 // Decimal
             "N" | "n" => {
                 // Number with commas
                 if let Ok(num) = val.parse::<i64>() {
@@ -320,7 +337,12 @@ impl StringFunctionExecutor {
         }
     }
 
-    fn exec_left(&self, string: &StringExpr, length: &StringExpr, context: &HashMap<String, String>) -> Result<String> {
+    fn exec_left(
+        &self,
+        string: &StringExpr,
+        length: &StringExpr,
+        context: &HashMap<String, String>,
+    ) -> Result<String> {
         let s = self.eval_expr(string, context)?;
         let len = self.eval_as_int(length, context)?;
 
@@ -355,7 +377,10 @@ impl StringFunctionExecutor {
         if let Some(ch) = char::from_u32(validated) {
             Ok(ch.to_string())
         } else {
-            Err(DbError::InvalidInput(format!("Invalid Unicode code point: {}", code)))
+            Err(DbError::InvalidInput(format!(
+                "Invalid Unicode code point: {}",
+                code
+            )))
         }
     }
 
@@ -445,7 +470,12 @@ impl StringFunctionExecutor {
         Ok(s.chars().rev().collect())
     }
 
-    fn exec_right(&self, string: &StringExpr, length: &StringExpr, context: &HashMap<String, String>) -> Result<String> {
+    fn exec_right(
+        &self,
+        string: &StringExpr,
+        length: &StringExpr,
+        context: &HashMap<String, String>,
+    ) -> Result<String> {
         let s = self.eval_expr(string, context)?;
         let len = self.eval_as_int(length, context)?;
 
@@ -574,7 +604,9 @@ impl StringFunctionExecutor {
         let new_s = self.eval_expr(new_string, context)?;
 
         if start_pos < 1 {
-            return Err(DbError::InvalidInput("Start position must be >= 1".to_string()));
+            return Err(DbError::InvalidInput(
+                "Start position must be >= 1".to_string(),
+            ));
         }
 
         let start_idx = (start_pos - 1) as usize;
@@ -695,16 +727,14 @@ mod tests {
         let mut executor = StringFunctionExecutor::new();
         let context = HashMap::new();
 
-        let result = executor.exec_upper(
-            &StringExpr::Literal("hello".to_string()),
-            &context,
-        ).unwrap();
+        let result = executor
+            .exec_upper(&StringExpr::Literal("hello".to_string()), &context)
+            .unwrap();
         assert_eq!(result, "HELLO");
 
-        let result = executor.exec_lower(
-            &StringExpr::Literal("WORLD".to_string()),
-            &context,
-        ).unwrap();
+        let result = executor
+            .exec_lower(&StringExpr::Literal("WORLD".to_string()), &context)
+            .unwrap();
         assert_eq!(result, "world");
     }
 

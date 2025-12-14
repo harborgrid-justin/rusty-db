@@ -7,7 +7,7 @@
 // - Geodetic calculations
 // - Great circle distance calculations
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 use crate::spatial::geometry::Coordinate;
 use std::collections::HashMap;
 use std::f64::consts::PI;
@@ -20,11 +20,11 @@ pub type SridType = i32;
 pub mod well_known_srid {
     use super::SridType;
 
-    pub const WGS84: SridType = 4326;          // Geographic WGS84
-    pub const WEB_MERCATOR: SridType = 3857;   // Web Mercator (Google Maps)
-    pub const UTM_ZONE_10N: SridType = 32610;  // UTM Zone 10N
-    pub const NAD83: SridType = 4269;          // North American Datum 1983
-    pub const EPSG_3395: SridType = 3395;      // World Mercator
+    pub const WGS84: SridType = 4326; // Geographic WGS84
+    pub const WEB_MERCATOR: SridType = 3857; // Web Mercator (Google Maps)
+    pub const UTM_ZONE_10N: SridType = 32610; // UTM Zone 10N
+    pub const NAD83: SridType = 4269; // North American Datum 1983
+    pub const EPSG_3395: SridType = 3395; // World Mercator
 }
 
 // Spatial Reference System definition
@@ -156,7 +156,10 @@ impl SrsRegistry {
         };
 
         self.systems.write().unwrap().insert(wgs84.srid, wgs84);
-        self.systems.write().unwrap().insert(web_mercator.srid, web_mercator);
+        self.systems
+            .write()
+            .unwrap()
+            .insert(web_mercator.srid, web_mercator);
     }
 
     // Register a new SRS
@@ -233,9 +236,10 @@ impl CoordinateTransformer {
         match srs.projection_type {
             ProjectionType::Geographic => Ok(*coord), // Already geographic
             ProjectionType::Mercator => self.mercator_to_wgs84(coord),
-            _ => Err(DbError::NotImplemented(
-                format!("Transformation from {:?} not implemented", srs.projection_type),
-            )),
+            _ => Err(DbError::NotImplemented(format!(
+                "Transformation from {:?} not implemented",
+                srs.projection_type
+            ))),
         }
     }
 
@@ -244,9 +248,10 @@ impl CoordinateTransformer {
         match srs.projection_type {
             ProjectionType::Geographic => Ok(*coord), // Already geographic
             ProjectionType::Mercator => self.wgs84_to_mercator(coord),
-            _ => Err(DbError::NotImplemented(
-                format!("Transformation to {:?} not implemented", srs.projection_type),
-            )),
+            _ => Err(DbError::NotImplemented(format!(
+                "Transformation to {:?} not implemented",
+                srs.projection_type
+            ))),
         }
     }
 
@@ -317,26 +322,30 @@ impl UtmProjection {
         let c = e2 / (1.0 - e2) * lat_rad.cos().powi(2);
         let a_coef = (lon_rad - lon0) * lat_rad.cos();
 
-        let m = a * (
-            (1.0 - e2 / 4.0 - 3.0 * e2.powi(2) / 64.0 - 5.0 * e2.powi(3) / 256.0) * lat_rad
-            - (3.0 * e2 / 8.0 + 3.0 * e2.powi(2) / 32.0 + 45.0 * e2.powi(3) / 1024.0) * (2.0 * lat_rad).sin()
-            + (15.0 * e2.powi(2) / 256.0 + 45.0 * e2.powi(3) / 1024.0) * (4.0 * lat_rad).sin()
-            - (35.0 * e2.powi(3) / 3072.0) * (6.0 * lat_rad).sin()
-        );
+        let m = a
+            * ((1.0 - e2 / 4.0 - 3.0 * e2.powi(2) / 64.0 - 5.0 * e2.powi(3) / 256.0) * lat_rad
+                - (3.0 * e2 / 8.0 + 3.0 * e2.powi(2) / 32.0 + 45.0 * e2.powi(3) / 1024.0)
+                    * (2.0 * lat_rad).sin()
+                + (15.0 * e2.powi(2) / 256.0 + 45.0 * e2.powi(3) / 1024.0) * (4.0 * lat_rad).sin()
+                - (35.0 * e2.powi(3) / 3072.0) * (6.0 * lat_rad).sin());
 
-        let x = k0 * n * (
-            a_coef
-            + (1.0 - t.powi(2) + c) * a_coef.powi(3) / 6.0
-            + (5.0 - 18.0 * t.powi(2) + t.powi(4) + 72.0 * c - 58.0 * e2 / (1.0 - e2)) * a_coef.powi(5) / 120.0
-        ) + 500000.0; // False easting
+        let x = k0
+            * n
+            * (a_coef
+                + (1.0 - t.powi(2) + c) * a_coef.powi(3) / 6.0
+                + (5.0 - 18.0 * t.powi(2) + t.powi(4) + 72.0 * c - 58.0 * e2 / (1.0 - e2))
+                    * a_coef.powi(5)
+                    / 120.0)
+            + 500000.0; // False easting
 
-        let y = k0 * (
-            m + n * lat_rad.tan() * (
-                a_coef.powi(2) / 2.0
-                + (5.0 - t.powi(2) + 9.0 * c + 4.0 * c.powi(2)) * a_coef.powi(4) / 24.0
-                + (61.0 - 58.0 * t.powi(2) + t.powi(4) + 600.0 * c - 330.0 * e2 / (1.0 - e2)) * a_coef.powi(6) / 720.0
-            )
-        );
+        let y = k0
+            * (m + n
+                * lat_rad.tan()
+                * (a_coef.powi(2) / 2.0
+                    + (5.0 - t.powi(2) + 9.0 * c + 4.0 * c.powi(2)) * a_coef.powi(4) / 24.0
+                    + (61.0 - 58.0 * t.powi(2) + t.powi(4) + 600.0 * c - 330.0 * e2 / (1.0 - e2))
+                        * a_coef.powi(6)
+                        / 720.0));
 
         let y = if is_northern {
             y
@@ -380,16 +389,26 @@ impl UtmProjection {
         let r = a * (1.0 - e2) / (1.0 - e2 * lat_rad.sin().powi(2)).powf(1.5);
         let d = x / (n * k0);
 
-        let lat = lat_rad - (n * t / r) * (
-            d.powi(2) / 2.0
-            - (5.0 + 3.0 * t.powi(2) + 10.0 * c - 4.0 * c.powi(2) - 9.0 * e2 / (1.0 - e2)) * d.powi(4) / 24.0
-            + (61.0 + 90.0 * t.powi(2) + 298.0 * c + 45.0 * t.powi(4) - 252.0 * e2 / (1.0 - e2) - 3.0 * c.powi(2)) * d.powi(6) / 720.0
-        );
+        let lat = lat_rad
+            - (n * t / r)
+                * (d.powi(2) / 2.0
+                    - (5.0 + 3.0 * t.powi(2) + 10.0 * c - 4.0 * c.powi(2) - 9.0 * e2 / (1.0 - e2))
+                        * d.powi(4)
+                        / 24.0
+                    + (61.0 + 90.0 * t.powi(2) + 298.0 * c + 45.0 * t.powi(4)
+                        - 252.0 * e2 / (1.0 - e2)
+                        - 3.0 * c.powi(2))
+                        * d.powi(6)
+                        / 720.0);
 
-        let lon = lon0 + (
-            d - (1.0 + 2.0 * t.powi(2) + c) * d.powi(3) / 6.0
-            + (5.0 - 2.0 * c + 28.0 * t.powi(2) - 3.0 * c.powi(2) + 8.0 * e2 / (1.0 - e2) + 24.0 * t.powi(4)) * d.powi(5) / 120.0
-        ) / lat_rad.cos();
+        let lon = lon0
+            + (d - (1.0 + 2.0 * t.powi(2) + c) * d.powi(3) / 6.0
+                + (5.0 - 2.0 * c + 28.0 * t.powi(2) - 3.0 * c.powi(2)
+                    + 8.0 * e2 / (1.0 - e2)
+                    + 24.0 * t.powi(4))
+                    * d.powi(5)
+                    / 120.0)
+                / lat_rad.cos();
 
         Ok(Coordinate::new(lon * 180.0 / PI, lat * 180.0 / PI))
     }
@@ -452,7 +471,7 @@ impl GeodeticCalculator {
 
             sin_sigma = ((cos_u2 * sin_lambda).powi(2)
                 + (cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda).powi(2))
-                .sqrt();
+            .sqrt();
 
             if sin_sigma == 0.0 {
                 return 0.0; // Coincident points
@@ -473,8 +492,14 @@ impl GeodeticCalculator {
             let c = f / 16.0 * cos_sq_alpha * (4.0 + f * (4.0 - 3.0 * cos_sq_alpha));
 
             lambda_prev = lambda;
-            lambda = l + (1.0 - c) * f * sin_alpha
-                * (sigma + c * sin_sigma * (cos_2_sigma_m + c * cos_sigma * (-1.0 + 2.0 * cos_2_sigma_m.powi(2))));
+            lambda = l
+                + (1.0 - c)
+                    * f
+                    * sin_alpha
+                    * (sigma
+                        + c * sin_sigma
+                            * (cos_2_sigma_m
+                                + c * cos_sigma * (-1.0 + 2.0 * cos_2_sigma_m.powi(2))));
 
             iter_limit -= 1;
             if (lambda - lambda_prev).abs() < 1e-12 || iter_limit == 0 {
@@ -487,14 +512,19 @@ impl GeodeticCalculator {
         }
 
         let u_sq = cos_sq_alpha * (a.powi(2) - b.powi(2)) / b.powi(2);
-        let a_coef = 1.0 + u_sq / 16384.0 * (4096.0 + u_sq * (-768.0 + u_sq * (320.0 - 175.0 * u_sq)));
+        let a_coef =
+            1.0 + u_sq / 16384.0 * (4096.0 + u_sq * (-768.0 + u_sq * (320.0 - 175.0 * u_sq)));
         let b_coef = u_sq / 1024.0 * (256.0 + u_sq * (-128.0 + u_sq * (74.0 - 47.0 * u_sq)));
 
-        let delta_sigma = b_coef * sin_sigma
-            * (cos_2_sigma_m + b_coef / 4.0
-                * (cos_sigma * (-1.0 + 2.0 * cos_2_sigma_m.powi(2))
-                    - b_coef / 6.0 * cos_2_sigma_m * (-3.0 + 4.0 * sin_sigma.powi(2))
-                        * (-3.0 + 4.0 * cos_2_sigma_m.powi(2))));
+        let delta_sigma = b_coef
+            * sin_sigma
+            * (cos_2_sigma_m
+                + b_coef / 4.0
+                    * (cos_sigma * (-1.0 + 2.0 * cos_2_sigma_m.powi(2))
+                        - b_coef / 6.0
+                            * cos_2_sigma_m
+                            * (-3.0 + 4.0 * sin_sigma.powi(2))
+                            * (-3.0 + 4.0 * cos_2_sigma_m.powi(2))));
 
         b * a_coef * (sigma - delta_sigma)
     }
@@ -509,8 +539,7 @@ impl GeodeticCalculator {
         let dlat = lat2 - lat1;
         let dlon = lon2 - lon1;
 
-        let a = (dlat / 2.0).sin().powi(2)
-            + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
+        let a = (dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
 
         let c = 2.0 * a.sqrt().asin();
 
@@ -544,7 +573,7 @@ impl GeodeticCalculator {
 
         let lat2 = (lat1.sin() * angular_distance.cos()
             + lat1.cos() * angular_distance.sin() * bearing.cos())
-            .asin();
+        .asin();
 
         let lon2 = lon1
             + (bearing.sin() * angular_distance.sin() * lat1.cos())
@@ -586,12 +615,20 @@ mod tests {
 
         let wgs84 = Coordinate::new(-122.4194, 37.7749); // San Francisco
         let mercator = transformer
-            .transform(&wgs84, well_known_srid::WGS84, well_known_srid::WEB_MERCATOR)
+            .transform(
+                &wgs84,
+                well_known_srid::WGS84,
+                well_known_srid::WEB_MERCATOR,
+            )
             .unwrap();
 
         // Transform back
         let back = transformer
-            .transform(&mercator, well_known_srid::WEB_MERCATOR, well_known_srid::WGS84)
+            .transform(
+                &mercator,
+                well_known_srid::WEB_MERCATOR,
+                well_known_srid::WGS84,
+            )
             .unwrap();
 
         assert!((back.x - wgs84.x).abs() < 0.0001);

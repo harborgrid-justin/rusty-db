@@ -8,12 +8,12 @@
 // - Thread pool management
 // - Query parallelization optimizer
 
-use std::collections::VecDeque;
 use crate::error::DbError;
-use crate::execution::{QueryResult, planner::PlanNode};
-use std::sync::Arc;
-use std::collections::HashMap;
+use crate::execution::{planner::PlanNode, QueryResult};
 use parking_lot::RwLock;
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::Arc;
 
 // Parallel execution engine with fixed-size thread pool
 pub struct ParallelExecutor {
@@ -51,11 +51,20 @@ impl ParallelExecutor {
             PlanNode::TableScan { table, columns } => {
                 self.parallel_table_scan(table, columns).await
             }
-            PlanNode::Join { join_type, left, right, condition } => {
-                self.parallel_join(join_type, left, right, condition).await
-            }
-            PlanNode::Aggregate { input, group_by, aggregates, having } => {
-                self.parallel_aggregate(input, group_by, aggregates, having).await
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => self.parallel_join(join_type, left, right, condition).await,
+            PlanNode::Aggregate {
+                input,
+                group_by,
+                aggregates,
+                having,
+            } => {
+                self.parallel_aggregate(input, group_by, aggregates, having)
+                    .await
             }
             _ => {
                 // Fall back to sequential execution
@@ -65,7 +74,11 @@ impl ParallelExecutor {
     }
 
     // Parallel table scan using range partitioning
-    async fn parallel_table_scan(&self, table: &str, columns: &[String]) -> Result<QueryResult, DbError> {
+    async fn parallel_table_scan(
+        &self,
+        table: &str,
+        columns: &[String],
+    ) -> Result<QueryResult, DbError> {
         // Divide table into ranges for parallel scanning
         let chunk_size = 1000; // Rows per chunk
         let num_chunks = 10; // Simulate 10 chunks
@@ -157,9 +170,7 @@ impl ParallelExecutor {
                 let mut ht = ht.write();
                 for row in partition {
                     if let Some(key) = row.get(0) {
-                        ht.entry(key.clone())
-                            .or_insert_with(Vec::new)
-                            .push(row);
+                        ht.entry(key.clone()).or_insert_with(Vec::new).push(row);
                     }
                 }
             });
@@ -168,9 +179,10 @@ impl ParallelExecutor {
 
         // Wait for hash table construction
         for handle in handles {
-            handle.await.map_err(|e| DbError::Internal(format!("Hash table build failed: {}", e)))?;
+            handle
+                .await
+                .map_err(|e| DbError::Internal(format!("Hash table build failed: {}", e)))?;
         }
-
 
         // Probe phase - partition left relation
         let left_partitions = Self::partition_rows(&left.rows, self.worker_count);
@@ -227,10 +239,12 @@ impl ParallelExecutor {
 
         if group_by.is_empty() {
             // Global aggregation
-            self.global_aggregate_parallel(&input_result, aggregates).await
+            self.global_aggregate_parallel(&input_result, aggregates)
+                .await
         } else {
             // Group-by aggregation
-            self.group_by_aggregate_parallel(&input_result, group_by, aggregates).await
+            self.group_by_aggregate_parallel(&input_result, group_by, aggregates)
+                .await
         }
     }
 
@@ -388,7 +402,10 @@ impl WorkStealingScheduler {
             })
             .collect();
 
-        Self { work_queues, num_workers }
+        Self {
+            work_queues,
+            num_workers,
+        }
     }
 
     // Add work item to a worker queue (hot path - inline)
@@ -403,7 +420,8 @@ impl WorkStealingScheduler {
     // Try to get work from own queue (hot path - inline)
     #[inline]
     pub fn try_pop_local(&self, worker_id: usize) -> Option<WorkItem> {
-        self.work_queues.get(worker_id)
+        self.work_queues
+            .get(worker_id)
             .and_then(|queue| queue.write().pop_front())
     }
 
@@ -434,9 +452,7 @@ impl WorkStealingScheduler {
 
     // Get total pending work across all queues
     pub fn total_pending_work(&self) -> usize {
-        self.work_queues.iter()
-            .map(|q| q.read().len())
-            .sum()
+        self.work_queues.iter().map(|q| q.read().len()).sum()
     }
 }
 
@@ -461,10 +477,7 @@ impl ParallelSorter {
         if rows.len() < 1000 {
             // Small dataset, use sequential sort
             let mut sorted = rows;
-            sorted.sort_by(|a, b| {
-                a.get(column_index)
-                    .cmp(&b.get(column_index))
-            });
+            sorted.sort_by(|a, b| a.get(column_index).cmp(&b.get(column_index)));
             return Ok(sorted);
         }
 
@@ -480,9 +493,7 @@ impl ParallelSorter {
 
             let handle = tokio::spawn(async move {
                 // Sort this chunk
-                chunk.sort_by(|a, b| {
-                    a.get(col_idx).cmp(&b.get(col_idx))
-                });
+                chunk.sort_by(|a, b| a.get(col_idx).cmp(&b.get(col_idx)));
                 chunk
             });
 
@@ -551,9 +562,7 @@ pub struct ParallelPipeline {
 
 impl ParallelPipeline {
     pub fn new() -> Self {
-        Self {
-            stages: Vec::new(),
-        }
+        Self { stages: Vec::new() }
     }
 
     pub fn add_stage(&mut self, stage: PipelineStage) {
@@ -591,7 +600,10 @@ impl PipelineStage {
 
 // Pipeline processor trait
 pub trait PipelineProcessor: Send + Sync {
-    fn process(&self, input: QueryResult) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResult, DbError>> + Send>>;
+    fn process(
+        &self,
+        input: QueryResult,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<QueryResult, DbError>> + Send>>;
 }
 
 // Vectorized execution engine

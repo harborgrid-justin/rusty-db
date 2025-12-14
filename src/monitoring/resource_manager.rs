@@ -1,15 +1,14 @@
 // Resource Manager
 // CPU resource groups, memory allocation limits, I/O bandwidth quotas, query timeout enforcement
 
-use std::fmt;
-use std::time::Instant;
-use std::time::SystemTime;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
-use parking_lot::RwLock;
-use std::time::{Duration};
-
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // Resource type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -90,11 +89,11 @@ impl ResourceLimit {
 // Enforcement policy when resource limits are exceeded
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EnforcementPolicy {
-    Allow,      // Log but allow
-    Throttle,   // Slow down operations
-    Queue,      // Queue requests
-    Reject,     // Reject new requests
-    Terminate,  // Terminate existing operations
+    Allow,     // Log but allow
+    Throttle,  // Slow down operations
+    Queue,     // Queue requests
+    Reject,    // Reject new requests
+    Terminate, // Terminate existing operations
 }
 
 // Resource group for organizing sessions/queries
@@ -283,7 +282,10 @@ impl ResourceManager {
 
         // Create default resource group
         let default = ResourceGroup::new("DEFAULT", 100);
-        manager.groups.write().insert("DEFAULT".to_string(), default);
+        manager
+            .groups
+            .write()
+            .insert("DEFAULT".to_string(), default);
 
         manager
     }
@@ -321,7 +323,9 @@ impl ResourceManager {
     }
 
     pub fn set_global_limit(&self, limit: ResourceLimit) {
-        self.global_limits.write().insert(limit.resource_type, limit);
+        self.global_limits
+            .write()
+            .insert(limit.resource_type, limit);
     }
 
     pub fn assign_session_to_group(&self, session_id: u64, group_name: impl Into<String>) -> bool {
@@ -368,17 +372,15 @@ impl ResourceManager {
         let groups = self.groups.read();
         if let Some(group) = groups.get(&group_name) {
             match group.check_limit(ResourceType::Connections) {
-                ResourceLimitStatus::Exceeded(limit) => {
-                    match limit.enforcement_policy {
-                        EnforcementPolicy::Reject => {
-                            return Err(format!(
-                                "Connection limit exceeded for group {}: {}/{}",
-                                group_name, limit.current_value, limit.max_value
-                            ));
-                        }
-                        _ => {}
+                ResourceLimitStatus::Exceeded(limit) => match limit.enforcement_policy {
+                    EnforcementPolicy::Reject => {
+                        return Err(format!(
+                            "Connection limit exceeded for group {}: {}/{}",
+                            group_name, limit.current_value, limit.max_value
+                        ));
                     }
-                }
+                    _ => {}
+                },
                 _ => {}
             }
         }
@@ -421,11 +423,7 @@ impl ResourceManager {
         }
     }
 
-    pub fn allocate_memory(
-        &self,
-        query_id: u64,
-        bytes: u64,
-    ) -> Result<(), String> {
+    pub fn allocate_memory(&self, query_id: u64, bytes: u64) -> Result<(), String> {
         let mut active_queries = self.active_queries.write();
         if let Some(usage) = active_queries.get_mut(&query_id) {
             let group_name = usage.resource_group.clone();
@@ -481,8 +479,10 @@ impl ResourceManager {
     }
 
     pub fn get_group_statistics(&self, group_name: &str) -> Option<ResourceGroupStatistics> {
-        self.groups.read().get(group_name).map(|group| {
-            ResourceGroupStatistics {
+        self.groups
+            .read()
+            .get(group_name)
+            .map(|group| ResourceGroupStatistics {
                 name: group.name.clone(),
                 priority: group.priority,
                 active_sessions: group.session_count(),
@@ -494,8 +494,7 @@ impl ResourceManager {
                     .iter()
                     .map(|(rt, limit)| (*rt, limit.usage_percentage()))
                     .collect(),
-            }
-        })
+            })
     }
 
     pub fn get_all_groups(&self) -> Vec<String> {
@@ -591,28 +590,22 @@ impl ResourcePlanner {
         }
     }
 
-    pub fn get_peak_usage(
-        &self,
-        group_name: &str,
-        resource_type: ResourceType,
-    ) -> Option<f64> {
+    pub fn get_peak_usage(&self, group_name: &str, resource_type: ResourceType) -> Option<f64> {
         let history = self.historical_usage.read();
         if let Some(group_history) = history.get(group_name) {
             group_history
                 .iter()
                 .filter_map(|s| s.resource_usage.get(&resource_type))
                 .cloned()
-                .fold(None, |max, v| Some(max.map_or(v, |m| if v > m { v } else { m })))
+                .fold(None, |max, v| {
+                    Some(max.map_or(v, |m| if v > m { v } else { m }))
+                })
         } else {
             None
         }
     }
 
-    pub fn get_average_usage(
-        &self,
-        group_name: &str,
-        resource_type: ResourceType,
-    ) -> Option<f64> {
+    pub fn get_average_usage(&self, group_name: &str, resource_type: ResourceType) -> Option<f64> {
         self.predict_resource_needs(group_name, resource_type)
     }
 }
@@ -636,7 +629,14 @@ mod tests {
         group.add_limit(limit);
 
         assert!(group.allocate_resource(ResourceType::Memory, 500));
-        assert_eq!(group.limits.get(&ResourceType::Memory).unwrap().current_value, 500);
+        assert_eq!(
+            group
+                .limits
+                .get(&ResourceType::Memory)
+                .unwrap()
+                .current_value,
+            500
+        );
 
         assert!(group.allocate_resource(ResourceType::Memory, 500));
         assert!(!group.allocate_resource(ResourceType::Memory, 1));
@@ -664,8 +664,8 @@ mod tests {
 
     #[test]
     fn test_query_timeout() {
-        let mut usage = QueryResourceUsage::new(1, 100, "default")
-            .with_timeout(Duration::from_millis(10));
+        let mut usage =
+            QueryResourceUsage::new(1, 100, "default").with_timeout(Duration::from_millis(10));
 
         assert!(!usage.is_timeout());
         std::thread::sleep(Duration::from_millis(20));

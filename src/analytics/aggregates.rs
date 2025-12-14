@@ -8,11 +8,11 @@
 // - **Advanced Aggregates**: PERCENTILE, CORR, COVAR, REGR
 // - **Collection Aggregates**: STRING_AGG, ARRAY_AGG, JSON_AGG
 
-use std::collections::HashSet;
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use crate::error::{Result, DbError};
+use std::collections::HashSet;
 
 // =============================================================================
 // Aggregate Function Definitions
@@ -125,9 +125,7 @@ pub fn compute_aggregate(
     }
 
     match function {
-        AggregateFunction::Count => {
-            Ok(data.len().to_string())
-        }
+        AggregateFunction::Count => Ok(data.len().to_string()),
 
         AggregateFunction::CountDistinct => {
             let distinct: HashSet<_> = data
@@ -161,49 +159,45 @@ pub fn compute_aggregate(
             Ok(format_number(avg))
         }
 
-        AggregateFunction::Min => {
-            data.iter()
-                .filter_map(|row| row.get(column_index))
-                .min()
-                .cloned()
-                .ok_or_else(|| DbError::Execution("No values to minimize".to_string()))
+        AggregateFunction::Min => data
+            .iter()
+            .filter_map(|row| row.get(column_index))
+            .min()
+            .cloned()
+            .ok_or_else(|| DbError::Execution("No values to minimize".to_string())),
+
+        AggregateFunction::Max => data
+            .iter()
+            .filter_map(|row| row.get(column_index))
+            .max()
+            .cloned()
+            .ok_or_else(|| DbError::Execution("No values to maximize".to_string())),
+
+        AggregateFunction::Mode => {
+            let mut counts: HashMap<&String, usize> = HashMap::new();
+            for row in data.iter() {
+                if let Some(value) = row.get(column_index) {
+                    *counts.entry(value).or_insert(0) += 1;
+                }
+            }
+            counts
+                .into_iter()
+                .max_by_key(|(_, count)| *count)
+                .map(|(value, _)| value.clone())
+                .ok_or_else(|| DbError::Execution("No mode found".to_string()))
         }
 
-AggregateFunction::Max => {
-              data.iter()
-                  .filter_map(|row| row.get(column_index))
-                  .max()
-                  .cloned()
-                  .ok_or_else(|| DbError::Execution("No values to maximize".to_string()))
-          }
+        AggregateFunction::FirstValue => data
+            .first()
+            .and_then(|row| row.get(column_index))
+            .cloned()
+            .ok_or_else(|| DbError::Execution("No first value found".to_string())),
 
-          AggregateFunction::Mode => {
-              let mut counts: HashMap<&String, usize> = HashMap::new();
-              for row in data.iter() {
-                  if let Some(value) = row.get(column_index) {
-                      *counts.entry(value).or_insert(0) += 1;
-                  }
-              }
-              counts
-                  .into_iter()
-                  .max_by_key(|(_, count)| *count)
-                  .map(|(value, _)| value.clone())
-                  .ok_or_else(|| DbError::Execution("No mode found".to_string()))
-          }
-
-          AggregateFunction::FirstValue => {
-              data.first()
-                  .and_then(|row| row.get(column_index))
-                  .cloned()
-                  .ok_or_else(|| DbError::Execution("No first value found".to_string()))
-          }
-
-          AggregateFunction::LastValue => {
-              data.last()
-                  .and_then(|row| row.get(column_index))
-                  .cloned()
-                  .ok_or_else(|| DbError::Execution("No last value found".to_string()))
-          }
+        AggregateFunction::LastValue => data
+            .last()
+            .and_then(|row| row.get(column_index))
+            .cloned()
+            .ok_or_else(|| DbError::Execution("No last value found".to_string())),
 
         AggregateFunction::StdDev | AggregateFunction::StdDevPop => {
             let values = extract_numeric_values(data, column_index);
@@ -335,7 +329,10 @@ fn format_number(value: f64) -> String {
     if value.fract() == 0.0 {
         format!("{:.0}", value)
     } else {
-        format!("{:.6}", value).trim_end_matches('0').trim_end_matches('.').to_string()
+        format!("{:.6}", value)
+            .trim_end_matches('0')
+            .trim_end_matches('.')
+            .to_string()
     }
 }
 
@@ -381,7 +378,10 @@ impl AggregateState {
         self.max = Some(self.max.map_or(value, |m| m.max(value)));
 
         // Store values for percentile/median
-        if matches!(self.function, AggregateFunction::Median | AggregateFunction::Percentile { .. }) {
+        if matches!(
+            self.function,
+            AggregateFunction::Median | AggregateFunction::Percentile { .. }
+        ) {
             self.values.push(value);
         }
     }
@@ -416,9 +416,7 @@ impl AggregateState {
                 };
                 variance.sqrt()
             }
-            AggregateFunction::Median => {
-                compute_percentile(&self.values, 50.0)
-            }
+            AggregateFunction::Median => compute_percentile(&self.values, 50.0),
             AggregateFunction::Percentile { percentile } => {
                 compute_percentile(&self.values, *percentile)
             }
@@ -499,7 +497,9 @@ mod tests {
         let result = compute_aggregate(
             &data,
             0,
-            &AggregateFunction::StringAgg { separator: ", ".to_string() },
+            &AggregateFunction::StringAgg {
+                separator: ", ".to_string(),
+            },
         )
         .unwrap();
         assert_eq!(result, "a, b, c");

@@ -7,7 +7,10 @@
 // - Stream management
 
 use axum::{
-    extract::{Path, Query, State, ws::{WebSocket, WebSocketUpgrade}},
+    extract::{
+        ws::{WebSocket, WebSocketUpgrade},
+        Path, Query, State,
+    },
     http::StatusCode,
     response::Response,
     Json,
@@ -17,11 +20,10 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use utoipa::ToSchema;
 
-use crate::api::rest::types::{ApiState, ApiError, ApiResult};
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
 use crate::streams::{
-    CDCEngine, CDCConfig,
-    EventPublisher, PublisherConfig, PublishedEvent, TopicConfig,
-    SubscriptionConfig,
+    CDCConfig, CDCEngine, EventPublisher, PublishedEvent, PublisherConfig, SubscriptionConfig,
+    TopicConfig,
 };
 
 // ============================================================================
@@ -170,8 +172,12 @@ pub async fn publish_event(
     let _publisher = EVENT_PUBLISHER.read();
 
     // Serialize payload
-    let payload_bytes = serde_json::to_vec(&request.payload)
-        .map_err(|e| ApiError::new("SERIALIZATION_FAILED", format!("Failed to serialize payload: {}", e)))?;
+    let payload_bytes = serde_json::to_vec(&request.payload).map_err(|e| {
+        ApiError::new(
+            "SERIALIZATION_FAILED",
+            format!("Failed to serialize payload: {}", e),
+        )
+    })?;
 
     // Create event
     let event = PublishedEvent::new(request.topic.clone(), payload_bytes);
@@ -184,13 +190,16 @@ pub async fn publish_event(
     // For now, returning mock response
     let event_id = uuid::Uuid::new_v4().to_string();
 
-    Ok((StatusCode::CREATED, Json(PublishEventResponse {
-        event_id,
-        topic: request.topic,
-        partition: 0,
-        offset: 0,
-        timestamp: chrono::Utc::now().timestamp_millis(),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(PublishEventResponse {
+            event_id,
+            topic: request.topic,
+            partition: 0,
+            offset: 0,
+            timestamp: chrono::Utc::now().timestamp_millis(),
+        }),
+    ))
 }
 
 /// Create a new topic
@@ -214,12 +223,15 @@ pub async fn create_topic(
 
     // Create topic (would be async in real implementation)
 
-    Ok((StatusCode::CREATED, Json(TopicResponse {
-        name: request.name,
-        partitions: request.partitions,
-        replication_factor: request.replication_factor.unwrap_or(1),
-        created_at: chrono::Utc::now().timestamp(),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(TopicResponse {
+            name: request.name,
+            partitions: request.partitions,
+            replication_factor: request.replication_factor.unwrap_or(1),
+            created_at: chrono::Utc::now().timestamp(),
+        }),
+    ))
 }
 
 /// List all topics
@@ -231,9 +243,7 @@ pub async fn create_topic(
     ),
     tag = "streams"
 )]
-pub async fn list_topics(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<Json<Vec<String>>> {
+pub async fn list_topics(State(_state): State<Arc<ApiState>>) -> ApiResult<Json<Vec<String>>> {
     // In a real implementation, would query topic metadata
     Ok(Json(vec![]))
 }
@@ -260,11 +270,14 @@ pub async fn subscribe_topics(
     // Create subscriber (would be async in real implementation)
     let subscription_id = uuid::Uuid::new_v4().to_string();
 
-    Ok((StatusCode::CREATED, Json(SubscribeResponse {
-        subscription_id,
-        topics: request.topics,
-        group_id: request.group_id,
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(SubscribeResponse {
+            subscription_id,
+            topics: request.topics,
+            group_id: request.group_id,
+        }),
+    ))
 }
 
 /// Start CDC capture
@@ -290,12 +303,15 @@ pub async fn start_cdc(
     // Start CDC (would be async in real implementation)
     let cdc_id = uuid::Uuid::new_v4().to_string();
 
-    Ok((StatusCode::CREATED, Json(CDCStartResponse {
-        cdc_id,
-        status: "running".to_string(),
-        tables,
-        started_at: chrono::Utc::now().timestamp(),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(CDCStartResponse {
+            cdc_id,
+            status: "running".to_string(),
+            tables,
+            started_at: chrono::Utc::now().timestamp(),
+        }),
+    ))
 }
 
 /// Get CDC changes
@@ -391,10 +407,7 @@ pub async fn get_cdc_stats(
     ),
     tag = "streams"
 )]
-pub async fn stream_events(
-    ws: WebSocketUpgrade,
-    State(_state): State<Arc<ApiState>>,
-) -> Response {
+pub async fn stream_events(ws: WebSocketUpgrade, State(_state): State<Arc<ApiState>>) -> Response {
     ws.on_upgrade(|socket| handle_stream_websocket(socket))
 }
 

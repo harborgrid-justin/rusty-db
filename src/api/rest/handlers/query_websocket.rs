@@ -4,16 +4,19 @@
 // Provides streaming updates for query progress, execution plans, and optimization events
 
 use axum::{
-    extract::{ws::{WebSocket, WebSocketUpgrade}, State},
+    extract::{
+        ws::{WebSocket, WebSocketUpgrade},
+        State,
+    },
     response::Response,
 };
+use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use serde_json::json;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use serde_json::json;
-use futures::{StreamExt, SinkExt};
 use tokio::time::{interval, Duration};
+use utoipa::ToSchema;
 
 use super::super::types::ApiState;
 
@@ -180,7 +183,11 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
     };
 
     if let Ok(welcome_json) = serde_json::to_string(&welcome) {
-        if socket.send(Message::Text(welcome_json.into())).await.is_err() {
+        if socket
+            .send(Message::Text(welcome_json.into()))
+            .await
+            .is_err()
+        {
             return;
         }
     }
@@ -266,7 +273,8 @@ async fn handle_query_execution_websocket(mut socket: WebSocket, state: Arc<ApiS
             match msg {
                 Message::Text(text) => {
                     // Parse cancellation request
-                    if let Ok(cancel_req) = serde_json::from_str::<QueryCancellationRequest>(&text) {
+                    if let Ok(cancel_req) = serde_json::from_str::<QueryCancellationRequest>(&text)
+                    {
                         // Handle query cancellation
                         let response = QueryCancellationResponse {
                             query_id: cancel_req.query_id.clone(),

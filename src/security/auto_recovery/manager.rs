@@ -2,19 +2,19 @@
 //
 // Central orchestrator for all recovery components.
 
-use tokio::time::sleep;
-use std::collections::{HashMap, HashSet};
-use std::time::SystemTime;
-use crate::{Result, DbError};
-use serde::{Deserialize, Serialize};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::{Duration, Instant};
+use crate::{DbError, Result};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+use std::time::SystemTime;
+use std::time::{Duration, Instant};
 use tokio::time::interval;
+use tokio::time::sleep;
 
-use super::recovery_strategies::*;
 use super::checkpoint_management::*;
+use super::recovery_strategies::*;
 use super::state_restoration::*;
 
 // Constants
@@ -134,22 +134,32 @@ impl AutoRecoveryManager {
 
         {
             let manager = Arc::clone(&self);
-            self.corruption_detector.set_corruption_callback(move |corruption| {
-                let failure = DetectedFailure {
-                    id: manager.next_failure_id.fetch_add(1, Ordering::SeqCst),
-                    failure_type: FailureType::DataCorruption,
-                    severity: FailureSeverity::High,
-                    affected_resource: corruption.file_path.clone(),
-                    detected_at: SystemTime::now(),
-                    description: format!("Page {} corrupted (checksum mismatch)", corruption.page_id),
-                    context: HashMap::from([
-                        ("page_id".to_string(), corruption.page_id.to_string()),
-                        ("expected_checksum".to_string(), format!("0x{:x}", corruption.expected_checksum)),
-                        ("actual_checksum".to_string(), format!("0x{:x}", corruption.actual_checksum)),
-                    ]),
-                };
-                manager.handle_failure(failure);
-            });
+            self.corruption_detector
+                .set_corruption_callback(move |corruption| {
+                    let failure = DetectedFailure {
+                        id: manager.next_failure_id.fetch_add(1, Ordering::SeqCst),
+                        failure_type: FailureType::DataCorruption,
+                        severity: FailureSeverity::High,
+                        affected_resource: corruption.file_path.clone(),
+                        detected_at: SystemTime::now(),
+                        description: format!(
+                            "Page {} corrupted (checksum mismatch)",
+                            corruption.page_id
+                        ),
+                        context: HashMap::from([
+                            ("page_id".to_string(), corruption.page_id.to_string()),
+                            (
+                                "expected_checksum".to_string(),
+                                format!("0x{:x}", corruption.expected_checksum),
+                            ),
+                            (
+                                "actual_checksum".to_string(),
+                                format!("0x{:x}", corruption.actual_checksum),
+                            ),
+                        ]),
+                    };
+                    manager.handle_failure(failure);
+                });
         }
 
         {
@@ -196,7 +206,11 @@ impl AutoRecoveryManager {
     }
 
     fn handle_failure(&self, failure: DetectedFailure) {
-        tracing::warn!("Failure detected: {:?} - {}", failure.failure_type, failure.description);
+        tracing::warn!(
+            "Failure detected: {:?} - {}",
+            failure.failure_type,
+            failure.description
+        );
 
         self.failures.write().insert(failure.id, failure.clone());
 
@@ -226,29 +240,26 @@ impl AutoRecoveryManager {
         self.active_recoveries.write().insert(failure.id);
 
         let start = Instant::now();
-        tracing::info!("Starting recovery for failure {}: {:?}", failure.id, failure.failure_type);
+        tracing::info!(
+            "Starting recovery for failure {}: {:?}",
+            failure.id,
+            failure.failure_type
+        );
 
         let result = match failure.failure_type {
-            FailureType::ProcessCrash => {
-                self.self_healer.diagnose_and_heal(&failure).await
-            }
-            FailureType::DataCorruption => {
-                self.recover_corrupted_data(&failure).await
-            }
-            FailureType::TransactionDeadlock => {
-                self.recover_from_deadlock(&failure).await
-            }
-            FailureType::MemoryExhaustion => {
-                self.self_healer.diagnose_and_heal(&failure).await
-            }
+            FailureType::ProcessCrash => self.self_healer.diagnose_and_heal(&failure).await,
+            FailureType::DataCorruption => self.recover_corrupted_data(&failure).await,
+            FailureType::TransactionDeadlock => self.recover_from_deadlock(&failure).await,
+            FailureType::MemoryExhaustion => self.self_healer.diagnose_and_heal(&failure).await,
             FailureType::ConnectionPoolExhaustion => {
                 self.self_healer.diagnose_and_heal(&failure).await
             }
-            FailureType::HealthCheckFailure => {
-                self.recover_from_health_failure(&failure).await
-            }
+            FailureType::HealthCheckFailure => self.recover_from_health_failure(&failure).await,
             _ => {
-                tracing::warn!("No automatic recovery for failure type: {:?}", failure.failure_type);
+                tracing::warn!(
+                    "No automatic recovery for failure type: {:?}",
+                    failure.failure_type
+                );
                 Ok(false)
             }
         };
@@ -267,12 +278,16 @@ impl AutoRecoveryManager {
                 stats.max_rto_seconds = stats.max_rto_seconds.max(rto_seconds);
 
                 if rto_seconds <= 120 {
-                    stats.rto_compliance_rate =
-                        (stats.rto_compliance_rate * (stats.successful_recoveries - 1) as f64 + 1.0)
+                    stats.rto_compliance_rate = (stats.rto_compliance_rate
+                        * (stats.successful_recoveries - 1) as f64
+                        + 1.0)
                         / stats.successful_recoveries as f64;
                 }
 
-                tracing::info!("Recovery completed successfully in {}s (RTO target: 120s)", rto_seconds);
+                tracing::info!(
+                    "Recovery completed successfully in {}s (RTO target: 120s)",
+                    rto_seconds
+                );
             } else {
                 stats.failed_recoveries += 1;
                 tracing::error!("Recovery failed after {}s", rto_seconds);
@@ -284,16 +299,21 @@ impl AutoRecoveryManager {
 
     async fn recover_corrupted_data(&self, failure: &DetectedFailure) -> Result<bool> {
         if let Some(page_id_str) = failure.context.get("page_id") {
-            let page_id: u64 = page_id_str.parse()
+            let page_id: u64 = page_id_str
+                .parse()
                 .map_err(|_| DbError::InvalidInput("Invalid page_id".to_string()))?;
 
-            self.data_repairer.repair_page(page_id, &failure.affected_resource).await?;
+            self.data_repairer
+                .repair_page(page_id, &failure.affected_resource)
+                .await?;
 
             self.corruption_detector.mark_repaired(page_id)?;
 
             Ok(true)
         } else {
-            Err(DbError::InvalidInput("Missing page_id in context".to_string()))
+            Err(DbError::InvalidInput(
+                "Missing page_id in context".to_string(),
+            ))
         }
     }
 
@@ -333,7 +353,10 @@ impl AutoRecoveryManager {
             let failure_probability = self.health_monitor.predict_failure_probability();
 
             if failure_probability > 0.7 {
-                tracing::warn!("High failure probability detected: {:.1}%", failure_probability * 100.0);
+                tracing::warn!(
+                    "High failure probability detected: {:.1}%",
+                    failure_probability * 100.0
+                );
 
                 if let Err(e) = self.take_preventive_action().await {
                     tracing::error!("Preventive action failed: {}", e);

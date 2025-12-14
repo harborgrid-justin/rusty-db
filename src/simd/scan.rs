@@ -4,8 +4,8 @@
 // and batch processing for maximum throughput.
 
 use super::{
-    filter::SimdFilter, FilterOp, PredicateType, SelectionVector, SimdContext,
-    SimdStats, BATCH_SIZE,
+    filter::SimdFilter, FilterOp, PredicateType, SelectionVector, SimdContext, SimdStats,
+    BATCH_SIZE,
 };
 use crate::common::Value;
 use crate::error::{DbError, Result};
@@ -76,9 +76,9 @@ impl ColumnData {
             ColumnData::Float64(v) => v.get(index).map(|&x| Value::Float(x)),
             ColumnData::String(v) => v.get(index).map(|x| Value::String(x.clone())),
             ColumnData::Boolean(v) => v.get(index).map(|&x| Value::Boolean(x)),
-            ColumnData::NullableInt32(v) => {
-                v.get(index).and_then(|x| x.map(|val| Value::Integer(val as i64)))
-            }
+            ColumnData::NullableInt32(v) => v
+                .get(index)
+                .and_then(|x| x.map(|val| Value::Integer(val as i64))),
             ColumnData::NullableInt64(v) => {
                 v.get(index).and_then(|x| x.map(|val| Value::Integer(val)))
             }
@@ -114,7 +114,7 @@ impl ColumnarTable {
     pub fn add_column(&mut self, data: ColumnData) -> Result<()> {
         if !self.columns.is_empty() && data.len() != self.row_count {
             return Err(DbError::InvalidArgument(
-                "Column length must match table row count".to_string()
+                "Column length must match table row count".to_string(),
             ));
         }
 
@@ -268,10 +268,12 @@ impl ColumnScan {
         filter: &FilterOp,
         input_selection: &SelectionVector,
     ) -> Result<SelectionVector> {
-        let column = table.column(filter.column_index)
-            .ok_or_else(|| DbError::InvalidArgument(
-                format!("Column index {} out of bounds", filter.column_index)
-            ))?;
+        let column = table.column(filter.column_index).ok_or_else(|| {
+            DbError::InvalidArgument(format!(
+                "Column index {} out of bounds",
+                filter.column_index
+            ))
+        })?;
 
         let mut output_selection = SelectionVector::with_capacity(input_selection.len());
         let mut simd_filter = SimdFilter::with_context(self.context.clone());
@@ -288,12 +290,7 @@ impl ColumnScan {
                     )?;
                 } else {
                     // Filter only selected rows (sparse selection)
-                    self.filter_sparse_i32(
-                        data,
-                        filter,
-                        input_selection,
-                        &mut output_selection,
-                    )?;
+                    self.filter_sparse_i32(data, filter, input_selection, &mut output_selection)?;
                 }
             }
             ColumnData::Int64(data) => {
@@ -316,7 +313,7 @@ impl ColumnScan {
             }
             _ => {
                 return Err(DbError::InvalidArgument(
-                    "Unsupported column type for filtering".to_string()
+                    "Unsupported column type for filtering".to_string(),
                 ));
             }
         }
@@ -336,12 +333,18 @@ impl ColumnScan {
         output_selection: &mut SelectionVector,
     ) -> Result<()> {
         if filter.values.is_empty() {
-            return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
+            return Err(DbError::InvalidArgument(
+                "Filter requires at least one value".to_string(),
+            ));
         }
 
         let value = match &filter.values[0] {
             Value::Integer(v) => *v as i32,
-            _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
+            _ => {
+                return Err(DbError::InvalidArgument(
+                    "Expected integer value".to_string(),
+                ))
+            }
         };
 
         // For sparse selections, use scalar filtering
@@ -359,11 +362,17 @@ impl ColumnScan {
                 PredicateType::GreaterThanOrEqual => data[idx] >= value,
                 PredicateType::Between => {
                     if filter.values.len() < 2 {
-                        return Err(DbError::InvalidArgument("BETWEEN requires two values".to_string()));
+                        return Err(DbError::InvalidArgument(
+                            "BETWEEN requires two values".to_string(),
+                        ));
                     }
                     let high = match &filter.values[1] {
                         Value::Integer(v) => *v as i32,
-                        _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
+                        _ => {
+                            return Err(DbError::InvalidArgument(
+                                "Expected integer value".to_string(),
+                            ))
+                        }
                     };
                     data[idx] >= value && data[idx] <= high
                 }
@@ -387,12 +396,18 @@ impl ColumnScan {
         output_selection: &mut SelectionVector,
     ) -> Result<()> {
         if filter.values.is_empty() {
-            return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
+            return Err(DbError::InvalidArgument(
+                "Filter requires at least one value".to_string(),
+            ));
         }
 
         let value = match &filter.values[0] {
             Value::Integer(v) => *v,
-            _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
+            _ => {
+                return Err(DbError::InvalidArgument(
+                    "Expected integer value".to_string(),
+                ))
+            }
         };
 
         for &idx in input_selection.indices() {
@@ -427,7 +442,9 @@ impl ColumnScan {
         output_selection: &mut SelectionVector,
     ) -> Result<()> {
         if filter.values.is_empty() {
-            return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
+            return Err(DbError::InvalidArgument(
+                "Filter requires at least one value".to_string(),
+            ));
         }
 
         let value = match &filter.values[0] {
@@ -464,7 +481,9 @@ impl ColumnScan {
         output_selection: &mut SelectionVector,
     ) -> Result<()> {
         if filter.values.is_empty() {
-            return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
+            return Err(DbError::InvalidArgument(
+                "Filter requires at least one value".to_string(),
+            ));
         }
 
         let value = match &filter.values[0] {
@@ -501,7 +520,9 @@ impl ColumnScan {
         output_selection: &mut SelectionVector,
     ) -> Result<()> {
         if filter.values.is_empty() {
-            return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
+            return Err(DbError::InvalidArgument(
+                "Filter requires at least one value".to_string(),
+            ));
         }
 
         let value = match &filter.values[0] {
@@ -537,12 +558,18 @@ impl ColumnScan {
         output_selection: &mut SelectionVector,
     ) -> Result<()> {
         if filter.values.is_empty() {
-            return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
+            return Err(DbError::InvalidArgument(
+                "Filter requires at least one value".to_string(),
+            ));
         }
 
         let value = match &filter.values[0] {
             Value::Boolean(v) => *v,
-            _ => return Err(DbError::InvalidArgument("Expected boolean value".to_string())),
+            _ => {
+                return Err(DbError::InvalidArgument(
+                    "Expected boolean value".to_string(),
+                ))
+            }
         };
 
         for &idx in input_selection.indices() {
@@ -585,12 +612,18 @@ impl ColumnScan {
             }
             _ => {
                 if filter.values.is_empty() {
-                    return Err(DbError::InvalidArgument("Filter requires at least one value".to_string()));
+                    return Err(DbError::InvalidArgument(
+                        "Filter requires at least one value".to_string(),
+                    ));
                 }
 
                 let value = match &filter.values[0] {
                     Value::Integer(v) => *v as i32,
-                    _ => return Err(DbError::InvalidArgument("Expected integer value".to_string())),
+                    _ => {
+                        return Err(DbError::InvalidArgument(
+                            "Expected integer value".to_string(),
+                        ))
+                    }
                 };
 
                 for &idx in input_selection.indices() {
@@ -729,8 +762,12 @@ mod tests {
     fn test_columnar_table() {
         let mut table = ColumnarTable::new(vec!["id".to_string(), "value".to_string()]);
 
-        table.add_column(ColumnData::Int32(vec![1, 2, 3, 4, 5])).unwrap();
-        table.add_column(ColumnData::Int32(vec![10, 20, 30, 40, 50])).unwrap();
+        table
+            .add_column(ColumnData::Int32(vec![1, 2, 3, 4, 5]))
+            .unwrap();
+        table
+            .add_column(ColumnData::Int32(vec![10, 20, 30, 40, 50]))
+            .unwrap();
 
         assert_eq!(table.row_count(), 5);
         assert_eq!(table.column_count(), 2);
@@ -742,11 +779,14 @@ mod tests {
     #[test]
     fn test_column_scan() {
         let mut table = ColumnarTable::new(vec!["id".to_string(), "value".to_string()]);
-        table.add_column(ColumnData::Int32(vec![1, 2, 3, 4, 5])).unwrap();
-        table.add_column(ColumnData::Int32(vec![10, 20, 30, 40, 50])).unwrap();
+        table
+            .add_column(ColumnData::Int32(vec![1, 2, 3, 4, 5]))
+            .unwrap();
+        table
+            .add_column(ColumnData::Int32(vec![10, 20, 30, 40, 50]))
+            .unwrap();
 
-        let mut scan = ColumnScan::new()
-            .add_filter(FilterOp::equal(0, Value::Integer(3)));
+        let mut scan = ColumnScan::new().add_filter(FilterOp::equal(0, Value::Integer(3)));
 
         let results = scan.execute(&table).unwrap();
         assert_eq!(results.len(), 1);

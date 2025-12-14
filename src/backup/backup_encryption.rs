@@ -1,16 +1,16 @@
 // Backup Encryption - AES-256 encryption with key management
 // Provides secure backup encryption with key rotation and management
 
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use std::fs::{File, create_dir_all};
-use std::io::{Read, Write};
-use std::time::{SystemTime};
-use std::collections::HashMap;
-use parking_lot::{Mutex, RwLock};
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::{Mutex, RwLock};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fs::{create_dir_all, File};
+use std::io::{Read, Write};
+use std::path::PathBuf;
+use std::sync::Arc;
+use std::time::SystemTime;
 
 // Encryption algorithm
 #[repr(C)]
@@ -25,9 +25,19 @@ pub enum EncryptionAlgorithm {
 // Key derivation function
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum KeyDerivationFunction {
-    PBKDF2 { iterations: u32 },
-    Argon2 { memory_kb: u32, iterations: u32, parallelism: u32 },
-    Scrypt { n: u32, r: u32, p: u32 },
+    PBKDF2 {
+        iterations: u32,
+    },
+    Argon2 {
+        memory_kb: u32,
+        iterations: u32,
+        parallelism: u32,
+    },
+    Scrypt {
+        n: u32,
+        r: u32,
+        p: u32,
+    },
 }
 
 // Encryption key metadata
@@ -114,7 +124,11 @@ impl EncryptionKey {
                 }
                 derived
             }
-            KeyDerivationFunction::Argon2 { memory_kb, iterations: _iterations, parallelism: _parallelism } => {
+            KeyDerivationFunction::Argon2 {
+                memory_kb,
+                iterations: _iterations,
+                parallelism: _parallelism,
+            } => {
                 // Simulate Argon2 key derivation
                 let mut derived = vec![0u8; 32];
                 for i in 0..32 {
@@ -249,14 +263,23 @@ impl KeyManager {
         let algo_key = format!("{:?}", algorithm);
         self.active_keys.write().insert(algo_key, key_id.clone());
 
-        self.audit(KeyOperation::Create, &key_id, "system", AuditResult::Success);
+        self.audit(
+            KeyOperation::Create,
+            &key_id,
+            "system",
+            AuditResult::Success,
+        );
 
         Ok(key_id)
     }
 
     // Get a key by ID
     pub fn get_key(&self, key_id: &str) -> Result<EncryptionKey> {
-        let key = self.keys.read().get(key_id).cloned()
+        let key = self
+            .keys
+            .read()
+            .get(key_id)
+            .cloned()
             .ok_or_else(|| DbError::BackupError("Key not found".to_string()))?;
 
         self.audit(KeyOperation::Access, key_id, "system", AuditResult::Success);
@@ -274,17 +297,22 @@ impl KeyManager {
         new_key.key_version = old_key.key_version + 1;
         new_key.master_key_id = Some(key_id.to_string());
 
-        self.keys.write().insert(new_key_id.clone(), new_key.clone());
+        self.keys
+            .write()
+            .insert(new_key_id.clone(), new_key.clone());
 
         // Update version tracking
         let mut versions = self.key_versions.write();
-        versions.entry(key_id.to_string())
+        versions
+            .entry(key_id.to_string())
             .or_insert_with(Vec::new)
             .push(new_key.key_version);
 
         // Update active key
         let algo_key = format!("{:?}", old_key.algorithm);
-        self.active_keys.write().insert(algo_key, new_key_id.clone());
+        self.active_keys
+            .write()
+            .insert(algo_key, new_key_id.clone());
 
         self.audit(KeyOperation::Rotate, key_id, "system", AuditResult::Success);
 
@@ -295,7 +323,8 @@ impl KeyManager {
     pub fn get_active_key(&self, algorithm: &EncryptionAlgorithm) -> Result<EncryptionKey> {
         let algo_key = format!("{:?}", algorithm);
         let active_keys = self.active_keys.read();
-        let key_id = active_keys.get(&algo_key)
+        let key_id = active_keys
+            .get(&algo_key)
             .ok_or_else(|| DbError::BackupError(format!("No active key for {:?}", algorithm)))?;
 
         self.get_key(key_id)
@@ -329,7 +358,9 @@ impl KeyManager {
 
     // Delete a key
     pub fn delete_key(&self, key_id: &str) -> Result<()> {
-        self.keys.write().remove(key_id)
+        self.keys
+            .write()
+            .remove(key_id)
             .ok_or_else(|| DbError::BackupError("Key not found".to_string()))?;
 
         self.key_versions.write().remove(key_id);
@@ -388,7 +419,8 @@ impl BackupEncryptionManager {
             .map_err(|e| DbError::BackupError(format!("Failed to open source file: {}", e)))?;
 
         let mut source_data = Vec::new();
-        source_file.read_to_end(&mut source_data)
+        source_file
+            .read_to_end(&mut source_data)
             .map_err(|e| DbError::BackupError(format!("Failed to read source file: {}", e)))?;
 
         let original_size = source_data.len() as u64;
@@ -397,13 +429,16 @@ impl BackupEncryptionManager {
         let iv = self.generate_iv(&algorithm);
 
         // Encrypt data
-        let (encrypted_data, auth_tag) = self.encrypt_data(&source_data, &key.key_material, &iv, &algorithm)?;
+        let (encrypted_data, auth_tag) =
+            self.encrypt_data(&source_data, &key.key_material, &iv, &algorithm)?;
 
         // Write encrypted file
-        let mut dest_file = File::create(&destination_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?;
+        let mut dest_file = File::create(&destination_path).map_err(|e| {
+            DbError::BackupError(format!("Failed to create destination file: {}", e))
+        })?;
 
-        dest_file.write_all(&encrypted_data)
+        dest_file
+            .write_all(&encrypted_data)
             .map_err(|e| DbError::BackupError(format!("Failed to write encrypted data: {}", e)))?;
 
         let encrypted_size = encrypted_data.len() as u64;
@@ -422,7 +457,9 @@ impl BackupEncryptionManager {
             checksum: format!("SHA256-{}", uuid::Uuid::new_v4()),
         };
 
-        self.encrypted_backups.write().insert(backup_id, encrypted_backup.clone());
+        self.encrypted_backups
+            .write()
+            .insert(backup_id, encrypted_backup.clone());
 
         Ok(encrypted_backup)
     }
@@ -435,7 +472,11 @@ impl BackupEncryptionManager {
         destination_path: PathBuf,
     ) -> Result<()> {
         // Get encrypted backup metadata
-        let encrypted_backup = self.encrypted_backups.read().get(backup_id).cloned()
+        let encrypted_backup = self
+            .encrypted_backups
+            .read()
+            .get(backup_id)
+            .cloned()
             .ok_or_else(|| DbError::BackupError("Encrypted backup not found".to_string()))?;
 
         // Get decryption key
@@ -446,7 +487,8 @@ impl BackupEncryptionManager {
             .map_err(|e| DbError::BackupError(format!("Failed to open encrypted file: {}", e)))?;
 
         let mut encrypted_data = Vec::new();
-        source_file.read_to_end(&mut encrypted_data)
+        source_file
+            .read_to_end(&mut encrypted_data)
             .map_err(|e| DbError::BackupError(format!("Failed to read encrypted file: {}", e)))?;
 
         // Decrypt data
@@ -459,10 +501,12 @@ impl BackupEncryptionManager {
         )?;
 
         // Write decrypted file
-        let mut dest_file = File::create(&destination_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create destination file: {}", e)))?;
+        let mut dest_file = File::create(&destination_path).map_err(|e| {
+            DbError::BackupError(format!("Failed to create destination file: {}", e))
+        })?;
 
-        dest_file.write_all(&decrypted_data)
+        dest_file
+            .write_all(&decrypted_data)
             .map_err(|e| DbError::BackupError(format!("Failed to write decrypted data: {}", e)))?;
 
         Ok(())
@@ -483,7 +527,8 @@ impl BackupEncryptionManager {
         let mut total_encrypted = 0u64;
 
         loop {
-            let bytes_read = input.read(&mut buffer)
+            let bytes_read = input
+                .read(&mut buffer)
                 .map_err(|e| DbError::BackupError(format!("Failed to read: {}", e)))?;
 
             if bytes_read == 0 {
@@ -493,14 +538,11 @@ impl BackupEncryptionManager {
             total_original += bytes_read as u64;
 
             // Encrypt chunk
-            let (encrypted_chunk, _) = self.encrypt_data(
-                &buffer[..bytes_read],
-                &key.key_material,
-                &iv,
-                algorithm,
-            )?;
+            let (encrypted_chunk, _) =
+                self.encrypt_data(&buffer[..bytes_read], &key.key_material, &iv, algorithm)?;
 
-            output.write_all(&encrypted_chunk)
+            output
+                .write_all(&encrypted_chunk)
                 .map_err(|e| DbError::BackupError(format!("Failed to write: {}", e)))?;
 
             total_encrypted += encrypted_chunk.len() as u64;
@@ -537,8 +579,9 @@ impl BackupEncryptionManager {
 
         // Generate authentication tag for AEAD modes
         let auth_tag = match algorithm {
-            EncryptionAlgorithm::AES256GCM | EncryptionAlgorithm::AES128GCM |
-            EncryptionAlgorithm::ChaCha20Poly1305 => {
+            EncryptionAlgorithm::AES256GCM
+            | EncryptionAlgorithm::AES128GCM
+            | EncryptionAlgorithm::ChaCha20Poly1305 => {
                 Some(vec![0u8; 16]) // Simulate 128-bit auth tag
             }
             _ => None,
@@ -595,8 +638,8 @@ impl BackupEncryptionManager {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
     use super::*;
+    use std::time::Duration;
 
     #[test]
     fn test_key_creation() {

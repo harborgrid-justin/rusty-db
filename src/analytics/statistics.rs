@@ -7,9 +7,9 @@
 // - **Histograms**: Value distribution for selectivity estimation
 // - **Most Common Values**: Frequency tracking for skewed data
 
-use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::time::SystemTime;
 
 // =============================================================================
@@ -53,7 +53,7 @@ pub struct ColumnStatistics {
 
     // When statistics were last updated
     pub last_updated: SystemTime,
-    pub num_values: ()
+    pub num_values: (),
 }
 
 impl ColumnStatistics {
@@ -139,7 +139,10 @@ impl ColumnStatistics {
         self.total_count = data.len() as u64;
         self.null_count = data.iter().filter(|v| v.is_empty() || *v == "NULL").count() as u64;
 
-        let non_null: Vec<_> = data.iter().filter(|v| !v.is_empty() && *v != "NULL").collect();
+        let non_null: Vec<_> = data
+            .iter()
+            .filter(|v| !v.is_empty() && *v != "NULL")
+            .collect();
 
         let distinct: HashSet<_> = non_null.iter().collect();
         self.distinct_count = distinct.len() as u64;
@@ -312,12 +315,7 @@ impl HistogramManager {
     }
 
     // Create a histogram from data.
-    pub fn create_histogram(
-        &mut self,
-        key: String,
-        data: Vec<String>,
-        bucket_type: HistogramType,
-    ) {
+    pub fn create_histogram(&mut self, key: String, data: Vec<String>, bucket_type: HistogramType) {
         let mut histogram = Histogram::new(bucket_type.clone());
 
         match bucket_type {

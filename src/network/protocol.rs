@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::execution::QueryResult;
+use serde::{Deserialize, Serialize};
 
 // Client request
 #[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]

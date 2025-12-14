@@ -2,11 +2,11 @@
 //
 // Part of the API Gateway and Security system for RustyDB
 
-use std::collections::{HashMap, VecDeque};
-use std::sync::{Arc};
-use std::time::{Duration, Instant, SystemTime};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, VecDeque};
+use std::sync::Arc;
+use std::time::{Duration, Instant, SystemTime};
 
 use crate::error::DbError;
 
@@ -116,7 +116,11 @@ impl RateLimiter {
     }
 
     // Check rate limit
-    pub fn check_rate_limit(&self, key: &str, override_config: Option<&RateLimitConfig>) -> Result<(), DbError> {
+    pub fn check_rate_limit(
+        &self,
+        key: &str,
+        override_config: Option<&RateLimitConfig>,
+    ) -> Result<(), DbError> {
         let configs = self.configs.read();
         let config = override_config.or_else(|| configs.get(key));
 
@@ -126,15 +130,9 @@ impl RateLimiter {
         };
 
         match config.limit_type {
-            RateLimitType::TokenBucket => {
-                self.check_token_bucket(key, config)
-            },
-            RateLimitType::SlidingWindow => {
-                self.check_sliding_window(key, config)
-            },
-            RateLimitType::FixedWindow => {
-                self.check_fixed_window(key, config)
-            },
+            RateLimitType::TokenBucket => self.check_token_bucket(key, config),
+            RateLimitType::SlidingWindow => self.check_sliding_window(key, config),
+            RateLimitType::FixedWindow => self.check_fixed_window(key, config),
         }
     }
 
@@ -156,9 +154,9 @@ impl RateLimiter {
     fn check_sliding_window(&self, key: &str, config: &RateLimitConfig) -> Result<(), DbError> {
         let mut windows = self.windows.write();
 
-        let window = windows.entry(key.to_string()).or_insert_with(|| {
-            SlidingWindow::new(config.window, config.requests)
-        });
+        let window = windows
+            .entry(key.to_string())
+            .or_insert_with(|| SlidingWindow::new(config.window, config.requests));
 
         window.allow_request()
     }
@@ -182,7 +180,9 @@ impl RateLimiter {
         let windows = self.windows.read();
         if let Some(window) = windows.get(key) {
             return Some(RateLimitStatus {
-                remaining: window.max_requests.saturating_sub(window.requests.len() as u64),
+                remaining: window
+                    .max_requests
+                    .saturating_sub(window.requests.len() as u64),
                 reset_at: Instant::now() + Duration::from_secs(window.window_size),
             });
         }
@@ -282,15 +282,18 @@ impl QuotaManager {
         let mut quotas = self.quotas.write();
 
         let now = SystemTime::now();
-        quotas.insert(user_id.clone(), UserQuota {
-            user_id,
-            daily_limit,
-            monthly_limit,
-            daily_usage: 0,
-            monthly_usage: 0,
-            daily_reset: now + Duration::from_secs(86400),
-            monthly_reset: now + Duration::from_secs(30 * 86400),
-        });
+        quotas.insert(
+            user_id.clone(),
+            UserQuota {
+                user_id,
+                daily_limit,
+                monthly_limit,
+                daily_usage: 0,
+                monthly_usage: 0,
+                daily_reset: now + Duration::from_secs(86400),
+                monthly_reset: now + Duration::from_secs(30 * 86400),
+            },
+        );
     }
 
     // Check and update quota
@@ -318,10 +321,14 @@ impl QuotaManager {
 
         // Check limits
         if quota.daily_usage >= quota.daily_limit {
-            return Err(DbError::InvalidOperation("Daily quota exceeded".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Daily quota exceeded".to_string(),
+            ));
         }
         if quota.monthly_usage >= quota.monthly_limit {
-            return Err(DbError::InvalidOperation("Monthly quota exceeded".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Monthly quota exceeded".to_string(),
+            ));
         }
 
         // Update usage

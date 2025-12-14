@@ -1,15 +1,15 @@
 // RustyDB Workload Repository - AWR-like Automatic Workload Repository
 // Provides comprehensive workload capture, analysis, and historical trending
 
-use std::collections::VecDeque;
-use std::time::SystemTime;
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
-use std::time::{Duration};
-use parking_lot::RwLock;
-use crate::Result;
-use crate::error::DbError;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Unique identifier for a workload snapshot
 pub type SnapshotId = u64;
@@ -432,7 +432,11 @@ impl WorkloadRepository {
         index.by_time.insert(snapshot.timestamp, snapshot_id);
 
         let date_key = format!("{:?}", snapshot.timestamp);
-        index.by_date.entry(date_key).or_insert_with(Vec::new).push(snapshot_id);
+        index
+            .by_date
+            .entry(date_key)
+            .or_insert_with(Vec::new)
+            .push(snapshot_id);
 
         // Store snapshot
         snapshots.insert(snapshot_id, snapshot);
@@ -487,7 +491,8 @@ impl WorkloadRepository {
     ) -> Result<BaselineId> {
         // Verify snapshots exist
         let snapshots = self.snapshots.read();
-        if !snapshots.contains_key(&start_snapshot_id) || !snapshots.contains_key(&end_snapshot_id) {
+        if !snapshots.contains_key(&start_snapshot_id) || !snapshots.contains_key(&end_snapshot_id)
+        {
             return Err(DbError::InvalidInput("Invalid snapshot IDs".to_string()));
         }
         drop(snapshots);
@@ -528,7 +533,10 @@ impl WorkloadRepository {
         if baselines.remove(&baseline_id).is_some() {
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Baseline {} not found", baseline_id)))
+            Err(DbError::NotFound(format!(
+                "Baseline {} not found",
+                baseline_id
+            )))
         }
     }
 
@@ -709,7 +717,8 @@ impl SnapshotComparison {
                 - snapshot1.system_stats.logical_reads as i64,
             delta_physical_reads: snapshot2.system_stats.physical_reads as i64
                 - snapshot1.system_stats.physical_reads as i64,
-            delta_cpu_usage_pct: snapshot2.os_stats.cpu_usage_pct - snapshot1.os_stats.cpu_usage_pct,
+            delta_cpu_usage_pct: snapshot2.os_stats.cpu_usage_pct
+                - snapshot1.os_stats.cpu_usage_pct,
             delta_buffer_hit_ratio: snapshot2.system_stats.buffer_cache_hit_ratio
                 - snapshot1.system_stats.buffer_cache_hit_ratio,
         };

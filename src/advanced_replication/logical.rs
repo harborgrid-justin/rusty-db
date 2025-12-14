@@ -3,14 +3,14 @@
 // Row-level logical replication with table/column filtering,
 // transformation, and schema evolution handling.
 
+use crate::error::DbError;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
 use std::sync::Arc;
-use parking_lot::RwLock;
 use tokio::sync::mpsc;
-use crate::error::DbError;
 
 type Result<T> = std::result::Result<T, DbError>;
 
@@ -208,9 +208,10 @@ impl LogicalReplication {
         let mut pubs = self.publications.write();
 
         if pubs.contains_key(&publication.name) {
-            return Err(DbError::Replication(
-                format!("Publication {} already exists", publication.name)
-            ));
+            return Err(DbError::Replication(format!(
+                "Publication {} already exists",
+                publication.name
+            )));
         }
 
         pubs.insert(publication.name.clone(), publication);
@@ -222,25 +223,18 @@ impl LogicalReplication {
         let mut pubs = self.publications.write();
 
         pubs.remove(name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Publication {} not found", name)
-            ))?;
+            .ok_or_else(|| DbError::Replication(format!("Publication {} not found", name)))?;
 
         Ok(())
     }
 
     /// Add table to publication
-    pub fn add_table_to_publication(
-        &self,
-        pub_name: &str,
-        table: TablePublication,
-    ) -> Result<()> {
+    pub fn add_table_to_publication(&self, pub_name: &str, table: TablePublication) -> Result<()> {
         let mut pubs = self.publications.write();
 
-        let pub_entry = pubs.get_mut(pub_name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Publication {} not found", pub_name)
-            ))?;
+        let pub_entry = pubs
+            .get_mut(pub_name)
+            .ok_or_else(|| DbError::Replication(format!("Publication {} not found", pub_name)))?;
 
         pub_entry.tables.push(table);
         Ok(())
@@ -251,9 +245,10 @@ impl LogicalReplication {
         let mut subs = self.subscriptions.write();
 
         if subs.contains_key(&subscription.name) {
-            return Err(DbError::Replication(
-                format!("Subscription {} already exists", subscription.name)
-            ));
+            return Err(DbError::Replication(format!(
+                "Subscription {} already exists",
+                subscription.name
+            )));
         }
 
         subs.insert(subscription.name.clone(), subscription);
@@ -265,9 +260,7 @@ impl LogicalReplication {
         let mut subs = self.subscriptions.write();
 
         subs.remove(name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Subscription {} not found", name)
-            ))?;
+            .ok_or_else(|| DbError::Replication(format!("Subscription {} not found", name)))?;
 
         Ok(())
     }
@@ -276,10 +269,9 @@ impl LogicalReplication {
     pub fn enable_subscription(&self, name: &str) -> Result<()> {
         let mut subs = self.subscriptions.write();
 
-        let sub = subs.get_mut(name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Subscription {} not found", name)
-            ))?;
+        let sub = subs
+            .get_mut(name)
+            .ok_or_else(|| DbError::Replication(format!("Subscription {} not found", name)))?;
 
         sub.enabled = true;
         Ok(())
@@ -289,10 +281,9 @@ impl LogicalReplication {
     pub fn disable_subscription(&self, name: &str) -> Result<()> {
         let mut subs = self.subscriptions.write();
 
-        let sub = subs.get_mut(name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Subscription {} not found", name)
-            ))?;
+        let sub = subs
+            .get_mut(name)
+            .ok_or_else(|| DbError::Replication(format!("Subscription {} not found", name)))?;
 
         sub.enabled = false;
         Ok(())
@@ -322,7 +313,8 @@ impl LogicalReplication {
         }
 
         // Queue change for replication
-        self.change_tx.send(change.clone())
+        self.change_tx
+            .send(change.clone())
             .map_err(|e| DbError::Replication(format!("Failed to queue change: {}", e)))?;
 
         // Update statistics
@@ -349,8 +341,7 @@ impl LogicalReplication {
     /// Check if a change matches a publication
     fn matches_publication(&self, change: &LogicalChange, publication: &Publication) -> bool {
         for table_pub in &publication.tables {
-            if table_pub.schema_name == change.schema &&
-               table_pub.table_name == change.table {
+            if table_pub.schema_name == change.schema && table_pub.table_name == change.table {
                 // Check operation type
                 match change.change_type {
                     ChangeType::Insert if !table_pub.replicate_insert => continue,
@@ -401,8 +392,16 @@ impl LogicalReplication {
             }
 
             transformed.columns = new_columns;
-            transformed.old_row = if new_old_row.is_empty() { None } else { Some(new_old_row) };
-            transformed.new_row = if new_new_row.is_empty() { None } else { Some(new_new_row) };
+            transformed.old_row = if new_old_row.is_empty() {
+                None
+            } else {
+                Some(new_old_row)
+            };
+            transformed.new_row = if new_new_row.is_empty() {
+                None
+            } else {
+                Some(new_new_row)
+            };
         }
 
         // Apply transformations
@@ -436,31 +435,33 @@ impl LogicalReplication {
                         MaskType::Null => None,
                         MaskType::Hash => {
                             // Simple hash transformation
-                            change.new_row.as_ref()
+                            change
+                                .new_row
+                                .as_ref()
                                 .and_then(|row| row.get(idx))
                                 .and_then(|v| v.as_ref())
                                 .map(|v| {
-                                    use sha2::{Sha256, Digest};
+                                    use sha2::{Digest, Sha256};
                                     let mut hasher = Sha256::new();
                                     hasher.update(v);
                                     hasher.finalize().to_vec()
                                 })
                         }
-                        MaskType::Partial(n) => {
-                            change.new_row.as_ref()
-                                .and_then(|row| row.get(idx))
-                                .and_then(|v| v.as_ref())
-                                .map(|v| {
-                                    let s = String::from_utf8_lossy(v);
-                                    let len = s.len();
-                                    if len > *n {
-                                        let masked = "*".repeat(len - n) + &s[len - n..];
-                                        masked.into_bytes()
-                                    } else {
-                                        v.clone()
-                                    }
-                                })
-                        }
+                        MaskType::Partial(n) => change
+                            .new_row
+                            .as_ref()
+                            .and_then(|row| row.get(idx))
+                            .and_then(|v| v.as_ref())
+                            .map(|v| {
+                                let s = String::from_utf8_lossy(v);
+                                let len = s.len();
+                                if len > *n {
+                                    let masked = "*".repeat(len - n) + &s[len - n..];
+                                    masked.into_bytes()
+                                } else {
+                                    v.clone()
+                                }
+                            }),
                         MaskType::Constant(val) => Some(val.clone()),
                     };
 
@@ -484,16 +485,17 @@ impl LogicalReplication {
         let sub = {
             let subs = self.subscriptions.read();
             subs.get(subscription_name)
-                .ok_or_else(|| DbError::Replication(
-                    format!("Subscription {} not found", subscription_name)
-                ))?
+                .ok_or_else(|| {
+                    DbError::Replication(format!("Subscription {} not found", subscription_name))
+                })?
                 .clone()
         };
 
         if !sub.enabled {
-            return Err(DbError::Replication(
-                format!("Subscription {} is disabled", subscription_name)
-            ));
+            return Err(DbError::Replication(format!(
+                "Subscription {} is disabled",
+                subscription_name
+            )));
         }
 
         // Get changes from buffer
@@ -513,10 +515,9 @@ impl LogicalReplication {
     pub fn update_subscription_lsn(&self, name: &str, lsn: u64) -> Result<()> {
         let mut subs = self.subscriptions.write();
 
-        let sub = subs.get_mut(name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Subscription {} not found", name)
-            ))?;
+        let sub = subs
+            .get_mut(name)
+            .ok_or_else(|| DbError::Replication(format!("Subscription {} not found", name)))?;
 
         sub.last_lsn = lsn;
         Ok(())
@@ -531,10 +532,9 @@ impl LogicalReplication {
     pub fn get_subscription_state(&self, name: &str) -> Result<SubscriptionState> {
         let subs = self.subscriptions.read();
 
-        let sub = subs.get(name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Subscription {} not found", name)
-            ))?;
+        let sub = subs
+            .get(name)
+            .ok_or_else(|| DbError::Replication(format!("Subscription {} not found", name)))?;
 
         Ok(sub.state.clone())
     }
@@ -543,10 +543,9 @@ impl LogicalReplication {
     pub fn update_subscription_state(&self, name: &str, state: SubscriptionState) -> Result<()> {
         let mut subs = self.subscriptions.write();
 
-        let sub = subs.get_mut(name)
-            .ok_or_else(|| DbError::Replication(
-                format!("Subscription {} not found", name)
-            ))?;
+        let sub = subs
+            .get_mut(name)
+            .ok_or_else(|| DbError::Replication(format!("Subscription {} not found", name)))?;
 
         sub.state = state;
         Ok(())
@@ -574,18 +573,25 @@ impl LogicalReplication {
                             // Check if this column is being replicated
                             if let Some(ref cols) = table_pub.columns {
                                 if cols.contains(col_name) {
-                                    return Err(DbError::Replication(
-                                        format!("Cannot drop column {} being replicated", col_name)
-                                    ));
+                                    return Err(DbError::Replication(format!(
+                                        "Cannot drop column {} being replicated",
+                                        col_name
+                                    )));
                                 }
                             }
                         }
                         SchemaChangeType::RenameColumn { ref from, ref to } => {
                             println!("Column {}.{}.{} renamed to {}", schema, table, from, to);
                         }
-                        SchemaChangeType::ChangeType { ref column, ref old_type, ref new_type } => {
-                            println!("Column {}.{}.{} type changed from {} to {}",
-                                   schema, table, column, old_type, new_type);
+                        SchemaChangeType::ChangeType {
+                            ref column,
+                            ref old_type,
+                            ref new_type,
+                        } => {
+                            println!(
+                                "Column {}.{}.{} type changed from {} to {}",
+                                schema, table, column, old_type, new_type
+                            );
                         }
                     }
                 }
@@ -616,8 +622,15 @@ impl LogicalReplication {
 pub enum SchemaChangeType {
     AddColumn(String),
     DropColumn(String),
-    RenameColumn { from: String, to: String },
-    ChangeType { column: String, old_type: String, new_type: String },
+    RenameColumn {
+        from: String,
+        to: String,
+    },
+    ChangeType {
+        column: String,
+        old_type: String,
+        new_type: String,
+    },
 }
 
 impl Default for LogicalReplication {

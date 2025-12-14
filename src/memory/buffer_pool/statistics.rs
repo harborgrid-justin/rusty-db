@@ -3,7 +3,7 @@
 // Comprehensive statistics tracking and reporting.
 
 use super::common::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub struct BufferPoolStatisticsTracker {
     // Per-pool hit ratio tracking
@@ -97,21 +97,24 @@ impl WaitStatistics {
     #[allow(dead_code)]
     pub fn record_free_buffer_wait(&self, duration: Duration) {
         self.free_buffer_waits.fetch_add(1, Ordering::Relaxed);
-        self.free_buffer_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
+        self.free_buffer_wait_time_ns
+            .fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
     }
 
     // Record buffer lock wait
     #[allow(dead_code)]
     pub fn record_buffer_lock_wait(&self, duration: Duration) {
         self.buffer_lock_waits.fetch_add(1, Ordering::Relaxed);
-        self.buffer_lock_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
+        self.buffer_lock_wait_time_ns
+            .fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
     }
 
     // Record I/O wait
     #[allow(dead_code)]
     pub fn record_io_wait(&self, duration: Duration) {
         self.io_waits.fetch_add(1, Ordering::Relaxed);
-        self.io_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
+        self.io_wait_time_ns
+            .fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
     }
 
     // Get snapshot
@@ -164,7 +167,8 @@ impl BusyWaitStatistics {
     #[allow(dead_code)]
     pub fn record_wait(&self, page_type: PageType, tablespace_id: u32, duration: Duration) {
         self.total_waits.fetch_add(1, Ordering::Relaxed);
-        self.total_wait_time_ns.fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
+        self.total_wait_time_ns
+            .fetch_add(duration.as_nanos() as u64, Ordering::Relaxed);
 
         // Record by type
         let types = self.waits_by_type.read();
@@ -173,7 +177,9 @@ impl BusyWaitStatistics {
         } else {
             drop(types);
             let mut types = self.waits_by_type.write();
-            types.entry(page_type).or_insert_with(|| AtomicU64::new(0))
+            types
+                .entry(page_type)
+                .or_insert_with(|| AtomicU64::new(0))
                 .fetch_add(1, Ordering::Relaxed);
         }
 
@@ -184,7 +190,9 @@ impl BusyWaitStatistics {
         } else {
             drop(spaces);
             let mut spaces = self.waits_by_tablespace.write();
-            spaces.entry(tablespace_id).or_insert_with(|| AtomicU64::new(0))
+            spaces
+                .entry(tablespace_id)
+                .or_insert_with(|| AtomicU64::new(0))
                 .fetch_add(1, Ordering::Relaxed);
         }
     }
@@ -192,12 +200,14 @@ impl BusyWaitStatistics {
     // Get snapshot
     pub fn snapshot(&self) -> BusyWaitStatisticsSnapshot {
         let types = self.waits_by_type.read();
-        let waits_by_type: HashMap<PageType, u64> = types.iter()
+        let waits_by_type: HashMap<PageType, u64> = types
+            .iter()
             .map(|(k, v)| (*k, v.load(Ordering::Relaxed)))
             .collect();
 
         let spaces = self.waits_by_tablespace.read();
-        let waits_by_tablespace: HashMap<u32, u64> = spaces.iter()
+        let waits_by_tablespace: HashMap<u32, u64> = spaces
+            .iter()
             .map(|(k, v)| (*k, v.load(Ordering::Relaxed)))
             .collect();
 
@@ -256,7 +266,7 @@ impl MemoryPressureMonitor {
                 peak,
                 usage,
                 Ordering::Relaxed,
-                Ordering::Relaxed
+                Ordering::Relaxed,
             ) {
                 Ok(_) => break,
                 Err(x) => peak = x,
@@ -379,7 +389,8 @@ impl BufferPoolStatisticsTracker {
         } else {
             drop(ratios);
             let mut ratios = self.pool_hit_ratios.write();
-            let ratio = ratios.entry(pool_name.to_string())
+            let ratio = ratios
+                .entry(pool_name.to_string())
                 .or_insert_with(PoolHitRatio::new);
             ratio.record_hit();
         }
@@ -393,7 +404,8 @@ impl BufferPoolStatisticsTracker {
         } else {
             drop(ratios);
             let mut ratios = self.pool_hit_ratios.write();
-            let ratio = ratios.entry(pool_name.to_string())
+            let ratio = ratios
+                .entry(pool_name.to_string())
                 .or_insert_with(PoolHitRatio::new);
             ratio.record_miss();
         }
@@ -407,7 +419,8 @@ impl BufferPoolStatisticsTracker {
         } else {
             drop(types);
             let mut types = self.page_type_dist.write();
-            types.entry(page_type)
+            types
+                .entry(page_type)
                 .or_insert_with(|| AtomicU64::new(0))
                 .fetch_add(1, Ordering::Relaxed);
         }
@@ -416,19 +429,24 @@ impl BufferPoolStatisticsTracker {
     // Get comprehensive statistics
     pub fn get_comprehensive_stats(&self) -> ComprehensiveBufferStats {
         let ratios = self.pool_hit_ratios.read();
-        let pool_stats: HashMap<String, PoolStatsSnapshot> = ratios.iter()
+        let pool_stats: HashMap<String, PoolStatsSnapshot> = ratios
+            .iter()
             .map(|(name, ratio)| {
-                (name.clone(), PoolStatsSnapshot {
-                    hits: ratio.hits.load(Ordering::Relaxed),
-                    misses: ratio.misses.load(Ordering::Relaxed),
-                    accesses: ratio.accesses.load(Ordering::Relaxed),
-                    hit_ratio: ratio.hit_ratio(),
-                })
+                (
+                    name.clone(),
+                    PoolStatsSnapshot {
+                        hits: ratio.hits.load(Ordering::Relaxed),
+                        misses: ratio.misses.load(Ordering::Relaxed),
+                        accesses: ratio.accesses.load(Ordering::Relaxed),
+                        hit_ratio: ratio.hit_ratio(),
+                    },
+                )
             })
             .collect();
 
         let types = self.page_type_dist.read();
-        let page_type_distribution: HashMap<PageType, u64> = types.iter()
+        let page_type_distribution: HashMap<PageType, u64> = types
+            .iter()
             .map(|(pt, count)| (*pt, count.load(Ordering::Relaxed)))
             .collect();
 

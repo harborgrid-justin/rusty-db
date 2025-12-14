@@ -66,30 +66,30 @@
 // - [`changes`]: Change streams and notifications
 // - [`sql_json`]: SQL/JSON integration functions
 
+use crate::error::Result;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-use serde_json::Value;
-use crate::error::Result;
 
 // Public module exports
-pub mod document;
-pub mod collections;
-pub mod jsonpath;
-pub mod indexing;
-pub mod qbe;
 pub mod aggregation;
 pub mod changes;
+pub mod collections;
+pub mod document;
+pub mod indexing;
+pub mod jsonpath;
+pub mod qbe;
 pub mod sql_json;
 
 // Re-export commonly used types
-pub use document::{Document, DocumentId, DocumentContent, DocumentMetadata, IdGenerationType};
+pub use aggregation::{Pipeline, PipelineBuilder, PipelineStage};
+pub use changes::{ChangeEvent, ChangeEventType, ChangeStreamFilter, ChangeStreamManager};
 pub use collections::{Collection, CollectionManager, CollectionSettings, JsonSchema};
-pub use jsonpath::{JsonPath, JsonPathEvaluator, query as jsonpath_query};
-pub use indexing::{IndexManager, IndexDefinition, IndexType, IndexField};
-pub use qbe::{QueryDocument, QueryBuilder, Projection};
-pub use aggregation::{Pipeline, PipelineStage, PipelineBuilder};
-pub use changes::{ChangeEvent, ChangeStreamManager, ChangeStreamFilter, ChangeEventType};
-pub use sql_json::{SqlJsonFunctions, JsonTableColumn, JsonDataType};
+pub use document::{Document, DocumentContent, DocumentId, DocumentMetadata, IdGenerationType};
+pub use indexing::{IndexDefinition, IndexField, IndexManager, IndexType};
+pub use jsonpath::{query as jsonpath_query, JsonPath, JsonPathEvaluator};
+pub use qbe::{Projection, QueryBuilder, QueryDocument};
+pub use sql_json::{JsonDataType, JsonTableColumn, SqlJsonFunctions};
 
 // Main document store interface
 //
@@ -119,7 +119,10 @@ impl DocumentStore {
     // Create a collection
     pub fn create_collection(&mut self, name: String) -> Result<()> {
         self.collection_manager.create_collection(name.clone())?;
-        self.collections.write().unwrap().insert(name, HashMap::new());
+        self.collections
+            .write()
+            .unwrap()
+            .insert(name, HashMap::new());
         Ok(())
     }
 
@@ -129,8 +132,12 @@ impl DocumentStore {
         name: String,
         settings: CollectionSettings,
     ) -> Result<()> {
-        self.collection_manager.create_collection_with_settings(name.clone(), settings)?;
-        self.collections.write().unwrap().insert(name, HashMap::new());
+        self.collection_manager
+            .create_collection_with_settings(name.clone(), settings)?;
+        self.collections
+            .write()
+            .unwrap()
+            .insert(name, HashMap::new());
         Ok(())
     }
 
@@ -140,11 +147,7 @@ impl DocumentStore {
         self.collections.write().unwrap().remove(name);
 
         // Emit change event
-        let event = ChangeEvent::new(
-            ChangeEventType::Drop,
-            name.to_string(),
-            None,
-        );
+        let event = ChangeEvent::new(ChangeEventType::Drop, name.to_string(), None);
         self.change_stream_manager.add_event(event);
 
         Ok(())
@@ -156,7 +159,9 @@ impl DocumentStore {
 
         // Get or create collection documents
         let mut collections = self.collections.write().unwrap();
-        let docs = collections.entry(collection.to_string()).or_insert_with(HashMap::new);
+        let docs = collections
+            .entry(collection.to_string())
+            .or_insert_with(HashMap::new);
 
         // Insert document
         docs.insert(doc_id.clone(), document.clone());
@@ -171,26 +176,22 @@ impl DocumentStore {
     // Find a document by ID
     pub fn find_by_id(&self, collection: &str, id: &DocumentId) -> Result<Document> {
         let collections = self.collections.read().unwrap();
-        let docs = collections.get(collection)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", collection)
-            ))?;
+        let docs = collections.get(collection).ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", collection))
+        })?;
 
         docs.get(id)
             .cloned()
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Document {:?} not found", id)
-            ))
+            .ok_or_else(|| crate::error::DbError::NotFound(format!("Document {:?} not found", id)))
     }
 
     // Find documents by query
     pub fn find(&self, collection: &str, query: Value) -> Result<Vec<Document>> {
         let query_doc = QueryDocument::from_json(query)?;
         let collections = self.collections.read().unwrap();
-        let docs = collections.get(collection)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", collection)
-            ))?;
+        let docs = collections.get(collection).ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", collection))
+        })?;
 
         let mut results = Vec::new();
         for doc in docs.values() {
@@ -205,27 +206,20 @@ impl DocumentStore {
     // Update a document
     pub fn update(&mut self, collection: &str, id: &DocumentId, document: Document) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
-        let docs = collections.get_mut(collection)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", collection)
-            ))?;
+        let docs = collections.get_mut(collection).ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", collection))
+        })?;
 
-        let old_doc = docs.get(id)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Document {:?} not found", id)
-            ))?
+        let old_doc = docs
+            .get(id)
+            .ok_or_else(|| crate::error::DbError::NotFound(format!("Document {:?} not found", id)))?
             .clone();
 
         // Update document
         docs.insert(id.clone(), document.clone());
 
         // Emit change event
-        let event = ChangeEvent::update(
-            collection.to_string(),
-            id.clone(),
-            &old_doc,
-            &document,
-        )?;
+        let event = ChangeEvent::update(collection.to_string(), id.clone(), &old_doc, &document)?;
         self.change_stream_manager.add_event(event);
 
         Ok(())
@@ -234,10 +228,9 @@ impl DocumentStore {
     // Delete a document
     pub fn delete(&mut self, collection: &str, id: &DocumentId) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
-        let docs = collections.get_mut(collection)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", collection)
-            ))?;
+        let docs = collections.get_mut(collection).ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", collection))
+        })?;
 
         if docs.remove(id).is_some() {
             // Emit change event
@@ -246,19 +239,19 @@ impl DocumentStore {
 
             Ok(())
         } else {
-            Err(crate::error::DbError::NotFound(
-                format!("Document {:?} not found", id)
-            ))
+            Err(crate::error::DbError::NotFound(format!(
+                "Document {:?} not found",
+                id
+            )))
         }
     }
 
     // Count documents in a collection
     pub fn count(&self, collection: &str) -> Result<usize> {
         let collections = self.collections.read().unwrap();
-        let docs = collections.get(collection)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", collection)
-            ))?;
+        let docs = collections.get(collection).ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", collection))
+        })?;
 
         Ok(docs.len())
     }
@@ -272,10 +265,9 @@ impl DocumentStore {
     // Aggregate documents using pipeline
     pub fn aggregate(&self, collection: &str, pipeline: Pipeline) -> Result<Vec<Value>> {
         let collections = self.collections.read().unwrap();
-        let docs = collections.get(collection)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", collection)
-            ))?;
+        let docs = collections.get(collection).ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", collection))
+        })?;
 
         pipeline.execute(docs)
     }
@@ -303,10 +295,9 @@ impl DocumentStore {
     // Execute JSONPath query
     pub fn jsonpath_query(&self, collection: &str, path: &str) -> Result<Vec<Value>> {
         let collections = self.collections.read().unwrap();
-        let docs = collections.get(collection)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", collection)
-            ))?;
+        let docs = collections.get(collection).ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", collection))
+        })?;
 
         let mut all_results = Vec::new();
         for doc in docs.values() {
@@ -358,12 +349,7 @@ impl DocumentStore {
     }
 
     // Execute JSON_EXISTS function
-    pub fn json_exists(
-        &self,
-        collection: &str,
-        doc_id: &DocumentId,
-        path: &str,
-    ) -> Result<bool> {
+    pub fn json_exists(&self, collection: &str, doc_id: &DocumentId, path: &str) -> Result<bool> {
         let doc = self.find_by_id(collection, doc_id)?;
         let json = doc.as_json()?;
         SqlJsonFunctions::json_exists(&json, path)
@@ -381,7 +367,11 @@ impl DocumentStore {
     }
 
     // Bulk insert documents
-    pub fn bulk_insert(&mut self, collection: &str, documents: Vec<Document>) -> Result<Vec<DocumentId>> {
+    pub fn bulk_insert(
+        &mut self,
+        collection: &str,
+        documents: Vec<Document>,
+    ) -> Result<Vec<DocumentId>> {
         let mut ids = Vec::new();
 
         for doc in documents {
@@ -405,12 +395,7 @@ impl DocumentStore {
     }
 
     // Bulk update documents by query
-    pub fn bulk_update(
-        &mut self,
-        collection: &str,
-        query: Value,
-        update: Value,
-    ) -> Result<usize> {
+    pub fn bulk_update(&mut self, collection: &str, query: Value, update: Value) -> Result<usize> {
         let docs_to_update = self.find(collection, query)?;
         let count = docs_to_update.len();
 
@@ -465,15 +450,15 @@ impl DocumentStore {
     // Replace a document
     pub fn replace(&mut self, collection: &str, id: &DocumentId, document: Document) -> Result<()> {
         let mut collections = self.collections.write().unwrap();
-        let docs = collections.get_mut(collection)
-            .ok_or_else(|| crate::error::DbError::NotFound(
-                format!("Collection '{}' not found", collection)
-            ))?;
+        let docs = collections.get_mut(collection).ok_or_else(|| {
+            crate::error::DbError::NotFound(format!("Collection '{}' not found", collection))
+        })?;
 
         if !docs.contains_key(id) {
-            return Err(crate::error::DbError::NotFound(
-                format!("Document {:?} not found", id)
-            ));
+            return Err(crate::error::DbError::NotFound(format!(
+                "Document {:?} not found",
+                id
+            )));
         }
 
         docs.insert(id.clone(), document.clone());
@@ -550,7 +535,8 @@ mod tests {
                 "age": 30,
                 "email": "alice@example.com"
             }),
-        ).unwrap();
+        )
+        .unwrap();
 
         let id = store.insert("users", doc).unwrap();
 
@@ -580,14 +566,20 @@ mod tests {
                     "name": format!("User {}", i),
                     "age": 20 + i * 5,
                 }),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("users", doc).unwrap();
         }
 
         // Query documents
-        let results = store.find("users", json!({
-            "age": {"$gte": 30}
-        })).unwrap();
+        let results = store
+            .find(
+                "users",
+                json!({
+                    "age": {"$gte": 30}
+                }),
+            )
+            .unwrap();
 
         assert_eq!(results.len(), 3);
     }
@@ -606,7 +598,8 @@ mod tests {
                     "product": if i % 2 == 0 { "A" } else { "B" },
                     "amount": i * 10,
                 }),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("sales", doc).unwrap();
         }
 
@@ -625,8 +618,7 @@ mod tests {
         store.create_collection("users".to_string()).unwrap();
 
         // Create change stream
-        let filter = ChangeStreamFilter::new()
-            .operation_types(vec![ChangeEventType::Insert]);
+        let filter = ChangeStreamFilter::new().operation_types(vec![ChangeEventType::Insert]);
         let mut cursor = store.watch(filter);
 
         // Insert document
@@ -634,7 +626,8 @@ mod tests {
             DocumentId::new_custom("user1"),
             "users".to_string(),
             json!({"name": "Alice"}),
-        ).unwrap();
+        )
+        .unwrap();
         store.insert("users", doc).unwrap();
 
         // Get changes
@@ -651,7 +644,8 @@ mod tests {
             DocumentId::new_uuid(),
             "users".to_string(),
             json!({"name": "Alice"}),
-        ).unwrap();
+        )
+        .unwrap();
         store.insert("users", doc).unwrap();
 
         let stats = store.database_stats();

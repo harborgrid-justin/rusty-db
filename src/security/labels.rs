@@ -13,15 +13,15 @@
 // - Label dominance comparison
 // - Label composition and decomposition
 
-use std::collections::HashSet;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use parking_lot::RwLock;
-use std::sync::Arc;
-use std::cmp::Ordering;
-use std::time::UNIX_EPOCH;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
+use std::time::UNIX_EPOCH;
 
 // Security classification level
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -205,13 +205,25 @@ pub enum LabelAccessPolicy {
 #[derive(Debug, Clone)]
 pub enum LabelOperation {
     // Check if user can read row with label
-    CanRead { user_label: SecurityLabel, row_label: SecurityLabel },
+    CanRead {
+        user_label: SecurityLabel,
+        row_label: SecurityLabel,
+    },
     // Check if user can write row with label
-    CanWrite { user_label: SecurityLabel, row_label: SecurityLabel },
+    CanWrite {
+        user_label: SecurityLabel,
+        row_label: SecurityLabel,
+    },
     // Check if user can upgrade label
-    CanUpgrade { from_label: SecurityLabel, to_label: SecurityLabel },
+    CanUpgrade {
+        from_label: SecurityLabel,
+        to_label: SecurityLabel,
+    },
     // Check if user can downgrade label
-    CanDowngrade { from_label: SecurityLabel, to_label: SecurityLabel },
+    CanDowngrade {
+        from_label: SecurityLabel,
+        to_label: SecurityLabel,
+    },
 }
 
 // Label manager
@@ -245,17 +257,19 @@ impl LabelManager {
         let mut compartments = self.compartments.write();
 
         if compartments.contains_key(&compartment.id) {
-            return Err(DbError::AlreadyExists(
-                format!("Compartment {} already exists", compartment.id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Compartment {} already exists",
+                compartment.id
+            )));
         }
 
         // Validate parent exists if specified
         if let Some(ref parent) = compartment.parent {
             if !compartments.contains_key(parent) {
-                return Err(DbError::NotFound(
-                    format!("Parent compartment {} not found", parent)
-                ));
+                return Err(DbError::NotFound(format!(
+                    "Parent compartment {} not found",
+                    parent
+                )));
             }
         }
 
@@ -265,7 +279,8 @@ impl LabelManager {
 
     // Get a compartment
     pub fn get_compartment(&self, id: &str) -> Result<Compartment> {
-        self.compartments.read()
+        self.compartments
+            .read()
             .get(id)
             .cloned()
             .ok_or_else(|| DbError::NotFound(format!("Compartment {} not found", id)))
@@ -289,17 +304,20 @@ impl LabelManager {
         // Validate current label is within clearance
         if !clearance.max_read.dominates(&clearance.current_label) {
             return Err(DbError::InvalidInput(
-                "Current label exceeds max read clearance".to_string()
+                "Current label exceeds max read clearance".to_string(),
             ));
         }
 
-        self.clearances.write().insert(clearance.user_id.clone(), clearance);
+        self.clearances
+            .write()
+            .insert(clearance.user_id.clone(), clearance);
         Ok(())
     }
 
     // Get user clearance
     pub fn get_user_clearance(&self, user_id: &str) -> Result<UserClearance> {
-        self.clearances.read()
+        self.clearances
+            .read()
             .get(user_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound(format!("Clearance not found for user {}", user_id)))
@@ -341,19 +359,15 @@ impl LabelManager {
 
     // Get label for a row
     pub fn get_row_label(&self, table_id: &str, row_id: &str) -> Option<SecurityLabel> {
-        self.row_labels.read()
+        self.row_labels
+            .read()
             .get(table_id)
             .and_then(|table| table.get(row_id))
             .map(|row_label| row_label.label.clone())
     }
 
     // Check if user can read a row
-    pub fn can_read_row(
-        &self,
-        user_id: &str,
-        table_id: &str,
-        row_id: &str,
-    ) -> Result<bool> {
+    pub fn can_read_row(&self, user_id: &str, table_id: &str, row_id: &str) -> Result<bool> {
         let clearance = self.get_user_clearance(user_id)?;
 
         // Get row label
@@ -386,12 +400,7 @@ impl LabelManager {
     }
 
     // Check if user can write a row
-    pub fn can_write_row(
-        &self,
-        user_id: &str,
-        table_id: &str,
-        row_id: &str,
-    ) -> Result<bool> {
+    pub fn can_write_row(&self, user_id: &str, table_id: &str, row_id: &str) -> Result<bool> {
         let clearance = self.get_user_clearance(user_id)?;
 
         let row_label = match self.get_row_label(table_id, row_id) {
@@ -402,19 +411,11 @@ impl LabelManager {
         let policy = self.get_table_policy(table_id)?;
 
         match policy.write_policy {
-            LabelAccessPolicy::ReadDown => {
-                Ok(clearance.current_label.dominates(&row_label) &&
-                   clearance.max_write.dominates(&row_label))
-            }
-            LabelAccessPolicy::ReadEqual => {
-                Ok(clearance.current_label == row_label)
-            }
-            LabelAccessPolicy::ReadUp => {
-                Ok(row_label.dominates(&clearance.current_label))
-            }
-            LabelAccessPolicy::Custom { .. } => {
-                Ok(true)
-            }
+            LabelAccessPolicy::ReadDown => Ok(clearance.current_label.dominates(&row_label)
+                && clearance.max_write.dominates(&row_label)),
+            LabelAccessPolicy::ReadEqual => Ok(clearance.current_label == row_label),
+            LabelAccessPolicy::ReadUp => Ok(row_label.dominates(&clearance.current_label)),
+            LabelAccessPolicy::Custom { .. } => Ok(true),
         }
     }
 
@@ -468,9 +469,10 @@ impl LabelManager {
         let mut policies = self.policies.write();
 
         if policies.contains_key(&policy.id) {
-            return Err(DbError::AlreadyExists(
-                format!("Label policy {} already exists", policy.id)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Label policy {} already exists",
+                policy.id
+            )));
         }
 
         policies.insert(policy.id.clone(), policy);
@@ -479,30 +481,37 @@ impl LabelManager {
 
     // Get label policy for a table
     pub fn get_table_policy(&self, table_id: &str) -> Result<LabelPolicy> {
-        self.policies.read()
+        self.policies
+            .read()
             .values()
             .find(|p| p.table_id == table_id && p.enabled)
             .cloned()
-            .ok_or_else(|| DbError::NotFound(format!("No active label policy for table {}", table_id)))
+            .ok_or_else(|| {
+                DbError::NotFound(format!("No active label policy for table {}", table_id))
+            })
     }
 
     // Update user's current working label
     pub fn set_user_label(&self, user_id: &str, label: SecurityLabel) -> Result<()> {
         let mut clearances = self.clearances.write();
-        let clearance = clearances.get_mut(user_id)
-            .ok_or_else(|| DbError::NotFound(format!("Clearance not found for user {}", user_id)))?;
+        let clearance = clearances.get_mut(user_id).ok_or_else(|| {
+            DbError::NotFound(format!("Clearance not found for user {}", user_id))
+        })?;
 
         // Validate new label is within clearance
         if !clearance.max_read.dominates(&label) {
             return Err(DbError::InvalidInput(
-                "Label exceeds user's maximum clearance".to_string()
+                "Label exceeds user's maximum clearance".to_string(),
             ));
         }
 
         // Validate all compartments are authorized
-        if !label.compartments.is_subset(&clearance.authorized_compartments) {
+        if !label
+            .compartments
+            .is_subset(&clearance.authorized_compartments)
+        {
             return Err(DbError::InvalidInput(
-                "User not authorized for all compartments".to_string()
+                "User not authorized for all compartments".to_string(),
             ));
         }
 
@@ -533,19 +542,25 @@ impl LabelManager {
     }
 
     // Intersect two labels (greatest lower bound)
-    pub fn intersect_labels(&self, label1: &SecurityLabel, label2: &SecurityLabel) -> SecurityLabel {
+    pub fn intersect_labels(
+        &self,
+        label1: &SecurityLabel,
+        label2: &SecurityLabel,
+    ) -> SecurityLabel {
         let classification = if label1.classification < label2.classification {
             label1.classification.clone()
         } else {
             label2.classification.clone()
         };
 
-        let compartments: HashSet<String> = label1.compartments
+        let compartments: HashSet<String> = label1
+            .compartments
             .intersection(&label2.compartments)
             .cloned()
             .collect();
 
-        let groups: HashSet<String> = label1.groups
+        let groups: HashSet<String> = label1
+            .groups
             .intersection(&label2.groups)
             .cloned()
             .collect();
@@ -572,16 +587,17 @@ impl LabelManager {
         stats.total_policies = self.policies.read().len();
 
         let row_labels = self.row_labels.read();
-        stats.total_labeled_rows = row_labels.values()
-            .map(|table| table.len())
-            .sum();
+        stats.total_labeled_rows = row_labels.values().map(|table| table.len()).sum();
 
         // Count rows by classification
         stats.rows_by_classification.clear();
         for table_labels in row_labels.values() {
             for row_label in table_labels.values() {
                 let classification = format!("{:?}", row_label.label.classification);
-                *stats.rows_by_classification.entry(classification).or_insert(0) += 1;
+                *stats
+                    .rows_by_classification
+                    .entry(classification)
+                    .or_insert(0) += 1;
             }
         }
     }
@@ -697,12 +713,14 @@ mod tests {
         let mut row1_label = SecurityLabel::new(ClassificationLevel::Confidential);
         row1_label.add_compartment("SECRET".to_string());
 
-        manager.set_row_label(
-            "table1".to_string(),
-            "row1".to_string(),
-            row1_label,
-            "admin".to_string(),
-        ).unwrap();
+        manager
+            .set_row_label(
+                "table1".to_string(),
+                "row1".to_string(),
+                row1_label,
+                "admin".to_string(),
+            )
+            .unwrap();
 
         // Test read access
         assert!(manager.can_read_row("user1", "table1", "row1").unwrap());

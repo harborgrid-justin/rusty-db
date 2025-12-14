@@ -2,7 +2,7 @@
 //
 // This module provides tokenization functionality for PL/SQL source code.
 
-use crate::{Result, DbError};
+use crate::{DbError, Result};
 
 // Token types for lexical analysis
 #[derive(Debug, Clone, PartialEq)]
@@ -54,19 +54,19 @@ pub enum Token {
     Cursor,
 
     // Operators
-    Assign,           // :=
-    Equal,            // =
-    NotEqual,         // !=, <>
-    LessThan,         // <
-    LessThanOrEqual,  // <=
-    GreaterThan,      // >
+    Assign,             // :=
+    Equal,              // =
+    NotEqual,           // !=, <>
+    LessThan,           // <
+    LessThanOrEqual,    // <=
+    GreaterThan,        // >
     GreaterThanOrEqual, // >=
     Plus,
     Minus,
     Star,
     Slash,
     Percent,
-    Concat,           // ||
+    Concat, // ||
 
     // Logical
     And,
@@ -151,12 +151,14 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>> {
             }
             let num_str: String = chars[start..i].iter().collect();
             if is_float {
-                let val: f64 = num_str.parse().map_err(|_|
-                    DbError::SqlParse(format!("Invalid float: {}", num_str)))?;
+                let val: f64 = num_str
+                    .parse()
+                    .map_err(|_| DbError::SqlParse(format!("Invalid float: {}", num_str)))?;
                 tokens.push(Token::FloatLit(val));
             } else {
-                let val: i64 = num_str.parse().map_err(|_|
-                    DbError::SqlParse(format!("Invalid integer: {}", num_str)))?;
+                let val: i64 = num_str
+                    .parse()
+                    .map_err(|_| DbError::SqlParse(format!("Invalid integer: {}", num_str)))?;
                 tokens.push(Token::IntegerLit(val));
             }
             continue;
@@ -319,7 +321,10 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>> {
                 }
             }
             _ => {
-                return Err(DbError::SqlParse(format!("Unexpected character: {}", chars[i])));
+                return Err(DbError::SqlParse(format!(
+                    "Unexpected character: {}",
+                    chars[i]
+                )));
             }
         }
     }

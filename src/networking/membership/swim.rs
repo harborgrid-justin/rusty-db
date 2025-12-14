@@ -12,31 +12,25 @@
 // Reference: "SWIM: Scalable Weakly-consistent Infection-style Process Group
 // Membership Protocol" (Das et al., 2002)
 
-use crate::error::Result;
 use crate::common::NodeId;
-use crate::networking::membership::{NodeInfo, NodeStatus, SwimConfig, MembershipEvent};
+use crate::error::Result;
+use crate::networking::membership::{MembershipEvent, NodeInfo, NodeStatus, SwimConfig};
+use rand::prelude::IndexedRandom;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
-use rand::prelude::IndexedRandom;
-use tokio::sync::{RwLock, mpsc};
+use tokio::sync::{mpsc, RwLock};
 use tokio::time;
 
 /// SWIM message types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SwimMessage {
     /// Direct ping to check if node is alive
-    Ping {
-        from: NodeId,
-        sequence: u64,
-    },
+    Ping { from: NodeId, sequence: u64 },
 
     /// Response to ping
-    Ack {
-        from: NodeId,
-        sequence: u64,
-    },
+    Ack { from: NodeId, sequence: u64 },
 
     /// Request to probe a node indirectly
     PingReq {
@@ -46,9 +40,7 @@ pub enum SwimMessage {
     },
 
     /// Membership update via gossip
-    Gossip {
-        updates: Vec<MembershipUpdate>,
-    },
+    Gossip { updates: Vec<MembershipUpdate> },
 }
 
 /// Membership update for gossip
@@ -221,12 +213,10 @@ impl SwimMembership {
             let mut interval = time::interval(Duration::from_secs(1));
             loop {
                 interval.tick().await;
-                if let Err(e) = Self::check_failures(
-                    &members,
-                    suspicion_multiplier,
-                    protocol_period,
-                    &event_tx,
-                ).await {
+                if let Err(e) =
+                    Self::check_failures(&members, suspicion_multiplier, protocol_period, &event_tx)
+                        .await
+                {
                     tracing::error!("Failure detection failed: {}", e);
                 }
             }
@@ -267,9 +257,7 @@ impl SwimMembership {
                 return Ok(());
             }
 
-            active_members
-                .choose(&mut rand::rng())
-                .cloned()
+            active_members.choose(&mut rand::rng()).cloned()
         };
 
         if let Some(target_id) = target {
@@ -290,11 +278,14 @@ impl SwimMembership {
 
             // Record pending ack
             let mut pending = pending_acks.write().await;
-            pending.insert(seq, PendingAck {
-                target: target_id.clone(),
-                sent_at: SystemTime::now(),
-                timeout: Duration::from_millis(500),
-            });
+            pending.insert(
+                seq,
+                PendingAck {
+                    target: target_id.clone(),
+                    sent_at: SystemTime::now(),
+                    timeout: Duration::from_millis(500),
+                },
+            );
         }
 
         // Gossip membership updates
@@ -384,9 +375,11 @@ impl SwimMembership {
         for node_id in to_suspect {
             if let Some(info) = members_guard.get_mut(&node_id) {
                 info.update_status(NodeStatus::Suspected, info.incarnation + 1);
-                let _ = event_tx.send(MembershipEvent::NodeSuspected {
-                    node_id: node_id.clone(),
-                }).await;
+                let _ = event_tx
+                    .send(MembershipEvent::NodeSuspected {
+                        node_id: node_id.clone(),
+                    })
+                    .await;
                 tracing::warn!(node_id = %node_id, "Node suspected");
             }
         }
@@ -394,9 +387,11 @@ impl SwimMembership {
         for node_id in to_fail {
             if let Some(info) = members_guard.get_mut(&node_id) {
                 info.update_status(NodeStatus::Failed, info.incarnation + 1);
-                let _ = event_tx.send(MembershipEvent::NodeFailed {
-                    node_id: node_id.clone(),
-                }).await;
+                let _ = event_tx
+                    .send(MembershipEvent::NodeFailed {
+                        node_id: node_id.clone(),
+                    })
+                    .await;
                 tracing::error!(node_id = %node_id, "Node failed");
             }
         }
@@ -407,7 +402,10 @@ impl SwimMembership {
     /// Handle incoming SWIM message
     pub async fn handle_message(&self, message: SwimMessage) -> Result<Option<SwimMessage>> {
         match message {
-            SwimMessage::Ping { from: _from, sequence: _sequence } => {
+            SwimMessage::Ping {
+                from: _from,
+                sequence: _sequence,
+            } => {
                 // Respond with ack
                 Ok(Some(SwimMessage::Ack {
                     from: self.node_id.clone(),
@@ -426,16 +424,23 @@ impl SwimMembership {
                     info.last_seen = SystemTime::now();
                     if info.node.status == NodeStatus::Suspected {
                         info.update_status(NodeStatus::Active, info.incarnation + 1);
-                        let _ = self.event_tx.send(MembershipEvent::NodeRecovered {
-                            node_id: from.clone(),
-                        }).await;
+                        let _ = self
+                            .event_tx
+                            .send(MembershipEvent::NodeRecovered {
+                                node_id: from.clone(),
+                            })
+                            .await;
                     }
                 }
 
                 Ok(None)
             }
 
-            SwimMessage::PingReq { from, target, sequence: _ } => {
+            SwimMessage::PingReq {
+                from,
+                target,
+                sequence: _,
+            } => {
                 // Forward ping to target
                 tracing::trace!(
                     relay = %self.node_id,
@@ -468,10 +473,13 @@ impl SwimMembership {
         let node_id = node.id.clone();
         members.insert(node_id.clone(), MemberInfo::new(node));
 
-        let _ = self.event_tx.send(MembershipEvent::NodeJoined {
-            node_id: node_id.clone(),
-            node_info: members.get(&node_id).unwrap().node.clone(),
-        }).await;
+        let _ = self
+            .event_tx
+            .send(MembershipEvent::NodeJoined {
+                node_id: node_id.clone(),
+                node_info: members.get(&node_id).unwrap().node.clone(),
+            })
+            .await;
 
         Ok(())
     }

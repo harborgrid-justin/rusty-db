@@ -1,9 +1,9 @@
 // Memory Management Web API
 
 use super::common::*;
+use super::debugger::{ComponentBreakdown, MemoryReport};
 use super::memory_manager::*;
 use super::pressure_manager::MemoryPressureEvent;
-use super::debugger::{ComponentBreakdown, MemoryReport};
 
 pub struct MemoryApi {
     manager: Arc<MemoryManager>,
@@ -37,14 +37,16 @@ impl MemoryApi {
 
     // Get component breakdown
     pub fn api_get_component_breakdown(&self) -> Vec<ComponentBreakdown> {
-        self.manager.debugger()
+        self.manager
+            .debugger()
             .generate_report()
             .component_breakdown
     }
 
     // Detect memory leaks
     pub fn api_detect_leaks(&self, min_age_seconds: u64) -> Vec<LeakReport> {
-        self.manager.debugger()
+        self.manager
+            .debugger()
             .detect_leaks(Duration::from_secs(min_age_seconds))
     }
 
@@ -71,7 +73,10 @@ impl MemoryApi {
                 self.manager.debugger().enable_stack_traces();
                 Ok(())
             }
-            _ => Err(DbError::InvalidArgument(format!("Unknown feature: {}", feature)))
+            _ => Err(DbError::InvalidArgument(format!(
+                "Unknown feature: {}",
+                feature
+            ))),
         }
     }
 
@@ -82,25 +87,27 @@ impl MemoryApi {
                 self.manager.debugger().disable_tracking();
                 Ok(())
             }
-            _ => Err(DbError::InvalidArgument(format!("Cannot disable: {}", feature)))
+            _ => Err(DbError::InvalidArgument(format!(
+                "Cannot disable: {}",
+                feature
+            ))),
         }
     }
 
     // Get pressure events
     pub fn api_get_pressure_events(&self, count: usize) -> Vec<MemoryPressureEvent> {
-        self.manager.pressure_manager()
-            .get_recent_events(count)
+        self.manager.pressure_manager().get_recent_events(count)
     }
 
     // Force emergency memory release
     pub fn api_force_emergency_release(&self) -> Result<()> {
-        self.manager.pressure_manager()
-            .emergency_release()
+        self.manager.pressure_manager().emergency_release()
     }
 
     // Set memory limit
     pub fn api_set_memory_limit(&self, limit_bytes: u64) {
-        self.manager.pressure_manager()
+        self.manager
+            .pressure_manager()
             .set_total_memory(limit_bytes);
     }
 

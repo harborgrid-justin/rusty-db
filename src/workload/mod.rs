@@ -2,60 +2,58 @@
 // Oracle-like AWR, SQL Tuning Advisor, and Performance Diagnostics
 
 use std::time::SystemTime;
-pub mod repository;
-pub mod sql_tuning;
-pub mod sql_monitor;
-pub mod performance_hub;
 pub mod advisor;
+pub mod performance_hub;
+pub mod repository;
+pub mod sql_monitor;
+pub mod sql_tuning;
 
 // Re-export commonly used types from repository
 pub use repository::{
-    WorkloadRepository, WorkloadSnapshot, RepositoryConfig, SnapshotId, BaselineId,
-    Baseline, BaselineType, InstanceInfo, SystemStatistics, SqlStatementStats,
-    SessionStats, WaitEventStats, IoStatistics, MemoryStatistics, TimeModelStats,
-    LoadProfile, OsStatistics, TablespaceStats, SegmentStats, AggregatedMetrics,
-    SnapshotComparison, DeltaStatistics, RepositoryStats,
+    AggregatedMetrics, Baseline, BaselineId, BaselineType, DeltaStatistics, InstanceInfo,
+    IoStatistics, LoadProfile, MemoryStatistics, OsStatistics, RepositoryConfig, RepositoryStats,
+    SegmentStats, SessionStats, SnapshotComparison, SnapshotId, SqlStatementStats,
+    SystemStatistics, TablespaceStats, TimeModelStats, WaitEventStats, WorkloadRepository,
+    WorkloadSnapshot,
 };
 
 // Re-export commonly used types from sql_tuning
 pub use sql_tuning::{
-    SqlTuningAdvisor, TuningConfig, TuningTask, TaskId, TaskStatus, TuningScope,
-    TuningRecommendation, RecommendationType, BenefitType, RecommendationDetails,
-    SqlProfile, ProfileStatus, SqlProfileDetails, IndexRecommendation,
-    RestructureRecommendation, RewriteType, StatisticsRecommendation,
-    AlternativePlanDetails, PlanAnalysis, PlanOperation, PlanIssue,
-    IssueSeverity, IssueType, AccessPath, AccessType, OptimizerStatistics,
-    TableStatistics, IndexStatistics, ColumnStatistics, Histogram, HistogramType,
-    HistogramBucket,
+    AccessPath, AccessType, AlternativePlanDetails, BenefitType, ColumnStatistics, Histogram,
+    HistogramBucket, HistogramType, IndexRecommendation, IndexStatistics, IssueSeverity, IssueType,
+    OptimizerStatistics, PlanAnalysis, PlanIssue, PlanOperation, ProfileStatus,
+    RecommendationDetails, RecommendationType, RestructureRecommendation, RewriteType, SqlProfile,
+    SqlProfileDetails, SqlTuningAdvisor, StatisticsRecommendation, TableStatistics, TaskId,
+    TaskStatus, TuningConfig, TuningRecommendation, TuningScope, TuningTask,
 };
 
 // Re-export commonly used types from sql_monitor
 pub use sql_monitor::{
-    SqlMonitor, MonitorConfig, SqlExecution, ExecutionId, ExecutionStatus,
-    WaitEventDetail, PlanOperationMetrics, ParallelExecutionInfo, ParallelServer,
-    BindVariable, ExecutionPlan, PlanOperation as MonitorPlanOperation,
-    PerformanceAlert, AlertType, AlertSeverity, ExecutionStatistics,
+    AlertSeverity, AlertType, BindVariable, ExecutionId, ExecutionPlan, ExecutionStatistics,
+    ExecutionStatus, MonitorConfig, ParallelExecutionInfo, ParallelServer, PerformanceAlert,
+    PlanOperation as MonitorPlanOperation, PlanOperationMetrics, SqlExecution, SqlMonitor,
+    WaitEventDetail,
 };
 
 // Re-export commonly used types from performance_hub
 pub use performance_hub::{
-    PerformanceHub, PerformanceHubConfig, SqlStats, SessionActivity, SessionState,
-    WaitEventMetrics, WaitEventSample, FileIoStats, FileType, IoSample, IoOperation,
-    MemoryUsage, TrendDataPoint, PerformanceSummary, SystemMetrics,
+    FileIoStats, FileType, IoOperation, IoSample, MemoryUsage, PerformanceHub,
+    PerformanceHubConfig, PerformanceSummary, SessionActivity, SessionState, SqlStats,
+    SystemMetrics, TrendDataPoint, WaitEventMetrics, WaitEventSample,
 };
 
 // Re-export commonly used types from advisor
 pub use advisor::{
-    DiagnosticAdvisor, AdvisorConfig, AnalysisRun, AnalysisId, AnalysisStatus,
-    AnalysisScope, Finding, FindingType, FindingSeverity, ImpactType, Evidence,
-    EvidenceType, Recommendation, RecommendationPriority, RecommendationCategory,
-    ImplementationEffort, PerformanceBaseline, BaselineMetrics, AnalysisSummary,
+    AdvisorConfig, AnalysisId, AnalysisRun, AnalysisScope, AnalysisStatus, AnalysisSummary,
+    BaselineMetrics, DiagnosticAdvisor, Evidence, EvidenceType, Finding, FindingSeverity,
+    FindingType, ImpactType, ImplementationEffort, PerformanceBaseline, Recommendation,
+    RecommendationCategory, RecommendationPriority,
 };
 
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use parking_lot::RwLock;
-use crate::Result;
 
 // Unified Workload Intelligence Hub
 //
@@ -210,48 +208,60 @@ impl WorkloadIntelligence {
                 sorts_memory: 450,
                 sorts_disk: 50,
             },
-            top_sql: summary.top_sql.into_iter().map(|s| SqlStatementStats {
-                sql_id: s.sql_id,
-                sql_text: s.sql_text,
-                sql_hash: s.sql_hash,
-                executions: s.executions,
-                elapsed_time_micros: s.total_elapsed_time_micros,
-                cpu_time_micros: s.total_cpu_time_micros,
-                buffer_gets: s.total_logical_reads,
-                disk_reads: s.total_physical_reads,
-                rows_processed: s.total_rows_processed,
-                parse_calls: 0,
-                sorts: 0,
-                fetches: 0,
-                px_servers_executions: 0,
-                elapsed_time_per_exec_micros: s.avg_elapsed_time_micros,
-                cpu_time_per_exec_micros: s.avg_cpu_time_micros,
-                module: s.module,
-                action: s.action,
-            }).collect(),
-            session_stats: summary.top_sessions.into_iter().map(|s| SessionStats {
-                session_id: s.session_id,
-                user_name: s.user_name,
-                program: s.program,
-                machine: s.machine,
-                status: s.status,
-                logical_reads: s.logical_reads,
-                physical_reads: s.physical_reads,
-                cpu_time_micros: s.cpu_time_micros,
-                elapsed_time_micros: s.wait_time_micros + s.cpu_time_micros,
-                active_time_micros: s.cpu_time_micros,
-                current_sql_id: s.sql_id,
-                wait_class: s.wait_class,
-                wait_event: s.wait_event,
-            }).collect(),
-            wait_events: summary.top_wait_events.into_iter().map(|w| WaitEventStats {
-                wait_class: w.wait_class,
-                wait_event: w.wait_event,
-                total_waits: w.total_waits,
-                total_wait_time_micros: w.total_wait_time_micros,
-                avg_wait_time_micros: w.avg_wait_time_micros,
-                time_waited_pct: w.time_waited_pct,
-            }).collect(),
+            top_sql: summary
+                .top_sql
+                .into_iter()
+                .map(|s| SqlStatementStats {
+                    sql_id: s.sql_id,
+                    sql_text: s.sql_text,
+                    sql_hash: s.sql_hash,
+                    executions: s.executions,
+                    elapsed_time_micros: s.total_elapsed_time_micros,
+                    cpu_time_micros: s.total_cpu_time_micros,
+                    buffer_gets: s.total_logical_reads,
+                    disk_reads: s.total_physical_reads,
+                    rows_processed: s.total_rows_processed,
+                    parse_calls: 0,
+                    sorts: 0,
+                    fetches: 0,
+                    px_servers_executions: 0,
+                    elapsed_time_per_exec_micros: s.avg_elapsed_time_micros,
+                    cpu_time_per_exec_micros: s.avg_cpu_time_micros,
+                    module: s.module,
+                    action: s.action,
+                })
+                .collect(),
+            session_stats: summary
+                .top_sessions
+                .into_iter()
+                .map(|s| SessionStats {
+                    session_id: s.session_id,
+                    user_name: s.user_name,
+                    program: s.program,
+                    machine: s.machine,
+                    status: s.status,
+                    logical_reads: s.logical_reads,
+                    physical_reads: s.physical_reads,
+                    cpu_time_micros: s.cpu_time_micros,
+                    elapsed_time_micros: s.wait_time_micros + s.cpu_time_micros,
+                    active_time_micros: s.cpu_time_micros,
+                    current_sql_id: s.sql_id,
+                    wait_class: s.wait_class,
+                    wait_event: s.wait_event,
+                })
+                .collect(),
+            wait_events: summary
+                .top_wait_events
+                .into_iter()
+                .map(|w| WaitEventStats {
+                    wait_class: w.wait_class,
+                    wait_event: w.wait_event,
+                    total_waits: w.total_waits,
+                    total_wait_time_micros: w.total_wait_time_micros,
+                    avg_wait_time_micros: w.avg_wait_time_micros,
+                    time_waited_pct: w.time_waited_pct,
+                })
+                .collect(),
             io_stats: IoStatistics {
                 datafile_reads: 5000,
                 datafile_writes: 2000,

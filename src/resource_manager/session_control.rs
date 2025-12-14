@@ -3,18 +3,18 @@
 // This module implements maximum active sessions, idle timeout management,
 // long-running query limits, automatic session termination, and priority boosting.
 
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::sync::Mutex;
-use std::collections::HashSet;
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
 use std::time::Instant;
 use std::time::SystemTime;
-use std::collections::{HashMap};
-use std::sync::{Arc, RwLock};
-use std::time::{Duration};
-use serde::{Deserialize, Serialize};
 
-use crate::error::{Result, DbError};
 use super::consumer_groups::ConsumerGroupId;
+use crate::error::{DbError, Result};
 
 // Session identifier
 pub type SessionId = u64;
@@ -147,7 +147,8 @@ impl SessionInfo {
 
     // Get current query execution time
     pub fn current_query_duration(&self) -> Option<Duration> {
-        self.current_query_start.map(|start| Instant::now().duration_since(start))
+        self.current_query_start
+            .map(|start| Instant::now().duration_since(start))
     }
 
     // Check if execution time limit exceeded
@@ -300,7 +301,7 @@ impl SessionController {
             let sessions = self.sessions.read().unwrap();
             if sessions.len() >= max as usize {
                 return Err(DbError::ResourceExhausted(
-                    "Maximum number of sessions reached".to_string()
+                    "Maximum number of sessions reached".to_string(),
                 ));
             }
         }
@@ -350,7 +351,8 @@ impl SessionController {
     pub fn start_query(&self, session_id: SessionId) -> Result<bool> {
         let group_id = {
             let sessions = self.sessions.read().unwrap();
-            let session = sessions.get(&session_id)
+            let session = sessions
+                .get(&session_id)
                 .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
             session.group_id
         };
@@ -381,7 +383,8 @@ impl SessionController {
     // Activate a session
     fn activate_session(&self, session_id: SessionId) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
-        let session = sessions.get_mut(&session_id)
+        let session = sessions
+            .get_mut(&session_id)
             .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         session.start_query();
@@ -413,7 +416,8 @@ impl SessionController {
     fn queue_session(&self, session_id: SessionId) -> Result<()> {
         let priority = {
             let sessions = self.sessions.read().unwrap();
-            let session = sessions.get(&session_id)
+            let session = sessions
+                .get(&session_id)
                 .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
             session.priority
         };
@@ -440,7 +444,8 @@ impl SessionController {
     pub fn complete_query(&self, session_id: SessionId) -> Result<()> {
         let group_id = {
             let mut sessions = self.sessions.write().unwrap();
-            let session = sessions.get_mut(&session_id)
+            let session = sessions
+                .get_mut(&session_id)
                 .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
             session.complete_query();
@@ -513,7 +518,8 @@ impl SessionController {
     // Terminate a session
     pub fn terminate_session(&self, session_id: SessionId, _reason: &str) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
-        let session = sessions.get_mut(&session_id)
+        let session = sessions
+            .get_mut(&session_id)
             .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         session.state = SessionState::Terminated;
@@ -618,7 +624,8 @@ impl SessionController {
     // Boost session priority
     pub fn boost_session_priority(&self, session_id: SessionId) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
-        let session = sessions.get_mut(&session_id)
+        let session = sessions
+            .get_mut(&session_id)
             .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         session.boost_priority();
@@ -642,7 +649,8 @@ impl SessionController {
         let sessions = self.sessions.read().unwrap();
         let active = self.active_sessions.read().unwrap();
 
-        active.iter()
+        active
+            .iter()
             .filter_map(|id| sessions.get(id).cloned())
             .collect()
     }
@@ -660,7 +668,8 @@ impl SessionController {
         max_execution_time: Option<Duration>,
     ) -> Result<()> {
         let mut sessions = self.sessions.write().unwrap();
-        let session = sessions.get_mut(&session_id)
+        let session = sessions
+            .get_mut(&session_id)
             .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
         session.idle_timeout = idle_timeout;
@@ -687,11 +696,9 @@ mod tests {
     #[test]
     fn test_session_creation() {
         let controller = SessionController::new(Some(1000));
-        let session_id = controller.create_session(
-            1,
-            "testuser".to_string(),
-            1,
-        ).unwrap();
+        let session_id = controller
+            .create_session(1, "testuser".to_string(), 1)
+            .unwrap();
 
         assert!(session_id > 0);
 
@@ -711,9 +718,15 @@ mod tests {
 
         controller.configure_group_pool(1, config).unwrap();
 
-        let s1 = controller.create_session(1, "user1".to_string(), 1).unwrap();
-        let s2 = controller.create_session(2, "user2".to_string(), 1).unwrap();
-        let s3 = controller.create_session(3, "user3".to_string(), 1).unwrap();
+        let s1 = controller
+            .create_session(1, "user1".to_string(), 1)
+            .unwrap();
+        let s2 = controller
+            .create_session(2, "user2".to_string(), 1)
+            .unwrap();
+        let s3 = controller
+            .create_session(3, "user3".to_string(), 1)
+            .unwrap();
 
         // First two should activate
         assert!(controller.start_query(s1).unwrap());
@@ -726,11 +739,9 @@ mod tests {
     #[test]
     fn test_session_termination() {
         let controller = SessionController::new(None);
-        let session_id = controller.create_session(
-            1,
-            "testuser".to_string(),
-            1,
-        ).unwrap();
+        let session_id = controller
+            .create_session(1, "testuser".to_string(), 1)
+            .unwrap();
 
         controller.terminate_session(session_id, "Test").unwrap();
 

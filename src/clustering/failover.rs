@@ -7,14 +7,14 @@
 // - Node replacement and recovery
 // - Split-brain prevention
 
-use std::fmt;
-use std::time::Duration;
-use crate::error::DbError;
 use crate::clustering::node::{NodeId, NodeInfo, NodeStatus};
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-use std::time::{SystemTime};
+use crate::error::DbError;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt;
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Trait for failover management behavior
 pub trait FailoverManager {
@@ -93,7 +93,9 @@ impl ClusterFailoverManager {
     }
 
     pub fn get_failover_history(&self) -> Result<Vec<FailoverEvent>, DbError> {
-        let history = self.failover_history.read()
+        let history = self
+            .failover_history
+            .read()
             .map_err(|_| DbError::LockError("Failed to read failover history".to_string()))?;
         Ok(history.clone())
     }
@@ -170,7 +172,8 @@ impl FailureDetector for ClusterFailoverManager {
 
         if let Some(node) = nodes.iter().find(|n| &n.id == node_id) {
             let last_heartbeat = node.last_heartbeat;
-            let elapsed = last_heartbeat.elapsed()
+            let elapsed = last_heartbeat
+                .elapsed()
                 .map_err(|_| DbError::Internal("Invalid heartbeat timestamp".to_string()))?;
 
             Ok(elapsed > self.config.failure_timeout)
@@ -189,7 +192,9 @@ impl FailureDetector for ClusterFailoverManager {
     }
 
     fn mark_node_suspected(&self, node_id: &NodeId) -> Result<(), DbError> {
-        let mut suspected = self.suspected_nodes.write()
+        let mut suspected = self
+            .suspected_nodes
+            .write()
             .map_err(|_| DbError::LockError("Failed to acquire write lock".to_string()))?;
 
         suspected.insert(node_id.clone(), std::time::Instant::now());
@@ -248,8 +253,8 @@ pub trait ClusterState {
 #[cfg(test)]
 mod tests {
     use super::*;
-use crate::clustering::node::{NodeRole};
-use std::time::Instant;
+    use crate::clustering::node::NodeRole;
+    use std::time::Instant;
 
     struct MockClusterState {
         nodes: Vec<NodeInfo>,
@@ -262,7 +267,9 @@ use std::time::Instant;
         }
 
         fn get_healthy_nodes(&self) -> Result<Vec<NodeInfo>, DbError> {
-            Ok(self.nodes.iter()
+            Ok(self
+                .nodes
+                .iter()
                 .filter(|n| matches!(n.status, NodeStatus::Healthy))
                 .cloned()
                 .collect())
@@ -272,7 +279,11 @@ use std::time::Instant;
             Ok(self.nodes.clone())
         }
 
-        fn update_node_status(&self, _node_id: &NodeId, _status: NodeStatus) -> Result<(), DbError> {
+        fn update_node_status(
+            &self,
+            _node_id: &NodeId,
+            _status: NodeStatus,
+        ) -> Result<(), DbError> {
             Ok(())
         }
     }
@@ -314,6 +325,8 @@ use std::time::Instant;
         let config = FailoverConfig::default();
         let manager = ClusterFailoverManager::new(cluster_state, config);
 
-        assert!(manager.is_node_failed(&NodeId("node1".to_string())).unwrap());
+        assert!(manager
+            .is_node_failed(&NodeId("node1".to_string()))
+            .unwrap());
     }
 }

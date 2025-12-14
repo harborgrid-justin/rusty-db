@@ -1,7 +1,6 @@
-/// Page Table - Partitioned Hash Map for concurrent page lookups
-
-use crate::common::PageId;
 use crate::buffer::page_cache::FrameId;
+/// Page Table - Partitioned Hash Map for concurrent page lookups
+use crate::common::PageId;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -137,10 +136,7 @@ impl PageTable {
     #[cold]
     #[allow(dead_code)]
     pub fn len(&self) -> usize {
-        self.partitions
-            .iter()
-            .map(|p| p.read().len())
-            .sum()
+        self.partitions.iter().map(|p| p.read().len()).sum()
     }
 
     /// Check if the page table is empty

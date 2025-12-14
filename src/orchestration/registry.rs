@@ -34,7 +34,7 @@ use std::sync::Arc;
 use parking_lot::RwLock;
 use tracing::{debug, info};
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 
 // Service lifetime scope
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -192,10 +192,11 @@ impl ServiceRegistry {
         let type_id = TypeId::of::<T>();
 
         // Wrap the factory to return a boxed Any
-        let wrapped_factory = move |registry: &ServiceRegistry| -> Result<Box<dyn Any + Send + Sync>> {
-            let instance = factory(registry)?;
-            Ok(Box::new(instance))
-        };
+        let wrapped_factory =
+            move |registry: &ServiceRegistry| -> Result<Box<dyn Any + Send + Sync>> {
+                let instance = factory(registry)?;
+                Ok(Box::new(instance))
+            };
 
         let concrete_factory = ConcreteServiceFactory {
             factory_fn: wrapped_factory,
@@ -224,7 +225,12 @@ impl ServiceRegistry {
     }
 
     // Register a singleton service instance
-    pub fn register_singleton<T>(&self, name: String, instance: T, metadata: ServiceMetadata) -> Result<()>
+    pub fn register_singleton<T>(
+        &self,
+        name: String,
+        instance: T,
+        metadata: ServiceMetadata,
+    ) -> Result<()>
     where
         T: Send + Sync + 'static,
     {
@@ -256,7 +262,10 @@ impl ServiceRegistry {
         init_order.push(type_id);
         drop(init_order);
 
-        info!("Registered singleton service: {} ({})", name, metadata.type_name);
+        info!(
+            "Registered singleton service: {} ({})",
+            name, metadata.type_name
+        );
 
         Ok(())
     }
@@ -698,16 +707,10 @@ mod tests {
     fn test_list_services() {
         let registry = ServiceRegistry::new();
 
-        let metadata1 = ServiceMetadata::new(
-            "service1".into(),
-            "TestService",
-            ServiceLifetime::Singleton,
-        );
-        let metadata2 = ServiceMetadata::new(
-            "service2".into(),
-            "TestService",
-            ServiceLifetime::Transient,
-        );
+        let metadata1 =
+            ServiceMetadata::new("service1".into(), "TestService", ServiceLifetime::Singleton);
+        let metadata2 =
+            ServiceMetadata::new("service2".into(), "TestService", ServiceLifetime::Transient);
 
         registry
             .register::<TestService, _>(

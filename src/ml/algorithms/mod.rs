@@ -11,21 +11,21 @@
 // - `clustering`: K-Means and other clustering algorithms
 // - `neural_networks`: Neural network implementations (placeholder)
 
-pub mod regression;
 pub mod classification;
-pub mod trees;
 pub mod clustering;
 pub mod neural_networks;
+pub mod regression;
+pub mod trees;
 
+use super::{Dataset, Hyperparameters, Matrix, Vector};
 use crate::error::Result;
-use super::{Dataset, Vector, Matrix, Hyperparameters};
 
 // Re-export algorithm implementations
-pub use regression::LinearRegression;
 pub use classification::{LogisticRegression, NaiveBayes};
-pub use trees::{DecisionTree, RandomForest};
 pub use clustering::KMeansClustering;
 pub use neural_networks::NeuralNetwork;
+pub use regression::LinearRegression;
+pub use trees::{DecisionTree, RandomForest};
 
 // ============================================================================
 // Common Types and Traits
@@ -105,7 +105,9 @@ pub trait Algorithm: Send + Sync {
     fn serialize(&self) -> Result<Vec<u8>>;
 
     // Deserialize model from bytes
-    fn deserialize(bytes: &[u8]) -> Result<Self> where Self: Sized;
+    fn deserialize(bytes: &[u8]) -> Result<Self>
+    where
+        Self: Sized;
 
     // Calculate feature importance (if supported)
     fn feature_importance(&self) -> Option<Vector> {

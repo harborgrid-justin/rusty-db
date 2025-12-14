@@ -13,11 +13,11 @@
 // }
 // ```
 
-use std::fmt;
-use std::time::SystemTime;
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 
 use parking_lot::RwLock;
 

@@ -8,16 +8,16 @@
 // - Subquery unnesting
 // - View merging
 
-use crate::common::{TableId, IndexId, Schema};
+use crate::common::{IndexId, Schema, TableId};
 use crate::error::Result;
 use crate::optimizer_pro::{
-    PhysicalPlan, PhysicalOperator, Expression, JoinType, SortKey, AggregateFunction,
-    PlanId, PlanMetadata, Query, BinaryOperator, OptimizerHint, CostModel,
+    AggregateFunction, BinaryOperator, CostModel, Expression, JoinType, OptimizerHint,
+    PhysicalOperator, PhysicalPlan, PlanId, PlanMetadata, Query, SortKey,
 };
+use std::cmp::Ordering;
 use std::collections::{BTreeSet, HashMap};
 use std::sync::Arc;
 use std::time::SystemTime;
-use std::cmp::Ordering;
 
 // ============================================================================
 // Plan Generator
@@ -85,22 +85,20 @@ impl PlanGenerator {
                 right,
                 join_type,
                 condition,
-            } => {
-                self.generate_join_plans(left, right, *join_type, condition.as_ref(), hint_config)
-            }
+            } => self.generate_join_plans(left, right, *join_type, condition.as_ref(), hint_config),
             LogicalPlan::Aggregate {
                 input,
                 group_by,
                 aggregates,
-            } => {
-                self.generate_aggregate_plans(input, group_by, aggregates, hint_config)
-            }
+            } => self.generate_aggregate_plans(input, group_by, aggregates, hint_config),
             LogicalPlan::Sort { input, sort_keys } => {
                 self.generate_sort_plans(input, sort_keys, hint_config)
             }
-            LogicalPlan::Limit { input, limit, offset } => {
-                self.generate_limit_plans(input, *limit, *offset, hint_config)
-            }
+            LogicalPlan::Limit {
+                input,
+                limit,
+                offset,
+            } => self.generate_limit_plans(input, *limit, *offset, hint_config),
             LogicalPlan::Projection { input, columns } => {
                 self.generate_projection_plans(input, columns, hint_config)
             }
@@ -179,7 +177,8 @@ impl PlanGenerator {
 
         for index in indexes {
             // Determine if index can be used
-            let (key_conditions, remaining_filter) = self.extract_index_conditions(filter, &index)?;
+            let (key_conditions, remaining_filter) =
+                self.extract_index_conditions(filter, &index)?;
 
             if !key_conditions.is_empty() {
                 // Index scan
@@ -247,7 +246,12 @@ impl PlanGenerator {
         let mut plans = Vec::new();
 
         // For OR conditions, bitmap scans can be efficient
-        if let Some(Expression::BinaryOp { op: BinaryOperator::Or, left: _, right: _ }) = filter {
+        if let Some(Expression::BinaryOp {
+            op: BinaryOperator::Or,
+            left: _,
+            right: _,
+        }) = filter
+        {
             let indexes = self.get_table_indexes(table)?;
             let bitmap_indexes: Vec<IndexId> = indexes.iter().map(|idx| idx.index_id).collect();
 
@@ -722,7 +726,9 @@ impl PlanGenerator {
 
     /// Get next plan ID
     fn next_plan_id(&self) -> PlanId {
-        let id = self.next_plan_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let id = self
+            .next_plan_id
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         PlanId(id)
     }
 }
@@ -971,7 +977,9 @@ impl AccessPathSelector {
         let index_scans = self.evaluate_index_scans(table, filter)?;
 
         // Select lowest cost path
-        let mut best_path = AccessPath::SeqScan { cost: seq_scan_cost };
+        let mut best_path = AccessPath::SeqScan {
+            cost: seq_scan_cost,
+        };
 
         for (index_id, cost) in index_scans {
             if cost < seq_scan_cost {
@@ -982,11 +990,7 @@ impl AccessPathSelector {
         Ok(best_path)
     }
 
-    fn estimate_seq_scan_cost(
-        &self,
-        table: TableId,
-        filter: Option<&Expression>,
-    ) -> Result<f64> {
+    fn estimate_seq_scan_cost(&self, table: TableId, filter: Option<&Expression>) -> Result<f64> {
         let operator = PhysicalOperator::SeqScan {
             table_id: table,
             filter: filter.cloned(),

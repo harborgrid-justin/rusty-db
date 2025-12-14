@@ -57,7 +57,7 @@ impl CircuitBreaker {
             failure_threshold: Arc::new(RwLock::new(failure_threshold)),
             timeout,
             opened_at: Arc::new(RwLock::new(None)),
-            success_threshold: 3, // Default: need 3 successes to close
+            success_threshold: 3,      // Default: need 3 successes to close
             half_open_max_requests: 5, // Allow up to 5 concurrent requests in half-open
             half_open_requests: Arc::new(RwLock::new(0)),
         }
@@ -373,8 +373,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_circuit_breaker_recovery() {
-        let cb = CircuitBreaker::new(2, Duration::from_millis(100))
-            .with_success_threshold(2);
+        let cb = CircuitBreaker::new(2, Duration::from_millis(100)).with_success_threshold(2);
 
         // Open the circuit
         cb.record_failure().await;
@@ -453,8 +452,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_half_open_max_requests() {
-        let cb = CircuitBreaker::new(2, Duration::from_millis(100))
-            .with_half_open_max_requests(2);
+        let cb = CircuitBreaker::new(2, Duration::from_millis(100)).with_half_open_max_requests(2);
 
         // Open circuit
         cb.record_failure().await;

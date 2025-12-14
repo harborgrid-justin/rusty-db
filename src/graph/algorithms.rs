@@ -8,12 +8,12 @@
 // - Influence maximization
 // - Similarity measures
 
+use super::property_graph::{PropertyGraph, VertexId};
+use crate::error::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
-use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
-use crate::error::Result;
-use super::property_graph::{PropertyGraph, VertexId};
 
 // ============================================================================
 // PageRank Algorithm
@@ -78,9 +78,8 @@ impl PageRank {
 
         // Initialize scores uniformly
         let initial_score = 1.0 / n as f64;
-        let mut scores: HashMap<VertexId, f64> = vertices.iter()
-            .map(|&v| (v, initial_score))
-            .collect();
+        let mut scores: HashMap<VertexId, f64> =
+            vertices.iter().map(|&v| (v, initial_score)).collect();
 
         let mut new_scores = scores.clone();
         let teleport_prob = (1.0 - config.damping_factor) / n as f64;
@@ -140,7 +139,9 @@ impl PageRank {
 
     // Get top-k vertices by PageRank score
     pub fn top_k(result: &PageRankResult, k: usize) -> Vec<(VertexId, f64)> {
-        let mut entries: Vec<_> = result.scores.iter()
+        let mut entries: Vec<_> = result
+            .scores
+            .iter()
             .map(|(&id, &score)| (id, score))
             .collect();
 
@@ -196,10 +197,7 @@ impl ConnectedComponentsAlgorithm {
             }
         }
 
-        let largest_component_size = component_sizes.values()
-            .max()
-            .copied()
-            .unwrap_or(0);
+        let largest_component_size = component_sizes.values().max().copied().unwrap_or(0);
 
         Ok(ConnectedComponents {
             component_map,
@@ -277,9 +275,7 @@ impl CentralityAlgorithms {
     // Compute betweenness centrality using Brandes' algorithm
     pub fn betweenness_centrality(graph: &PropertyGraph) -> Result<BetweennessCentrality> {
         let vertices: Vec<VertexId> = graph.vertices().map(|v| v.id).collect();
-        let mut scores: HashMap<VertexId, f64> = vertices.iter()
-            .map(|&v| (v, 0.0))
-            .collect();
+        let mut scores: HashMap<VertexId, f64> = vertices.iter().map(|&v| (v, 0.0)).collect();
 
         for &source in &vertices {
             // BFS from source
@@ -319,8 +315,8 @@ impl CentralityAlgorithms {
             while let Some(w) = stack.pop() {
                 if let Some(preds) = predecessors.get(&w) {
                     for &v in preds {
-                        let delta = (paths[&v] as f64 / paths[&w] as f64) *
-                                   (1.0 + dependency.get(&w).unwrap_or(&0.0));
+                        let delta = (paths[&v] as f64 / paths[&w] as f64)
+                            * (1.0 + dependency.get(&w).unwrap_or(&0.0));
                         *dependency.entry(v).or_insert(0.0) += delta;
                     }
                 }
@@ -431,14 +427,15 @@ pub struct LouvainAlgorithm;
 
 impl LouvainAlgorithm {
     // Detect communities using the Louvain algorithm
-    pub fn detect(graph: &PropertyGraph, max_iterations: usize) -> Result<CommunityDetectionResult> {
+    pub fn detect(
+        graph: &PropertyGraph,
+        max_iterations: usize,
+    ) -> Result<CommunityDetectionResult> {
         let vertices: Vec<VertexId> = graph.vertices().map(|v| v.id).collect();
 
         // Initialize each vertex in its own community
-        let mut communities: HashMap<VertexId, usize> = vertices.iter()
-            .enumerate()
-            .map(|(i, &v)| (v, i))
-            .collect();
+        let mut communities: HashMap<VertexId, usize> =
+            vertices.iter().enumerate().map(|(i, &v)| (v, i)).collect();
 
         let total_edges = graph.edge_count() as f64;
         let mut best_modularity = Self::calculate_modularity(graph, &communities, total_edges)?;
@@ -458,7 +455,8 @@ impl LouvainAlgorithm {
                 let mut best_gain = 0.0;
 
                 // Try moving vertex to neighbor communities
-                let neighbor_communities: HashSet<usize> = neighbors.iter()
+                let neighbor_communities: HashSet<usize> = neighbors
+                    .iter()
                     .filter_map(|&n| communities.get(&n).copied())
                     .collect();
 
@@ -469,7 +467,8 @@ impl LouvainAlgorithm {
 
                     // Calculate modularity gain
                     communities.insert(vertex, candidate_community);
-                    let new_modularity = Self::calculate_modularity(graph, &communities, total_edges)?;
+                    let new_modularity =
+                        Self::calculate_modularity(graph, &communities, total_edges)?;
                     let gain = new_modularity - best_modularity;
 
                     if gain > best_gain {
@@ -495,7 +494,8 @@ impl LouvainAlgorithm {
             community_remap.insert(old_id, new_id);
         }
 
-        let final_communities: HashMap<VertexId, usize> = communities.iter()
+        let final_communities: HashMap<VertexId, usize> = communities
+            .iter()
             .map(|(&v, &c)| (v, community_remap[&c]))
             .collect();
 
@@ -721,13 +721,9 @@ impl ClusteringCoefficientAlgorithm {
 
 // Jaccard similarity between two vertices
 pub fn jaccard_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<f64> {
-    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
-        .into_iter()
-        .collect();
+    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?.into_iter().collect();
 
-    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
-        .into_iter()
-        .collect();
+    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?.into_iter().collect();
 
     let intersection = neighbors1.intersection(&neighbors2).count();
     let union = neighbors1.union(&neighbors2).count();
@@ -741,13 +737,9 @@ pub fn jaccard_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> 
 
 // Cosine similarity between two vertices (based on neighbor sets)
 pub fn cosine_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<f64> {
-    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
-        .into_iter()
-        .collect();
+    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?.into_iter().collect();
 
-    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
-        .into_iter()
-        .collect();
+    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?.into_iter().collect();
 
     let intersection = neighbors1.intersection(&neighbors2).count();
     let size1 = neighbors1.len();
@@ -762,13 +754,9 @@ pub fn cosine_similarity(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> R
 
 // Common neighbor count
 pub fn common_neighbors(graph: &PropertyGraph, v1: VertexId, v2: VertexId) -> Result<usize> {
-    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?
-        .into_iter()
-        .collect();
+    let neighbors1: HashSet<VertexId> = graph.get_outgoing_neighbors(v1)?.into_iter().collect();
 
-    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?
-        .into_iter()
-        .collect();
+    let neighbors2: HashSet<VertexId> = graph.get_outgoing_neighbors(v2)?.into_iter().collect();
 
     Ok(neighbors1.intersection(&neighbors2).count())
 }
@@ -813,12 +801,8 @@ impl InfluenceMaximization {
                 let mut test_set = seed_set.clone();
                 test_set.push(candidate);
 
-                let influence = Self::estimate_influence(
-                    graph,
-                    &test_set,
-                    model,
-                    monte_carlo_runs,
-                )?;
+                let influence =
+                    Self::estimate_influence(graph, &test_set, model, monte_carlo_runs)?;
 
                 if influence > best_influence {
                     best_influence = influence;
@@ -891,10 +875,7 @@ impl InfluenceMaximization {
         Ok(influenced.len())
     }
 
-    fn linear_threshold_simulation(
-        graph: &PropertyGraph,
-        seed_set: &[VertexId],
-    ) -> Result<usize> {
+    fn linear_threshold_simulation(graph: &PropertyGraph, seed_set: &[VertexId]) -> Result<usize> {
         let mut influenced = HashSet::new();
         let mut thresholds: HashMap<VertexId, f64> = HashMap::new();
 
@@ -917,9 +898,8 @@ impl InfluenceMaximization {
                 }
 
                 let neighbors = graph.get_incoming_neighbors(vertex.id)?;
-                let influenced_neighbors = neighbors.iter()
-                    .filter(|n| influenced.contains(n))
-                    .count();
+                let influenced_neighbors =
+                    neighbors.iter().filter(|n| influenced.contains(n)).count();
 
                 let degree = vertex.in_degree();
                 if degree > 0 {
@@ -939,7 +919,7 @@ impl InfluenceMaximization {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graph::property_graph::{Properties, EdgeDirection};
+    use crate::graph::property_graph::{EdgeDirection, Properties};
 
     #[test]
     fn test_pagerank() {
@@ -948,9 +928,33 @@ mod tests {
         let v2 = graph.add_vertex(vec![], Properties::new()).unwrap();
         let v3 = graph.add_vertex(vec![], Properties::new()).unwrap();
 
-        graph.add_edge(v1, v2, "link".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
-        graph.add_edge(v2, v3, "link".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
-        graph.add_edge(v3, v1, "link".to_string(), Properties::new(), EdgeDirection::Directed).unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v2,
+                v3,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v3,
+                v1,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         let config = PageRankConfig::default();
         let result = PageRank::compute(&graph, &config).unwrap();
@@ -972,13 +976,33 @@ mod tests {
         let v3 = graph.add_vertex(vec![], Properties::new()).unwrap();
         let v4 = graph.add_vertex(vec![], Properties::new()).unwrap();
 
-        graph.add_edge(v1, v2, "link".to_string(), Properties::new(), EdgeDirection::Undirected).unwrap();
-        graph.add_edge(v3, v4, "link".to_string(), Properties::new(), EdgeDirection::Undirected).unwrap();
+        graph
+            .add_edge(
+                v1,
+                v2,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Undirected,
+            )
+            .unwrap();
+        graph
+            .add_edge(
+                v3,
+                v4,
+                "link".to_string(),
+                Properties::new(),
+                EdgeDirection::Undirected,
+            )
+            .unwrap();
 
         let result = ConnectedComponentsAlgorithm::compute(&graph).unwrap();
 
         assert_eq!(result.num_components, 2);
-        assert!(!ConnectedComponentsAlgorithm::same_component(&result, v1, v3));
-        assert!(ConnectedComponentsAlgorithm::same_component(&result, v1, v2));
+        assert!(!ConnectedComponentsAlgorithm::same_component(
+            &result, v1, v3
+        ));
+        assert!(ConnectedComponentsAlgorithm::same_component(
+            &result, v1, v2
+        ));
     }
 }

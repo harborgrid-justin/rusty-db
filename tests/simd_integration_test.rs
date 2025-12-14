@@ -1,11 +1,10 @@
 // Integration tests for SIMD scan engine
 
-use rusty_db::simd::{
-    ColumnScan, FilterOp, SimdAggregator, AggregateOp,
-    scan::{ColumnarTable, ColumnData},
-    SelectionVector, PredicateType,
-};
 use rusty_db::common::Value;
+use rusty_db::simd::{
+    scan::{ColumnData, ColumnarTable},
+    AggregateOp, ColumnScan, FilterOp, PredicateType, SelectionVector, SimdAggregator,
+};
 
 #[test]
 fn test_simd_filter_pipeline() {
@@ -13,18 +12,21 @@ fn test_simd_filter_pipeline() {
     let mut table = ColumnarTable::new(vec!["id".to_string(), "amount".to_string()]);
 
     // Add columns
-    table.add_column(ColumnData::Int32(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10])).unwrap();
-    table.add_column(ColumnData::Float64(vec![
-        10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0
-    ])).unwrap();
+    table
+        .add_column(ColumnData::Int32(vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]))
+        .unwrap();
+    table
+        .add_column(ColumnData::Float64(vec![
+            10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0,
+        ]))
+        .unwrap();
 
     // Create scan with filter: WHERE id > 5
-    let mut scan = ColumnScan::new()
-        .add_filter(FilterOp {
-            column_index: 0,
-            predicate: PredicateType::GreaterThan,
-            values: vec![Value::Integer(5)],
-        });
+    let mut scan = ColumnScan::new().add_filter(FilterOp {
+        column_index: 0,
+        predicate: PredicateType::GreaterThan,
+        values: vec![Value::Integer(5)],
+    });
 
     // Execute scan
     let results = scan.execute(&table).unwrap();
@@ -69,12 +71,11 @@ fn test_simd_batch_processing() {
     table.add_column(ColumnData::Int32(data)).unwrap();
 
     // Filter for values between 1000 and 2000
-    let mut scan = ColumnScan::new()
-        .add_filter(FilterOp::between(
-            0,
-            Value::Integer(1000),
-            Value::Integer(2000)
-        ));
+    let mut scan = ColumnScan::new().add_filter(FilterOp::between(
+        0,
+        Value::Integer(1000),
+        Value::Integer(2000),
+    ));
 
     let results = scan.execute(&table).unwrap();
     assert_eq!(results.len(), 1001); // 1000, 1001, ..., 2000
@@ -85,18 +86,24 @@ fn test_simd_late_materialization() {
     let mut table = ColumnarTable::new(vec![
         "id".to_string(),
         "name".to_string(),
-        "score".to_string()
+        "score".to_string(),
     ]);
 
-    table.add_column(ColumnData::Int32(vec![1, 2, 3, 4, 5])).unwrap();
-    table.add_column(ColumnData::String(vec![
-        "Alice".to_string(),
-        "Bob".to_string(),
-        "Charlie".to_string(),
-        "David".to_string(),
-        "Eve".to_string(),
-    ])).unwrap();
-    table.add_column(ColumnData::Float64(vec![95.5, 87.0, 92.3, 78.5, 88.9])).unwrap();
+    table
+        .add_column(ColumnData::Int32(vec![1, 2, 3, 4, 5]))
+        .unwrap();
+    table
+        .add_column(ColumnData::String(vec![
+            "Alice".to_string(),
+            "Bob".to_string(),
+            "Charlie".to_string(),
+            "David".to_string(),
+            "Eve".to_string(),
+        ]))
+        .unwrap();
+    table
+        .add_column(ColumnData::Float64(vec![95.5, 87.0, 92.3, 78.5, 88.9]))
+        .unwrap();
 
     // Project only id and name where score > 85
     let mut scan = ColumnScan::new()

@@ -1,16 +1,15 @@
 // Query Profiler
 // Captures execution plans, row counts, time per operator, and wait events
 
-use std::fmt;
-use std::time::Instant;
-use std::collections::VecDeque;
-use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
 use parking_lot::RwLock;
-use std::time::{Duration};
-
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::Instant;
+use std::time::SystemTime;
 
 // Query execution operator types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -203,9 +202,8 @@ impl PlanOperator {
                     0.0
                 }
             } else {
-                (actual as f64 / self.estimated_rows as f64).min(
-                    self.estimated_rows as f64 / actual as f64
-                )
+                (actual as f64 / self.estimated_rows as f64)
+                    .min(self.estimated_rows as f64 / actual as f64)
             }
         })
     }
@@ -230,7 +228,11 @@ impl PlanOperator {
             ));
 
             if let Some(accuracy) = self.estimation_accuracy() {
-                output.push_str(&format!("{}  Estimation accuracy: {:.2}%\n", prefix, accuracy * 100.0));
+                output.push_str(&format!(
+                    "{}  Estimation accuracy: {:.2}%\n",
+                    prefix,
+                    accuracy * 100.0
+                ));
             }
         }
 
@@ -315,12 +317,7 @@ impl QueryProfile {
         self.plan = Some(plan);
     }
 
-    pub fn set_timing(
-        &mut self,
-        parse: Duration,
-        optimize: Duration,
-        execution: Duration,
-    ) {
+    pub fn set_timing(&mut self, parse: Duration, optimize: Duration, execution: Duration) {
         self.parse_time = parse;
         self.optimize_time = optimize;
         self.execution_time = execution;
@@ -381,7 +378,10 @@ impl QueryProfile {
         output.push_str(&format!("Rows Returned: {}\n", self.rows_returned));
         output.push_str(&format!("Bytes Read: {}\n", self.bytes_read));
         output.push_str(&format!("Bytes Written: {}\n", self.bytes_written));
-        output.push_str(&format!("Cache Hit Ratio: {:.2}%\n", self.cache_hit_ratio() * 100.0));
+        output.push_str(&format!(
+            "Cache Hit Ratio: {:.2}%\n",
+            self.cache_hit_ratio() * 100.0
+        ));
         output.push_str(&format!("Locks Acquired: {}\n", self.locks_acquired));
 
         if !self.wait_events.is_empty() {
@@ -460,12 +460,7 @@ impl QueryProfiler {
 
     pub fn get_recent_profiles(&self, limit: usize) -> Vec<QueryProfile> {
         let profiles = self.profiles.read();
-        profiles
-            .iter()
-            .rev()
-            .take(limit)
-            .cloned()
-            .collect()
+        profiles.iter().rev().take(limit).cloned().collect()
     }
 
     pub fn get_slow_queries(&self) -> Vec<QueryProfile> {
@@ -516,7 +511,8 @@ impl QueryProfiler {
 
         for profile in profiles.iter() {
             for (event_type, events) in &profile.wait_events {
-                let (total_time, total_count) = summary.entry(*event_type).or_insert((Duration::ZERO, 0));
+                let (total_time, total_count) =
+                    summary.entry(*event_type).or_insert((Duration::ZERO, 0));
                 for event in events {
                     *total_time += event.duration;
                     *total_count += event.count;
@@ -665,7 +661,7 @@ mod tests {
             Duration::from_millis(100),
         );
 
-assert_eq!(*profile.total_execution_time(), Duration::from_millis(130));
+        assert_eq!(*profile.total_execution_time(), Duration::from_millis(130));
 
         profile.cache_hits = 80;
         profile.cache_misses = 20;

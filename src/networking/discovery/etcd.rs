@@ -3,9 +3,10 @@
 // Implements service discovery using etcd distributed key-value store.
 // Supports lease-based registration, prefix watching, and distributed locking.
 
-use super::{HealthStatus, Node, ServiceDiscovery, EtcdConfig};
+use super::{EtcdConfig, HealthStatus, Node, ServiceDiscovery};
 use crate::error::{DbError, Result};
 use async_trait::async_trait;
+use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::net::IpAddr;
@@ -13,7 +14,6 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use tokio::sync::RwLock;
 use tokio::time;
-use base64::{Engine as _, engine::general_purpose};
 
 /// etcd-based service discovery
 pub struct EtcdDiscovery {
@@ -85,14 +85,14 @@ impl EtcdDiscovery {
             )));
         }
 
-        let lease_response: EtcdLeaseGrantResponse = response
-            .json()
-            .await
-            .map_err(|e| DbError::Serialization(format!("Failed to parse lease response: {}", e)))?;
-
-        let lease_id = lease_response.id.parse::<i64>().map_err(|e| {
-            DbError::Serialization(format!("Invalid lease ID: {}", e))
+        let lease_response: EtcdLeaseGrantResponse = response.json().await.map_err(|e| {
+            DbError::Serialization(format!("Failed to parse lease response: {}", e))
         })?;
+
+        let lease_id = lease_response
+            .id
+            .parse::<i64>()
+            .map_err(|e| DbError::Serialization(format!("Invalid lease ID: {}", e)))?;
 
         tracing::info!("Created etcd lease: {}", lease_id);
         Ok(lease_id)
@@ -223,20 +223,21 @@ impl EtcdDiscovery {
             )));
         }
 
-        let range_response: EtcdRangeResponse = response
-            .json()
-            .await
-            .map_err(|e| DbError::Serialization(format!("Failed to parse range response: {}", e)))?;
+        let range_response: EtcdRangeResponse = response.json().await.map_err(|e| {
+            DbError::Serialization(format!("Failed to parse range response: {}", e))
+        })?;
 
         let mut results = Vec::new();
 
         for kv in range_response.kvs.unwrap_or_default() {
-            let key = general_purpose::STANDARD.decode(&kv.key)
+            let key = general_purpose::STANDARD
+                .decode(&kv.key)
                 .ok()
                 .and_then(|b| String::from_utf8(b).ok())
                 .unwrap_or_default();
 
-            let value = general_purpose::STANDARD.decode(&kv.value)
+            let value = general_purpose::STANDARD
+                .decode(&kv.value)
                 .ok()
                 .and_then(|b| String::from_utf8(b).ok())
                 .unwrap_or_default();
@@ -427,7 +428,11 @@ impl ServiceDiscovery for EtcdDiscovery {
             .map_err(|e| DbError::Serialization(format!("Failed to serialize node: {}", e)))?;
 
         // Build key: /prefix/node_id
-        let key = format!("{}/{}", self.config.key_prefix.trim_end_matches('/'), node.id);
+        let key = format!(
+            "{}/{}",
+            self.config.key_prefix.trim_end_matches('/'),
+            node.id
+        );
         *self.node_key.write().await = Some(key.clone());
 
         // Put the key with lease
@@ -469,7 +474,11 @@ impl ServiceDiscovery for EtcdDiscovery {
             let value = serde_json::to_string(&node_info)
                 .map_err(|e| DbError::Serialization(format!("Failed to serialize node: {}", e)))?;
 
-            let key = format!("{}/{}", self.config.key_prefix.trim_end_matches('/'), node.id);
+            let key = format!(
+                "{}/{}",
+                self.config.key_prefix.trim_end_matches('/'),
+                node.id
+            );
             self.put_with_lease(&key, &value, lease_id).await?;
         }
 
@@ -478,7 +487,11 @@ impl ServiceDiscovery for EtcdDiscovery {
 
     async fn health_check(&self, node_id: &str) -> Result<HealthStatus> {
         // Check if the node key exists in etcd
-        let key = format!("{}/{}", self.config.key_prefix.trim_end_matches('/'), node_id);
+        let key = format!(
+            "{}/{}",
+            self.config.key_prefix.trim_end_matches('/'),
+            node_id
+        );
 
         match self.get_prefix(&key).await {
             Ok(kvs) if !kvs.is_empty() => Ok(HealthStatus::Healthy),

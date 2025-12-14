@@ -158,8 +158,7 @@ impl AnalyticsManager {
             profiler: Arc::new(RwLock::new(DataProfiler::new())),
             quality_analyzer: Arc::new(RwLock::new(DataQualityAnalyzer::new())),
             performance_tracker: Arc::new(
-                QueryPerformanceTracker::new()
-                    .with_slow_threshold(config.slow_query_threshold_ms),
+                QueryPerformanceTracker::new().with_slow_threshold(config.slow_query_threshold_ms),
             ),
             workload_analyzer: Arc::new(WorkloadAnalyzer::new()),
             column_stats: Arc::new(RwLock::new(HashMap::new())),
@@ -188,7 +187,8 @@ impl AnalyticsManager {
     // Stores a result in the cache.
     pub fn cache_result(&self, query: &str, result: CachedResult) {
         if self.config.cache_enabled {
-            self.cache.put(String::from(query), result.result, result.ttl_seconds);
+            self.cache
+                .put(String::from(query), result.result, result.ttl_seconds);
         }
     }
 
@@ -231,10 +231,12 @@ impl AnalyticsManager {
     // Records query execution statistics.
     pub fn record_query(&self, query: &str, execution_time_ms: u64) {
         if self.config.statistics_enabled {
-            self.statistics_tracker.record_query(query, execution_time_ms);
+            self.statistics_tracker
+                .record_query(query, execution_time_ms);
 
             let query_hash = Self::hash_query(query);
-            self.performance_tracker.record(query_hash, execution_time_ms);
+            self.performance_tracker
+                .record(query_hash, execution_time_ms);
         }
     }
 
@@ -473,9 +475,9 @@ impl AnalyticsManagerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::{Instant, SystemTime};
-use std::time::Duration;
     use crate::flashback::system_time_to_timestamp;
+    use std::time::Duration;
+    use std::time::{Instant, SystemTime};
 
     #[test]
     fn test_manager_creation() {
@@ -510,17 +512,17 @@ use std::time::Duration;
     fn test_cache_operations() {
         let manager = AnalyticsManager::new();
 
-let result = CachedResult {
-                query: "".to_string(),
-                result: vec![],
-                timestamp: SystemTime::now(),
-                created_at: Instant::now(),
-                size_bytes: 100,
-                access_count: 0,
-                query_hash: 123,
-                ttl_seconds: 0,
-                last_access: SystemTime::now(),
-            };
+        let result = CachedResult {
+            query: "".to_string(),
+            result: vec![],
+            timestamp: SystemTime::now(),
+            created_at: Instant::now(),
+            size_bytes: 100,
+            access_count: 0,
+            query_hash: 123,
+            ttl_seconds: 0,
+            last_access: SystemTime::now(),
+        };
 
         manager.cache_result("SELECT 1", result);
 

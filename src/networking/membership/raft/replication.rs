@@ -6,9 +6,9 @@
 // - Catch-up mechanism for slow followers
 // - Snapshot installation for far-behind followers
 
-use crate::error::{DbError, Result};
+use super::{LogEntry, LogIndex, RaftLog, RaftRole, RaftStateData, Term};
 use crate::common::NodeId;
-use super::{RaftStateData, RaftRole, RaftLog, Term, LogEntry, LogIndex};
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -178,7 +178,10 @@ impl ReplicationManager {
     }
 
     /// Handle AppendEntries request from leader (as follower)
-    pub async fn handle_append_entries(&self, request: AppendEntriesRequest) -> Result<AppendEntriesResponse> {
+    pub async fn handle_append_entries(
+        &self,
+        request: AppendEntriesRequest,
+    ) -> Result<AppendEntriesResponse> {
         let mut state = self.state.write().await;
 
         // Update term if request has higher term
@@ -302,8 +305,12 @@ impl ReplicationManager {
 
         if response.success {
             // Update next_index and match_index for this follower
-            state.next_index.insert(follower_id.clone(), response.match_index + 1);
-            state.match_index.insert(follower_id.clone(), response.match_index);
+            state
+                .next_index
+                .insert(follower_id.clone(), response.match_index + 1);
+            state
+                .match_index
+                .insert(follower_id.clone(), response.match_index);
 
             // Try to advance commit index
             self.advance_commit_index(&mut state).await?;
@@ -313,7 +320,9 @@ impl ReplicationManager {
                 state.next_index.insert(follower_id.clone(), conflict_index);
             } else {
                 let current_next = state.next_index.get(&follower_id).copied().unwrap_or(1);
-                state.next_index.insert(follower_id, current_next.saturating_sub(1).max(1));
+                state
+                    .next_index
+                    .insert(follower_id, current_next.saturating_sub(1).max(1));
             }
         }
 
@@ -357,7 +366,10 @@ impl ReplicationManager {
     }
 
     /// Install snapshot on follower
-    pub async fn handle_install_snapshot(&self, request: InstallSnapshotRequest) -> Result<InstallSnapshotResponse> {
+    pub async fn handle_install_snapshot(
+        &self,
+        request: InstallSnapshotRequest,
+    ) -> Result<InstallSnapshotResponse> {
         let mut state = self.state.write().await;
 
         // Update term if request has higher term
@@ -408,20 +420,14 @@ mod tests {
         let state = Arc::new(RwLock::new(RaftStateData::new("node1".to_string())));
         let log = Arc::new(RwLock::new(RaftLog::new()));
 
-        let replication = ReplicationManager::new(
-            "node1".to_string(),
-            state.clone(),
-            log.clone(),
-        );
+        let replication = ReplicationManager::new("node1".to_string(), state.clone(), log.clone());
 
         let request = AppendEntriesRequest {
             term: 1,
             leader_id: "leader".to_string(),
             prev_log_index: 0,
             prev_log_term: 0,
-            entries: vec![
-                LogEntry::new(1, 1, vec![1, 2, 3]),
-            ],
+            entries: vec![LogEntry::new(1, 1, vec![1, 2, 3])],
             leader_commit: 0,
         };
 
@@ -441,11 +447,7 @@ mod tests {
             s.current_term = 5;
         }
 
-        let replication = ReplicationManager::new(
-            "node1".to_string(),
-            state.clone(),
-            log.clone(),
-        );
+        let replication = ReplicationManager::new("node1".to_string(), state.clone(), log.clone());
 
         let request = AppendEntriesRequest {
             term: 3, // Stale term

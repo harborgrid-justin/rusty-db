@@ -4,14 +4,14 @@
 // and INSTEAD OF triggers at both ROW and STATEMENT levels, with dependency
 // tracking and ordering capabilities.
 
-use std::collections::HashSet;
-use crate::{Result, DbError};
 use crate::procedures::parser::PlSqlBlock;
 use crate::procedures::runtime::{RuntimeExecutor, RuntimeValue};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
+use crate::{DbError, Result};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
 
 // Trigger timing (when the trigger fires)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -76,7 +76,10 @@ impl TriggerRowContext {
         }
     }
 
-    pub fn with_old_new(old: HashMap<String, RuntimeValue>, new: HashMap<String, RuntimeValue>) -> Self {
+    pub fn with_old_new(
+        old: HashMap<String, RuntimeValue>,
+        new: HashMap<String, RuntimeValue>,
+    ) -> Self {
         Self {
             old_values: Some(old),
             new_values: Some(new),
@@ -145,7 +148,7 @@ impl Trigger {
                                     Ok(true)
                                 } else {
                                     Ok(false)
-                                }
+                                };
                             }
                         }
                     }
@@ -155,7 +158,9 @@ impl Trigger {
             // Handle OLD.column references for UPDATE triggers
             if upper.contains("OLD.") && upper.contains("NEW.") {
                 // Change detection: NEW.col <> OLD.col
-                if let (Some(new_values), Some(old_values)) = (&context.new_values, &context.old_values) {
+                if let (Some(new_values), Some(old_values)) =
+                    (&context.new_values, &context.old_values)
+                {
                     for (col, new_val) in new_values {
                         if let Some(old_val) = old_values.get(col) {
                             let pattern = format!("NEW.{}", col.to_uppercase());
@@ -205,25 +210,28 @@ impl TriggerManager {
         let mut table_triggers = self.table_triggers.write();
 
         if triggers.contains_key(&trigger.name) {
-            return Err(DbError::AlreadyExists(
-                format!("Trigger '{}' already exists", trigger.name)
-            ));
+            return Err(DbError::AlreadyExists(format!(
+                "Trigger '{}' already exists",
+                trigger.name
+            )));
         }
 
         // Validate ordering constraints
         if let Some(ref follows) = trigger.follows {
             if !triggers.contains_key(follows) {
-                return Err(DbError::NotFound(
-                    format!("Trigger '{}' (specified in FOLLOWS) not found", follows)
-                ));
+                return Err(DbError::NotFound(format!(
+                    "Trigger '{}' (specified in FOLLOWS) not found",
+                    follows
+                )));
             }
         }
 
         if let Some(ref precedes) = trigger.precedes {
             if !triggers.contains_key(precedes) {
-                return Err(DbError::NotFound(
-                    format!("Trigger '{}' (specified in PRECEDES) not found", precedes)
-                ));
+                return Err(DbError::NotFound(format!(
+                    "Trigger '{}' (specified in PRECEDES) not found",
+                    precedes
+                )));
             }
         }
 
@@ -242,9 +250,9 @@ impl TriggerManager {
         let mut triggers = self.triggers.write();
         let mut table_triggers = self.table_triggers.write();
 
-        let trigger = triggers.remove(name).ok_or_else(||
-            DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?;
+        let trigger = triggers
+            .remove(name)
+            .ok_or_else(|| DbError::NotFound(format!("Trigger '{}' not found", name)))?;
 
         // Remove from table triggers index
         if let Some(table_trigs) = table_triggers.get_mut(&trigger.table_name) {
@@ -258,9 +266,9 @@ impl TriggerManager {
     pub fn enable_trigger(&self, name: &str) -> Result<()> {
         let mut triggers = self.triggers.write();
 
-        let trigger = triggers.get_mut(name).ok_or_else(||
-            DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?;
+        let trigger = triggers
+            .get_mut(name)
+            .ok_or_else(|| DbError::NotFound(format!("Trigger '{}' not found", name)))?;
 
         trigger.enabled = true;
         Ok(())
@@ -270,9 +278,9 @@ impl TriggerManager {
     pub fn disable_trigger(&self, name: &str) -> Result<()> {
         let mut triggers = self.triggers.write();
 
-        let trigger = triggers.get_mut(name).ok_or_else(||
-            DbError::NotFound(format!("Trigger '{}' not found", name))
-        )?;
+        let trigger = triggers
+            .get_mut(name)
+            .ok_or_else(|| DbError::NotFound(format!("Trigger '{}' not found", name)))?;
 
         trigger.enabled = false;
         Ok(())
@@ -284,7 +292,8 @@ impl TriggerManager {
         let table_triggers = self.table_triggers.read();
 
         if let Some(trigger_names) = table_triggers.get(table_name) {
-            trigger_names.iter()
+            trigger_names
+                .iter()
                 .filter_map(|name| triggers.get(name).cloned())
                 .collect()
         } else {
@@ -301,7 +310,8 @@ impl TriggerManager {
     ) -> Vec<Trigger> {
         let table_triggers = self.get_table_triggers(table_name);
 
-        let mut matching_triggers: Vec<Trigger> = table_triggers.into_iter()
+        let mut matching_triggers: Vec<Trigger> = table_triggers
+            .into_iter()
             .filter(|t| t.should_fire(event, timing))
             .collect();
 
@@ -339,7 +349,8 @@ impl TriggerManager {
         }
 
         // Topological sort
-        let mut queue: Vec<String> = in_degree.iter()
+        let mut queue: Vec<String> = in_degree
+            .iter()
             .filter(|(_, &deg)| deg == 0)
             .map(|(name, _)| name.clone())
             .collect();
@@ -363,8 +374,14 @@ impl TriggerManager {
 
         // Reorder triggers based on sorted names and explicit order
         triggers.sort_by(|a, b| {
-            let pos_a = sorted_names.iter().position(|n| n == &a.name).unwrap_or(usize::MAX);
-            let pos_b = sorted_names.iter().position(|n| n == &b.name).unwrap_or(usize::MAX);
+            let pos_a = sorted_names
+                .iter()
+                .position(|n| n == &a.name)
+                .unwrap_or(usize::MAX);
+            let pos_b = sorted_names
+                .iter()
+                .position(|n| n == &b.name)
+                .unwrap_or(usize::MAX);
 
             if pos_a == pos_b {
                 a.order.cmp(&b.order)
@@ -465,11 +482,10 @@ impl TriggerManager {
     // Get trigger by name
     pub fn get_trigger(&self, name: &str) -> Result<Trigger> {
         let triggers = self.triggers.read();
-        triggers.get(name)
+        triggers
+            .get(name)
             .cloned()
-            .ok_or_else(|| DbError::NotFound(
-                format!("Trigger '{}' not found", name)
-            ))
+            .ok_or_else(|| DbError::NotFound(format!("Trigger '{}' not found", name)))
     }
 
     // Validate trigger dependencies (check for cycles)
@@ -491,9 +507,10 @@ impl TriggerManager {
         triggers: &HashMap<String, Trigger>,
     ) -> Result<()> {
         if visited.contains(current) {
-            return Err(DbError::InvalidInput(
-                format!("Circular trigger dependency detected involving '{}'", current)
-            ));
+            return Err(DbError::InvalidInput(format!(
+                "Circular trigger dependency detected involving '{}'",
+                current
+            )));
         }
 
         visited.insert(current.to_string());
@@ -735,7 +752,8 @@ mod tests {
 
         manager.create_trigger(trigger2)?;
 
-        let triggers = manager.get_triggers_for_event("test", &TriggerEvent::Insert, &TriggerTiming::Before);
+        let triggers =
+            manager.get_triggers_for_event("test", &TriggerEvent::Insert, &TriggerTiming::Before);
         assert_eq!(triggers.len(), 2);
         assert_eq!(triggers[0].name, "trigger1");
         assert_eq!(triggers[1].name, "trigger2");

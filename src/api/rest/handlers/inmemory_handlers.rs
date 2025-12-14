@@ -16,11 +16,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use utoipa::ToSchema;
 
-use crate::api::rest::types::{ApiState, ApiError, ApiResult};
-use crate::inmemory::{
-    InMemoryStore, InMemoryConfig, ColumnMetadata,
-};
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
 use crate::inmemory::column_store::ColumnDataType;
+use crate::inmemory::{ColumnMetadata, InMemoryConfig, InMemoryStore};
 
 // ============================================================================
 // Request/Response Types
@@ -134,16 +132,17 @@ pub async fn enable_inmemory(
 
     // Mock column metadata
     let columns = if let Some(cols) = request.columns {
-        cols.iter().enumerate().map(|(i, name)| {
-            ColumnMetadata {
+        cols.iter()
+            .enumerate()
+            .map(|(i, name)| ColumnMetadata {
                 name: name.clone(),
                 column_id: i as u32,
                 data_type: ColumnDataType::String,
                 nullable: true,
                 compression_type: None,
                 cardinality: None,
-            }
-        }).collect()
+            })
+            .collect()
     } else {
         Vec::new()
     };
@@ -176,7 +175,8 @@ pub async fn disable_inmemory(
     State(_state): State<Arc<ApiState>>,
     Query(params): Query<HashMap<String, String>>,
 ) -> ApiResult<StatusCode> {
-    let _table = params.get("table")
+    let _table = params
+        .get("table")
         .ok_or_else(|| ApiError::new("MISSING_PARAMETER", "Missing table parameter"))?;
 
     // In a real implementation, would disable and evict the table from memory
@@ -326,8 +326,12 @@ pub async fn get_table_status(
 ) -> ApiResult<Json<InMemoryTableInfo>> {
     let store = INMEMORY_STORE.read();
 
-    let column_store = store.get_column_store(&table)
-        .ok_or_else(|| ApiError::new("NOT_FOUND", format!("Table '{}' not found in memory", table)))?;
+    let column_store = store.get_column_store(&table).ok_or_else(|| {
+        ApiError::new(
+            "NOT_FOUND",
+            format!("Table '{}' not found in memory", table),
+        )
+    })?;
 
     Ok(Json(InMemoryTableInfo {
         table_name: table,
@@ -348,9 +352,7 @@ pub async fn get_table_status(
     ),
     tag = "inmemory"
 )]
-pub async fn compact_memory(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<StatusCode> {
+pub async fn compact_memory(State(_state): State<Arc<ApiState>>) -> ApiResult<StatusCode> {
     // In a real implementation, would:
     // 1. Trigger compression on all column stores
     // 2. Reclaim unused memory

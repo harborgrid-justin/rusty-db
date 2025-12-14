@@ -20,8 +20,8 @@
 // }
 // ```
 
-use std::fmt;
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
 
 use parking_lot::RwLock;

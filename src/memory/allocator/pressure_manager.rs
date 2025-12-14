@@ -4,7 +4,6 @@
 
 use super::common::*;
 
-
 // Memory pressure callback type
 pub type PressureCallback = Arc<dyn Fn(MemoryPressureLevel) -> Result<usize> + Send + Sync>;
 
@@ -171,8 +170,12 @@ impl MemoryPressureManager {
 
         drop(callbacks);
 
-        self.stats.callbacks_invoked.fetch_add(callbacks_invoked as u64, Ordering::Relaxed);
-        self.stats.total_freed.fetch_add(total_freed, Ordering::Relaxed);
+        self.stats
+            .callbacks_invoked
+            .fetch_add(callbacks_invoked as u64, Ordering::Relaxed);
+        self.stats
+            .total_freed
+            .fetch_add(total_freed, Ordering::Relaxed);
 
         // Record event
         let event = MemoryPressureEvent {
@@ -205,7 +208,9 @@ impl MemoryPressureManager {
 
     // Emergency memory release
     pub(crate) fn emergency_release(&self) -> Result<()> {
-        self.stats.emergency_releases.fetch_add(1, Ordering::Relaxed);
+        self.stats
+            .emergency_releases
+            .fetch_add(1, Ordering::Relaxed);
 
         // Trigger all callbacks with emergency level
         let callbacks = self.callbacks.read().unwrap();
@@ -235,9 +240,10 @@ impl MemoryPressureManager {
 
             let used = self.used_memory.load(Ordering::Relaxed);
             if used + size > total {
-                return Err(DbError::OutOfMemory(
-                    format!("Cannot allocate {} bytes (used: {}, total: {})", size, used, total)
-                ));
+                return Err(DbError::OutOfMemory(format!(
+                    "Cannot allocate {} bytes (used: {}, total: {})",
+                    size, used, total
+                )));
             }
         }
 

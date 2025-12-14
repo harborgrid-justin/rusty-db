@@ -4,8 +4,8 @@
 // optimized for Windows/MSVC with zero-allocation hot paths.
 
 use rusty_db::buffer::{
+    create_default_buffer_pool, create_olap_buffer_pool, create_oltp_buffer_pool,
     BufferPoolBuilder, EvictionPolicyType,
-    create_default_buffer_pool, create_oltp_buffer_pool, create_olap_buffer_pool,
 };
 use rusty_db::Result;
 use std::time::Duration;
@@ -42,7 +42,10 @@ fn example_1_simple() -> Result<()> {
     // Create a simple buffer pool with 100 frames
     let pool = create_default_buffer_pool(100);
 
-    println!("Created buffer pool with {} frames", pool.config().num_frames);
+    println!(
+        "Created buffer pool with {} frames",
+        pool.config().num_frames
+    );
     println!("Eviction policy: {}\n", pool.eviction_policy_name());
 
     // Pin a page
@@ -73,7 +76,10 @@ fn example_2_oltp() -> Result<()> {
     println!("  Frames: {}", pool.config().num_frames);
     println!("  Policy: {}", pool.eviction_policy_name());
     println!("  Per-core pools: {}", pool.config().enable_per_core_pools);
-    println!("  Background flush: {}\n", pool.config().enable_background_flush);
+    println!(
+        "  Background flush: {}\n",
+        pool.config().enable_background_flush
+    );
 
     // Simulate OLTP workload
     for i in 0..10 {
@@ -141,7 +147,10 @@ fn example_4_custom() -> Result<()> {
     println!("  Frames: {}", pool.config().num_frames);
     println!("  Policy: {}", pool.eviction_policy_name());
     println!("  Frames per core: {}", pool.config().frames_per_core);
-    println!("  Flush threshold: {}%", pool.config().dirty_page_threshold * 100.0);
+    println!(
+        "  Flush threshold: {}%",
+        pool.config().dirty_page_threshold * 100.0
+    );
     println!();
 
     Ok(())

@@ -9,8 +9,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
 
-use super::types::*;
 use super::models::*;
+use super::types::*;
 use super::GraphQLEngine;
 use crate::api::AuthorizationContext;
 
@@ -337,7 +337,10 @@ impl MutationRoot {
         let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
-        match engine.execute_transaction(operations, isolation_level).await {
+        match engine
+            .execute_transaction(operations, isolation_level)
+            .await
+        {
             Ok(results) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(TransactionExecutionResult {
@@ -377,7 +380,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.bulk_insert(&table, data, batch_size.unwrap_or(1000)).await {
+        match engine
+            .bulk_insert(&table, data, batch_size.unwrap_or(1000))
+            .await
+        {
             Ok(affected) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(MutationResult::Success(MutationSuccess {
@@ -419,7 +425,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.create_database(&name, if_not_exists.unwrap_or(false)).await {
+        match engine
+            .create_database(&name, if_not_exists.unwrap_or(false))
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
@@ -459,7 +468,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.drop_database(&name, if_exists.unwrap_or(false)).await {
+        match engine
+            .drop_database(&name, if_exists.unwrap_or(false))
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
@@ -500,7 +512,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.backup_database(&name, &location, full_backup.unwrap_or(true)).await {
+        match engine
+            .backup_database(&name, &location, full_backup.unwrap_or(true))
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
@@ -585,7 +600,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.alter_table_drop_column(&table, &column_name, if_exists.unwrap_or(false)).await {
+        match engine
+            .alter_table_drop_column(&table, &column_name, if_exists.unwrap_or(false))
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
@@ -706,12 +724,18 @@ impl MutationRoot {
             }));
         }
 
-        match engine.alter_table_drop_constraint(&table, &constraint_name, if_exists.unwrap_or(false)).await {
+        match engine
+            .alter_table_drop_constraint(&table, &constraint_name, if_exists.unwrap_or(false))
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
                     success: true,
-                    message: format!("Constraint '{}' dropped from table '{}'", constraint_name, table),
+                    message: format!(
+                        "Constraint '{}' dropped from table '{}'",
+                        constraint_name, table
+                    ),
                     affected_rows: 1,
                     execution_time_ms: execution_time,
                 }))
@@ -726,11 +750,7 @@ impl MutationRoot {
     }
 
     // Truncate table
-    async fn truncate_table(
-        &self,
-        ctx: &Context<'_>,
-        table: String,
-    ) -> GqlResult<DdlResult> {
+    async fn truncate_table(&self, ctx: &Context<'_>, table: String) -> GqlResult<DdlResult> {
         let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
@@ -790,7 +810,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.create_view(&name, &query, or_replace.unwrap_or(false)).await {
+        match engine
+            .create_view(&name, &query, or_replace.unwrap_or(false))
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
@@ -877,13 +900,16 @@ impl MutationRoot {
             }));
         }
 
-        match engine.create_index(
-            &table,
-            &index_name,
-            columns,
-            unique.unwrap_or(false),
-            if_not_exists.unwrap_or(false),
-        ).await {
+        match engine
+            .create_index(
+                &table,
+                &index_name,
+                columns,
+                unique.unwrap_or(false),
+                if_not_exists.unwrap_or(false),
+            )
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
@@ -924,7 +950,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.drop_index(&index_name, table.as_deref(), if_exists.unwrap_or(false)).await {
+        match engine
+            .drop_index(&index_name, table.as_deref(), if_exists.unwrap_or(false))
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
@@ -970,7 +999,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.create_procedure(&name, parameters, &body, or_replace.unwrap_or(false)).await {
+        match engine
+            .create_procedure(&name, parameters, &body, or_replace.unwrap_or(false))
+            .await
+        {
             Ok(()) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(DdlResult::Success(DdlSuccess {
@@ -1009,7 +1041,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.execute_procedure(&name, arguments.unwrap_or_default()).await {
+        match engine
+            .execute_procedure(&name, arguments.unwrap_or_default())
+            .await
+        {
             Ok(result) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(ProcedureResult::Success(ProcedureSuccess {
@@ -1050,7 +1085,10 @@ impl MutationRoot {
             }));
         }
 
-        match engine.insert_into_select(&target_table, target_columns, &source_query).await {
+        match engine
+            .insert_into_select(&target_table, target_columns, &source_query)
+            .await
+        {
             Ok(affected) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(MutationResult::Success(MutationSuccess {
@@ -1121,7 +1159,10 @@ impl MutationRoot {
         let start = Instant::now();
         let engine = ctx.data::<Arc<GraphQLEngine>>()?;
 
-        match engine.execute_string_function(function_type, parameters).await {
+        match engine
+            .execute_string_function(function_type, parameters)
+            .await
+        {
             Ok(result) => {
                 let execution_time = start.elapsed().as_secs_f64() * 1000.0;
                 Ok(StringFunctionResult {
@@ -1144,7 +1185,10 @@ impl MutationRoot {
 
         let mut results = Vec::new();
         for func in functions {
-            match engine.execute_string_function(func.function_type, func.parameters).await {
+            match engine
+                .execute_string_function(func.function_type, func.parameters)
+                .await
+            {
                 Ok(result) => results.push(result),
                 Err(e) => return Err(Error::new(e.to_string())),
             }

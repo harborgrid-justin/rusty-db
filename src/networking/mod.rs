@@ -104,79 +104,67 @@
 // 5. **Observability**: Comprehensive metrics and logging
 
 // Core modules
-pub mod protocol;
-pub mod transport;
-pub mod pool;
-pub mod loadbalancer;
-pub mod security;
 pub mod autodiscovery;
 pub mod discovery;
+pub mod loadbalancer;
+pub mod pool;
+pub mod protocol;
+pub mod security;
+pub mod transport;
 
 // High-level coordination modules
-pub mod types;
-pub mod traits;
-pub mod manager;
 pub mod api;
 pub mod graphql;
+pub mod manager;
+pub mod traits;
+pub mod types;
 
 // Message routing and delivery
-pub mod routing;
-mod membership;
 mod health;
+mod membership;
+pub mod routing;
 
 // Re-export commonly used types for convenience
 pub use protocol::{
-    Message, MessageCodec, ProtocolCodec,
-    Handshake, HandshakeRequest, HandshakeResponse, NodeCapabilities,
-    CompressionType, ProtocolFlags,
+    CompressionType, Handshake, HandshakeRequest, HandshakeResponse, Message, MessageCodec,
+    NodeCapabilities, ProtocolCodec, ProtocolFlags,
 };
 
 pub use transport::{
-    Connection, ConnectionState, TransportType,
-    ConnectionPool, PoolConfig, PoolStatistics, SelectionStrategy,
-    TcpTransport, TcpConfig, TcpConnection,
-    QuicTransport, QuicConfig, QuicConnection,
-    TransportManager,
+    Connection, ConnectionPool, ConnectionState, PoolConfig, PoolStatistics, QuicConfig,
+    QuicConnection, QuicTransport, SelectionStrategy, TcpConfig, TcpConnection, TcpTransport,
+    TransportManager, TransportType,
 };
 
 // Re-export pool types (with aliases to avoid conflicts)
 pub use pool::{
-    PoolManager as NodePoolManager,
-    PoolConfig as NodePoolConfig,
-    NodePool, NodeConnection,
-    MultiplexedConnection, Stream, StreamId, StreamPriority,
-    ChannelPool, RequestChannel, ChannelRequest,
-    WarmupStrategy, WarmupManager,
-    EvictionPolicy, EvictionManager,
-    PoolMetrics, ConnectionMetrics, StreamMetrics,
+    ChannelPool, ChannelRequest, ConnectionMetrics, EvictionManager, EvictionPolicy,
+    MultiplexedConnection, NodeConnection, NodePool, PoolConfig as NodePoolConfig,
+    PoolManager as NodePoolManager, PoolMetrics, RequestChannel, Stream, StreamId, StreamMetrics,
+    StreamPriority, WarmupManager, WarmupStrategy,
 };
 
 // Re-export load balancer types
 pub use loadbalancer::{
-    LoadBalancer, Backend, LoadBalancerContext, BackendStatistics,
-    LoadBalancingStrategy, RoundRobinBalancer, LeastConnectionsBalancer,
-    ConsistentHashBalancer, AdaptiveBalancer,
+    AdaptiveBalancer, Backend, BackendStatistics, ConsistentHashBalancer, LeastConnectionsBalancer,
+    LoadBalancer, LoadBalancerContext, LoadBalancingStrategy, RoundRobinBalancer,
 };
 
 // Re-export circuit breaker types
 pub use loadbalancer::circuit_breaker::{CircuitBreaker, CircuitState};
 
 // Re-export retry types
-pub use loadbalancer::retry::{RetryPolicy, RetryStrategy, RetryBudget};
+pub use loadbalancer::retry::{RetryBudget, RetryPolicy, RetryStrategy};
 
 // Re-export traffic shaping types
-pub use loadbalancer::traffic_shaping::{TrafficShaper, RateLimiter};
+pub use loadbalancer::traffic_shaping::{RateLimiter, TrafficShaper};
 
 // Re-export security types
 pub use security::{
-    SecurityConfig, SecurityManager, AuthContext,
-    TlsConfig, TlsVersion, CipherSuite,
-    MtlsAuthenticator, MtlsConfig,
-    CertificateManager, CertificateConfig,
-    NodeIdentity, IdentityProvider,
-    MessageEncryption, EncryptionConfig,
-    NetworkAcl, AclRule, Action,
-    ApplicationFirewall, FirewallConfig,
+    AclRule, Action, ApplicationFirewall, AuthContext, CertificateConfig, CertificateManager,
+    CipherSuite, EncryptionConfig, FirewallConfig, IdentityProvider, MessageEncryption,
+    MtlsAuthenticator, MtlsConfig, NetworkAcl, NodeIdentity, SecurityConfig, SecurityManager,
+    TlsConfig, TlsVersion,
 };
 
 // ============================================================================
@@ -185,106 +173,107 @@ pub use security::{
 
 // Re-export types from the coordination layer
 pub use types::{
-    ClusterMessage as CoordClusterMessage,
-    CompressionType as CoordCompressionType,
-    ConnectionInfo, HealthCheckConfig, HealthCheckResult,
-    LoadBalancingConfig, LoadBalancingStrategy as CoordLoadBalancingStrategy,
-    MembershipEvent, MessageEnvelope, MessagePriority,
-    NetworkConfig, NetworkStats,
-    NodeAddress, NodeId, NodeInfo, NodeState,
-    PeerInfo, RoutingStrategy, SelectionCriteria,
-    ServiceDiscoveryConfig, ServiceDiscoveryType,
+    ClusterMessage as CoordClusterMessage, CompressionType as CoordCompressionType, ConnectionInfo,
+    HealthCheckConfig, HealthCheckResult, LoadBalancingConfig,
+    LoadBalancingStrategy as CoordLoadBalancingStrategy, MembershipEvent, MessageEnvelope,
+    MessagePriority, NetworkConfig, NetworkStats, NodeAddress, NodeId, NodeInfo, NodeState,
+    PeerInfo, RoutingStrategy, SelectionCriteria, ServiceDiscoveryConfig, ServiceDiscoveryType,
     TlsConfig as CoordTlsConfig, TlsVersion as CoordTlsVersion,
 };
 
 // Re-export traits from the coordination layer
 pub use traits::{
-    CircuitBreaker as CoordCircuitBreaker,
-    ClusterMembership,
-    Connection as CoordConnection,
-    ConnectionPool as CoordConnectionPool,
-    ConnectionStats,
-    HealthChangeEvent,
-    HealthMonitor,
-    LoadBalancer as CoordLoadBalancer,
-    MessageHandler,
-    NetworkTransport,
-    ServiceDiscovery,
+    CircuitBreaker as CoordCircuitBreaker, ClusterMembership, Connection as CoordConnection,
+    ConnectionPool as CoordConnectionPool, ConnectionStats, HealthChangeEvent, HealthMonitor,
+    LoadBalancer as CoordLoadBalancer, MessageHandler, NetworkTransport, ServiceDiscovery,
 };
 
 // Re-export manager
-pub use manager::{NetworkManager, NetworkManagerBuilder, create_default_manager};
+pub use manager::{create_default_manager, NetworkManager, NetworkManagerBuilder};
 
 // Re-export API components
 pub use api::{
-    create_router as create_api_router,
-    ApiState, HealthResponse, JoinClusterRequest,
-    JoinClusterResponse, LeaveClusterResponse,
-    NodeHealthResponse, PeersQuery, PeersResponse,
+    create_router as create_api_router, ApiState, HealthResponse, JoinClusterRequest,
+    JoinClusterResponse, LeaveClusterResponse, NodeHealthResponse, PeersQuery, PeersResponse,
     StatsResponse, TopologyResponse,
 };
 
 // Re-export GraphQL components
 pub use graphql::{
-    create_schema as create_graphql_schema,
-    GqlContext, GqlMembershipEvent, GqlNetworkStats,
-    GqlNodeInfo, GqlPeerInfo, GqlTopology,
-    MutationRoot, NetworkSchema, QueryRoot,
+    create_schema as create_graphql_schema, GqlContext, GqlMembershipEvent, GqlNetworkStats,
+    GqlNodeInfo, GqlPeerInfo, GqlTopology, MutationRoot, NetworkSchema, QueryRoot,
     SubscriptionRoot,
 };
 
 // Re-export autodiscovery components
 pub use autodiscovery::{
-    AutoDiscovery, DiscoveryConfig, DiscoveryBackend,
-    DiscoveryEvent, DiscoveryProtocol,
-    NodeInfo as DiscoveryNodeInfo, NodeStatus,
-    GossipDiscovery, MemberState,
-    MdnsDiscovery,
-    BroadcastDiscovery,
-    BeaconProtocol,
-    SerfProtocol,
-    MembershipList, VersionVector, Member, MembershipDelta, MembershipSnapshot,
-    AntiEntropyEngine, MerkleTree, CrdtCounter,
+    AntiEntropyEngine, AutoDiscovery, BeaconProtocol, BroadcastDiscovery, CrdtCounter,
+    DiscoveryBackend, DiscoveryConfig, DiscoveryEvent, DiscoveryProtocol, GossipDiscovery,
+    MdnsDiscovery, Member, MemberState, MembershipDelta, MembershipList, MembershipSnapshot,
+    MerkleTree, NodeInfo as DiscoveryNodeInfo, NodeStatus, SerfProtocol, VersionVector,
 };
 
 // Re-export discovery components (enterprise service discovery)
 pub use discovery::{
-    Registry as ServiceDiscoveryRegistry,
-    Node as DiscoveredNode,
-    HealthStatus as NodeHealthStatus,
-    DiscoveryConfig as EnterpriseDiscoveryConfig,
-    DiscoveryEvent as ServiceDiscoveryEvent,
-    DnsConfig, StaticConfig, KubernetesConfig, ConsulConfig, EtcdConfig, CloudConfig,
-    CloudProvider,
+    CloudConfig, CloudProvider, ConsulConfig, DiscoveryConfig as EnterpriseDiscoveryConfig,
+    DiscoveryEvent as ServiceDiscoveryEvent, DnsConfig, EtcdConfig,
+    HealthStatus as NodeHealthStatus, KubernetesConfig, Node as DiscoveredNode,
+    Registry as ServiceDiscoveryRegistry, StaticConfig,
 };
 
 // Re-export routing components
 pub use routing::{
-    // Core routing
-    MessageRouter, RoutingTable, RoutingTableSnapshot, MessageDispatcher,
-    RouteVersion, ShardId as RoutingShardId, DatacenterId,
+    // Serialization
+    BinaryCodec,
+    // Dispatcher results
+    BroadcastResult,
+    ClusterMessage as RoutingClusterMessage,
+    CoordinatedBroadcastResult,
+
+    DataReadRequest,
+    DataReadResponse,
+    DataWriteRequest,
+    DataWriteResponse,
+    DatacenterId,
+
+    DeadLetterMessage,
 
     // Delivery guarantees
-    DeliveryGuarantee, DeliveryTracker, IdempotencyKey,
+    DeliveryGuarantee,
+    DeliveryTracker,
+    FanOutResult,
+    IdempotencyKey,
 
-    // Message queue
-    QueueManager, QueuedMessage, QueueStats, DeadLetterMessage,
-
-    // RPC framework
-    RpcClient, RpcServer, Request as RpcRequest, RpcHandler,
-    PingRequest, PingResponse, DataReadRequest, DataReadResponse,
-    DataWriteRequest, DataWriteResponse, QueryRpcRequest, QueryRpcResponse,
-
+    MessageDispatcher,
     // Message handler
     MessageHandler as RoutingMessageHandler,
 
-    // Dispatcher results
-    BroadcastResult, MulticastResult, ShardResult, FanOutResult,
-    ScatterGatherResult, QuorumResult, CoordinatedBroadcastResult,
+    // Core routing
+    MessageRouter,
+    MulticastResult,
+    PingRequest,
+    PingResponse,
+    QueryRpcRequest,
+    QueryRpcResponse,
 
-    // Serialization
-    BinaryCodec, ClusterMessage as RoutingClusterMessage, RequestId,
+    // Message queue
+    QueueManager,
+    QueueStats,
+    QueuedMessage,
+    QuorumResult,
+    Request as RpcRequest,
+    RequestId,
 
+    RouteVersion,
     // Statistics
     RouterStats,
+    RoutingTable,
+    RoutingTableSnapshot,
+    // RPC framework
+    RpcClient,
+    RpcHandler,
+    RpcServer,
+    ScatterGatherResult,
+    ShardId as RoutingShardId,
+    ShardResult,
 };

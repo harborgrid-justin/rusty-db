@@ -25,13 +25,13 @@
 
 use std::collections::BTreeMap;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
-use std::path::PathBuf;
 
+use super::time_travel::{current_timestamp, TimeTravelEngine, Timestamp, SCN};
 use crate::common::TableId;
-use crate::error::{Result, DbError};
-use super::time_travel::{SCN, Timestamp, TimeTravelEngine, current_timestamp};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Database Flashback Manager
@@ -64,10 +64,7 @@ pub struct DatabaseFlashbackManager {
 
 impl DatabaseFlashbackManager {
     /// Create a new database flashback manager
-    pub fn new(
-        time_travel: Arc<TimeTravelEngine>,
-        config: DatabaseFlashbackConfig,
-    ) -> Self {
+    pub fn new(time_travel: Arc<TimeTravelEngine>, config: DatabaseFlashbackConfig) -> Self {
         Self {
             time_travel,
             flashback_logs: Arc::new(RwLock::new(FlashbackLogs::new())),
@@ -107,9 +104,8 @@ impl DatabaseFlashbackManager {
         // 5. Update statistics
         let mut stats = self.stats.write().unwrap();
         stats.database_flashbacks += 1;
-        stats.total_flashback_duration_ms += start_time.elapsed()
-            .unwrap_or_default()
-            .as_millis() as u64;
+        stats.total_flashback_duration_ms +=
+            start_time.elapsed().unwrap_or_default().as_millis() as u64;
 
         Ok(DatabaseFlashbackResult {
             success: true,
@@ -121,7 +117,10 @@ impl DatabaseFlashbackManager {
     }
 
     /// FLASHBACK DATABASE TO RESTORE POINT
-    pub fn flashback_to_restore_point(&self, restore_point_name: &str) -> Result<DatabaseFlashbackResult> {
+    pub fn flashback_to_restore_point(
+        &self,
+        restore_point_name: &str,
+    ) -> Result<DatabaseFlashbackResult> {
         let guaranteed = self.guaranteed_points.read().unwrap();
         let restore_point = guaranteed.get(restore_point_name)?;
         let scn = restore_point.scn;
@@ -131,11 +130,7 @@ impl DatabaseFlashbackManager {
     }
 
     /// Create a guaranteed restore point
-    pub fn create_guaranteed_restore_point(
-        &self,
-        name: String,
-        scn: Option<SCN>,
-    ) -> Result<()> {
+    pub fn create_guaranteed_restore_point(&self, name: String, scn: Option<SCN>) -> Result<()> {
         let target_scn = scn.unwrap_or_else(|| self.time_travel.get_current_scn());
 
         let restore_point = GuaranteedRestorePoint {
@@ -209,16 +204,17 @@ impl DatabaseFlashbackManager {
 
         if target_scn >= current_scn {
             return Err(DbError::Validation(
-                "Cannot flashback to future SCN".to_string()
+                "Cannot flashback to future SCN".to_string(),
             ));
         }
 
         // Check if flashback logs cover the target SCN
         let logs = self.flashback_logs.read().unwrap();
         if !logs.covers_scn(target_scn) {
-            return Err(DbError::Validation(
-                format!("Flashback logs do not cover SCN {}", target_scn)
-            ));
+            return Err(DbError::Validation(format!(
+                "Flashback logs do not cover SCN {}",
+                target_scn
+            )));
         }
 
         Ok(())
@@ -266,9 +262,7 @@ impl FlashbackLogs {
 
     /// Reserved for flashback logging
 
-
     #[allow(dead_code)]
-
 
     fn add_log(&mut self, log: FlashbackLogFile) {
         self.total_size_bytes += log.size_bytes;
@@ -276,9 +270,9 @@ impl FlashbackLogs {
     }
 
     fn covers_scn(&self, scn: SCN) -> bool {
-        self.logs.iter().any(|(_, log)| {
-            scn >= log.start_scn && scn <= log.end_scn
-        })
+        self.logs
+            .iter()
+            .any(|(_, log)| scn >= log.start_scn && scn <= log.end_scn)
     }
 
     fn get_oldest_scn(&self) -> Result<SCN> {
@@ -299,9 +293,10 @@ impl FlashbackLogs {
         }
 
         if result.is_empty() {
-            return Err(DbError::Validation(
-                format!("No flashback logs found for SCN range {} to {}", start_scn, end_scn)
-            ));
+            return Err(DbError::Validation(format!(
+                "No flashback logs found for SCN range {} to {}",
+                start_scn, end_scn
+            )));
         }
 
         Ok(result)
@@ -310,7 +305,8 @@ impl FlashbackLogs {
     fn archive_until(&mut self, scn: SCN) -> Result<usize> {
         let mut archived = 0;
 
-        let to_archive: Vec<_> = self.logs
+        let to_archive: Vec<_> = self
+            .logs
             .iter()
             .filter(|(_, log)| log.end_scn <= scn)
             .map(|(k, _)| *k)
@@ -329,7 +325,8 @@ impl FlashbackLogs {
     fn purge_before(&mut self, timestamp: Timestamp) -> Result<usize> {
         let mut purged = 0;
 
-        let to_purge: Vec<_> = self.logs
+        let to_purge: Vec<_> = self
+            .logs
             .iter()
             .filter(|(_, log)| log.creation_time < timestamp)
             .map(|(k, _)| *k)
@@ -429,9 +426,7 @@ impl IncarnationTree {
 
     /// Reserved for flashback API
 
-
     #[allow(dead_code)]
-
 
     fn list_all(&self) -> Vec<Incarnation> {
         self.incarnations.clone()
@@ -475,9 +470,10 @@ impl GuaranteedRestorePoints {
 
     fn add(&mut self, point: GuaranteedRestorePoint) -> Result<()> {
         if self.points.contains_key(&point.name) {
-            return Err(DbError::Validation(
-                format!("Restore point '{}' already exists", point.name)
-            ));
+            return Err(DbError::Validation(format!(
+                "Restore point '{}' already exists",
+                point.name
+            )));
         }
 
         self.points.insert(point.name.clone(), point);
@@ -485,17 +481,15 @@ impl GuaranteedRestorePoints {
     }
 
     fn get(&self, name: &str) -> Result<&GuaranteedRestorePoint> {
-        self.points.get(name)
-            .ok_or_else(|| DbError::Validation(
-                format!("Restore point '{}' not found", name)
-            ))
+        self.points
+            .get(name)
+            .ok_or_else(|| DbError::Validation(format!("Restore point '{}' not found", name)))
     }
 
     fn remove(&mut self, name: &str) -> Result<()> {
-        self.points.remove(name)
-            .ok_or_else(|| DbError::Validation(
-                format!("Restore point '{}' not found", name)
-            ))?;
+        self.points
+            .remove(name)
+            .ok_or_else(|| DbError::Validation(format!("Restore point '{}' not found", name)))?;
         Ok(())
     }
 
@@ -534,7 +528,7 @@ impl RecoveryOrchestrator {
     fn execute_database_flashback(&mut self, _plan: &FlashbackPlan) -> Result<RecoveryResult> {
         if self.recovery_in_progress {
             return Err(DbError::Validation(
-                "Recovery already in progress".to_string()
+                "Recovery already in progress".to_string(),
             ));
         }
 

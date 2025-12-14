@@ -320,7 +320,11 @@ impl<T: 'static> LockFreeQueue<T> {
 
             if let Some(last_ptr) = last {
                 // Safety: We own these nodes until we link them to the queue
-                last_ptr.as_ref().unwrap().next.store(node_ptr, Ordering::Relaxed);
+                last_ptr
+                    .as_ref()
+                    .unwrap()
+                    .next
+                    .store(node_ptr, Ordering::Relaxed);
             } else {
                 first = Some(node_ptr);
             }
@@ -547,16 +551,16 @@ mod tests {
         }
 
         // Dequeuers
-for _ in 0..5 {
-                    let q = queue.clone();
-                    handles.push(thread::spawn(move || {
-                        for _ in 0..1000 {
-                            while q.dequeue().is_none() {
-                                thread::yield_now();
-                            }
-                        }
-                    }));
+        for _ in 0..5 {
+            let q = queue.clone();
+            handles.push(thread::spawn(move || {
+                for _ in 0..1000 {
+                    while q.dequeue().is_none() {
+                        thread::yield_now();
+                    }
                 }
+            }));
+        }
 
         for handle in handles {
             handle.join().unwrap();

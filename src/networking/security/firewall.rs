@@ -175,9 +175,7 @@ impl ConnectionInfo {
 
     /// Check if suspicious
     pub fn is_suspicious(&self) -> bool {
-        self.suspicion_score > 100
-            || self.failed_attempts > 10
-            || self.connection_count > 1000
+        self.suspicion_score > 100 || self.failed_attempts > 10 || self.connection_count > 1000
     }
 
     /// Decay suspicion score
@@ -219,7 +217,7 @@ impl Default for DdosProtectionConfig {
             connection_limit_enabled: true,
             max_connections_per_ip: 100,
             bandwidth_limit_enabled: true,
-            max_bandwidth_per_ip: 10_000_000, // 10 MB/s
+            max_bandwidth_per_ip: 10_000_000,              // 10 MB/s
             blacklist_duration: Duration::from_secs(3600), // 1 hour
         }
     }
@@ -441,7 +439,9 @@ impl ApplicationFirewall {
         // Record connection
         {
             let mut connections = self.connections.write().await;
-            let info = connections.entry(ip).or_insert_with(|| ConnectionInfo::new(ip));
+            let info = connections
+                .entry(ip)
+                .or_insert_with(|| ConnectionInfo::new(ip));
             info.record_connection();
 
             // Check if suspicious
@@ -476,7 +476,9 @@ impl ApplicationFirewall {
     /// Record failed connection attempt
     pub async fn record_failure(&self, ip: IpAddr) -> Result<()> {
         let mut connections = self.connections.write().await;
-        let info = connections.entry(ip).or_insert_with(|| ConnectionInfo::new(ip));
+        let info = connections
+            .entry(ip)
+            .or_insert_with(|| ConnectionInfo::new(ip));
         info.record_failure();
         Ok(())
     }

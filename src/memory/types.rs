@@ -69,11 +69,11 @@
 // # }
 // ```
 
-use std::fmt;
-use std::time::{SystemTime};
 use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicU64};
-use std::time::{Duration};
+use std::fmt;
+use std::sync::atomic::AtomicU64;
+use std::time::Duration;
+use std::time::SystemTime;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -108,7 +108,11 @@ pub enum MemoryError {
     UseAfterFree { address: usize },
 
     #[error("Zone overflow: requested {requested}, available {available} in zone '{zone_name}'")]
-    ZoneOverflow { zone_name: String, requested: usize, available: usize },
+    ZoneOverflow {
+        zone_name: String,
+        requested: usize,
+        available: usize,
+    },
 
     #[error("Configuration invalid: {field} - {reason}")]
     InvalidConfiguration { field: String, reason: String },
@@ -191,7 +195,10 @@ impl MemoryContextId {
         }
 
         // Check for valid characters
-        if !id.chars().all(|c| c.is_ascii_alphanumeric() || "_-:.".contains(c)) {
+        if !id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "_-:.".contains(c))
+        {
             return Err(MemoryError::InvalidConfiguration {
                 field: "context_id".to_string(),
                 reason: "Memory context ID contains invalid characters".to_string(),
@@ -232,7 +239,7 @@ impl AllocationId {
 
     // Generates a new unique allocation ID
     pub fn generate() -> Self {
-use std::sync::atomic::{Ordering};
+        use std::sync::atomic::Ordering;
         static COUNTER: AtomicU64 = AtomicU64::new(1);
         Self(COUNTER.fetch_add(1, Ordering::Relaxed))
     }
@@ -317,13 +324,22 @@ impl Default for AllocationSource {
 impl fmt::Display for AllocationSource {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AllocationSource::Storage { component, operation } => {
+            AllocationSource::Storage {
+                component,
+                operation,
+            } => {
                 write!(f, "Storage[{}:{}]", component, operation)
             }
-            AllocationSource::Query { query_id, operation } => {
+            AllocationSource::Query {
+                query_id,
+                operation,
+            } => {
                 write!(f, "Query[{}:{}]", query_id, operation)
             }
-            AllocationSource::Index { index_name, operation } => {
+            AllocationSource::Index {
+                index_name,
+                operation,
+            } => {
                 write!(f, "Index[{}:{}]", index_name, operation)
             }
             AllocationSource::Transaction { txn_id, operation } => {
@@ -332,16 +348,28 @@ impl fmt::Display for AllocationSource {
             AllocationSource::BufferPool { pool_id, operation } => {
                 write!(f, "BufferPool[{}:{}]", pool_id, operation)
             }
-            AllocationSource::Wal { segment_id, operation } => {
+            AllocationSource::Wal {
+                segment_id,
+                operation,
+            } => {
                 write!(f, "WAL[{}:{}]", segment_id, operation)
             }
-            AllocationSource::Replication { replica_id, operation } => {
+            AllocationSource::Replication {
+                replica_id,
+                operation,
+            } => {
                 write!(f, "Replication[{}:{}]", replica_id, operation)
             }
-            AllocationSource::Network { connection_id, operation } => {
+            AllocationSource::Network {
+                connection_id,
+                operation,
+            } => {
                 write!(f, "Network[{}:{}]", connection_id, operation)
             }
-            AllocationSource::Catalog { object_type, operation } => {
+            AllocationSource::Catalog {
+                object_type,
+                operation,
+            } => {
                 write!(f, "Catalog[{}:{}]", object_type, operation)
             }
             AllocationSource::Admin { admin_operation } => {
@@ -795,7 +823,7 @@ impl Default for DebugConfig {
             enable_profiling: false,
             profiling_sample_rate: 0.01, // 1% sampling
             enable_component_stats: true,
-            free_pattern: 0xDD, // "Dead" pattern
+            free_pattern: 0xDD,  // "Dead" pattern
             alloc_pattern: 0xCC, // "Clean" pattern
         }
     }
@@ -1020,7 +1048,10 @@ impl MemoryContextId {
             });
         }
 
-        if !id.chars().all(|c| c.is_ascii_alphanumeric() || "_-:.".contains(c)) {
+        if !id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "_-:.".contains(c))
+        {
             return Err(MemoryError::InvalidConfiguration {
                 field: "context_id".to_string(),
                 reason: "Memory context ID contains invalid characters".to_string(),
@@ -1140,16 +1171,26 @@ mod tests {
     #[test]
     fn test_allocation_size_classification() {
         assert_eq!(classify_allocation_size(1024), AllocatorType::Slab);
-        assert_eq!(classify_allocation_size(constants::MAX_SLAB_SIZE), AllocatorType::Slab);
-        assert_eq!(classify_allocation_size(constants::MAX_SLAB_SIZE + 1), AllocatorType::System);
-        assert_eq!(classify_allocation_size(constants::LARGE_OBJECT_THRESHOLD), AllocatorType::LargeObject);
+        assert_eq!(
+            classify_allocation_size(constants::MAX_SLAB_SIZE),
+            AllocatorType::Slab
+        );
+        assert_eq!(
+            classify_allocation_size(constants::MAX_SLAB_SIZE + 1),
+            AllocatorType::System
+        );
+        assert_eq!(
+            classify_allocation_size(constants::LARGE_OBJECT_THRESHOLD),
+            AllocatorType::LargeObject
+        );
     }
 
     #[test]
     fn test_allocation_size_validation() {
         assert!(validate_allocation_size(1024).is_ok());
         assert!(validate_allocation_size(0).is_err()); // Zero size
-        assert!(validate_allocation_size(constants::HUGE_PAGE_1GB + 1).is_err()); // Too large
+        assert!(validate_allocation_size(constants::HUGE_PAGE_1GB + 1).is_err());
+        // Too large
     }
 
     #[test]
@@ -1186,7 +1227,10 @@ mod tests {
     fn test_context_type_display() {
         assert_eq!(ContextType::Query.to_string(), "Query");
         assert_eq!(ContextType::Transaction.to_string(), "Transaction");
-        assert_eq!(ContextType::Custom("test".to_string()).to_string(), "Custom(test)");
+        assert_eq!(
+            ContextType::Custom("test".to_string()).to_string(),
+            "Custom(test)"
+        );
     }
 
     #[test]

@@ -39,5 +39,8 @@ pub enum SnapshotError {
     ConcurrencyConflict { operation: String },
 
     #[error("Insufficient storage space: required {required_bytes}, available {available_bytes}")]
-    InsufficientStorage { required_bytes: u64, available_bytes: u64 },
+    InsufficientStorage {
+        required_bytes: u64,
+        available_bytes: u64,
+    },
 }

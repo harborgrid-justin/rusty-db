@@ -125,11 +125,7 @@ impl TcpLivenessProbe {
 
     /// Create with custom configuration
     pub fn with_config(host: String, port: u16, config: ProbeConfig) -> Self {
-        Self {
-            host,
-            port,
-            config,
-        }
+        Self { host, port, config }
     }
 }
 
@@ -200,9 +196,18 @@ impl ReadinessProbe for HttpReadinessProbe {
         let host_port: Vec<&str> = url_parts[1].split(':').collect();
         let host = host_port[0].to_string();
         let port = if host_port.len() > 1 {
-            host_port[1].split('/').next().unwrap_or("80").parse::<u16>().unwrap_or(80)
+            host_port[1]
+                .split('/')
+                .next()
+                .unwrap_or("80")
+                .parse::<u16>()
+                .unwrap_or(80)
         } else {
-            if url_parts[0] == "https" { 443 } else { 80 }
+            if url_parts[0] == "https" {
+                443
+            } else {
+                80
+            }
         };
 
         let addr = format!("{}:{}", host, port);
@@ -310,10 +315,7 @@ impl ProbeExecutor {
     }
 
     /// Execute a liveness probe
-    pub async fn execute_liveness<P: LivenessProbe + ?Sized>(
-        &mut self,
-        probe: &P
-    ) -> Result<bool> {
+    pub async fn execute_liveness<P: LivenessProbe + ?Sized>(&mut self, probe: &P) -> Result<bool> {
         // Check if we should wait for initial delay
         if !self.has_started && self.start_time.elapsed() < probe.config().initial_delay {
             return Ok(self.is_healthy);
@@ -341,7 +343,7 @@ impl ProbeExecutor {
     /// Execute a readiness probe
     pub async fn execute_readiness<P: ReadinessProbe + ?Sized>(
         &mut self,
-        probe: &P
+        probe: &P,
     ) -> Result<bool> {
         // Check if we should wait for initial delay
         if !self.has_started && self.start_time.elapsed() < probe.config().initial_delay {
@@ -368,10 +370,7 @@ impl ProbeExecutor {
     }
 
     /// Execute a startup probe
-    pub async fn execute_startup<P: StartupProbe + ?Sized>(
-        &mut self,
-        probe: &P
-    ) -> Result<bool> {
+    pub async fn execute_startup<P: StartupProbe + ?Sized>(&mut self, probe: &P) -> Result<bool> {
         // Startup probes run immediately
         if !self.has_started {
             self.has_started = true;
@@ -612,10 +611,7 @@ mod tests {
 
     #[test]
     fn test_custom_liveness_probe() {
-        let probe = CustomLivenessProbe::new(
-            "custom".to_string(),
-            || Ok(true)
-        );
+        let probe = CustomLivenessProbe::new("custom".to_string(), || Ok(true));
 
         assert_eq!(probe.probe_type(), "custom");
     }
@@ -624,10 +620,7 @@ mod tests {
     async fn test_node_probe_manager() {
         let mut manager = NodeProbeManager::new();
 
-        let liveness = Box::new(CustomLivenessProbe::new(
-            "test".to_string(),
-            || Ok(true)
-        ));
+        let liveness = Box::new(CustomLivenessProbe::new("test".to_string(), || Ok(true)));
 
         manager.set_liveness_probe(liveness);
 

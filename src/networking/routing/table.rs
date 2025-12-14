@@ -60,7 +60,12 @@ impl RoutingTable {
     }
 
     /// Add a node to the routing table
-    pub fn add_node(&self, node_id: NodeId, address: NodeAddress, datacenter: Option<DatacenterId>) {
+    pub fn add_node(
+        &self,
+        node_id: NodeId,
+        address: NodeAddress,
+        datacenter: Option<DatacenterId>,
+    ) {
         let mut inner = self.inner.write();
 
         inner.node_addresses.insert(node_id.clone(), address);

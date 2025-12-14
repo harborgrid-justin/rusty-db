@@ -4,7 +4,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::net::IpAddr;
-use std::time::{SystemTime};
+use std::time::SystemTime;
 use uuid::Uuid;
 
 use super::types::*;
@@ -149,16 +149,13 @@ impl AuditLogger {
 
     // Get recent events
     pub fn get_recent_events(&self, count: usize) -> Vec<AuditEvent> {
-        self.events.iter()
-            .rev()
-            .take(count)
-            .cloned()
-            .collect()
+        self.events.iter().rev().take(count).cloned().collect()
     }
 
     // Search events
     pub fn search_events(&self, filter: &AuditEventFilter) -> Vec<AuditEvent> {
-        self.events.iter()
+        self.events
+            .iter()
             .filter(|e| filter.matches(e))
             .cloned()
             .collect()
@@ -219,8 +216,10 @@ impl AuditEventFilter {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
-    use crate::api::gateway::{IpFilter, IpFilterMode, RbacManager, Role, SlidingWindow, ThreatDetector, TokenBucket};
+    use crate::api::gateway::{
+        IpFilter, IpFilterMode, RbacManager, Role, SlidingWindow, ThreatDetector, TokenBucket,
+    };
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_token_bucket() {
@@ -254,7 +253,9 @@ use std::time::UNIX_EPOCH;
 
         // Should detect SQL injection
         assert!(detector.check_sql_injection("' OR '1'='1").is_err());
-        assert!(detector.check_sql_injection("UNION SELECT * FROM users").is_err());
+        assert!(detector
+            .check_sql_injection("UNION SELECT * FROM users")
+            .is_err());
 
         // Should detect XSS
         assert!(detector.check_xss("<script>alert('xss')</script>").is_err());

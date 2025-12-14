@@ -188,7 +188,11 @@ impl fmt::Display for StringFunction {
         match self {
             StringFunction::Ascii(expr) => write!(f, "ASCII({})", expr),
             StringFunction::Char(expr) => write!(f, "CHAR({})", expr),
-            StringFunction::CharIndex { substring, string, start_position } => {
+            StringFunction::CharIndex {
+                substring,
+                string,
+                start_position,
+            } => {
                 if let Some(start) = start_position {
                     write!(f, "CHARINDEX({}, {}, {})", substring, string, start)
                 } else {
@@ -198,7 +202,9 @@ impl fmt::Display for StringFunction {
             StringFunction::Concat(exprs) => {
                 write!(f, "CONCAT(")?;
                 for (i, expr) in exprs.iter().enumerate() {
-                    if i > 0 { write!(f, ", ")?; }
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
                     write!(f, "{}", expr)?;
                 }
                 write!(f, ")")
@@ -214,7 +220,11 @@ impl fmt::Display for StringFunction {
             StringFunction::Difference { string1, string2 } => {
                 write!(f, "DIFFERENCE({}, {})", string1, string2)
             }
-            StringFunction::Format { value, format, culture } => {
+            StringFunction::Format {
+                value,
+                format,
+                culture,
+            } => {
                 if let Some(cult) = culture {
                     write!(f, "FORMAT({}, {}, {})", value, format, cult)
                 } else {
@@ -236,8 +246,16 @@ impl fmt::Display for StringFunction {
                     write!(f, "QUOTENAME({})", string)
                 }
             }
-            StringFunction::Replace { string, old_substring, new_substring } => {
-                write!(f, "REPLACE({}, {}, {})", string, old_substring, new_substring)
+            StringFunction::Replace {
+                string,
+                old_substring,
+                new_substring,
+            } => {
+                write!(
+                    f,
+                    "REPLACE({}, {}, {})",
+                    string, old_substring, new_substring
+                )
             }
             StringFunction::Replicate { string, count } => {
                 write!(f, "REPLICATE({}, {})", string, count)
@@ -247,7 +265,11 @@ impl fmt::Display for StringFunction {
             StringFunction::RTrim(expr) => write!(f, "RTRIM({})", expr),
             StringFunction::Soundex(expr) => write!(f, "SOUNDEX({})", expr),
             StringFunction::Space(expr) => write!(f, "SPACE({})", expr),
-            StringFunction::Str { number, length, decimals } => {
+            StringFunction::Str {
+                number,
+                length,
+                decimals,
+            } => {
                 write!(f, "STR({}", number)?;
                 if let Some(len) = length {
                     write!(f, ", {}", len)?;
@@ -257,13 +279,30 @@ impl fmt::Display for StringFunction {
                 }
                 write!(f, ")")
             }
-            StringFunction::Stuff { string, start, length, new_string } => {
-                write!(f, "STUFF({}, {}, {}, {})", string, start, length, new_string)
+            StringFunction::Stuff {
+                string,
+                start,
+                length,
+                new_string,
+            } => {
+                write!(
+                    f,
+                    "STUFF({}, {}, {}, {})",
+                    string, start, length, new_string
+                )
             }
-            StringFunction::Substring { string, start, length } => {
+            StringFunction::Substring {
+                string,
+                start,
+                length,
+            } => {
                 write!(f, "SUBSTRING({}, {}, {})", string, start, length)
             }
-            StringFunction::Translate { string, characters, translations } => {
+            StringFunction::Translate {
+                string,
+                characters,
+                translations,
+            } => {
                 write!(f, "TRANSLATE({}, {}, {})", string, characters, translations)
             }
             StringFunction::Trim { string, characters } => {

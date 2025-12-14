@@ -29,16 +29,16 @@
 // SELECT MODEL_INFO('customer_churn');
 // ```
 
-use crate::error::Result;
 use super::{
-    Vector, Matrix, Hyperparameters, MLError,
-    engine::{MLEngine, ModelMetadata, ModelVersion},
     algorithms::ModelType,
+    engine::{MLEngine, ModelMetadata, ModelVersion},
     inference::InferenceEngine,
+    Hyperparameters, MLError, Matrix, Vector,
 };
+use crate::error::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use serde::{Serialize, Deserialize};
 
 // ============================================================================
 // SQL Statement Parsing
@@ -70,22 +70,26 @@ impl CreateModelStatement {
         let sql = sql.trim();
 
         // Extract model name
-        let name_start = sql.find("MODEL").ok_or_else(|| {
-            MLError::InvalidConfiguration("Missing MODEL keyword".to_string())
-        })? + 5;
+        let name_start = sql
+            .find("MODEL")
+            .ok_or_else(|| MLError::InvalidConfiguration("Missing MODEL keyword".to_string()))?
+            + 5;
 
         let name_part = &sql[name_start..].trim();
-        let name_end = name_part.find(|c: char| c.is_whitespace())
+        let name_end = name_part
+            .find(|c: char| c.is_whitespace())
             .ok_or_else(|| MLError::InvalidConfiguration("Missing model name".to_string()))?;
         let name = name_part[..name_end].trim().to_string();
 
         // Extract algorithm
-        let using_start = sql.find("USING").ok_or_else(|| {
-            MLError::InvalidConfiguration("Missing USING keyword".to_string())
-        })? + 5;
+        let using_start = sql
+            .find("USING")
+            .ok_or_else(|| MLError::InvalidConfiguration("Missing USING keyword".to_string()))?
+            + 5;
 
         let using_part = &sql[using_start..].trim();
-        let algorithm_end = using_part.find(|c: char| c.is_whitespace() || c == '(' || c == '\n')
+        let algorithm_end = using_part
+            .find(|c: char| c.is_whitespace() || c == '(' || c == '\n')
             .unwrap_or(using_part.len());
         let algorithm = using_part[..algorithm_end].trim().to_string();
 
@@ -107,9 +111,10 @@ impl CreateModelStatement {
         }
 
         // Extract training query
-        let as_start = sql.find("AS").ok_or_else(|| {
-            MLError::InvalidConfiguration("Missing AS keyword".to_string())
-        })? + 2;
+        let as_start = sql
+            .find("AS")
+            .ok_or_else(|| MLError::InvalidConfiguration("Missing AS keyword".to_string()))?
+            + 2;
         let training_query = sql[as_start..].trim().to_string();
 
         Ok(Self {
@@ -208,12 +213,14 @@ impl RetrainModelStatement {
     pub fn parse(sql: &str) -> Result<Self> {
         let sql = sql.trim();
 
-        let name_start = sql.find("MODEL").ok_or_else(|| {
-            MLError::InvalidConfiguration("Missing MODEL keyword".to_string())
-        })? + 5;
+        let name_start = sql
+            .find("MODEL")
+            .ok_or_else(|| MLError::InvalidConfiguration("Missing MODEL keyword".to_string()))?
+            + 5;
 
         let name_part = &sql[name_start..].trim();
-        let name_end = name_part.find(|c: char| c.is_whitespace())
+        let name_end = name_part
+            .find(|c: char| c.is_whitespace())
             .unwrap_or(name_part.len());
         let name = name_part[..name_end].trim().to_string();
 
@@ -298,11 +305,8 @@ impl PredictFunction {
         inference_engine: &InferenceEngine,
         feature_values: &Matrix,
     ) -> Result<Vector> {
-        let result = inference_engine.predict(
-            &self.model_name,
-            self.model_version,
-            feature_values,
-        )?;
+        let result =
+            inference_engine.predict(&self.model_name, self.model_version, feature_values)?;
 
         Ok(result.predictions)
     }
@@ -342,8 +346,9 @@ impl ModelInfo {
 
     // Format as JSON
     pub fn to_json(&self) -> Result<String> {
-        serde_json::to_string_pretty(self)
-            .map_err(|e| MLError::InvalidConfiguration(format!("JSON serialization failed: {}", e)).into())
+        serde_json::to_string_pretty(self).map_err(|e| {
+            MLError::InvalidConfiguration(format!("JSON serialization failed: {}", e)).into()
+        })
     }
 }
 
@@ -368,11 +373,7 @@ pub struct ModelTable {
 
 impl ModelTable {
     // Create a new model table
-    pub fn new(
-        model_name: String,
-        source_table: String,
-        feature_columns: Vec<String>,
-    ) -> Self {
+    pub fn new(model_name: String, source_table: String, feature_columns: Vec<String>) -> Self {
         Self {
             model_name,
             model_version: None,
@@ -394,11 +395,7 @@ impl ModelTable {
         format!(
             "CREATE VIEW {}_predictions AS \
              SELECT *, PREDICT('{}', {}) as {} FROM {}",
-            self.model_name,
-            self.model_name,
-            features,
-            self.prediction_column,
-            self.source_table
+            self.model_name, self.model_name, features, self.prediction_column, self.source_table
         )
     }
 }
@@ -441,9 +438,7 @@ impl MLSqlParser {
         } else if sql_upper.starts_with("RETRAIN MODEL") {
             self.execute_retrain_model(sql)
         } else {
-            Err(MLError::InvalidConfiguration(
-                format!("Unsupported ML statement: {}", sql)
-            ).into())
+            Err(MLError::InvalidConfiguration(format!("Unsupported ML statement: {}", sql)).into())
         }
     }
 
@@ -529,8 +524,9 @@ pub enum MLExecutionResult {
 impl MLExecutionResult {
     // Convert to JSON
     pub fn to_json(&self) -> Result<String> {
-        serde_json::to_string_pretty(self)
-            .map_err(|e| MLError::InvalidConfiguration(format!("JSON serialization failed: {}", e)).into())
+        serde_json::to_string_pretty(self).map_err(|e| {
+            MLError::InvalidConfiguration(format!("JSON serialization failed: {}", e)).into()
+        })
     }
 }
 
@@ -544,11 +540,15 @@ pub struct FeatureDetector;
 impl FeatureDetector {
     // Detect numeric features from column types
     pub fn detect_numeric_features(columns: &[(String, String)]) -> Vec<String> {
-        columns.iter()
+        columns
+            .iter()
             .filter(|(_, col_type)| {
                 let ct = col_type.to_uppercase();
-                ct.contains("INT") || ct.contains("FLOAT") || ct.contains("DOUBLE")
-                    || ct.contains("DECIMAL") || ct.contains("NUMERIC")
+                ct.contains("INT")
+                    || ct.contains("FLOAT")
+                    || ct.contains("DOUBLE")
+                    || ct.contains("DECIMAL")
+                    || ct.contains("NUMERIC")
             })
             .map(|(name, _)| name.clone())
             .collect()
@@ -556,10 +556,13 @@ impl FeatureDetector {
 
     // Detect categorical features
     pub fn detect_categorical_features(columns: &[(String, String)]) -> Vec<String> {
-        columns.iter()
+        columns
+            .iter()
             .filter(|(_, col_type)| {
                 let ct = col_type.to_uppercase();
-                ct.contains("VARCHAR") || ct.contains("TEXT") || ct.contains("CHAR")
+                ct.contains("VARCHAR")
+                    || ct.contains("TEXT")
+                    || ct.contains("CHAR")
                     || ct.contains("ENUM")
             })
             .map(|(name, _)| name.clone())
@@ -604,7 +607,10 @@ mod tests {
         let stmt = CreateModelStatement::parse(sql).unwrap();
         assert_eq!(stmt.name, "churn_model");
         assert_eq!(stmt.algorithm, "logistic_regression");
-        assert_eq!(stmt.hyperparameters.get("learning_rate"), Some(&"0.01".to_string()));
+        assert_eq!(
+            stmt.hyperparameters.get("learning_rate"),
+            Some(&"0.01".to_string())
+        );
     }
 
     #[test]

@@ -1,18 +1,18 @@
 // Backup Catalog - RMAN-style backup metadata repository
 // Centralized backup tracking and management across databases
 
-use std::collections::BTreeMap;
-use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::fs::{File, create_dir_all};
-use std::io::{Read, Write};
-use std::time::{SystemTime};
-use std::collections::{HashMap};
-use parking_lot::RwLock;
-use std::sync::Arc;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::fs::{create_dir_all, File};
+use std::io::{Read, Write};
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Catalog database configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -108,7 +108,8 @@ impl BackupSet {
     }
 
     pub fn duration(&self) -> Option<Duration> {
-        self.completion_time.and_then(|ct| ct.duration_since(self.start_time).ok())
+        self.completion_time
+            .and_then(|ct| ct.duration_since(self.start_time).ok())
     }
 }
 
@@ -220,8 +221,9 @@ pub struct BackupCatalog {
 
 impl BackupCatalog {
     pub fn new(config: CatalogConfig) -> Result<Self> {
-        create_dir_all(&config.catalog_path)
-            .map_err(|e| DbError::BackupError(format!("Failed to create catalog directory: {}", e)))?;
+        create_dir_all(&config.catalog_path).map_err(|e| {
+            DbError::BackupError(format!("Failed to create catalog directory: {}", e))
+        })?;
 
         Ok(Self {
             config,
@@ -260,7 +262,9 @@ impl BackupCatalog {
 
     // Unregister a database
     pub fn unregister_database(&self, database_id: &str) -> Result<()> {
-        self.databases.write().remove(database_id)
+        self.databases
+            .write()
+            .remove(database_id)
             .ok_or_else(|| DbError::BackupError("Database not found".to_string()))?;
         Ok(())
     }
@@ -294,7 +298,8 @@ impl BackupCatalog {
     // Mark backup set as obsolete
     pub fn mark_obsolete(&self, set_id: &str) -> Result<()> {
         let mut sets = self.backup_sets.write();
-        let set = sets.get_mut(set_id)
+        let set = sets
+            .get_mut(set_id)
             .ok_or_else(|| DbError::BackupError("Backup set not found".to_string()))?;
 
         set.obsolete = true;
@@ -315,7 +320,8 @@ impl BackupCatalog {
         let mut deleted = Vec::new();
         let mut sets = self.backup_sets.write();
 
-        let obsolete_sets: Vec<String> = sets.iter()
+        let obsolete_sets: Vec<String> = sets
+            .iter()
             .filter(|(_, set)| set.is_obsolete())
             .map(|(id, _)| id.clone())
             .collect();
@@ -336,7 +342,8 @@ impl BackupCatalog {
 
     // List backup sets for a database
     pub fn list_backup_sets(&self, database_id: &str) -> Vec<BackupSet> {
-        self.backup_sets.read()
+        self.backup_sets
+            .read()
             .values()
             .filter(|set| set.database_id == database_id)
             .cloned()
@@ -356,8 +363,7 @@ impl BackupCatalog {
                 && set.scn_end <= target_scn
                 && !set.is_obsolete()
             {
-                if full_backup.is_none() ||
-                   set.scn_end > full_backup.as_ref().unwrap().scn_end {
+                if full_backup.is_none() || set.scn_end > full_backup.as_ref().unwrap().scn_end {
                     full_backup = Some(set.clone());
                 }
             }
@@ -369,7 +375,10 @@ impl BackupCatalog {
             // Find incremental backups after full backup
             for set in sets.values() {
                 if set.database_id == database_id
-                    && matches!(set.backup_type, BackupSetType::Incremental { .. } | BackupSetType::Differential)
+                    && matches!(
+                        set.backup_type,
+                        BackupSetType::Incremental { .. } | BackupSetType::Differential
+                    )
                     && set.scn_start >= full.scn_end
                     && set.scn_end <= target_scn
                     && !set.is_obsolete()
@@ -381,7 +390,9 @@ impl BackupCatalog {
             // Sort by SCN
             recovery_sets.sort_by_key(|s| s.scn_start);
         } else {
-            return Err(DbError::BackupError("No suitable full backup found for recovery".to_string()));
+            return Err(DbError::BackupError(
+                "No suitable full backup found for recovery".to_string(),
+            ));
         }
 
         Ok(recovery_sets)
@@ -408,7 +419,8 @@ impl BackupCatalog {
         start_scn: u64,
         end_scn: u64,
     ) -> Vec<ArchivedRedoLog> {
-        self.archived_logs.read()
+        self.archived_logs
+            .read()
             .values()
             .filter(|log| {
                 log.database_id == database_id
@@ -442,16 +454,16 @@ impl BackupCatalog {
         let total_size: u64 = filtered_sets.iter().map(|s| s.total_size_bytes).sum();
         let total_compressed: u64 = filtered_sets.iter().map(|s| s.compressed_size_bytes).sum();
 
-        let oldest = filtered_sets.iter()
-            .map(|s| s.start_time)
-            .min();
+        let oldest = filtered_sets.iter().map(|s| s.start_time).min();
 
-        let newest = filtered_sets.iter()
-            .filter_map(|s| s.completion_time)
-            .max();
+        let newest = filtered_sets.iter().filter_map(|s| s.completion_time).max();
 
         let summary = ReportSummary {
-            total_databases: if database_filter.is_some() { 1 } else { databases.len() },
+            total_databases: if database_filter.is_some() {
+                1
+            } else {
+                databases.len()
+            },
             total_backup_sets: filtered_sets.len(),
             total_backup_pieces: pieces.len(),
             total_size_bytes: total_size,
@@ -472,15 +484,16 @@ impl BackupCatalog {
                 continue;
             }
 
-            let db_sets: Vec<&BackupSet> = sets.values()
-                .filter(|s| &s.database_id == db_id)
-                .collect();
+            let db_sets: Vec<&BackupSet> =
+                sets.values().filter(|s| &s.database_id == db_id).collect();
 
             let db_size: u64 = db_sets.iter().map(|s| s.total_size_bytes).sum();
 
-            let recovery_window_compliant = db.last_backup_time
+            let recovery_window_compliant = db
+                .last_backup_time
                 .map(|t| {
-                    SystemTime::now().duration_since(t)
+                    SystemTime::now()
+                        .duration_since(t)
                         .map(|d| d.as_secs() < 86400) // Within 24 hours
                         .unwrap_or(false)
                 })
@@ -621,12 +634,14 @@ mod tests {
         let config = CatalogConfig::default();
         let catalog = BackupCatalog::new(config).unwrap();
 
-        catalog.register_database(
-            "db1".to_string(),
-            "TestDB".to_string(),
-            "1.0".to_string(),
-            "Linux".to_string(),
-        ).unwrap();
+        catalog
+            .register_database(
+                "db1".to_string(),
+                "TestDB".to_string(),
+                "1.0".to_string(),
+                "Linux".to_string(),
+            )
+            .unwrap();
 
         let databases = catalog.databases.read();
         assert_eq!(databases.len(), 1);
@@ -661,12 +676,14 @@ mod tests {
         let config = CatalogConfig::default();
         let catalog = BackupCatalog::new(config).unwrap();
 
-        catalog.register_database(
-            "db1".to_string(),
-            "TestDB".to_string(),
-            "1.0".to_string(),
-            "Linux".to_string(),
-        ).unwrap();
+        catalog
+            .register_database(
+                "db1".to_string(),
+                "TestDB".to_string(),
+                "1.0".to_string(),
+                "Linux".to_string(),
+            )
+            .unwrap();
 
         let full_set = BackupSet {
             set_id: "full1".to_string(),

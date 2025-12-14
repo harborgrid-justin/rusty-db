@@ -12,13 +12,13 @@
 // - Key hierarchy and derivation
 // - Encrypted backup support
 
+use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use parking_lot::RwLock;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::Result;
-use crate::error::DbError;
 
 // Key identifier
 pub type KeyId = String;
@@ -242,7 +242,9 @@ impl EncryptionManager {
     // Initialize with a master key
     pub fn initialize_master_key(&self, master_key: Vec<u8>) -> Result<KeyId> {
         if master_key.len() != 32 {
-            return Err(DbError::InvalidInput("Master key must be 32 bytes".to_string()));
+            return Err(DbError::InvalidInput(
+                "Master key must be 32 bytes".to_string(),
+            ));
         }
 
         // Store master key (in production, this would be in HSM)
@@ -279,7 +281,10 @@ impl EncryptionManager {
         // Verify parent key exists if specified
         if let Some(ref parent_id) = parent_key_id {
             if !self.keys.read().contains_key(parent_id) {
-                return Err(DbError::NotFound(format!("Parent key {} not found", parent_id)));
+                return Err(DbError::NotFound(format!(
+                    "Parent key {} not found",
+                    parent_id
+                )));
             }
         }
 
@@ -319,18 +324,15 @@ impl EncryptionManager {
 
     // Get a key by ID
     pub fn get_key(&self, key_id: &str) -> Result<EncryptionKey> {
-        self.keys.read()
+        self.keys
+            .read()
             .get(key_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound(format!("Key {} not found", key_id)))
     }
 
     // Enable TDE for a tablespace
-    pub fn enable_tde(
-        &self,
-        tablespace_id: String,
-        algorithm: EncryptionAlgorithm,
-    ) -> Result<()> {
+    pub fn enable_tde(&self, tablespace_id: String, algorithm: EncryptionAlgorithm) -> Result<()> {
         // Generate a new table encryption key
         let key_id = self.generate_key(
             KeyType::TableEncryption,
@@ -358,9 +360,10 @@ impl EncryptionManager {
         let mut configs = self.tde_configs.write();
 
         if configs.remove(tablespace_id).is_none() {
-            return Err(DbError::NotFound(
-                format!("TDE not configured for tablespace {}", tablespace_id)
-            ));
+            return Err(DbError::NotFound(format!(
+                "TDE not configured for tablespace {}",
+                tablespace_id
+            )));
         }
 
         Ok(())
@@ -415,15 +418,17 @@ impl EncryptionManager {
 
         if let Some(table_encryptions) = encryptions.get_mut(table_id) {
             if table_encryptions.remove(column_id).is_none() {
-                return Err(DbError::NotFound(
-                    format!("Column encryption not found for {}.{}", table_id, column_id)
-                ));
+                return Err(DbError::NotFound(format!(
+                    "Column encryption not found for {}.{}",
+                    table_id, column_id
+                )));
             }
             Ok(())
         } else {
-            Err(DbError::NotFound(
-                format!("No column encryptions for table {}", table_id)
-            ))
+            Err(DbError::NotFound(format!(
+                "No column encryptions for table {}",
+                table_id
+            )))
         }
     }
 
@@ -433,7 +438,8 @@ impl EncryptionManager {
         table_id: &str,
         column_id: &str,
     ) -> Option<ColumnEncryption> {
-        self.column_encryptions.read()
+        self.column_encryptions
+            .read()
             .get(table_id)
             .and_then(|t| t.get(column_id))
             .cloned()
@@ -446,7 +452,7 @@ impl EncryptionManager {
 
         if old_key.rotation_state != KeyRotationState::Active {
             return Err(DbError::InvalidOperation(
-                "Key is not in active state".to_string()
+                "Key is not in active state".to_string(),
             ));
         }
 
@@ -485,18 +491,15 @@ impl EncryptionManager {
 
     // Get rotation job status
     pub fn get_rotation_job(&self, job_id: &str) -> Result<KeyRotationJob> {
-        self.rotation_jobs.read()
+        self.rotation_jobs
+            .read()
             .get(job_id)
             .cloned()
             .ok_or_else(|| DbError::NotFound(format!("Rotation job {} not found", job_id)))
     }
 
     // Update rotation job progress
-    pub fn update_rotation_progress(
-        &self,
-        job_id: &str,
-        blocks_completed: u64,
-    ) -> Result<()> {
+    pub fn update_rotation_progress(&self, job_id: &str, blocks_completed: u64) -> Result<()> {
         let mut jobs = self.rotation_jobs.write();
 
         if let Some(job) = jobs.get_mut(job_id) {
@@ -519,7 +522,10 @@ impl EncryptionManager {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Rotation job {} not found", job_id)))
+            Err(DbError::NotFound(format!(
+                "Rotation job {} not found",
+                job_id
+            )))
         }
     }
 
@@ -557,7 +563,9 @@ impl EncryptionManager {
 
         // Even deprecated keys can decrypt (for rotation)
         if key.rotation_state == KeyRotationState::Destroyed {
-            return Err(DbError::InvalidOperation("Key has been destroyed".to_string()));
+            return Err(DbError::InvalidOperation(
+                "Key has been destroyed".to_string(),
+            ));
         }
 
         // Decrypt the key material using master key
@@ -575,12 +583,14 @@ impl EncryptionManager {
 
         if let Some(key) = keys.get_mut(key_id) {
             if key.key_type == KeyType::Master {
-                return Err(DbError::InvalidOperation("Cannot destroy master key".to_string()));
+                return Err(DbError::InvalidOperation(
+                    "Cannot destroy master key".to_string(),
+                ));
             }
 
             if key.rotation_state != KeyRotationState::Deprecated {
                 return Err(DbError::InvalidOperation(
-                    "Can only destroy deprecated keys".to_string()
+                    "Can only destroy deprecated keys".to_string(),
                 ));
             }
 
@@ -597,7 +607,8 @@ impl EncryptionManager {
 
     // Get all active keys
     pub fn get_active_keys(&self) -> Vec<EncryptionKey> {
-        self.keys.read()
+        self.keys
+            .read()
             .values()
             .filter(|k| k.is_active && k.rotation_state == KeyRotationState::Active)
             .cloned()
@@ -614,14 +625,14 @@ impl EncryptionManager {
         EncryptionStatistics {
             total_keys: keys.len(),
             active_keys: keys.values().filter(|k| k.is_active).count(),
-            deprecated_keys: keys.values()
+            deprecated_keys: keys
+                .values()
                 .filter(|k| k.rotation_state == KeyRotationState::Deprecated)
                 .count(),
             tablespaces_with_tde: tde_configs.len(),
-            encrypted_columns: column_encryptions.values()
-                .map(|t| t.len())
-                .sum(),
-            active_rotations: rotation_jobs.values()
+            encrypted_columns: column_encryptions.values().map(|t| t.len()).sum(),
+            active_rotations: rotation_jobs
+                .values()
                 .filter(|j| j.state == RotationJobState::Running)
                 .count(),
         }
@@ -729,11 +740,13 @@ mod tests {
         manager.initialize_master_key(master_key).unwrap();
 
         // Generate table encryption key
-        let key_id = manager.generate_key(
-            KeyType::TableEncryption,
-            EncryptionAlgorithm::Aes256Gcm,
-            Some("MASTER_KEY".to_string()),
-        ).unwrap();
+        let key_id = manager
+            .generate_key(
+                KeyType::TableEncryption,
+                EncryptionAlgorithm::Aes256Gcm,
+                Some("MASTER_KEY".to_string()),
+            )
+            .unwrap();
 
         assert!(key_id.starts_with("KEY_"));
     }
@@ -744,10 +757,9 @@ mod tests {
         let master_key = vec![0u8; 32];
         manager.initialize_master_key(master_key).unwrap();
 
-        manager.enable_tde(
-            "tablespace1".to_string(),
-            EncryptionAlgorithm::Aes256Gcm,
-        ).unwrap();
+        manager
+            .enable_tde("tablespace1".to_string(), EncryptionAlgorithm::Aes256Gcm)
+            .unwrap();
 
         let config = manager.get_tde_config("tablespace1");
         assert!(config.is_some());
@@ -760,11 +772,13 @@ mod tests {
         let master_key = vec![0u8; 32];
         manager.initialize_master_key(master_key).unwrap();
 
-        let key_id = manager.generate_key(
-            KeyType::TableEncryption,
-            EncryptionAlgorithm::Aes256Gcm,
-            Some("MASTER_KEY".to_string()),
-        ).unwrap();
+        let key_id = manager
+            .generate_key(
+                KeyType::TableEncryption,
+                EncryptionAlgorithm::Aes256Gcm,
+                Some("MASTER_KEY".to_string()),
+            )
+            .unwrap();
 
         let job_id = manager.start_key_rotation(&key_id).unwrap();
         let job = manager.get_rotation_job(&job_id).unwrap();

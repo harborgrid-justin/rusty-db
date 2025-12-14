@@ -4,24 +4,20 @@
 // testing the Raft consensus, distributed query execution, and failover.
 
 use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 // Import cluster types
-use rusty_db::clustering::{
-    NodeId, NodeRole, NodeStatus, NodeInfo,
-    ClusterMetrics, ClusterManager,
-    ExecutionStrategy, JoinStrategy,
-    DistributedQueryExecutor, DistributedQueryProcessor,
-};
+use rusty_db::clustering::health::{ClusterHealth, ClusterStatus};
+use rusty_db::clustering::membership::{Incarnation, Member, MemberId, MemberState};
 use rusty_db::clustering::raft::{
-    RaftNodeId, Term, LogIndex, RaftState, LogEntry,
-    VoteRequest, VoteResponse, AppendEntriesRequest, AppendEntriesResponse,
+    AppendEntriesRequest, AppendEntriesResponse, LogEntry, LogIndex, RaftNodeId, RaftState, Term,
+    VoteRequest, VoteResponse,
 };
-use rusty_db::clustering::membership::{
-    MemberId, Incarnation, MemberState, Member,
+use rusty_db::clustering::{
+    ClusterManager, ClusterMetrics, DistributedQueryExecutor, DistributedQueryProcessor,
+    ExecutionStrategy, JoinStrategy, NodeId, NodeInfo, NodeRole, NodeStatus,
 };
-use rusty_db::clustering::health::{ClusterStatus, ClusterHealth};
 
 /// Configuration for a cluster node
 #[derive(Debug, Clone)]
@@ -53,17 +49,18 @@ struct ClusterTestHarness {
 
 impl ClusterTestHarness {
     fn new() -> Self {
-        let nodes: Vec<ClusterNodeConfig> = (0..10)
-            .map(|i| ClusterNodeConfig::new(i))
-            .collect();
+        let nodes: Vec<ClusterNodeConfig> = (0..10).map(|i| ClusterNodeConfig::new(i)).collect();
 
-        let node_infos: Vec<NodeInfo> = nodes.iter().map(|config| {
-            NodeInfo::new(
-                NodeId::new(config.node_id.clone()),
-                config.address.clone(),
-                config.port,
-            )
-        }).collect();
+        let node_infos: Vec<NodeInfo> = nodes
+            .iter()
+            .map(|config| {
+                NodeInfo::new(
+                    NodeId::new(config.node_id.clone()),
+                    config.address.clone(),
+                    config.port,
+                )
+            })
+            .collect();
 
         Self { nodes, node_infos }
     }
@@ -87,7 +84,9 @@ impl ClusterTestHarness {
     }
 
     fn check_quorum(&self) -> bool {
-        let healthy_count = self.node_infos.iter()
+        let healthy_count = self
+            .node_infos
+            .iter()
             .filter(|n| n.status == NodeStatus::Healthy)
             .count();
         healthy_count > self.nodes.len() / 2
@@ -107,11 +106,15 @@ impl ClusterTestHarness {
     }
 
     fn get_cluster_metrics(&self) -> ClusterMetrics {
-        let healthy_nodes = self.node_infos.iter()
+        let healthy_nodes = self
+            .node_infos
+            .iter()
             .filter(|n| n.status == NodeStatus::Healthy)
             .count();
 
-        let leader = self.node_infos.iter()
+        let leader = self
+            .node_infos
+            .iter()
             .find(|n| n.role == NodeRole::Leader)
             .map(|n| n.id.clone());
 
@@ -157,7 +160,9 @@ fn test_leader_election() {
     assert_eq!(leader.id.as_str(), "node-0");
 
     // Verify only one leader
-    let leader_count = harness.node_infos.iter()
+    let leader_count = harness
+        .node_infos
+        .iter()
         .filter(|n| n.role == NodeRole::Leader)
         .count();
     assert_eq!(leader_count, 1, "Should have exactly one leader");
@@ -170,17 +175,26 @@ fn test_quorum_with_failures() {
     let mut harness = ClusterTestHarness::new();
 
     // All healthy - should have quorum
-    assert!(harness.check_quorum(), "Should have quorum with all nodes healthy");
+    assert!(
+        harness.check_quorum(),
+        "Should have quorum with all nodes healthy"
+    );
 
     // Fail 4 nodes (still have 6 healthy = quorum with 10 nodes)
     for i in 0..4 {
         harness.simulate_node_failure(i);
     }
-    assert!(harness.check_quorum(), "Should still have quorum with 6 healthy nodes");
+    assert!(
+        harness.check_quorum(),
+        "Should still have quorum with 6 healthy nodes"
+    );
 
     // Fail 1 more (5 healthy = NO quorum, need > 5 for 10 nodes)
     harness.simulate_node_failure(4);
-    assert!(!harness.check_quorum(), "Should NOT have quorum with only 5 healthy nodes (need > 5)");
+    assert!(
+        !harness.check_quorum(),
+        "Should NOT have quorum with only 5 healthy nodes (need > 5)"
+    );
 
     println!("✓ Quorum detection with node failures working correctly");
 }
@@ -272,7 +286,10 @@ fn test_append_entries_heartbeat() {
         leader_commit: 0,
     };
 
-    assert!(heartbeat.entries.is_empty(), "Heartbeat should have no entries");
+    assert!(
+        heartbeat.entries.is_empty(),
+        "Heartbeat should have no entries"
+    );
 
     let response = AppendEntriesResponse {
         term: 1,
@@ -289,9 +306,7 @@ fn test_append_entries_heartbeat() {
 
 #[test]
 fn test_distributed_query_plan() {
-    use rusty_db::clustering::coordinator::{
-        QueryPlanNode, DistributedQueryPlan, QueryId,
-    };
+    use rusty_db::clustering::coordinator::{DistributedQueryPlan, QueryId, QueryPlanNode};
 
     let scan = QueryPlanNode::Scan {
         table: "users".to_string(),
@@ -343,8 +358,10 @@ fn test_full_cluster_simulation() {
     println!("Phase 1: Cluster Initialization");
     println!("  - Creating 10 nodes...");
     for config in &harness.nodes {
-        println!("    Node: {} at {}:{} (API: {})",
-                 config.node_id, config.address, config.port, config.api_port);
+        println!(
+            "    Node: {} at {}:{} (API: {})",
+            config.node_id, config.address, config.port, config.api_port
+        );
     }
 
     // Phase 2: Leader election
@@ -367,7 +384,10 @@ fn test_full_cluster_simulation() {
     harness.simulate_node_failure(9);
 
     let metrics = harness.get_cluster_metrics();
-    println!("  - Healthy nodes after failures: {}", metrics.healthy_nodes);
+    println!(
+        "  - Healthy nodes after failures: {}",
+        metrics.healthy_nodes
+    );
     println!("  - Quorum maintained: {}", metrics.has_quorum);
 
     // Phase 5: Recovery
@@ -376,7 +396,10 @@ fn test_full_cluster_simulation() {
     harness.simulate_node_recovery(7);
 
     let metrics = harness.get_cluster_metrics();
-    println!("  - Healthy nodes after recovery: {}", metrics.healthy_nodes);
+    println!(
+        "  - Healthy nodes after recovery: {}",
+        metrics.healthy_nodes
+    );
 
     // Phase 6: Final status
     println!("\nPhase 6: Final Cluster Status");

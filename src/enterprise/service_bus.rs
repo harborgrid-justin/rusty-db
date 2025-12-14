@@ -37,15 +37,15 @@
 // }
 // ```
 
-use std::time::SystemTime;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 use tokio::sync::{mpsc, RwLock, Semaphore};
-use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-use crate::{Result, DbError};
+use crate::{DbError, Result};
 
 // Message priority levels for the service bus
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
@@ -256,11 +256,11 @@ impl Default for ServiceBusConfig {
     fn default() -> Self {
         Self {
             max_message_size: 10 * 1024 * 1024, // 10 MB
-            default_ttl: 3600,                   // 1 hour
+            default_ttl: 3600,                  // 1 hour
             max_retries: 3,
             dlq_capacity: 10000,
-            heartbeat_interval: 30,              // 30 seconds
-            service_timeout: 90,                 // 90 seconds
+            heartbeat_interval: 30, // 30 seconds
+            service_timeout: 90,    // 90 seconds
         }
     }
 }
@@ -349,7 +349,10 @@ impl ServiceBus {
         }
 
         // Acquire backpressure permit
-        let _permit = self.backpressure.acquire().await
+        let _permit = self
+            .backpressure
+            .acquire()
+            .await
             .map_err(|e| DbError::Internal(format!("Backpressure acquire failed: {}", e)))?;
 
         // Update statistics
@@ -397,7 +400,8 @@ impl ServiceBus {
             }
         } else {
             // No subscribers - send to DLQ
-            self.send_to_dlq(message, "No subscribers found".to_string(), 0).await;
+            self.send_to_dlq(message, "No subscribers found".to_string(), 0)
+                .await;
         }
 
         Ok(())
@@ -414,12 +418,8 @@ impl ServiceBus {
                 Err(e) => {
                     attempts += 1;
                     if attempts >= max_retries {
-                        self.send_to_dlq(
-                            message,
-                            format!("Max retries exceeded: {}", e),
-                            attempts,
-                        )
-                        .await;
+                        self.send_to_dlq(message, format!("Max retries exceeded: {}", e), attempts)
+                            .await;
                         return Err(e);
                     }
                     // Exponential backoff
@@ -499,7 +499,10 @@ impl ServiceBus {
             service.healthy = true;
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Service not found: {}", service_id)))
+            Err(DbError::NotFound(format!(
+                "Service not found: {}",
+                service_id
+            )))
         }
     }
 
@@ -529,9 +532,8 @@ impl ServiceBus {
         // Task 1: Check service health
         let bus_clone = Arc::clone(&bus);
         tokio::spawn(async move {
-            let mut interval = tokio::time::interval(Duration::from_secs(
-                bus_clone.config.heartbeat_interval,
-            ));
+            let mut interval =
+                tokio::time::interval(Duration::from_secs(bus_clone.config.heartbeat_interval));
 
             loop {
                 tokio::select! {

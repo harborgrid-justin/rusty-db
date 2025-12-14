@@ -16,10 +16,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use utoipa::ToSchema;
 
-use crate::api::rest::types::{ApiState, ApiError, ApiResult};
-use crate::flashback::{
-    FlashbackCoordinator, FlashbackOptions,
-};
+use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::flashback::{FlashbackCoordinator, FlashbackOptions};
 
 // ============================================================================
 // Request/Response Types
@@ -29,7 +27,7 @@ use crate::flashback::{
 pub struct FlashbackQueryRequest {
     pub table: String,
     pub timestamp: Option<String>, // ISO 8601 format
-    pub scn: Option<i64>, // System Change Number
+    pub scn: Option<i64>,          // System Change Number
     pub columns: Option<Vec<String>>,
     pub filter: Option<serde_json::Value>,
     pub limit: Option<usize>,
@@ -183,7 +181,10 @@ pub async fn flashback_query(
             .map_err(|e| ApiError::new("INVALID_TIMESTAMP", format!("Invalid timestamp: {}", e)))?
             .timestamp()
     } else {
-        return Err(ApiError::new("MISSING_PARAMETER", "Either timestamp or scn must be provided"));
+        return Err(ApiError::new(
+            "MISSING_PARAMETER",
+            "Either timestamp or scn must be provided",
+        ));
     };
 
     // In a real implementation, would:
@@ -227,7 +228,10 @@ pub async fn flashback_table(
         // Look up restore point SCN
         0
     } else {
-        return Err(ApiError::new("MISSING_PARAMETER", "Target timestamp, SCN, or restore point required"));
+        return Err(ApiError::new(
+            "MISSING_PARAMETER",
+            "Target timestamp, SCN, or restore point required",
+        ));
     };
 
     // Build flashback options
@@ -299,12 +303,15 @@ pub async fn create_restore_point(
     // Create restore point
     // db_flashback.create_restore_point(&request.name, request.guaranteed.unwrap_or(false))?;
 
-    Ok((StatusCode::CREATED, Json(RestorePointResponse {
-        name: request.name,
-        scn: current_scn as i64,
-        timestamp: chrono::Utc::now().timestamp(),
-        guaranteed: request.guaranteed.unwrap_or(false),
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(RestorePointResponse {
+            name: request.name,
+            scn: current_scn as i64,
+            timestamp: chrono::Utc::now().timestamp(),
+            guaranteed: request.guaranteed.unwrap_or(false),
+        }),
+    ))
 }
 
 /// List restore points
@@ -369,7 +376,10 @@ pub async fn flashback_database(
             .map_err(|e| ApiError::new("INVALID_TIMESTAMP", format!("Invalid timestamp: {}", e)))?
             .timestamp()
     } else {
-        return Err(ApiError::new("MISSING_PARAMETER", "Target timestamp or SCN required"));
+        return Err(ApiError::new(
+            "MISSING_PARAMETER",
+            "Target timestamp or SCN required",
+        ));
     };
 
     // Initiate database flashback (would be async in real implementation)
@@ -400,8 +410,8 @@ pub async fn get_flashback_stats(
     let stats = FLASHBACK_COORDINATOR.get_stats();
 
     Ok(Json(FlashbackStatsResponse {
-        current_scn: 0, // stats.time_travel.current_scn is () type
-        oldest_scn: 0, // stats.time_travel.oldest_scn is () type
+        current_scn: 0,     // stats.time_travel.current_scn is () type
+        oldest_scn: 0,      // stats.time_travel.oldest_scn is () type
         retention_days: 30, // Field doesn't exist in TimeTravelStats
         total_versions: stats.versions.total_versions,
         storage_bytes: 0, // stats.versions.storage_bytes is () type
@@ -445,9 +455,7 @@ pub async fn flashback_transaction(
     ),
     tag = "flashback"
 )]
-pub async fn get_current_scn(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<Json<i64>> {
+pub async fn get_current_scn(State(_state): State<Arc<ApiState>>) -> ApiResult<Json<i64>> {
     let time_travel = FLASHBACK_COORDINATOR.time_travel();
     let current_scn = time_travel.get_current_scn();
 

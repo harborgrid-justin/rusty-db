@@ -5,15 +5,15 @@
 
 use axum::{
     extract::{Path, State},
-    response::Json as AxumJson,
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use parking_lot::RwLock;
-use std::collections::HashMap;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::super::types::*;
@@ -167,13 +167,13 @@ async fn create_backup_internal(
         .unwrap()
         .as_secs() as i64;
 
-    let destination = request.destination.unwrap_or_else(|| {
-        format!("/var/lib/rustydb/backups/{}", backup_id)
-    });
+    let destination = request
+        .destination
+        .unwrap_or_else(|| format!("/var/lib/rustydb/backups/{}", backup_id));
 
-    let retention_until = request.retention_days.map(|days| {
-        now + (days as i64 * 24 * 3600)
-    });
+    let retention_until = request
+        .retention_days
+        .map(|days| now + (days as i64 * 24 * 3600));
 
     let backup_details = BackupDetails {
         backup_id: backup_id.clone(),
@@ -212,7 +212,7 @@ async fn create_backup_internal(
                 SystemTime::now()
                     .duration_since(UNIX_EPOCH)
                     .unwrap()
-                    .as_secs() as i64
+                    .as_secs() as i64,
             );
             backup.size_bytes = Some(1024 * 1024 * 100); // 100 MB
             backup.compressed_size_bytes = Some(1024 * 1024 * 50); // 50 MB
@@ -231,12 +231,11 @@ async fn create_backup_internal(
         (status = 200, description = "List of backups", body = BackupList),
     )
 )]
-pub async fn list_backups(
-    State(_state): State<Arc<ApiState>>,
-) -> ApiResult<AxumJson<BackupList>> {
+pub async fn list_backups(State(_state): State<Arc<ApiState>>) -> ApiResult<AxumJson<BackupList>> {
     let backups = BACKUPS.read();
 
-    let backup_list: Vec<BackupSummary> = backups.values()
+    let backup_list: Vec<BackupSummary> = backups
+        .values()
         .map(|b| BackupSummary {
             backup_id: b.backup_id.clone(),
             backup_type: b.backup_type.clone(),
@@ -274,7 +273,8 @@ pub async fn get_backup(
 ) -> ApiResult<AxumJson<BackupDetails>> {
     let backups = BACKUPS.read();
 
-    backups.get(&id)
+    backups
+        .get(&id)
         .cloned()
         .map(AxumJson)
         .ok_or_else(|| ApiError::new("NOT_FOUND", format!("Backup '{}' not found", id)))
@@ -303,12 +303,18 @@ pub async fn restore_backup(
     {
         let backups = BACKUPS.read();
         if !backups.contains_key(&id) {
-            return Err(ApiError::new("NOT_FOUND", format!("Backup '{}' not found", id)));
+            return Err(ApiError::new(
+                "NOT_FOUND",
+                format!("Backup '{}' not found", id),
+            ));
         }
 
         let backup = backups.get(&id).unwrap();
         if backup.status != "completed" {
-            return Err(ApiError::new("INVALID_INPUT", "Cannot restore from incomplete backup"));
+            return Err(ApiError::new(
+                "INVALID_INPUT",
+                "Cannot restore from incomplete backup",
+            ));
         }
     }
 
@@ -326,12 +332,15 @@ pub async fn restore_backup(
 
     log::info!("Restore initiated: {} from backup: {}", restore_id, id);
 
-    Ok((StatusCode::ACCEPTED, AxumJson(RestoreResponse {
-        restore_id,
-        status: "in_progress".to_string(),
-        message,
-        started_at: now,
-    })))
+    Ok((
+        StatusCode::ACCEPTED,
+        AxumJson(RestoreResponse {
+            restore_id,
+            status: "in_progress".to_string(),
+            message,
+            started_at: now,
+        }),
+    ))
 }
 
 /// Delete a backup
@@ -357,7 +366,10 @@ pub async fn delete_backup(
         log::info!("Backup deleted: {}", id);
         Ok(StatusCode::NO_CONTENT)
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Backup '{}' not found", id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Backup '{}' not found", id),
+        ))
     }
 }
 
@@ -394,7 +406,10 @@ pub async fn update_backup_schedule(
 ) -> ApiResult<AxumJson<serde_json::Value>> {
     // Validate retention days
     if schedule.retention_days == 0 {
-        return Err(ApiError::new("INVALID_INPUT", "retention_days must be greater than 0"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "retention_days must be greater than 0",
+        ));
     }
 
     // Store schedule

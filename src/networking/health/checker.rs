@@ -36,7 +36,10 @@ impl HealthCheckResult {
     /// Create a successful result
     pub fn success(check_type: String, response_time: Duration) -> Self {
         use std::time::SystemTime;
-        let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
+        let timestamp = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64;
         Self {
             success: true,
             response_time,
@@ -50,7 +53,10 @@ impl HealthCheckResult {
     /// Create a failed result
     pub fn failure(check_type: String, message: String) -> Self {
         use std::time::SystemTime;
-        let timestamp = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
+        let timestamp = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64;
         Self {
             success: false,
             response_time: Duration::from_secs(0),
@@ -131,15 +137,11 @@ impl HealthChecker for TcpHealthCheck {
                 let response_time = start.elapsed();
                 Ok(HealthCheckResult::success("tcp".to_string(), response_time))
             }
-            Ok(Err(e)) => {
-                Ok(HealthCheckResult::failure("tcp".to_string(), e.to_string()))
-            }
-            Err(_) => {
-                Ok(HealthCheckResult::failure(
-                    "tcp".to_string(),
-                    "Connection timeout".to_string()
-                ))
-            }
+            Ok(Err(e)) => Ok(HealthCheckResult::failure("tcp".to_string(), e.to_string())),
+            Err(_) => Ok(HealthCheckResult::failure(
+                "tcp".to_string(),
+                "Connection timeout".to_string(),
+            )),
         }
     }
 
@@ -215,16 +217,25 @@ impl HealthChecker for HttpHealthCheck {
         if url_parts.len() < 2 {
             return Ok(HealthCheckResult::failure(
                 "http".to_string(),
-                "Invalid URL format".to_string()
+                "Invalid URL format".to_string(),
             ));
         }
 
         let host_port: Vec<&str> = url_parts[1].split(':').collect();
         let host = host_port[0].to_string();
         let port = if host_port.len() > 1 {
-            host_port[1].split('/').next().unwrap_or("80").parse::<u16>().unwrap_or(80)
+            host_port[1]
+                .split('/')
+                .next()
+                .unwrap_or("80")
+                .parse::<u16>()
+                .unwrap_or(80)
         } else {
-            if url_parts[0] == "https" { 443 } else { 80 }
+            if url_parts[0] == "https" {
+                443
+            } else {
+                80
+            }
         };
 
         let addr = format!("{}:{}", host, port);
@@ -233,19 +244,20 @@ impl HealthChecker for HttpHealthCheck {
             Ok(Ok(_)) => {
                 let response_time = start.elapsed();
                 // In a real implementation, we would send an HTTP request and check the status
-                Ok(HealthCheckResult::success("http".to_string(), response_time)
-                    .with_status_code(200)
-                    .with_message("Connection successful".to_string()))
+                Ok(
+                    HealthCheckResult::success("http".to_string(), response_time)
+                        .with_status_code(200)
+                        .with_message("Connection successful".to_string()),
+                )
             }
-            Ok(Err(e)) => {
-                Ok(HealthCheckResult::failure("http".to_string(), e.to_string()))
-            }
-            Err(_) => {
-                Ok(HealthCheckResult::failure(
-                    "http".to_string(),
-                    "Request timeout".to_string()
-                ))
-            }
+            Ok(Err(e)) => Ok(HealthCheckResult::failure(
+                "http".to_string(),
+                e.to_string(),
+            )),
+            Err(_) => Ok(HealthCheckResult::failure(
+                "http".to_string(),
+                "Request timeout".to_string(),
+            )),
         }
     }
 
@@ -304,18 +316,19 @@ impl HealthChecker for GrpcHealthCheck {
         match timeout(self.timeout, TcpStream::connect(&addr)).await {
             Ok(Ok(_)) => {
                 let response_time = start.elapsed();
-                Ok(HealthCheckResult::success("grpc".to_string(), response_time)
-                    .with_message(format!("Service {} reachable", self.service)))
+                Ok(
+                    HealthCheckResult::success("grpc".to_string(), response_time)
+                        .with_message(format!("Service {} reachable", self.service)),
+                )
             }
-            Ok(Err(e)) => {
-                Ok(HealthCheckResult::failure("grpc".to_string(), e.to_string()))
-            }
-            Err(_) => {
-                Ok(HealthCheckResult::failure(
-                    "grpc".to_string(),
-                    "Connection timeout".to_string()
-                ))
-            }
+            Ok(Err(e)) => Ok(HealthCheckResult::failure(
+                "grpc".to_string(),
+                e.to_string(),
+            )),
+            Err(_) => Ok(HealthCheckResult::failure(
+                "grpc".to_string(),
+                "Connection timeout".to_string(),
+            )),
         }
     }
 
@@ -378,20 +391,19 @@ impl HealthChecker for CustomHealthCheck {
         match (self.check_fn)() {
             Ok(true) => {
                 let response_time = start.elapsed();
-                Ok(HealthCheckResult::success(self.check_type_name.clone(), response_time))
-            }
-            Ok(false) => {
-                Ok(HealthCheckResult::failure(
+                Ok(HealthCheckResult::success(
                     self.check_type_name.clone(),
-                    "Check returned false".to_string()
+                    response_time,
                 ))
             }
-            Err(e) => {
-                Ok(HealthCheckResult::failure(
-                    self.check_type_name.clone(),
-                    e.to_string()
-                ))
-            }
+            Ok(false) => Ok(HealthCheckResult::failure(
+                self.check_type_name.clone(),
+                "Check returned false".to_string(),
+            )),
+            Err(e) => Ok(HealthCheckResult::failure(
+                self.check_type_name.clone(),
+                e.to_string(),
+            )),
         }
     }
 
@@ -469,15 +481,22 @@ impl HealthChecker for CompositeHealthCheck {
             }
         }
 
-        let success = if self.require_all { all_success } else { any_success };
+        let success = if self.require_all {
+            all_success
+        } else {
+            any_success
+        };
         let response_time = start.elapsed();
 
         if success {
-            Ok(HealthCheckResult::success("composite".to_string(), response_time))
+            Ok(HealthCheckResult::success(
+                "composite".to_string(),
+                response_time,
+            ))
         } else {
             Ok(HealthCheckResult::failure(
                 "composite".to_string(),
-                messages.join("; ")
+                messages.join("; "),
             ))
         }
     }
@@ -521,28 +540,35 @@ impl HealthCheck {
     /// Convert to a checker instance
     pub fn into_checker(self) -> Box<dyn HealthChecker + Send + Sync> {
         match self {
-            HealthCheck::Tcp { host, port, timeout_ms } => {
-                Box::new(TcpHealthCheck::new(
-                    host,
-                    port,
-                    Duration::from_millis(timeout_ms)
-                ))
-            }
-            HealthCheck::Http { url, expected_status, timeout_ms } => {
-                Box::new(HttpHealthCheck::new(
-                    url,
-                    expected_status,
-                    Duration::from_millis(timeout_ms)
-                ))
-            }
-            HealthCheck::Grpc { host, port, service, timeout_ms } => {
-                Box::new(GrpcHealthCheck::new(
-                    host,
-                    port,
-                    service,
-                    Duration::from_millis(timeout_ms)
-                ))
-            }
+            HealthCheck::Tcp {
+                host,
+                port,
+                timeout_ms,
+            } => Box::new(TcpHealthCheck::new(
+                host,
+                port,
+                Duration::from_millis(timeout_ms),
+            )),
+            HealthCheck::Http {
+                url,
+                expected_status,
+                timeout_ms,
+            } => Box::new(HttpHealthCheck::new(
+                url,
+                expected_status,
+                Duration::from_millis(timeout_ms),
+            )),
+            HealthCheck::Grpc {
+                host,
+                port,
+                service,
+                timeout_ms,
+            } => Box::new(GrpcHealthCheck::new(
+                host,
+                port,
+                service,
+                Duration::from_millis(timeout_ms),
+            )),
         }
     }
 }
@@ -564,11 +590,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_tcp_health_check() {
-        let check = TcpHealthCheck::new(
-            "127.0.0.1".to_string(),
-            9999,
-            Duration::from_secs(1)
-        );
+        let check = TcpHealthCheck::new("127.0.0.1".to_string(), 9999, Duration::from_secs(1));
 
         assert_eq!(check.check_type(), "tcp");
 
@@ -579,10 +601,7 @@ mod tests {
 
     #[test]
     fn test_custom_health_check() {
-        let check = CustomHealthCheck::new(
-            "custom".to_string(),
-            || Ok(true)
-        );
+        let check = CustomHealthCheck::new("custom".to_string(), || Ok(true));
 
         assert_eq!(check.check_type(), "custom");
     }

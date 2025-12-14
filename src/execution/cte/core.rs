@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
 
 use crate::error::DbError;
-use crate::execution::{QueryResult, planner::PlanNode};
+use crate::execution::{planner::PlanNode, QueryResult};
 
 // CTE Definition
 #[derive(Debug, Clone)]
@@ -97,11 +97,7 @@ impl RecursiveCteEvaluator {
                 break;
             }
 
-            let new_rows = self.execute_recursive_step(
-                cte_name,
-                &working_table,
-                recursive_plan,
-            )?;
+            let new_rows = self.execute_recursive_step(cte_name, &working_table, recursive_plan)?;
 
             if new_rows.rows.is_empty() {
                 break;

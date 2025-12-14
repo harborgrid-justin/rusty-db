@@ -14,9 +14,9 @@
 // to make authenticated requests, enabling CSRF attacks. Always specify
 // a whitelist of trusted origins.
 
+use axum::http::{header, HeaderValue, Method};
 use std::collections::HashMap;
 use tower_http::cors::CorsLayer;
-use axum::http::{Method, HeaderValue, header};
 
 /// Trie node for efficient origin matching
 #[derive(Debug, Clone, Default)]
@@ -87,7 +87,8 @@ impl OriginMatcher {
 
         let mut node = &mut self.root;
         for ch in reversed.chars() {
-            node = node.children
+            node = node
+                .children
                 .entry(ch)
                 .or_insert_with(|| Box::new(TrieNode::new()));
         }
@@ -189,10 +190,7 @@ pub fn build_cors_layer(allowed_origins: &[String]) -> CorsLayer {
     // Build the origin matcher
     let matcher = OriginMatcher::from_origins(allowed_origins);
 
-    tracing::info!(
-        "CORS configured with {} allowed origins",
-        matcher.count()
-    );
+    tracing::info!("CORS configured with {} allowed origins", matcher.count());
 
     // Create CORS layer with dynamic origin validation
     CorsLayer::new()
@@ -218,7 +216,7 @@ pub fn build_cors_layer(allowed_origins: &[String]) -> CorsLayer {
                 } else {
                     false
                 }
-            }
+            },
         ))
 }
 
@@ -304,7 +302,10 @@ mod tests {
     #[test]
     fn test_production_origins() {
         let origins = production_origins();
-        assert!(origins.is_empty(), "Production should require explicit configuration");
+        assert!(
+            origins.is_empty(),
+            "Production should require explicit configuration"
+        );
     }
 
     #[test]

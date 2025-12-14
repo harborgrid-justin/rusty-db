@@ -208,26 +208,16 @@ pub enum Message {
     HandshakeResponse(HandshakeResponse),
 
     /// Ping message for keepalive
-    Ping {
-        timestamp: u64,
-    },
+    Ping { timestamp: u64 },
 
     /// Pong response to ping
-    Pong {
-        timestamp: u64,
-    },
+    Pong { timestamp: u64 },
 
     /// Query request
-    QueryRequest {
-        query_id: u64,
-        sql: String,
-    },
+    QueryRequest { query_id: u64, sql: String },
 
     /// Query response
-    QueryResponse {
-        query_id: u64,
-        result: Vec<u8>,
-    },
+    QueryResponse { query_id: u64, result: Vec<u8> },
 
     /// Replication log entry
     ReplicationLog {
@@ -251,22 +241,13 @@ pub enum Message {
     },
 
     /// Error message
-    Error {
-        error_code: u32,
-        message: String,
-    },
+    Error { error_code: u32, message: String },
 
     /// Generic request
-    Request {
-        request_id: u64,
-        data: Vec<u8>,
-    },
+    Request { request_id: u64, data: Vec<u8> },
 
     /// Generic response
-    Response {
-        request_id: u64,
-        data: Vec<u8>,
-    },
+    Response { request_id: u64, data: Vec<u8> },
 }
 
 impl Message {

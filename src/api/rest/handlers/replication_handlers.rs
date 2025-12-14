@@ -5,15 +5,15 @@
 
 use axum::{
     extract::{Path, State},
-    response::Json as AxumJson,
     http::StatusCode,
+    response::Json as AxumJson,
 };
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use parking_lot::RwLock;
-use std::collections::HashMap;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::super::types::*;
@@ -50,7 +50,7 @@ pub struct ReplicationSlot {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateSlotRequest {
     pub slot_name: String,
-    pub slot_type: String, // "logical" or "physical"
+    pub slot_type: String,      // "logical" or "physical"
     pub plugin: Option<String>, // Required for logical slots (e.g., "pgoutput")
     pub temporary: Option<bool>,
 }
@@ -128,12 +128,21 @@ pub async fn configure_replication(
     AxumJson(config): AxumJson<ReplicationConfig>,
 ) -> ApiResult<AxumJson<ReplicationConfigResponse>> {
     // Validate configuration
-    if config.mode != "synchronous" && config.mode != "asynchronous" && config.mode != "semi_synchronous" {
-        return Err(ApiError::new("INVALID_INPUT", "mode must be synchronous, asynchronous, or semi_synchronous"));
+    if config.mode != "synchronous"
+        && config.mode != "asynchronous"
+        && config.mode != "semi_synchronous"
+    {
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "mode must be synchronous, asynchronous, or semi_synchronous",
+        ));
     }
 
     if config.standby_nodes.is_empty() {
-        return Err(ApiError::new("INVALID_INPUT", "standby_nodes cannot be empty"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "standby_nodes cannot be empty",
+        ));
     }
 
     // Store configuration
@@ -142,7 +151,11 @@ pub async fn configure_replication(
         *repl_config = Some(config.clone());
     }
 
-    log::info!("Replication configured: mode={}, standbys={}", config.mode, config.standby_nodes.len());
+    log::info!(
+        "Replication configured: mode={}, standbys={}",
+        config.mode,
+        config.standby_nodes.len()
+    );
 
     Ok(AxumJson(ReplicationConfigResponse {
         success: true,
@@ -166,7 +179,8 @@ pub async fn get_replication_config(
 ) -> ApiResult<AxumJson<ReplicationConfig>> {
     let config = REPLICATION_CONFIG.read();
 
-    config.as_ref()
+    config
+        .as_ref()
         .cloned()
         .map(AxumJson)
         .ok_or_else(|| ApiError::new("NOT_FOUND", "Replication not configured"))
@@ -217,19 +231,28 @@ pub async fn create_replication_slot(
 ) -> ApiResult<(StatusCode, AxumJson<ReplicationSlot>)> {
     // Validate slot type
     if request.slot_type != "logical" && request.slot_type != "physical" {
-        return Err(ApiError::new("INVALID_INPUT", "slot_type must be 'logical' or 'physical'"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "slot_type must be 'logical' or 'physical'",
+        ));
     }
 
     // Logical slots require a plugin
     if request.slot_type == "logical" && request.plugin.is_none() {
-        return Err(ApiError::new("INVALID_INPUT", "plugin is required for logical slots"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "plugin is required for logical slots",
+        ));
     }
 
     // Check if slot already exists
     {
         let slots = REPLICATION_SLOTS.read();
         if slots.contains_key(&request.slot_name) {
-            return Err(ApiError::new("CONFLICT", format!("Replication slot '{}' already exists", request.slot_name)));
+            return Err(ApiError::new(
+                "CONFLICT",
+                format!("Replication slot '{}' already exists", request.slot_name),
+            ));
         }
     }
 
@@ -252,7 +275,11 @@ pub async fn create_replication_slot(
         slots.insert(request.slot_name.clone(), slot.clone());
     }
 
-    log::info!("Replication slot created: {} (type: {})", request.slot_name, request.slot_type);
+    log::info!(
+        "Replication slot created: {} (type: {})",
+        request.slot_name,
+        request.slot_type
+    );
 
     Ok((StatusCode::CREATED, AxumJson(slot)))
 }
@@ -276,10 +303,12 @@ pub async fn get_replication_slot(
 ) -> ApiResult<AxumJson<ReplicationSlot>> {
     let slots = REPLICATION_SLOTS.read();
 
-    slots.get(&name)
-        .cloned()
-        .map(AxumJson)
-        .ok_or_else(|| ApiError::new("NOT_FOUND", format!("Replication slot '{}' not found", name)))
+    slots.get(&name).cloned().map(AxumJson).ok_or_else(|| {
+        ApiError::new(
+            "NOT_FOUND",
+            format!("Replication slot '{}' not found", name),
+        )
+    })
 }
 
 /// Delete a replication slot
@@ -305,10 +334,16 @@ pub async fn delete_replication_slot(
     // Check if slot exists and is not active
     if let Some(slot) = slots.get(&name) {
         if slot.active {
-            return Err(ApiError::new("CONFLICT", "Cannot delete active replication slot"));
+            return Err(ApiError::new(
+                "CONFLICT",
+                "Cannot delete active replication slot",
+            ));
         }
     } else {
-        return Err(ApiError::new("NOT_FOUND", format!("Replication slot '{}' not found", name)));
+        return Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Replication slot '{}' not found", name),
+        ));
     }
 
     slots.remove(&name);
@@ -365,12 +400,18 @@ pub async fn resolve_replication_conflict(
     // Validate strategy
     let valid_strategies = ["use_local", "use_remote", "manual", "last_write_wins"];
     if !valid_strategies.contains(&request.strategy.as_str()) {
-        return Err(ApiError::new("INVALID_INPUT", "Invalid resolution strategy"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "Invalid resolution strategy",
+        ));
     }
 
     // Check if manual data is provided for manual strategy
     if request.strategy == "manual" && request.manual_data.is_none() {
-        return Err(ApiError::new("INVALID_INPUT", "manual_data is required for manual strategy"));
+        return Err(ApiError::new(
+            "INVALID_INPUT",
+            "manual_data is required for manual strategy",
+        ));
     }
 
     let mut conflicts = REPLICATION_CONFLICTS.write();
@@ -386,12 +427,15 @@ pub async fn resolve_replication_conflict(
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
-                .as_secs() as i64
+                .as_secs() as i64,
         );
         conflict.resolution_strategy = Some(request.strategy.clone());
 
-        log::info!("Replication conflict resolved: {} (strategy: {})",
-                   request.conflict_id, request.strategy);
+        log::info!(
+            "Replication conflict resolved: {} (strategy: {})",
+            request.conflict_id,
+            request.strategy
+        );
 
         Ok(AxumJson(serde_json::json!({
             "success": true,
@@ -401,7 +445,10 @@ pub async fn resolve_replication_conflict(
             "resolved_at": conflict.resolved_at
         })))
     } else {
-        Err(ApiError::new("NOT_FOUND", format!("Conflict '{}' not found", request.conflict_id)))
+        Err(ApiError::new(
+            "NOT_FOUND",
+            format!("Conflict '{}' not found", request.conflict_id),
+        ))
     }
 }
 
@@ -455,4 +502,136 @@ pub async fn simulate_replication_conflict(
     log::info!("Simulated replication conflict: {}", conflict_id);
 
     Ok((StatusCode::CREATED, AxumJson(conflict)))
+}
+
+// ============================================================================
+// Replica Control Handlers (Pause/Resume/Lag)
+// ============================================================================
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ReplicaControlResponse {
+    pub replica_id: String,
+    pub status: String,
+    pub message: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ReplicationLagResponse {
+    pub replicas: Vec<ReplicaLagInfo>,
+    pub max_lag_ms: u64,
+    pub avg_lag_ms: u64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct ReplicaLagInfo {
+    pub replica_id: String,
+    pub node_id: String,
+    pub lag_ms: u64,
+    pub lag_bytes: u64,
+    pub state: String,
+    pub last_sync: i64,
+}
+
+/// Pause replication on a specific replica
+#[utoipa::path(
+    post,
+    path = "/api/v1/replication/replicas/{id}/pause",
+    tag = "replication",
+    params(
+        ("id" = String, Path, description = "Replica ID")
+    ),
+    responses(
+        (status = 200, description = "Replication paused", body = ReplicaControlResponse),
+        (status = 404, description = "Replica not found", body = ApiError),
+    )
+)]
+pub async fn pause_replica(
+    State(_state): State<Arc<ApiState>>,
+    Path(id): Path<String>,
+) -> ApiResult<AxumJson<ReplicaControlResponse>> {
+    // In production, this would interact with actual replication manager
+    log::info!("Pausing replication for replica: {}", id);
+
+    Ok(AxumJson(ReplicaControlResponse {
+        replica_id: id.clone(),
+        status: "paused".to_string(),
+        message: format!("Replication paused for replica {}", id),
+    }))
+}
+
+/// Resume replication on a specific replica
+#[utoipa::path(
+    post,
+    path = "/api/v1/replication/replicas/{id}/resume",
+    tag = "replication",
+    params(
+        ("id" = String, Path, description = "Replica ID")
+    ),
+    responses(
+        (status = 200, description = "Replication resumed", body = ReplicaControlResponse),
+        (status = 404, description = "Replica not found", body = ApiError),
+    )
+)]
+pub async fn resume_replica(
+    State(_state): State<Arc<ApiState>>,
+    Path(id): Path<String>,
+) -> ApiResult<AxumJson<ReplicaControlResponse>> {
+    log::info!("Resuming replication for replica: {}", id);
+
+    Ok(AxumJson(ReplicaControlResponse {
+        replica_id: id.clone(),
+        status: "streaming".to_string(),
+        message: format!("Replication resumed for replica {}", id),
+    }))
+}
+
+/// Get replication lag for all replicas
+#[utoipa::path(
+    get,
+    path = "/api/v1/replication/lag",
+    tag = "replication",
+    responses(
+        (status = 200, description = "Replication lag information", body = ReplicationLagResponse),
+    )
+)]
+pub async fn get_replication_lag(
+    State(_state): State<Arc<ApiState>>,
+) -> ApiResult<AxumJson<ReplicationLagResponse>> {
+    // In production, query actual replication state
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+
+    let replicas = vec![
+        ReplicaLagInfo {
+            replica_id: "replica-1".to_string(),
+            node_id: "node-2".to_string(),
+            lag_ms: 5,
+            lag_bytes: 1024,
+            state: "streaming".to_string(),
+            last_sync: now,
+        },
+        ReplicaLagInfo {
+            replica_id: "replica-2".to_string(),
+            node_id: "node-3".to_string(),
+            lag_ms: 12,
+            lag_bytes: 4096,
+            state: "streaming".to_string(),
+            last_sync: now - 1,
+        },
+    ];
+
+    let max_lag = replicas.iter().map(|r| r.lag_ms).max().unwrap_or(0);
+    let avg_lag = if !replicas.is_empty() {
+        replicas.iter().map(|r| r.lag_ms).sum::<u64>() / replicas.len() as u64
+    } else {
+        0
+    };
+
+    Ok(AxumJson(ReplicationLagResponse {
+        replicas,
+        max_lag_ms: max_lag,
+        avg_lag_ms: avg_lag,
+    }))
 }

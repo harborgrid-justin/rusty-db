@@ -6,23 +6,23 @@
 // - Statement and cursor caching
 // - Connection guard implementation
 
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::time::Instant;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::time::Duration;
-use std::collections::HashMap;
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use thiserror::Error;
 use tokio::sync::Semaphore;
 use tokio::time::timeout;
-use serde::{Serialize, Deserialize};
-use thiserror::Error;
 
-use super::wait_queue::WaitQueue;
+use super::lifecycle::ConnectionFactory;
 use super::partitioning::PoolPartition;
 use super::statistics::PoolStatistics;
-use super::lifecycle::ConnectionFactory;
+use super::wait_queue::WaitQueue;
 
 // Errors specific to connection pooling
 #[derive(Error, Debug, Clone)]
@@ -143,21 +143,24 @@ impl PoolConfig {
     // Validate pool configuration
     pub fn validate(&self) -> Result<(), PoolError> {
         if self.min_size > self.max_size {
-            return Err(PoolError::InvalidConfig(
-                format!("min_size ({}) > max_size ({})", self.min_size, self.max_size)
-            ));
+            return Err(PoolError::InvalidConfig(format!(
+                "min_size ({}) > max_size ({})",
+                self.min_size, self.max_size
+            )));
         }
 
         if self.initial_size > self.max_size {
-            return Err(PoolError::InvalidConfig(
-                format!("initial_size ({}) > max_size ({})", self.initial_size, self.max_size)
-            ));
+            return Err(PoolError::InvalidConfig(format!(
+                "initial_size ({}) > max_size ({})",
+                self.initial_size, self.max_size
+            )));
         }
 
         if self.initial_size < self.min_size {
-            return Err(PoolError::InvalidConfig(
-                format!("initial_size ({}) < min_size ({})", self.initial_size, self.min_size)
-            ));
+            return Err(PoolError::InvalidConfig(format!(
+                "initial_size ({}) < min_size ({})",
+                self.initial_size, self.min_size
+            )));
         }
 
         Ok(())
@@ -526,7 +529,10 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
             next_id: AtomicU64::new(1),
             total_created: AtomicU64::new(0),
             total_destroyed: AtomicU64::new(0),
-            wait_queue: Arc::new(WaitQueue::new(config.max_wait_queue_size, config.fair_queue)),
+            wait_queue: Arc::new(WaitQueue::new(
+                config.max_wait_queue_size,
+                config.fair_queue,
+            )),
             partitions: Arc::new(RwLock::new(HashMap::new())),
             stats: Arc::new(PoolStatistics::new()),
             maintenance_handle: Arc::new(Mutex::new(None)),
@@ -555,8 +561,12 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
                     created += 1;
                 }
                 Err(e) => {
-                    tracing::warn!("Failed to create initial connection {}/{}: {}",
-                                 created + 1, target, e);
+                    tracing::warn!(
+                        "Failed to create initial connection {}/{}: {}",
+                        created + 1,
+                        target,
+                        e
+                    );
                     // Continue trying to reach min_size at least
                     if created < self.config.min_size {
                         tokio::time::sleep(Duration::from_millis(100)).await;
@@ -568,9 +578,10 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         }
 
         if created < self.config.min_size {
-            return Err(PoolError::CreationFailed(
-                format!("Could only create {} of {} minimum connections", created, self.config.min_size)
-            ));
+            return Err(PoolError::CreationFailed(format!(
+                "Could only create {} of {} minimum connections",
+                created, self.config.min_size
+            )));
         }
 
         Ok(())
@@ -587,14 +598,20 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 
         let id = self.next_id.fetch_add(1, Ordering::SeqCst);
 
-        let connection = self.factory.create()
+        let connection = self
+            .factory
+            .create()
             .await
             .map_err(|e| PoolError::CreationFailed(e.to_string()))?;
 
         self.total_created.fetch_add(1, Ordering::SeqCst);
         self.stats.record_connection_created();
 
-        Ok(PooledConnection::new(connection, id, self.config.statement_cache_size))
+        Ok(PooledConnection::new(
+            connection,
+            id,
+            self.config.statement_cache_size,
+        ))
     }
 
     // Start background maintenance task
@@ -604,7 +621,8 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         let active = Arc::clone(&self.active);
         let config = Arc::clone(&self.config);
         let closed = Arc::new(AtomicBool::new(self.closed.load(Ordering::Relaxed)));
-        let total_destroyed = Arc::new(AtomicU64::new(self.total_destroyed.load(Ordering::Relaxed)));
+        let total_destroyed =
+            Arc::new(AtomicU64::new(self.total_destroyed.load(Ordering::Relaxed)));
         let stats = Arc::clone(&self.stats);
 
         let handle = tokio::spawn(async move {
@@ -623,13 +641,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
                 }
 
                 // Perform maintenance
-                Self::perform_maintenance(
-                    &idle,
-                    &active,
-                    &config,
-                    &total_destroyed,
-                    &stats,
-                ).await;
+                Self::perform_maintenance(&idle, &active, &config, &total_destroyed, &stats).await;
             }
         });
 
@@ -649,8 +661,8 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 
         // Remove expired connections
         idle_conns.retain(|conn| {
-            let expired = conn.is_expired(config.max_lifetime) ||
-                         conn.is_idle_timeout(config.idle_timeout);
+            let expired =
+                conn.is_expired(config.max_lifetime) || conn.is_idle_timeout(config.idle_timeout);
 
             if expired {
                 total_destroyed.fetch_add(1, Ordering::SeqCst);
@@ -664,8 +676,11 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         if let Some(leak_threshold) = config.leak_detection_threshold {
             for (&conn_id, &acquired_at) in active_conns.iter() {
                 if acquired_at.elapsed() > leak_threshold {
-                    tracing::warn!("Potential connection leak detected: connection {} active for {:?}",
-                                 conn_id, acquired_at.elapsed());
+                    tracing::warn!(
+                        "Potential connection leak detected: connection {} active for {:?}",
+                        conn_id,
+                        acquired_at.elapsed()
+                    );
                     stats.record_leak_detected();
                 }
             }
@@ -674,8 +689,11 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         // Ensure minimum connections
         let total = idle_conns.len() + active_conns.len();
         if total < config.min_size {
-            tracing::info!("Pool below minimum size ({} < {}), will create more connections",
-                         total, config.min_size);
+            tracing::info!(
+                "Pool below minimum size ({} < {}), will create more connections",
+                total,
+                config.min_size
+            );
         }
     }
 
@@ -689,10 +707,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
         self.stats.record_acquire_attempt();
 
         // Try to get connection with timeout
-        let result = timeout(
-            self.config.acquire_timeout,
-            self.acquire_inner()
-        ).await;
+        let result = timeout(self.config.acquire_timeout, self.acquire_inner()).await;
 
         match result {
             Ok(Ok(guard)) => {
@@ -773,7 +788,7 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
                             drop(permit);
                             Err(e)
                         }
-                    }
+                    };
                 }
             }
 
@@ -788,8 +803,9 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
 
         let result = timeout(
             self.config.validation_timeout,
-            self.factory.validate(&conn.connection)
-        ).await;
+            self.factory.validate(&conn.connection),
+        )
+        .await;
 
         match result {
             Ok(Ok(true)) => {
@@ -798,7 +814,9 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
             }
             Ok(Ok(false)) => {
                 conn.state = ConnectionState::Closed;
-                Err(PoolError::ValidationFailed("Connection is not valid".to_string()))
+                Err(PoolError::ValidationFailed(
+                    "Connection is not valid".to_string(),
+                ))
             }
             Ok(Err(e)) => {
                 conn.state = ConnectionState::Closed;
@@ -806,7 +824,9 @@ impl<C: Send + Sync + 'static> ConnectionPool<C> {
             }
             Err(_) => {
                 conn.state = ConnectionState::Closed;
-                Err(PoolError::ValidationFailed("Validation timeout".to_string()))
+                Err(PoolError::ValidationFailed(
+                    "Validation timeout".to_string(),
+                ))
             }
         }
     }

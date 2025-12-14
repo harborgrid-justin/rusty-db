@@ -53,9 +53,14 @@ async fn main() -> Result<()> {
     // 5. Add a mock connection to the pool
     println!("\n5. Adding connection to pool...");
     let node_id = "test-node-1".to_string();
-    let conn = pool.add_connection(node_id.clone(), TransportType::Tcp).await?;
+    let conn = pool
+        .add_connection(node_id.clone(), TransportType::Tcp)
+        .await?;
     println!("   ✓ Connection added for peer: {}", node_id);
-    println!("   ✓ Total connections: {}", pool.connection_count(&node_id).await);
+    println!(
+        "   ✓ Total connections: {}",
+        pool.connection_count(&node_id).await
+    );
 
     // 6. Create message codec
     println!("\n6. Creating message codec...");
@@ -117,7 +122,10 @@ async fn main() -> Result<()> {
         println!("      - Total connections: {}", stat.total_connections);
         println!("      - Healthy connections: {}", stat.healthy_connections);
         println!("      - Total bytes sent: {}", stat.total_bytes_sent);
-        println!("      - Total bytes received: {}", stat.total_bytes_received);
+        println!(
+            "      - Total bytes received: {}",
+            stat.total_bytes_received
+        );
     }
 
     println!("\n=== Demo Complete ===");

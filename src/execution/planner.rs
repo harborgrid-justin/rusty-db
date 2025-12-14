@@ -1,5 +1,5 @@
-use crate::parser::{SqlStatement, JoinType, OrderByClause};
 use crate::error::DbError;
+use crate::parser::{JoinType, OrderByClause, SqlStatement};
 
 // Query plan node
 #[derive(Debug, Clone)]
@@ -94,7 +94,7 @@ impl Planner {
                     } else if columns.contains(&"*".to_string()) {
                         // Mixed wildcard and specific columns is invalid
                         return Err(DbError::SqlParse(
-                            "Cannot mix '*' with specific column names".to_string()
+                            "Cannot mix '*' with specific column names".to_string(),
                         ));
                     } else {
                         // Specific columns

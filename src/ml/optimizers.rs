@@ -3,7 +3,7 @@
 // This module provides state-of-the-art optimization algorithms for ML training,
 // including Adam, SGD with momentum, and adaptive learning rate scheduling.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // Common trait for all optimizers
 pub trait Optimizer: Send + Sync {
@@ -246,7 +246,10 @@ impl LRScheduler {
                 lr_min + (self.initial_lr - lr_min) * cosine_term
             }
 
-            LRSchedule::WarmupExponential { warmup_steps, gamma } => {
+            LRSchedule::WarmupExponential {
+                warmup_steps,
+                gamma,
+            } => {
                 if self.current_step <= warmup_steps {
                     // Linear warmup
                     self.initial_lr * (self.current_step as f64 / warmup_steps as f64)
@@ -291,12 +294,8 @@ pub fn create_optimizer(optimizer_type: OptimizerType, learning_rate: f64) -> Bo
         OptimizerType::SGD => {
             Box::new(SGDMomentum::new(learning_rate, 0.0)) // momentum = 0 is vanilla SGD
         }
-        OptimizerType::SGDMomentum => {
-            Box::new(SGDMomentum::new(learning_rate, 0.9))
-        }
-        OptimizerType::Adam => {
-            Box::new(AdamOptimizer::new(learning_rate))
-        }
+        OptimizerType::SGDMomentum => Box::new(SGDMomentum::new(learning_rate, 0.9)),
+        OptimizerType::Adam => Box::new(AdamOptimizer::new(learning_rate)),
     }
 }
 
@@ -333,10 +332,7 @@ mod tests {
 
     #[test]
     fn test_exponential_decay_schedule() {
-        let mut scheduler = LRScheduler::new(
-            1.0,
-            LRSchedule::ExponentialDecay { gamma: 0.9 },
-        );
+        let mut scheduler = LRScheduler::new(1.0, LRSchedule::ExponentialDecay { gamma: 0.9 });
 
         let lr1 = scheduler.step();
         assert!((lr1 - 0.9).abs() < 1e-10);

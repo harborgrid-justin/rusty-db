@@ -3,29 +3,24 @@
 // Military-grade network security hardening with modular components.
 
 pub mod firewall_rules;
-pub mod rate_limiting;
 pub mod intrusion_detection;
 pub mod manager;
+pub mod rate_limiting;
 
 // Re-export main types
 pub use firewall_rules::{
-    IPReputationChecker, IPReputation, ViolationType,
-    ReputationConfig, ReputationStats,
-    ConnectionGuard, ConnectionLimits, ConnectionStats,
+    ConnectionGuard, ConnectionLimits, ConnectionStats, IPReputation, IPReputationChecker,
+    ReputationConfig, ReputationStats, ViolationType,
 };
 
 pub use rate_limiting::{
-    AdaptiveRateLimiter, RateLimitConfig, TokenBucket, SlidingWindow, RateLimitStats,
-    DDoSMitigator, DDoSThresholds, DDoSAttack, DDoSAttackType,
-    MitigationAction, DDoSStats, DDoSAnalysisResult,
+    AdaptiveRateLimiter, DDoSAnalysisResult, DDoSAttack, DDoSAttackType, DDoSMitigator, DDoSStats,
+    DDoSThresholds, MitigationAction, RateLimitConfig, RateLimitStats, SlidingWindow, TokenBucket,
 };
 
 pub use intrusion_detection::{
-    ProtocolValidator, ValidationRules, ValidationStats,
-    TLSEnforcer, TLSConfig, TLSVersion, TLSStats,
-    NetworkAnomalyDetector, Anomaly, AnomalyType, AnomalyStats,
+    Anomaly, AnomalyStats, AnomalyType, NetworkAnomalyDetector, ProtocolValidator, TLSConfig,
+    TLSEnforcer, TLSStats, TLSVersion, ValidationRules, ValidationStats,
 };
 
-pub use manager::{
-    NetworkHardeningManager, NetworkHardeningStats,
-};
+pub use manager::{NetworkHardeningManager, NetworkHardeningStats};

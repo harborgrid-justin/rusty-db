@@ -3,13 +3,13 @@
 // MongoDB-like query syntax for document queries with comparison operators,
 // logical operators, array operators, and regular expressions.
 
+use super::document::{Document, DocumentId};
+use super::jsonpath::JsonPathEvaluator;
+use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::cmp::Ordering;
 use std::collections::HashMap;
-use crate::error::{Result, DbError};
-use super::document::{Document, DocumentId};
-use super::jsonpath::JsonPathEvaluator;
 
 // Query document for Query By Example
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -35,7 +35,7 @@ impl QueryDocument {
             })
         } else {
             Err(DbError::InvalidInput(
-                "Query must be a JSON object".to_string()
+                "Query must be a JSON object".to_string(),
             ))
         }
     }
@@ -88,7 +88,11 @@ impl QueryDocument {
         }
     }
 
-    fn evaluate_operators(&self, field_value: &Value, operators: &serde_json::Map<String, Value>) -> Result<bool> {
+    fn evaluate_operators(
+        &self,
+        field_value: &Value,
+        operators: &serde_json::Map<String, Value>,
+    ) -> Result<bool> {
         for (op, value) in operators {
             let result = match op.as_str() {
                 "$eq" => self.op_eq(field_value, value),
@@ -107,9 +111,7 @@ impl QueryDocument {
                 "$all" => self.op_all(field_value, value),
                 "$elemMatch" => self.op_elem_match(field_value, value)?,
                 _ => {
-                    return Err(DbError::InvalidInput(
-                        format!("Unknown operator: {}", op)
-                    ));
+                    return Err(DbError::InvalidInput(format!("Unknown operator: {}", op)));
                 }
             };
 
@@ -242,10 +244,7 @@ impl QueryDocument {
     fn op_mod(&self, field_value: &Value, query_value: &Value) -> bool {
         if let (Value::Number(n), Value::Array(arr)) = (field_value, query_value) {
             if arr.len() == 2 {
-                if let (Some(divisor), Some(remainder)) = (
-                    arr[0].as_i64(),
-                    arr[1].as_i64(),
-                ) {
+                if let (Some(divisor), Some(remainder)) = (arr[0].as_i64(), arr[1].as_i64()) {
                     if let Some(num) = n.as_i64() {
                         return num % divisor == remainder;
                     }
@@ -269,9 +268,7 @@ impl QueryDocument {
             }
             Ok(true)
         } else {
-            Err(DbError::InvalidInput(
-                "$and requires an array".to_string()
-            ))
+            Err(DbError::InvalidInput("$and requires an array".to_string()))
         }
     }
 
@@ -293,9 +290,7 @@ impl QueryDocument {
             }
             Ok(false)
         } else {
-            Err(DbError::InvalidInput(
-                "$or requires an array".to_string()
-            ))
+            Err(DbError::InvalidInput("$or requires an array".to_string()))
         }
     }
 
@@ -312,9 +307,7 @@ impl QueryDocument {
             }
             Ok(true)
         } else {
-            Err(DbError::InvalidInput(
-                "$not requires an object".to_string()
-            ))
+            Err(DbError::InvalidInput("$not requires an object".to_string()))
         }
     }
 
@@ -426,7 +419,7 @@ impl Projection {
             Ok(Self { fields })
         } else {
             Err(DbError::InvalidInput(
-                "Projection must be a JSON object".to_string()
+                "Projection must be a JSON object".to_string(),
             ))
         }
     }
@@ -571,8 +564,7 @@ impl GeoQuery {
         let dlat = lat2 - lat1;
         let dlon = lon2 - lon1;
 
-        let a = (dlat / 2.0).sin().powi(2)
-            + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
+        let a = (dlat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (dlon / 2.0).sin().powi(2);
         let c = 2.0 * a.sqrt().atan2((1.0 - a).sqrt());
 
         EARTH_RADIUS_METERS * c
@@ -600,73 +592,57 @@ impl QueryBuilder {
 
     // Add not-equal condition
     pub fn ne(mut self, field: impl Into<String>, value: Value) -> Self {
-        self.query.add_condition(
-            field.into(),
-            serde_json::json!({"$ne": value}),
-        );
+        self.query
+            .add_condition(field.into(), serde_json::json!({"$ne": value}));
         self
     }
 
     // Add greater-than condition
     pub fn gt(mut self, field: impl Into<String>, value: Value) -> Self {
-        self.query.add_condition(
-            field.into(),
-            serde_json::json!({"$gt": value}),
-        );
+        self.query
+            .add_condition(field.into(), serde_json::json!({"$gt": value}));
         self
     }
 
     // Add greater-than-or-equal condition
     pub fn gte(mut self, field: impl Into<String>, value: Value) -> Self {
-        self.query.add_condition(
-            field.into(),
-            serde_json::json!({"$gte": value}),
-        );
+        self.query
+            .add_condition(field.into(), serde_json::json!({"$gte": value}));
         self
     }
 
     // Add less-than condition
     pub fn lt(mut self, field: impl Into<String>, value: Value) -> Self {
-        self.query.add_condition(
-            field.into(),
-            serde_json::json!({"$lt": value}),
-        );
+        self.query
+            .add_condition(field.into(), serde_json::json!({"$lt": value}));
         self
     }
 
     // Add less-than-or-equal condition
     pub fn lte(mut self, field: impl Into<String>, value: Value) -> Self {
-        self.query.add_condition(
-            field.into(),
-            serde_json::json!({"$lte": value}),
-        );
+        self.query
+            .add_condition(field.into(), serde_json::json!({"$lte": value}));
         self
     }
 
     // Add in-array condition
     pub fn in_array(mut self, field: impl Into<String>, values: Vec<Value>) -> Self {
-        self.query.add_condition(
-            field.into(),
-            serde_json::json!({"$in": values}),
-        );
+        self.query
+            .add_condition(field.into(), serde_json::json!({"$in": values}));
         self
     }
 
     // Add regex condition
     pub fn regex(mut self, field: impl Into<String>, pattern: impl Into<String>) -> Self {
-        self.query.add_condition(
-            field.into(),
-            serde_json::json!({"$regex": pattern.into()}),
-        );
+        self.query
+            .add_condition(field.into(), serde_json::json!({"$regex": pattern.into()}));
         self
     }
 
     // Add exists condition
     pub fn exists(mut self, field: impl Into<String>, exists: bool) -> Self {
-        self.query.add_condition(
-            field.into(),
-            serde_json::json!({"$exists": exists}),
-        );
+        self.query
+            .add_condition(field.into(), serde_json::json!({"$exists": exists}));
         self
     }
 
@@ -691,7 +667,8 @@ mod tests {
     fn test_equality_query() {
         let query = QueryDocument::from_json(json!({
             "name": "Alice"
-        })).unwrap();
+        }))
+        .unwrap();
 
         let doc = json!({
             "name": "Alice",
@@ -705,7 +682,8 @@ mod tests {
     fn test_comparison_operators() {
         let query = QueryDocument::from_json(json!({
             "age": {"$gt": 25, "$lt": 35}
-        })).unwrap();
+        }))
+        .unwrap();
 
         let doc1 = json!({"age": 30});
         let doc2 = json!({"age": 20});
@@ -718,7 +696,8 @@ mod tests {
     fn test_array_operators() {
         let query = QueryDocument::from_json(json!({
             "tags": {"$in": ["rust", "database"]}
-        })).unwrap();
+        }))
+        .unwrap();
 
         let doc = json!({"tags": "rust"});
         assert!(query.matches_value(&doc).unwrap());
@@ -731,7 +710,8 @@ mod tests {
                 {"age": {"$lt": 25}},
                 {"age": {"$gt": 35}}
             ]
-        })).unwrap();
+        }))
+        .unwrap();
 
         let doc1 = json!({"age": 20});
         let doc2 = json!({"age": 30});

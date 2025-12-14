@@ -280,7 +280,11 @@ impl LruEvictionPolicy {
             list.push(LruNode {
                 frame_id: i as FrameId,
                 prev: if i > 0 { Some(i - 1) } else { None },
-                next: if i < num_frames - 1 { Some(i + 1) } else { None },
+                next: if i < num_frames - 1 {
+                    Some(i + 1)
+                } else {
+                    None
+                },
             });
         }
 
@@ -410,7 +414,11 @@ impl EvictionPolicy for LruEvictionPolicy {
 
         for i in 0..num_frames {
             list[i].prev = if i > 0 { Some(i - 1) } else { None };
-            list[i].next = if i < num_frames - 1 { Some(i + 1) } else { None };
+            list[i].next = if i < num_frames - 1 {
+                Some(i + 1)
+            } else {
+                None
+            };
         }
 
         *self.head.lock() = if num_frames > 0 { Some(0) } else { None };
@@ -548,9 +556,7 @@ impl TwoQEvictionPolicy {
             }
         }
         a1out.push_back(frame_id);
-        self.frame_queue
-            .write()
-            .insert(frame_id, QueueType::A1Out);
+        self.frame_queue.write().insert(frame_id, QueueType::A1Out);
     }
 
     /// Add frame to Am queue (LRU)
@@ -844,7 +850,9 @@ pub fn create_eviction_policy(
         EvictionPolicyType::TwoQ => Arc::new(TwoQEvictionPolicy::new(num_frames)),
         EvictionPolicyType::LruK(k) => Arc::new(LruKEvictionPolicy::new(num_frames, k)),
         EvictionPolicyType::Arc => Arc::new(crate::buffer::arc::ArcEvictionPolicy::new(num_frames)),
-        EvictionPolicyType::Lirs => Arc::new(crate::buffer::lirs::LirsEvictionPolicy::new(num_frames)),
+        EvictionPolicyType::Lirs => {
+            Arc::new(crate::buffer::lirs::LirsEvictionPolicy::new(num_frames))
+        }
     }
 }
 

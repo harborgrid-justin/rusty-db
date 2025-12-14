@@ -1,13 +1,13 @@
 // Self-service tenant provisioning with workflows and automation
 // Implements template-based provisioning, tier configuration, and lifecycle management
 
-use std::fmt;
-use std::collections::VecDeque;
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
+use std::sync::Arc;
 use std::time::{Duration, SystemTime};
+use tokio::sync::RwLock;
 
 // Provisioning error types
 #[derive(Debug, Clone)]
@@ -25,11 +25,15 @@ impl fmt::Display for ProvisioningError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ProvisioningError::TemplateNotFound(name) => write!(f, "Template not found: {}", name),
-            ProvisioningError::InvalidConfiguration(msg) => write!(f, "Invalid configuration: {}", msg),
+            ProvisioningError::InvalidConfiguration(msg) => {
+                write!(f, "Invalid configuration: {}", msg)
+            }
             ProvisioningError::QuotaExceeded(msg) => write!(f, "Quota exceeded: {}", msg),
             ProvisioningError::ApprovalRequired(msg) => write!(f, "Approval required: {}", msg),
             ProvisioningError::ProvisioningFailed(msg) => write!(f, "Provisioning failed: {}", msg),
-            ProvisioningError::DeprovisioningFailed(msg) => write!(f, "Deprovisioning failed: {}", msg),
+            ProvisioningError::DeprovisioningFailed(msg) => {
+                write!(f, "Deprovisioning failed: {}", msg)
+            }
             ProvisioningError::WorkflowError(msg) => write!(f, "Workflow error: {}", msg),
         }
     }
@@ -163,9 +167,21 @@ impl ProvisioningTemplate {
             encryption_at_rest: true,
             encryption_in_transit: true,
             monitoring_enabled: true,
-            default_schemas: vec!["PUBLIC".to_string(), "APP".to_string(), "ANALYTICS".to_string()],
-            default_tablespaces: vec!["USERS".to_string(), "TEMP".to_string(), "INDEX".to_string(), "LOB".to_string()],
-            initialization_scripts: vec!["init_premium.sql".to_string(), "setup_ha.sql".to_string()],
+            default_schemas: vec![
+                "PUBLIC".to_string(),
+                "APP".to_string(),
+                "ANALYTICS".to_string(),
+            ],
+            default_tablespaces: vec![
+                "USERS".to_string(),
+                "TEMP".to_string(),
+                "INDEX".to_string(),
+                "LOB".to_string(),
+            ],
+            initialization_scripts: vec![
+                "init_premium.sql".to_string(),
+                "setup_ha.sql".to_string(),
+            ],
         }
     }
 
@@ -417,7 +433,8 @@ impl ProvisioningService {
     ) -> ProvisioningResult<String> {
         // Validate template exists
         let templates = self.templates.read().await;
-        let template = templates.get(&template_id)
+        let template = templates
+            .get(&template_id)
             .ok_or_else(|| ProvisioningError::TemplateNotFound(template_id.clone()))?;
 
         let tier = template.tier;
@@ -479,17 +496,16 @@ impl ProvisioningService {
         approval_queue.push_back(request_id.to_string());
 
         Err(ProvisioningError::ApprovalRequired(
-            "Request requires approval".to_string()
+            "Request requires approval".to_string(),
         ))
     }
 
     // Approve provisioning request
     pub async fn approve_request(&self, request_id: &str) -> ProvisioningResult<()> {
         let mut requests = self.requests.write().await;
-        let request = requests.get_mut(request_id)
-            .ok_or_else(|| ProvisioningError::WorkflowError(
-                "Request not found".to_string()
-            ))?;
+        let request = requests
+            .get_mut(request_id)
+            .ok_or_else(|| ProvisioningError::WorkflowError("Request not found".to_string()))?;
 
         request.status = RequestStatus::Approved;
         drop(requests);
@@ -645,7 +661,8 @@ impl ProvisioningService {
     async fn execute_workflow(&self, workflow_id: &str) -> ProvisioningResult<()> {
         // Update workflow status
         let mut workflows = self.workflows.write().await;
-        let workflow = workflows.get_mut(workflow_id)
+        let workflow = workflows
+            .get_mut(workflow_id)
             .ok_or_else(|| ProvisioningError::WorkflowError("Workflow not found".to_string()))?;
 
         workflow.status = WorkflowStatus::InProgress;
@@ -714,7 +731,8 @@ impl ProvisioningService {
         let request_id = uuid::Uuid::new_v4().to_string();
         let policy = policy.unwrap_or_default();
 
-        let scheduled_at = SystemTime::now() + Duration::from_secs(policy.grace_period_days as u64 * 86400);
+        let scheduled_at =
+            SystemTime::now() + Duration::from_secs(policy.grace_period_days as u64 * 86400);
 
         let request = DeprovisioningRequest {
             request_id: request_id.clone(),
@@ -736,10 +754,9 @@ impl ProvisioningService {
     // Execute deprovisioning
     pub async fn execute_deprovisioning(&self, request_id: &str) -> ProvisioningResult<()> {
         let mut requests = self.deprovisioning_requests.write().await;
-        let request = requests.get_mut(request_id)
-            .ok_or_else(|| ProvisioningError::DeprovisioningFailed(
-                "Request not found".to_string()
-            ))?;
+        let request = requests.get_mut(request_id).ok_or_else(|| {
+            ProvisioningError::DeprovisioningFailed("Request not found".to_string())
+        })?;
 
         request.status = RequestStatus::Provisioning;
 
@@ -783,8 +800,8 @@ impl Default for ProvisioningService {
 
 #[cfg(test)]
 mod tests {
-    use std::thread::sleep;
     use super::*;
+    use std::thread::sleep;
 
     #[tokio::test]
     async fn test_template_registration() {
@@ -801,14 +818,16 @@ mod tests {
     async fn test_provisioning_request() {
         let service = ProvisioningService::new();
 
-        let result = service.submit_request(
-            "user@example.com".to_string(),
-            "test-tenant".to_string(),
-            "tpl_basic".to_string(),
-            HashMap::new(),
-            "Testing".to_string(),
-            "CC001".to_string(),
-        ).await;
+        let result = service
+            .submit_request(
+                "user@example.com".to_string(),
+                "test-tenant".to_string(),
+                "tpl_basic".to_string(),
+                HashMap::new(),
+                "Testing".to_string(),
+                "CC001".to_string(),
+            )
+            .await;
 
         assert!(result.is_ok());
     }
@@ -817,14 +836,17 @@ mod tests {
     async fn test_workflow_execution() {
         let service = ProvisioningService::new();
 
-        let request_id = service.submit_request(
-            "user@example.com".to_string(),
-            "test-tenant".to_string(),
-            "tpl_free".to_string(),
-            HashMap::new(),
-            "Testing".to_string(),
-            "CC001".to_string(),
-        ).await.unwrap();
+        let request_id = service
+            .submit_request(
+                "user@example.com".to_string(),
+                "test-tenant".to_string(),
+                "tpl_free".to_string(),
+                HashMap::new(),
+                "Testing".to_string(),
+                "CC001".to_string(),
+            )
+            .await
+            .unwrap();
 
         // Wait for workflow to complete
         tokio::time::sleep(Duration::from_secs(2)).await.await;
@@ -839,12 +861,14 @@ mod tests {
     async fn test_deprovisioning_request() {
         let service = ProvisioningService::new();
 
-        let result = service.submit_deprovisioning_request(
-            "tenant-123".to_string(),
-            "admin@example.com".to_string(),
-            "No longer needed".to_string(),
-            None,
-        ).await;
+        let result = service
+            .submit_deprovisioning_request(
+                "tenant-123".to_string(),
+                "admin@example.com".to_string(),
+                "No longer needed".to_string(),
+                None,
+            )
+            .await;
 
         assert!(result.is_ok());
     }

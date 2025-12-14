@@ -122,24 +122,13 @@ impl SimdHashJoin {
         probe_key_col: usize,
     ) -> Result<QueryResult, DbError> {
         // Phase 1: Partition and build
-        let partitions = self.partition_and_build(
-            &build_side,
-            build_key_col,
-        )?;
+        let partitions = self.partition_and_build(&build_side, build_key_col)?;
 
         // Phase 2: Probe with SIMD
-        let matches = self.probe_with_simd(
-            &probe_side,
-            probe_key_col,
-            &partitions,
-        )?;
+        let matches = self.probe_with_simd(&probe_side, probe_key_col, &partitions)?;
 
         // Phase 3: Materialize results
-        let result = self.materialize(
-            &build_side,
-            &probe_side,
-            matches,
-        )?;
+        let result = self.materialize(&build_side, &probe_side, matches)?;
 
         Ok(result)
     }
@@ -153,21 +142,22 @@ impl SimdHashJoin {
         let num_partitions = self.config.num_partitions;
 
         // Create partitions
-        let partitions: Vec<_> = (0..num_partitions)
-            .map(|_| Partition::new())
-            .collect();
+        let partitions: Vec<_> = (0..num_partitions).map(|_| Partition::new()).collect();
 
         let partitions = Arc::new(RwLock::new(partitions));
 
         // Partition build side in parallel
-        build_side.rows.par_iter().try_for_each(|row| -> Result<(), DbError> {
-            if let Some(key) = row.get(key_col) {
-                let partition_id = self.hash_partition(key);
-                let mut parts = partitions.write();
-                parts[partition_id].rows.push(row.clone());
-            }
-            Ok(())
-        })?;
+        build_side
+            .rows
+            .par_iter()
+            .try_for_each(|row| -> Result<(), DbError> {
+                if let Some(key) = row.get(key_col) {
+                    let partition_id = self.hash_partition(key);
+                    let mut parts = partitions.write();
+                    parts[partition_id].rows.push(row.clone());
+                }
+                Ok(())
+            })?;
 
         // Build Swiss tables and Bloom filters in parallel
         let mut partitions = Arc::try_unwrap(partitions)
@@ -225,7 +215,8 @@ impl SimdHashJoin {
         };
 
         // Probe each partition in parallel
-        let matches: Vec<Vec<Match>> = probe_partitions.par_iter()
+        let matches: Vec<Vec<Match>> = probe_partitions
+            .par_iter()
             .enumerate()
             .map(|(partition_id, probe_indices)| {
                 let partition = &partitions[partition_id];
@@ -408,10 +399,7 @@ mod tests {
         for i in 0..10_000 {
             build_rows.push(vec![format!("{}", i), format!("name_{}", i)]);
         }
-        let build = QueryResult::new(
-            vec!["id".to_string(), "name".to_string()],
-            build_rows,
-        );
+        let build = QueryResult::new(vec!["id".to_string(), "name".to_string()], build_rows);
 
         // Probe side: 100K rows (10x larger)
         let mut probe_rows = Vec::new();
@@ -419,10 +407,7 @@ mod tests {
             let id = i % 10_000; // Ensure matches
             probe_rows.push(vec![format!("{}", id), format!("value_{}", i)]);
         }
-        let probe = QueryResult::new(
-            vec!["id".to_string(), "value".to_string()],
-            probe_rows,
-        );
+        let probe = QueryResult::new(vec!["id".to_string(), "value".to_string()], probe_rows);
 
         let result = join.execute(build, probe, 0, 0).unwrap();
 
@@ -479,15 +464,9 @@ mod tests {
 
         let join = SimdHashJoin::new(config);
 
-        let build = QueryResult::new(
-            vec!["id".to_string()],
-            vec![vec!["1".to_string()]],
-        );
+        let build = QueryResult::new(vec!["id".to_string()], vec![vec!["1".to_string()]]);
 
-        let probe = QueryResult::new(
-            vec!["id".to_string()],
-            vec![vec!["1".to_string()]],
-        );
+        let probe = QueryResult::new(vec!["id".to_string()], vec![vec!["1".to_string()]]);
 
         let result = join.execute(build, probe, 0, 0).unwrap();
         assert_eq!(result.rows.len(), 1);

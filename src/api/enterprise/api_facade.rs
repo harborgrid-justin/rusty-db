@@ -2,12 +2,12 @@
 //
 // Part of the Enterprise Integration Layer for RustyDB
 
+use crate::api::{CorrelationId, RateLimitConfig};
+use crate::error::DbError;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant, SystemTime};
-use serde::{Serialize, Deserialize};
-use crate::api::{CorrelationId, RateLimitConfig};
-use crate::error::DbError;
 
 // ============================================================================
 // SECTION 4: API FACADE LAYER (700+ lines)
@@ -126,12 +126,19 @@ impl ResponseAggregator {
         strategies.insert(name.to_string(), strategy);
     }
 
-    pub fn aggregate(&self, strategy_name: &str, responses: Vec<UnifiedApiResponse>) -> Result<UnifiedApiResponse, DbError> {
+    pub fn aggregate(
+        &self,
+        strategy_name: &str,
+        responses: Vec<UnifiedApiResponse>,
+    ) -> Result<UnifiedApiResponse, DbError> {
         let strategies = self.aggregation_strategies.read().unwrap();
         if let Some(strategy) = strategies.get(strategy_name) {
             strategy.aggregate(responses)
         } else {
-            Err(DbError::NotFound(format!("Aggregation strategy not found: {}", strategy_name)))
+            Err(DbError::NotFound(format!(
+                "Aggregation strategy not found: {}",
+                strategy_name
+            )))
         }
     }
 }
@@ -184,9 +191,7 @@ impl BatchRequestHandler {
                     } else {
                         failure_count += 1;
                         if batch.atomic {
-                            return Err(DbError::Internal(
-                                "Atomic batch failed".to_string()
-                            ));
+                            return Err(DbError::Internal("Atomic batch failed".to_string()));
                         }
                     }
                     responses.push(response);
@@ -243,8 +248,7 @@ impl ApiVersionManager {
     pub fn is_version_supported(&self, version: &str) -> bool {
         let versions = self.versions.read().unwrap();
         if let Some(v) = versions.get(version) {
-            !v.deprecated || v.sunset_date.is_none() ||
-                v.sunset_date.unwrap() > SystemTime::now()
+            !v.deprecated || v.sunset_date.is_none() || v.sunset_date.unwrap() > SystemTime::now()
         } else {
             false
         }
@@ -272,7 +276,11 @@ impl BackwardCompatibilityLayer {
         }
     }
 
-    pub fn register_transformer(&self, from_version: &str, transformer: Box<dyn RequestTransformer>) {
+    pub fn register_transformer(
+        &self,
+        from_version: &str,
+        transformer: Box<dyn RequestTransformer>,
+    ) {
         let mut transformers = self.transformers.write().unwrap();
         transformers.insert(from_version.to_string(), transformer);
     }
@@ -330,15 +338,23 @@ impl RateLimiter {
         limits.insert(key.to_string(), limit);
 
         let mut usage = self.usage.write().unwrap();
-        usage.insert(key.to_string(), RateLimitUsage {
-            tokens: burst_size,
-            last_refill: Instant::now(),
-        });
+        usage.insert(
+            key.to_string(),
+            RateLimitUsage {
+                tokens: burst_size,
+                last_refill: Instant::now(),
+            },
+        );
     }
 
-    pub fn check_rate_limit(&self, key: &str, _option: Option<&RateLimitConfig>) -> Result<(), DbError> {
+    pub fn check_rate_limit(
+        &self,
+        key: &str,
+        _option: Option<&RateLimitConfig>,
+    ) -> Result<(), DbError> {
         let limits = self.limits.read().unwrap();
-        let limit = limits.get(key)
+        let limit = limits
+            .get(key)
             .ok_or_else(|| DbError::NotFound(format!("Rate limit not found for: {}", key)))?;
 
         let requests_per_second = limit.requests_per_second;
@@ -381,13 +397,19 @@ impl ApiGatewayCoordinator {
         }
     }
 
-    pub async fn process_request(&self, mut request: UnifiedApiRequest) -> Result<UnifiedApiResponse, DbError> {
+    pub async fn process_request(
+        &self,
+        mut request: UnifiedApiRequest,
+    ) -> Result<UnifiedApiResponse, DbError> {
         // Check rate limit
         let rate_key = format!("{}:{}", request.correlation_id.as_str(), request.endpoint);
         self.rate_limiter.check_rate_limit(&rate_key, None)?;
 
         // Check version
-        if !self.version_manager.is_version_supported(&request.api_version) {
+        if !self
+            .version_manager
+            .is_version_supported(&request.api_version)
+        {
             return Err(DbError::InvalidInput(format!(
                 "API version {} is not supported",
                 request.api_version

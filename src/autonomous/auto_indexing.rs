@@ -3,14 +3,14 @@
 // Intelligent index recommendation, creation, consolidation, and maintenance
 // based on workload analysis and query patterns.
 
-use std::fmt;
-use std::time::SystemTime;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::{Duration};
+use crate::Result;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::Result;
+use std::collections::HashMap;
+use std::fmt;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 
 // Index type recommendation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -48,17 +48,21 @@ pub struct ColumnAccessPattern {
     pub order_by_usage: usize,
     pub group_by_usage: usize,
     pub join_usage: usize,
-    pub filter_selectivity: f64,  // 0.0 = filters nothing, 1.0 = filters everything
+    pub filter_selectivity: f64, // 0.0 = filters nothing, 1.0 = filters everything
     pub cardinality: usize,
 }
 
 impl ColumnAccessPattern {
     pub fn total_accesses(&self) -> usize {
-        self.equality_searches + self.range_searches + self.order_by_usage + self.group_by_usage + self.join_usage
+        self.equality_searches
+            + self.range_searches
+            + self.order_by_usage
+            + self.group_by_usage
+            + self.join_usage
     }
 
     pub fn is_low_cardinality(&self) -> bool {
-        self.cardinality < 100  // Threshold for bitmap index consideration
+        self.cardinality < 100 // Threshold for bitmap index consideration
     }
 }
 
@@ -71,20 +75,20 @@ pub struct IndexCandidate {
     pub index_type: IndexType,
     pub estimated_size_mb: usize,
     pub estimated_creation_time_sec: u64,
-    pub expected_query_improvement: f64,  // Percentage improvement
+    pub expected_query_improvement: f64, // Percentage improvement
     pub queries_benefited: usize,
-    pub write_overhead: f64,  // Percentage slowdown for writes
+    pub write_overhead: f64, // Percentage slowdown for writes
     pub benefit_score: f64,
-    pub predicate: Option<String>,  // For partial indexes
-    pub include_columns: Vec<String>,  // For covering indexes
+    pub predicate: Option<String>,    // For partial indexes
+    pub include_columns: Vec<String>, // For covering indexes
 }
 
 impl IndexCandidate {
     pub fn calculate_benefit_score(&mut self) {
         // Benefit = (query improvement * queries benefited) - (write overhead + space cost)
         let query_benefit = self.expected_query_improvement * self.queries_benefited as f64;
-        let write_cost = self.write_overhead * 10.0;  // Weight write overhead
-        let space_cost = self.estimated_size_mb as f64 * 0.1;  // Small weight for space
+        let write_cost = self.write_overhead * 10.0; // Weight write overhead
+        let space_cost = self.estimated_size_mb as f64 * 0.1; // Small weight for space
 
         self.benefit_score = query_benefit - write_cost - space_cost;
     }
@@ -126,10 +130,7 @@ impl IndexStatistics {
         }
 
         // Check if columns are a prefix
-        self.columns
-            .iter()
-            .zip(&other.columns)
-            .all(|(a, b)| a == b)
+        self.columns.iter().zip(&other.columns).all(|(a, b)| a == b)
     }
 }
 
@@ -164,30 +165,50 @@ impl IndexAdvisor {
 
         patterns
             .entry(key.clone())
-            .and_modify(|pattern| {
-                match access_type {
-                    ColumnAccessType::EqualitySearch => pattern.equality_searches += 1,
-                    ColumnAccessType::RangeSearch => pattern.range_searches += 1,
-                    ColumnAccessType::OrderBy => pattern.order_by_usage += 1,
-                    ColumnAccessType::GroupBy => pattern.group_by_usage += 1,
-                    ColumnAccessType::Join => pattern.join_usage += 1,
-                }
+            .and_modify(|pattern| match access_type {
+                ColumnAccessType::EqualitySearch => pattern.equality_searches += 1,
+                ColumnAccessType::RangeSearch => pattern.range_searches += 1,
+                ColumnAccessType::OrderBy => pattern.order_by_usage += 1,
+                ColumnAccessType::GroupBy => pattern.group_by_usage += 1,
+                ColumnAccessType::Join => pattern.join_usage += 1,
             })
             .or_insert_with(|| ColumnAccessPattern {
                 table_name: table_name.clone(),
                 column_name: column_name.clone(),
-                equality_searches: if matches!(access_type, ColumnAccessType::EqualitySearch) { 1 } else { 0 },
-                range_searches: if matches!(access_type, ColumnAccessType::RangeSearch) { 1 } else { 0 },
-                order_by_usage: if matches!(access_type, ColumnAccessType::OrderBy) { 1 } else { 0 },
-                group_by_usage: if matches!(access_type, ColumnAccessType::GroupBy) { 1 } else { 0 },
-                join_usage: if matches!(access_type, ColumnAccessType::Join) { 1 } else { 0 },
+                equality_searches: if matches!(access_type, ColumnAccessType::EqualitySearch) {
+                    1
+                } else {
+                    0
+                },
+                range_searches: if matches!(access_type, ColumnAccessType::RangeSearch) {
+                    1
+                } else {
+                    0
+                },
+                order_by_usage: if matches!(access_type, ColumnAccessType::OrderBy) {
+                    1
+                } else {
+                    0
+                },
+                group_by_usage: if matches!(access_type, ColumnAccessType::GroupBy) {
+                    1
+                } else {
+                    0
+                },
+                join_usage: if matches!(access_type, ColumnAccessType::Join) {
+                    1
+                } else {
+                    0
+                },
                 filter_selectivity: 0.5,
-                cardinality: 1000,  // Default, should be updated from statistics
+                cardinality: 1000, // Default, should be updated from statistics
             });
     }
 
     pub fn update_index_statistics(&self, stats: IndexStatistics) {
-        self.existing_indexes.write().insert(stats.index_name.clone(), stats);
+        self.existing_indexes
+            .write()
+            .insert(stats.index_name.clone(), stats);
     }
 
     pub fn analyze_and_recommend(&self) -> Vec<IndexCandidate> {
@@ -197,7 +218,7 @@ impl IndexAdvisor {
         // Identify single-column index candidates
         for (_key, pattern) in patterns.iter() {
             if pattern.total_accesses() < 10 {
-                continue;  // Skip columns with low access
+                continue; // Skip columns with low access
             }
 
             if let Some(candidate) = self.recommend_single_column_index(pattern) {
@@ -226,7 +247,10 @@ impl IndexAdvisor {
         candidates
     }
 
-    fn recommend_single_column_index(&self, pattern: &ColumnAccessPattern) -> Option<IndexCandidate> {
+    fn recommend_single_column_index(
+        &self,
+        pattern: &ColumnAccessPattern,
+    ) -> Option<IndexCandidate> {
         let index_type = self.determine_index_type(pattern);
 
         let mut candidate_id = self.next_candidate_id.write();
@@ -234,7 +258,7 @@ impl IndexAdvisor {
         *candidate_id += 1;
         drop(candidate_id);
 
-        let estimated_size_mb = (pattern.cardinality * 20) / (1024 * 1024);  // Rough estimate
+        let estimated_size_mb = (pattern.cardinality * 20) / (1024 * 1024); // Rough estimate
         let expected_improvement = self.calculate_expected_improvement(pattern);
 
         Some(IndexCandidate {
@@ -260,7 +284,10 @@ impl IndexAdvisor {
         }
 
         // Hash for equality-only searches
-        if pattern.equality_searches > 0 && pattern.range_searches == 0 && pattern.order_by_usage == 0 {
+        if pattern.equality_searches > 0
+            && pattern.range_searches == 0
+            && pattern.order_by_usage == 0
+        {
             return IndexType::Hash;
         }
 
@@ -270,30 +297,33 @@ impl IndexAdvisor {
 
     fn calculate_expected_improvement(&self, pattern: &ColumnAccessPattern) -> f64 {
         // Estimate based on selectivity and access patterns
-        let base_improvement = pattern.filter_selectivity * 50.0;  // Up to 50% improvement
+        let base_improvement = pattern.filter_selectivity * 50.0; // Up to 50% improvement
 
         let access_factor = if pattern.equality_searches > pattern.range_searches {
-            1.2  // Equality searches benefit more
+            1.2 // Equality searches benefit more
         } else {
             1.0
         };
 
-        (base_improvement * access_factor).min(90.0)  // Cap at 90%
+        (base_improvement * access_factor).min(90.0) // Cap at 90%
     }
 
     fn calculate_write_overhead(&self, index_type: IndexType) -> f64 {
         match index_type {
-            IndexType::BTree => 5.0,      // 5% slowdown
-            IndexType::Hash => 3.0,       // 3% slowdown
-            IndexType::Bitmap => 8.0,     // 8% slowdown (more maintenance)
-            IndexType::Spatial => 10.0,   // 10% slowdown
-            IndexType::FullText => 15.0,  // 15% slowdown
-            IndexType::Partial => 4.0,    // 4% slowdown (fewer rows)
-            IndexType::Covering => 12.0,  // 12% slowdown (more columns)
+            IndexType::BTree => 5.0,     // 5% slowdown
+            IndexType::Hash => 3.0,      // 3% slowdown
+            IndexType::Bitmap => 8.0,    // 8% slowdown (more maintenance)
+            IndexType::Spatial => 10.0,  // 10% slowdown
+            IndexType::FullText => 15.0, // 15% slowdown
+            IndexType::Partial => 4.0,   // 4% slowdown (fewer rows)
+            IndexType::Covering => 12.0, // 12% slowdown (more columns)
         }
     }
 
-    fn recommend_multi_column_indexes(&self, patterns: &HashMap<String, ColumnAccessPattern>) -> Vec<IndexCandidate> {
+    fn recommend_multi_column_indexes(
+        &self,
+        patterns: &HashMap<String, ColumnAccessPattern>,
+    ) -> Vec<IndexCandidate> {
         let mut candidates = Vec::new();
 
         // Group columns by table
@@ -327,7 +357,8 @@ impl IndexAdvisor {
                     *candidate_id += 1;
                     drop(candidate_id);
 
-                    let estimated_size_mb = ((col1.cardinality + col2.cardinality) * 20) / (1024 * 1024);
+                    let estimated_size_mb =
+                        ((col1.cardinality + col2.cardinality) * 20) / (1024 * 1024);
 
                     candidates.push(IndexCandidate {
                         candidate_id: id,
@@ -425,7 +456,7 @@ impl IndexAdvisor {
                     index_type: IndexType::Covering,
                     estimated_size_mb: 10,
                     estimated_creation_time_sec: 5,
-                    expected_query_improvement: 70.0,  // Covering indexes can eliminate table lookups
+                    expected_query_improvement: 70.0, // Covering indexes can eliminate table lookups
                     queries_benefited: 50,
                     write_overhead: 12.0,
                     benefit_score: 0.0,
@@ -457,7 +488,7 @@ impl IndexAdvisor {
                     table_name: pattern.table_name.clone(),
                     columns: vec![pattern.column_name.clone()],
                     index_type: IndexType::Partial,
-                    estimated_size_mb: (pattern.cardinality as f64 * 0.2) as usize,  // Only 20% of data
+                    estimated_size_mb: (pattern.cardinality as f64 * 0.2) as usize, // Only 20% of data
                     estimated_creation_time_sec: 3,
                     expected_query_improvement: 45.0,
                     queries_benefited: pattern.total_accesses(),
@@ -493,7 +524,7 @@ pub struct MaintenanceTask {
     pub task_type: MaintenanceTaskType,
     pub scheduled_time: SystemTime,
     pub estimated_duration_sec: u64,
-    pub priority: u8,  // 1-10, higher is more urgent
+    pub priority: u8, // 1-10, higher is more urgent
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -512,7 +543,9 @@ impl IndexMaintenanceScheduler {
     }
 
     pub fn schedule_maintenance(&self, task: MaintenanceTask) {
-        self.maintenance_schedule.write().insert(task.index_name.clone(), task);
+        self.maintenance_schedule
+            .write()
+            .insert(task.index_name.clone(), task);
     }
 
     pub fn get_pending_tasks(&self) -> Vec<MaintenanceTask> {
@@ -552,7 +585,7 @@ pub struct AutoIndexingEngine {
 impl AutoIndexingEngine {
     pub fn new() -> Self {
         Self {
-            advisor: Arc::new(IndexAdvisor::new(10.0)),  // Minimum benefit score of 10
+            advisor: Arc::new(IndexAdvisor::new(10.0)), // Minimum benefit score of 10
             _maintenance_scheduler: Arc::new(IndexMaintenanceScheduler::new()),
             auto_create_enabled: Arc::new(RwLock::new(false)),
             auto_drop_enabled: Arc::new(RwLock::new(false)),
@@ -579,16 +612,24 @@ impl AutoIndexingEngine {
         let basic_recommendations = self.advisor.analyze_and_recommend();
         let covering_recommendations = self.advisor.recommend_covering_indexes();
         let partial_recommendations = self.advisor.recommend_partial_indexes();
-        let unused_indexes = self.advisor.find_unused_indexes(30);  // 30 days threshold
+        let unused_indexes = self.advisor.find_unused_indexes(30); // 30 days threshold
         let redundant_indexes = self.advisor.find_redundant_indexes();
 
         IndexRecommendationReport {
-            total_recommendations: basic_recommendations.len() + covering_recommendations.len() + partial_recommendations.len(),
-            high_benefit_recommendations: basic_recommendations.iter().filter(|c| c.benefit_score > 50.0).count(),
+            total_recommendations: basic_recommendations.len()
+                + covering_recommendations.len()
+                + partial_recommendations.len(),
+            high_benefit_recommendations: basic_recommendations
+                .iter()
+                .filter(|c| c.benefit_score > 50.0)
+                .count(),
             unused_indexes: unused_indexes.len(),
             redundant_index_pairs: redundant_indexes.len(),
-            estimated_space_savings_mb: unused_indexes.len() * 10,  // Rough estimate
-            estimated_performance_gain: basic_recommendations.first().map(|c| c.expected_query_improvement).unwrap_or(0.0),
+            estimated_space_savings_mb: unused_indexes.len() * 10, // Rough estimate
+            estimated_performance_gain: basic_recommendations
+                .first()
+                .map(|c| c.expected_query_improvement)
+                .unwrap_or(0.0),
         }
     }
 
@@ -632,7 +673,7 @@ impl AutoIndexingEngine {
             return Ok(Vec::new());
         }
 
-        let unused = self.advisor.find_unused_indexes(60);  // 60 days
+        let unused = self.advisor.find_unused_indexes(60); // 60 days
         let mut dropped = Vec::new();
 
         for index_name in unused {

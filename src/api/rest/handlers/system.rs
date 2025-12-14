@@ -2,10 +2,7 @@
 //
 // Handler functions for system-level information endpoints
 
-use axum::{
-    extract::State,
-    response::{Json as AxumJson},
-};
+use axum::{extract::State, response::Json as AxumJson};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -60,8 +57,12 @@ pub async fn get_server_config(
     let response = ServerConfigResponse {
         settings,
         version: SERVER_VERSION.clone(),
-        build_date: option_env!("VERGEN_BUILD_DATE").unwrap_or("unknown").to_string(),
-        rust_version: option_env!("VERGEN_RUSTC_SEMVER").unwrap_or("unknown").to_string(),
+        build_date: option_env!("VERGEN_BUILD_DATE")
+            .unwrap_or("unknown")
+            .to_string(),
+        rust_version: option_env!("VERGEN_RUSTC_SEMVER")
+            .unwrap_or("unknown")
+            .to_string(),
         features: vec![
             "mvcc".to_string(),
             "clustering".to_string(),
@@ -87,27 +88,25 @@ pub async fn get_clustering_status(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<AxumJson<ClusterStatusResponse>> {
     // In a real implementation, this would query the actual clustering module
-    let nodes = vec![
-        ClusterNodeStatus {
-            node_id: "node-local".to_string(),
-            address: "127.0.0.1:5432".to_string(),
-            role: "leader".to_string(),
-            status: "healthy".to_string(),
-            version: SERVER_VERSION.clone(),
-            uptime_seconds: SystemTime::now()
-                .duration_since(*SERVER_START_TIME)
-                .unwrap_or_default()
-                .as_secs(),
-            last_heartbeat: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as i64,
-            cpu_usage_percent: 15.5,
-            memory_usage_percent: 42.3,
-            disk_usage_percent: 58.2,
-            queries_per_second: 1250.0,
-        }
-    ];
+    let nodes = vec![ClusterNodeStatus {
+        node_id: "node-local".to_string(),
+        address: "127.0.0.1:5432".to_string(),
+        role: "leader".to_string(),
+        status: "healthy".to_string(),
+        version: SERVER_VERSION.clone(),
+        uptime_seconds: SystemTime::now()
+            .duration_since(*SERVER_START_TIME)
+            .unwrap_or_default()
+            .as_secs(),
+        last_heartbeat: SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64,
+        cpu_usage_percent: 15.5,
+        memory_usage_percent: 42.3,
+        disk_usage_percent: 58.2,
+        queries_per_second: 1250.0,
+    }];
 
     let total_nodes = nodes.len();
     let healthy_nodes = nodes.iter().filter(|n| n.status == "healthy").count();
@@ -212,75 +211,135 @@ pub async fn get_security_features(
     let mut features = HashMap::new();
 
     // Core security features
-    features.insert("authentication".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "User authentication and session management".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "authentication".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "User authentication and session management".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("rbac".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "Role-based access control".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "rbac".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "Role-based access control".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("encryption_at_rest".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "Transparent data encryption (TDE)".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "encryption_at_rest".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "Transparent data encryption (TDE)".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("encryption_in_transit".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "TLS/SSL for network connections".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "encryption_in_transit".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "TLS/SSL for network connections".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("audit_logging".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "Comprehensive audit trail".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "audit_logging".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "Comprehensive audit trail".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("fgac".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "Fine-grained access control".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "fgac".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "Fine-grained access control".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("injection_prevention".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "SQL injection prevention".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "injection_prevention".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "SQL injection prevention".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("memory_hardening".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "Memory safety and bounds protection".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "memory_hardening".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "Memory safety and bounds protection".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("insider_threat_detection".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "Behavioral analytics and anomaly detection".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "insider_threat_detection".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "Behavioral analytics and anomaly detection".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
-    features.insert("network_hardening".to_string(), SecurityFeatureStatus {
-        enabled: true,
-        status: "active".to_string(),
-        description: "DDoS protection and rate limiting".to_string(),
-        last_check: SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64,
-    });
+    features.insert(
+        "network_hardening".to_string(),
+        SecurityFeatureStatus {
+            enabled: true,
+            status: "active".to_string(),
+            description: "DDoS protection and rate limiting".to_string(),
+            last_check: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        },
+    );
 
     let enabled_count = features.values().filter(|f| f.enabled).count();
     let active_count = features.values().filter(|f| f.status == "active").count();
@@ -301,7 +360,8 @@ pub async fn get_security_features(
         last_security_audit: SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
-            .as_secs() as i64 - 86400 * 7, // 7 days ago
+            .as_secs() as i64
+            - 86400 * 7, // 7 days ago
     };
 
     Ok(AxumJson(response))
@@ -332,10 +392,16 @@ pub async fn get_server_info(
     let response = ServerInfoResponse {
         server_name: SERVER_NAME.clone(),
         version: SERVER_VERSION.clone(),
-        build_date: option_env!("VERGEN_BUILD_DATE").unwrap_or("unknown").to_string(),
+        build_date: option_env!("VERGEN_BUILD_DATE")
+            .unwrap_or("unknown")
+            .to_string(),
         build_target: format!("{}-{}", std::env::consts::ARCH, std::env::consts::OS),
-        rust_version: option_env!("VERGEN_RUSTC_SEMVER").unwrap_or("unknown").to_string(),
-        git_commit: option_env!("VERGEN_GIT_SHA").unwrap_or("unknown").to_string(),
+        rust_version: option_env!("VERGEN_RUSTC_SEMVER")
+            .unwrap_or("unknown")
+            .to_string(),
+        git_commit: option_env!("VERGEN_GIT_SHA")
+            .unwrap_or("unknown")
+            .to_string(),
         uptime_seconds: uptime.as_secs(),
         started_at: SERVER_START_TIME
             .duration_since(UNIX_EPOCH)

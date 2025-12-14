@@ -67,48 +67,43 @@
 // # }
 // ```
 
-use std::time::SystemTime;
-use std::sync::{Arc, RwLock};
-use std::time::{Duration};
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, RwLock};
+use std::time::Duration;
+use std::time::SystemTime;
 
-use crate::error::{Result, DbError};
+use crate::error::{DbError, Result};
 
 // Module declarations
 pub mod consumer_groups;
-pub mod plans;
 pub mod cpu_scheduler;
 pub mod io_scheduler;
 pub mod memory_manager;
 pub mod parallel_control;
+pub mod plans;
 pub mod session_control;
 
 // Re-exports for convenience
 pub use consumer_groups::{
-    ConsumerGroupManager, ConsumerGroup, ConsumerGroupId, PriorityLevel,
-    GroupCategory, SessionAttributes,
+    ConsumerGroup, ConsumerGroupId, ConsumerGroupManager, GroupCategory, PriorityLevel,
+    SessionAttributes,
 };
-pub use plans::{
-    ResourcePlanManager, ResourcePlan, ResourcePlanId, ResourcePlanDirective,
-    CpuManagementMethod, PlanSchedule, MaintenanceWindow,
-};
-pub use cpu_scheduler::{
-    CpuScheduler, SchedulingPolicy, ScheduledTask, TaskState,
-};
-pub use io_scheduler::{
-    IoScheduler, IoSchedulingPolicy, IoRequest, IoRequestType, IoPriority,
-};
+pub use cpu_scheduler::{CpuScheduler, ScheduledTask, SchedulingPolicy, TaskState};
+pub use io_scheduler::{IoPriority, IoRequest, IoRequestType, IoScheduler, IoSchedulingPolicy};
 pub use memory_manager::{
-    MemoryManager, AllocationStrategy, MemoryPool, MemoryPoolType,
-    SessionMemoryQuota, MemoryPressure,
+    AllocationStrategy, MemoryManager, MemoryPool, MemoryPoolType, MemoryPressure,
+    SessionMemoryQuota,
 };
 pub use parallel_control::{
-    ParallelExecutionController, ParallelMode, DegreeOfParallelism,
-    ParallelQueryRequest, ParallelExecution,
+    DegreeOfParallelism, ParallelExecution, ParallelExecutionController, ParallelMode,
+    ParallelQueryRequest,
+};
+pub use plans::{
+    CpuManagementMethod, MaintenanceWindow, PlanSchedule, ResourcePlan, ResourcePlanDirective,
+    ResourcePlanId, ResourcePlanManager,
 };
 pub use session_control::{
-    SessionController, SessionInfo, SessionState, SessionPriority,
-    SessionId, UserId,
+    SessionController, SessionId, SessionInfo, SessionPriority, SessionState, UserId,
 };
 
 // Resource Manager configuration
@@ -152,7 +147,7 @@ impl Default for ResourceManagerConfig {
             enabled: true,
             cpu_cores: num_cpus::get() as u32,
             total_memory: 16 * 1024 * 1024 * 1024, // 16 GB
-            max_db_memory: 8 * 1024 * 1024 * 1024,  // 8 GB
+            max_db_memory: 8 * 1024 * 1024 * 1024, // 8 GB
             io_parallelism: 32,
             max_concurrent_io: 128,
             max_total_dop: 128,
@@ -206,10 +201,7 @@ impl ResourceManager {
         let cpu_scheduler = Arc::new(RwLock::new(CpuScheduler::new(config.cpu_policy)));
 
         // Create I/O scheduler
-        let io_scheduler = Arc::new(IoScheduler::new(
-            config.io_policy,
-            config.max_concurrent_io,
-        ));
+        let io_scheduler = Arc::new(IoScheduler::new(config.io_policy, config.max_concurrent_io));
 
         // Create memory manager
         let memory_manager = Arc::new(MemoryManager::new(
@@ -270,10 +262,12 @@ impl ResourceManager {
         }
 
         // Register with I/O scheduler
-        self.io_scheduler.register_group(group_id, None, None, 100)?;
+        self.io_scheduler
+            .register_group(group_id, None, None, 100)?;
 
         // Register with memory manager
-        self.memory_manager.register_group_limits(group_id, None, None)?;
+        self.memory_manager
+            .register_group_limits(group_id, None, None)?;
 
         Ok(group_id)
     }
@@ -294,7 +288,8 @@ impl ResourceManager {
 
     // Set memory limit for a consumer group
     pub fn set_group_memory_limit(&self, group_id: ConsumerGroupId, limit: u64) -> Result<()> {
-        self.memory_manager.register_group_limits(group_id, Some(limit), None)?;
+        self.memory_manager
+            .register_group_limits(group_id, Some(limit), None)?;
         Ok(())
     }
 
@@ -305,7 +300,8 @@ impl ResourceManager {
         bandwidth_limit: Option<u64>,
         iops_limit: Option<u32>,
     ) -> Result<()> {
-        self.io_scheduler.register_group(group_id, bandwidth_limit, iops_limit, 100)?;
+        self.io_scheduler
+            .register_group(group_id, bandwidth_limit, iops_limit, 100)?;
         Ok(())
     }
 
@@ -322,10 +318,13 @@ impl ResourceManager {
         };
 
         // Assign to consumer group
-        let group_id = self.consumer_groups.assign_session(session_id, user_id, attrs)?;
+        let group_id = self
+            .consumer_groups
+            .assign_session(session_id, user_id, attrs)?;
 
         // Create memory quota
-        self.memory_manager.create_session_quota(session_id, group_id, None, None)?;
+        self.memory_manager
+            .create_session_quota(session_id, group_id, None, None)?;
 
         Ok(session_id)
     }
@@ -340,7 +339,8 @@ impl ResourceManager {
         // Get session info
         let (group_id, can_start) = {
             let controller = self.session_controller.write().unwrap();
-            let session = controller.get_session(session_id)
+            let session = controller
+                .get_session(session_id)
                 .ok_or_else(|| DbError::NotFound(format!("Session {} not found", session_id)))?;
 
             let can_start = controller.start_query(session_id)?;
@@ -349,7 +349,7 @@ impl ResourceManager {
 
         if !can_start {
             return Err(DbError::ResourceExhausted(
-                "Session queued, waiting for active session slot".to_string()
+                "Session queued, waiting for active session slot".to_string(),
             ));
         }
 
@@ -403,7 +403,9 @@ impl ResourceManager {
 
     // Apply the currently active resource plan
     fn apply_active_plan(&self) -> Result<()> {
-        let plan_id = self.resource_plans.get_active_plan()
+        let plan_id = self
+            .resource_plans
+            .get_active_plan()
             .ok_or_else(|| DbError::Configuration("No active resource plan".to_string()))?;
 
         let directives = self.resource_plans.get_plan_directives(plan_id);
@@ -453,7 +455,9 @@ impl ResourceManager {
         let pressure = self.memory_manager.get_pressure_level();
         if pressure >= MemoryPressure::High {
             report.memory_adjustments_made = true;
-            report.actions.push("High memory pressure detected, adjusting limits".to_string());
+            report
+                .actions
+                .push("High memory pressure detected, adjusting limits".to_string());
 
             // Get recommendations from memory advisor
             let recommendations = self.memory_manager.auto_tune_pools();
@@ -615,10 +619,9 @@ mod tests {
         let config = ResourceManagerConfig::default();
         let manager = ResourceManager::new(config).unwrap();
 
-        let group_id = manager.create_consumer_group(
-            "TEST_GROUP".to_string(),
-            PriorityLevel::medium(),
-        ).unwrap();
+        let group_id = manager
+            .create_consumer_group("TEST_GROUP".to_string(), PriorityLevel::medium())
+            .unwrap();
 
         assert!(group_id > 0);
     }
@@ -637,11 +640,9 @@ mod tests {
             action_name: None,
         };
 
-        let session_id = manager.create_session(
-            1,
-            "testuser".to_string(),
-            &attrs,
-        ).unwrap();
+        let session_id = manager
+            .create_session(1, "testuser".to_string(), &attrs)
+            .unwrap();
 
         assert!(session_id > 0);
     }

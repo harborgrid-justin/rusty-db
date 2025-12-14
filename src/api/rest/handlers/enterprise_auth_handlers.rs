@@ -3,16 +3,13 @@
 // Advanced authentication configuration and management for enterprise integrations
 // Includes LDAP, OAuth, and SSO (SAML) configuration and testing
 
-use axum::{
-    extract::State,
-    response::Json as AxumJson,
-};
+use axum::{extract::State, response::Json as AxumJson};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::SystemTime;
-use parking_lot::RwLock;
-use std::collections::HashMap;
+use utoipa::ToSchema;
 
 use super::super::types::*;
 
@@ -252,7 +249,10 @@ pub async fn test_ldap_connection(
         "LDAP connection failed: invalid configuration".to_string()
     };
 
-    let elapsed = SystemTime::now().duration_since(start_time).unwrap().as_millis() as u64;
+    let elapsed = SystemTime::now()
+        .duration_since(start_time)
+        .unwrap()
+        .as_millis() as u64;
 
     Ok(AxumJson(TestConnectionResult {
         success,
@@ -293,7 +293,10 @@ pub async fn configure_oauth(
         return Err(ApiError::new("INVALID_INPUT", "client_secret is required"));
     }
 
-    let provider_id = format!("oauth_{}", config.provider_name.to_lowercase().replace(' ', "_"));
+    let provider_id = format!(
+        "oauth_{}",
+        config.provider_name.to_lowercase().replace(' ', "_")
+    );
 
     // Store configuration
     {
@@ -325,15 +328,16 @@ pub async fn get_oauth_providers(
 ) -> ApiResult<AxumJson<OAuthProviderList>> {
     let providers = OAUTH_PROVIDERS.read();
 
-    let provider_list: Vec<OAuthProviderInfo> = providers.iter().map(|(id, config)| {
-        OAuthProviderInfo {
+    let provider_list: Vec<OAuthProviderInfo> = providers
+        .iter()
+        .map(|(id, config)| OAuthProviderInfo {
             provider_id: id.clone(),
             provider_name: config.provider_name.clone(),
             provider_type: config.provider_type.clone(),
             enabled: config.enabled,
             configured: !config.client_id.is_empty() && !config.client_secret.is_empty(),
-        }
-    }).collect();
+        })
+        .collect();
 
     let total_count = provider_list.len();
 
@@ -381,7 +385,10 @@ pub async fn configure_sso(
         *sso_config = config.clone();
     }
 
-    log::info!("SSO (SAML) configuration updated, enabled: {}", config.enabled);
+    log::info!(
+        "SSO (SAML) configuration updated, enabled: {}",
+        config.enabled
+    );
 
     Ok(AxumJson(serde_json::json!({
         "success": true,
@@ -417,9 +424,7 @@ pub async fn get_saml_metadata(
     <NameIDFormat>{}</NameIDFormat>
   </SPSSODescriptor>
 </EntityDescriptor>"#,
-        config.entity_id,
-        config.sso_url,
-        config.name_id_format
+        config.entity_id, config.sso_url, config.name_id_format
     );
 
     Ok(AxumJson(SamlMetadata {

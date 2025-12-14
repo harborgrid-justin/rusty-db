@@ -4,13 +4,13 @@
 // Initializes all subsystems and starts the network server.
 
 use log::warn;
-use rusty_db::{DatabaseConfig, Result, VERSION};
+use rusty_db::api::{ApiConfig, RestApiServer};
 use rusty_db::network::Server;
-use rusty_db::api::{RestApiServer, ApiConfig};
-use tracing::{info, error};
-use tracing_subscriber;
-use std::path::PathBuf;
+use rusty_db::{DatabaseConfig, Result, VERSION};
 use std::fs;
+use std::path::PathBuf;
+use tracing::{error, info};
+use tracing_subscriber;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -24,8 +24,7 @@ async fn main() -> Result<()> {
     print_banner();
 
     // Determine installation directory from current working directory
-    let install_dir = std::env::current_dir()
-        .unwrap_or_else(|_| PathBuf::from("."));
+    let install_dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     let install_dir_str = install_dir.display().to_string();
 
     // Configuration file path
@@ -100,10 +99,19 @@ async fn main() -> Result<()> {
     println!("╭─────────────────────────────────────────────────────────╮");
     println!("│  RustyDB is ready to accept connections                │");
     println!("│  Connect using: rusty-db-cli                            │");
-    println!("│  Native protocol port: {}                              │", config.port);
+    println!(
+        "│  Native protocol port: {}                              │",
+        config.port
+    );
     if config.enable_rest_api {
-        println!("│  REST API: http://0.0.0.0:{}                          │", config.api_port);
-        println!("│  GraphQL: http://0.0.0.0:{}/graphql                   │", config.api_port);
+        println!(
+            "│  REST API: http://0.0.0.0:{}                          │",
+            config.api_port
+        );
+        println!(
+            "│  GraphQL: http://0.0.0.0:{}/graphql                   │",
+            config.api_port
+        );
     }
     println!("╰─────────────────────────────────────────────────────────╯");
     println!();
@@ -137,7 +145,10 @@ async fn main() -> Result<()> {
 fn print_banner() {
     println!("╔════════════════════════════════════════════════════════════╗");
     println!("║         RustyDB - Enterprise Database System              ║");
-    println!("║         Rust-based Oracle Competitor v{}             ║", VERSION);
+    println!(
+        "║         Rust-based Oracle Competitor v{}             ║",
+        VERSION
+    );
     println!("╚════════════════════════════════════════════════════════════╝");
     println!();
 }
@@ -157,45 +168,110 @@ fn print_startup_info(install_dir: &str, config_file: &str, config: &DatabaseCon
     println!("│ STORAGE SETTINGS                                            │");
     println!("│   Data Directory:         {:<30} │", config.data_dir);
     println!("│   WAL Directory:          {:<30} │", config.wal_dir);
-    println!("│   Page Size:              {:<30} │", format!("{} bytes", config.page_size));
-    println!("│   Buffer Pool Size:       {:<30} │", format!("{} pages", config.buffer_pool_size));
-    println!("│   Checkpoint Interval:    {:<30} │", format!("{} seconds", config.checkpoint_interval.as_secs()));
+    println!(
+        "│   Page Size:              {:<30} │",
+        format!("{} bytes", config.page_size)
+    );
+    println!(
+        "│   Buffer Pool Size:       {:<30} │",
+        format!("{} pages", config.buffer_pool_size)
+    );
+    println!(
+        "│   Checkpoint Interval:    {:<30} │",
+        format!("{} seconds", config.checkpoint_interval.as_secs())
+    );
     println!("├─────────────────────────────────────────────────────────────┤");
     println!("│ TRANSACTION SETTINGS                                        │");
-    println!("│   Default Isolation:      {:<30} │", format!("{:?}", config.default_isolation));
-    println!("│   Lock Timeout:           {:<30} │", format!("{} seconds", config.lock_timeout.as_secs()));
-    println!("│   Deadlock Detection:     {:<30} │", format!("{} seconds", config.deadlock_detection_interval.as_secs()));
+    println!(
+        "│   Default Isolation:      {:<30} │",
+        format!("{:?}", config.default_isolation)
+    );
+    println!(
+        "│   Lock Timeout:           {:<30} │",
+        format!("{} seconds", config.lock_timeout.as_secs())
+    );
+    println!(
+        "│   Deadlock Detection:     {:<30} │",
+        format!("{} seconds", config.deadlock_detection_interval.as_secs())
+    );
     println!("├─────────────────────────────────────────────────────────────┤");
     println!("│ NETWORK SETTINGS                                            │");
-    println!("│   Listen Address:         {:<30} │", config.listen_address);
+    println!(
+        "│   Listen Address:         {:<30} │",
+        config.listen_address
+    );
     println!("│   Native Protocol Port:   {:<30} │", config.port);
     println!("│   REST API Port:          {:<30} │", config.api_port);
-    println!("│   REST API Enabled:       {:<30} │", config.enable_rest_api);
-    println!("│   Max Connections:        {:<30} │", config.max_connections);
-    println!("│   Connection Timeout:     {:<30} │", format!("{} seconds", config.connection_timeout.as_secs()));
+    println!(
+        "│   REST API Enabled:       {:<30} │",
+        config.enable_rest_api
+    );
+    println!(
+        "│   Max Connections:        {:<30} │",
+        config.max_connections
+    );
+    println!(
+        "│   Connection Timeout:     {:<30} │",
+        format!("{} seconds", config.connection_timeout.as_secs())
+    );
     println!("├─────────────────────────────────────────────────────────────┤");
     println!("│ SECURITY SETTINGS                                           │");
     println!("│   TLS Enabled:            {:<30} │", config.enable_tls);
-    println!("│   Encryption Enabled:     {:<30} │", config.enable_encryption);
-    println!("│   Password Min Length:    {:<30} │", config.password_min_length);
-    println!("│   Session Timeout:        {:<30} │", format!("{} seconds", config.session_timeout.as_secs()));
+    println!(
+        "│   Encryption Enabled:     {:<30} │",
+        config.enable_encryption
+    );
+    println!(
+        "│   Password Min Length:    {:<30} │",
+        config.password_min_length
+    );
+    println!(
+        "│   Session Timeout:        {:<30} │",
+        format!("{} seconds", config.session_timeout.as_secs())
+    );
     println!("├─────────────────────────────────────────────────────────────┤");
     println!("│ CLUSTERING SETTINGS                                         │");
-    println!("│   Cluster Enabled:        {:<30} │", config.cluster_enabled);
+    println!(
+        "│   Cluster Enabled:        {:<30} │",
+        config.cluster_enabled
+    );
     println!("│   Node ID:                {:<30} │", config.node_id);
-    println!("│   Replication Factor:     {:<30} │", config.replication_factor);
+    println!(
+        "│   Replication Factor:     {:<30} │",
+        config.replication_factor
+    );
     println!("├─────────────────────────────────────────────────────────────┤");
     println!("│ PERFORMANCE SETTINGS                                        │");
-    println!("│   Worker Threads:         {:<30} │", config.worker_threads);
+    println!(
+        "│   Worker Threads:         {:<30} │",
+        config.worker_threads
+    );
     println!("│   JIT Enabled:            {:<30} │", config.enable_jit);
-    println!("│   Vectorization Enabled:  {:<30} │", config.enable_vectorization);
-    println!("│   Query Timeout:          {:<30} │", config.query_timeout.map_or("None".to_string(), |d| format!("{} seconds", d.as_secs())));
-    println!("│   Max Memory:             {:<30} │", format!("{} MB", config.max_memory_mb));
+    println!(
+        "│   Vectorization Enabled:  {:<30} │",
+        config.enable_vectorization
+    );
+    println!(
+        "│   Query Timeout:          {:<30} │",
+        config
+            .query_timeout
+            .map_or("None".to_string(), |d| format!("{} seconds", d.as_secs()))
+    );
+    println!(
+        "│   Max Memory:             {:<30} │",
+        format!("{} MB", config.max_memory_mb)
+    );
     println!("├─────────────────────────────────────────────────────────────┤");
     println!("│ MONITORING SETTINGS                                         │");
-    println!("│   Metrics Enabled:        {:<30} │", config.enable_metrics);
+    println!(
+        "│   Metrics Enabled:        {:<30} │",
+        config.enable_metrics
+    );
     println!("│   Metrics Port:           {:<30} │", config.metrics_port);
-    println!("│   Slow Query Threshold:   {:<30} │", format!("{} ms", config.slow_query_threshold.as_millis()));
+    println!(
+        "│   Slow Query Threshold:   {:<30} │",
+        format!("{} ms", config.slow_query_threshold.as_millis())
+    );
     println!("└─────────────────────────────────────────────────────────────┘");
     println!();
 }
@@ -295,10 +371,24 @@ fn print_data_store_info(config: &DatabaseConfig) {
 
     println!("│ Data Directory:                                             │");
     println!("│   Path:    {:<48} │", config.data_dir);
-    println!("│   Exists:  {:<48} │", if data_exists { "YES" } else { "NO (will be created)" });
+    println!(
+        "│   Exists:  {:<48} │",
+        if data_exists {
+            "YES"
+        } else {
+            "NO (will be created)"
+        }
+    );
     if data_exists {
         if let Ok(metadata) = fs::metadata(&config.data_dir) {
-            println!("│   Type:    {:<48} │", if metadata.is_dir() { "Directory" } else { "File (ERROR)" });
+            println!(
+                "│   Type:    {:<48} │",
+                if metadata.is_dir() {
+                    "Directory"
+                } else {
+                    "File (ERROR)"
+                }
+            );
         }
         // Count files in data directory
         if let Ok(entries) = fs::read_dir(&config.data_dir) {
@@ -309,7 +399,14 @@ fn print_data_store_info(config: &DatabaseConfig) {
     println!("│                                                             │");
     println!("│ WAL Directory:                                              │");
     println!("│   Path:    {:<48} │", config.wal_dir);
-    println!("│   Exists:  {:<48} │", if wal_exists { "YES" } else { "NO (will be created)" });
+    println!(
+        "│   Exists:  {:<48} │",
+        if wal_exists {
+            "YES"
+        } else {
+            "NO (will be created)"
+        }
+    );
     if wal_exists {
         if let Ok(entries) = fs::read_dir(&config.wal_dir) {
             let count = entries.count();
@@ -318,10 +415,26 @@ fn print_data_store_info(config: &DatabaseConfig) {
     }
     println!("│                                                             │");
     println!("│ Storage Configuration:                                      │");
-    println!("│   Page Size:         {:<37} │", format!("{} bytes", config.page_size));
-    println!("│   Buffer Pool:       {:<37} │", format!("{} pages ({} KB)", config.buffer_pool_size, config.buffer_pool_size * config.page_size / 1024));
-    println!("│   Max Memory:        {:<37} │", format!("{} MB", config.max_memory_mb));
-    println!("│   Checkpoint Every:  {:<37} │", format!("{} seconds", config.checkpoint_interval.as_secs()));
+    println!(
+        "│   Page Size:         {:<37} │",
+        format!("{} bytes", config.page_size)
+    );
+    println!(
+        "│   Buffer Pool:       {:<37} │",
+        format!(
+            "{} pages ({} KB)",
+            config.buffer_pool_size,
+            config.buffer_pool_size * config.page_size / 1024
+        )
+    );
+    println!(
+        "│   Max Memory:        {:<37} │",
+        format!("{} MB", config.max_memory_mb)
+    );
+    println!(
+        "│   Checkpoint Every:  {:<37} │",
+        format!("{} seconds", config.checkpoint_interval.as_secs())
+    );
     println!("└─────────────────────────────────────────────────────────────┘");
     println!();
 }
@@ -333,19 +446,28 @@ fn print_config_file(config_file: &str, config: &DatabaseConfig) {
     println!("└─────────────────────────────────────────────────────────────┘");
     println!();
     println!("# RustyDB Configuration File");
-    println!("# Generated on startup - save to {} for persistence", config_file);
+    println!(
+        "# Generated on startup - save to {} for persistence",
+        config_file
+    );
     println!();
     println!("[storage]");
     println!("data_dir = \"{}\"", config.data_dir);
     println!("wal_dir = \"{}\"", config.wal_dir);
     println!("page_size = {}", config.page_size);
     println!("buffer_pool_size = {}", config.buffer_pool_size);
-    println!("checkpoint_interval_secs = {}", config.checkpoint_interval.as_secs());
+    println!(
+        "checkpoint_interval_secs = {}",
+        config.checkpoint_interval.as_secs()
+    );
     println!();
     println!("[transaction]");
     println!("default_isolation = \"{:?}\"", config.default_isolation);
     println!("lock_timeout_secs = {}", config.lock_timeout.as_secs());
-    println!("deadlock_detection_interval_secs = {}", config.deadlock_detection_interval.as_secs());
+    println!(
+        "deadlock_detection_interval_secs = {}",
+        config.deadlock_detection_interval.as_secs()
+    );
     println!();
     println!("[network]");
     println!("listen_address = \"{}\"", config.listen_address);
@@ -353,13 +475,19 @@ fn print_config_file(config_file: &str, config: &DatabaseConfig) {
     println!("api_port = {}", config.api_port);
     println!("enable_rest_api = {}", config.enable_rest_api);
     println!("max_connections = {}", config.max_connections);
-    println!("connection_timeout_secs = {}", config.connection_timeout.as_secs());
+    println!(
+        "connection_timeout_secs = {}",
+        config.connection_timeout.as_secs()
+    );
     println!();
     println!("[security]");
     println!("enable_tls = {}", config.enable_tls);
     println!("enable_encryption = {}", config.enable_encryption);
     println!("password_min_length = {}", config.password_min_length);
-    println!("session_timeout_secs = {}", config.session_timeout.as_secs());
+    println!(
+        "session_timeout_secs = {}",
+        config.session_timeout.as_secs()
+    );
     println!();
     println!("[clustering]");
     println!("cluster_enabled = {}", config.cluster_enabled);
@@ -378,7 +506,10 @@ fn print_config_file(config_file: &str, config: &DatabaseConfig) {
     println!("[monitoring]");
     println!("enable_metrics = {}", config.enable_metrics);
     println!("metrics_port = {}", config.metrics_port);
-    println!("slow_query_threshold_ms = {}", config.slow_query_threshold.as_millis());
+    println!(
+        "slow_query_threshold_ms = {}",
+        config.slow_query_threshold.as_millis()
+    );
     println!();
     println!("─────────────────────────────────────────────────────────────");
     println!();

@@ -33,7 +33,8 @@ mod tests {
                 "age": 30,
                 "department": "Engineering"
             }),
-        ).unwrap();
+        )
+        .unwrap();
 
         let result = store.insert("users", doc);
         assert!(result.is_ok(), "DOCSTORE-002: Failed to insert document");
@@ -50,12 +51,16 @@ mod tests {
             DocumentId::new_custom("user001"),
             "users".to_string(),
             json!({"name": "Alice"}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let doc_id = store.insert("users", doc).unwrap();
         let result = store.find_by_id("users", &doc_id);
 
-        assert!(result.is_ok(), "DOCSTORE-003: Failed to find document by ID");
+        assert!(
+            result.is_ok(),
+            "DOCSTORE-003: Failed to find document by ID"
+        );
         println!("✓ DOCSTORE-003: Find document by ID - PASSED");
     }
 
@@ -69,7 +74,8 @@ mod tests {
             DocumentId::new_custom("user001"),
             "users".to_string(),
             json!({"name": "Alice", "age": 30}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let doc_id = store.insert("users", doc).unwrap();
 
@@ -77,7 +83,8 @@ mod tests {
             doc_id.clone(),
             "users".to_string(),
             json!({"name": "Alice", "age": 31}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let result = store.update("users", &doc_id, updated_doc);
         assert!(result.is_ok(), "DOCSTORE-004: Failed to update document");
@@ -94,7 +101,8 @@ mod tests {
             DocumentId::new_custom("user001"),
             "users".to_string(),
             json!({"name": "Alice"}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let doc_id = store.insert("users", doc).unwrap();
         let result = store.delete("users", &doc_id);
@@ -114,7 +122,8 @@ mod tests {
                 DocumentId::new_custom(format!("user{:03}", i)),
                 "users".to_string(),
                 json!({"name": format!("User {}", i), "age": 20 + i * 2}),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("users", doc).unwrap();
         }
 
@@ -134,11 +143,14 @@ mod tests {
                 DocumentId::new_custom(format!("prod{:03}", i)),
                 "products".to_string(),
                 json!({"name": format!("Product {}", i), "price": i * 10}),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("products", doc).unwrap();
         }
 
-        let results = store.find("products", json!({"price": {"$gte": 50}})).unwrap();
+        let results = store
+            .find("products", json!({"price": {"$gte": 50}}))
+            .unwrap();
         assert!(results.len() >= 5, "DOCSTORE-007: Expected >= 5 results");
         println!("✓ DOCSTORE-007: Query with comparison operators ($gte) - PASSED");
     }
@@ -158,7 +170,9 @@ mod tests {
             store.insert("products", doc).unwrap();
         }
 
-        let results = store.find("products", json!({"category": {"$in": ["A", "C"]}})).unwrap();
+        let results = store
+            .find("products", json!({"category": {"$in": ["A", "C"]}}))
+            .unwrap();
         assert!(results.len() >= 1, "DOCSTORE-008: Expected >= 1 results");
         println!("✓ DOCSTORE-008: Query with $in operator - PASSED");
     }
@@ -174,7 +188,8 @@ mod tests {
                 DocumentId::new_custom(format!("item{:03}", i)),
                 "items".to_string(),
                 json!({"value": i}),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("items", doc).unwrap();
         }
 
@@ -194,7 +209,8 @@ mod tests {
                 DocumentId::new_custom(format!("sale{:03}", i)),
                 "sales".to_string(),
                 json!({"amount": i * 100, "product": if i % 2 == 0 { "A" } else { "B" }}),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("sales", doc).unwrap();
         }
 
@@ -203,7 +219,11 @@ mod tests {
             .build();
 
         let results = store.aggregate("sales", pipeline).unwrap();
-        assert_eq!(results.len(), 5, "DOCSTORE-010: Expected 5 matching documents");
+        assert_eq!(
+            results.len(),
+            5,
+            "DOCSTORE-010: Expected 5 matching documents"
+        );
         println!("✓ DOCSTORE-010: Aggregation pipeline - $match - PASSED");
     }
 
@@ -217,7 +237,8 @@ mod tests {
             DocumentId::new_custom("user001"),
             "users".to_string(),
             json!({"name": "Alice", "age": 30, "email": "alice@example.com", "secret": "hidden"}),
-        ).unwrap();
+        )
+        .unwrap();
         store.insert("users", doc).unwrap();
 
         let pipeline = PipelineBuilder::new()
@@ -226,8 +247,14 @@ mod tests {
 
         let results = store.aggregate("users", pipeline).unwrap();
         assert_eq!(results.len(), 1, "DOCSTORE-011: Expected 1 result");
-        assert!(results[0].get("name").is_some(), "DOCSTORE-011: Name should be present");
-        assert!(results[0].get("secret").is_none(), "DOCSTORE-011: Secret should be filtered");
+        assert!(
+            results[0].get("name").is_some(),
+            "DOCSTORE-011: Name should be present"
+        );
+        assert!(
+            results[0].get("secret").is_none(),
+            "DOCSTORE-011: Secret should be filtered"
+        );
         println!("✓ DOCSTORE-011: Aggregation pipeline - $project - PASSED");
     }
 
@@ -242,15 +269,15 @@ mod tests {
                 DocumentId::new_custom(format!("item{:03}", i)),
                 "items".to_string(),
                 json!({"value": i}),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("items", doc).unwrap();
         }
 
         let mut sort_spec = BTreeMap::new();
         sort_spec.insert("value".to_string(), 1); // Ascending
 
-        let pipeline = Pipeline::new()
-            .add_stage(PipelineStage::Sort { sort_spec });
+        let pipeline = Pipeline::new().add_stage(PipelineStage::Sort { sort_spec });
 
         let results = store.aggregate("items", pipeline).unwrap();
         assert!(results.len() >= 1, "DOCSTORE-012: Expected results");
@@ -268,13 +295,12 @@ mod tests {
                 DocumentId::new_custom(format!("item{:03}", i)),
                 "items".to_string(),
                 json!({"value": i}),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("items", doc).unwrap();
         }
 
-        let pipeline = PipelineBuilder::new()
-            .limit(3)
-            .build();
+        let pipeline = PipelineBuilder::new().limit(3).build();
 
         let results = store.aggregate("items", pipeline).unwrap();
         assert_eq!(results.len(), 3, "DOCSTORE-013: Expected 3 results");
@@ -292,16 +318,19 @@ mod tests {
                 DocumentId::new_custom(format!("item{:03}", i)),
                 "items".to_string(),
                 json!({"value": i}),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("items", doc).unwrap();
         }
 
-        let pipeline = PipelineBuilder::new()
-            .skip(7)
-            .build();
+        let pipeline = PipelineBuilder::new().skip(7).build();
 
         let results = store.aggregate("items", pipeline).unwrap();
-        assert_eq!(results.len(), 3, "DOCSTORE-014: Expected 3 results after skip");
+        assert_eq!(
+            results.len(),
+            3,
+            "DOCSTORE-014: Expected 3 results after skip"
+        );
         println!("✓ DOCSTORE-014: Aggregation pipeline - $skip - PASSED");
     }
 
@@ -317,7 +346,8 @@ mod tests {
                 DocumentId::new_custom(format!("doc{:03}", i)),
                 "bulk_test".to_string(),
                 json!({"value": i, "category": if i % 2 == 0 { "even" } else { "odd" }}),
-            ).unwrap();
+            )
+            .unwrap();
             documents.push(doc);
         }
 
@@ -339,11 +369,14 @@ mod tests {
                 DocumentId::new_custom(format!("doc{:03}", i)),
                 "bulk_test".to_string(),
                 json!({"value": i, "status": if i <= 10 { "active" } else { "inactive" }}),
-            ).unwrap();
+            )
+            .unwrap();
             store.insert("bulk_test", doc).unwrap();
         }
 
-        let count = store.bulk_delete("bulk_test", json!({"status": "inactive"})).unwrap();
+        let count = store
+            .bulk_delete("bulk_test", json!({"status": "inactive"}))
+            .unwrap();
         assert_eq!(count, 10, "DOCSTORE-016: Expected 10 deletions");
         println!("✓ DOCSTORE-016: Bulk delete - PASSED");
     }
@@ -352,7 +385,9 @@ mod tests {
     #[test]
     fn docstore_017_create_index() {
         let mut store = DocumentStore::new();
-        store.create_collection("indexed_collection".to_string()).unwrap();
+        store
+            .create_collection("indexed_collection".to_string())
+            .unwrap();
 
         let index_def = IndexDefinition::new("idx_name", IndexType::Single)
             .add_field(IndexField::ascending("name"));
@@ -398,11 +433,15 @@ mod tests {
                     }
                 }
             }),
-        ).unwrap();
+        )
+        .unwrap();
         store.insert("nested", doc).unwrap();
 
         let results = store.jsonpath_query("nested", "$.user.name").unwrap();
-        assert!(!results.is_empty(), "DOCSTORE-019: Expected results from JSONPath");
+        assert!(
+            !results.is_empty(),
+            "DOCSTORE-019: Expected results from JSONPath"
+        );
         println!("✓ DOCSTORE-019: JSONPath query - PASSED");
     }
 
@@ -416,12 +455,16 @@ mod tests {
             DocumentId::new_custom("ttl001"),
             "ttl_test".to_string(),
             json!({"data": "expires soon"}),
-        ).unwrap();
+        )
+        .unwrap();
 
         doc.metadata.set_ttl(3600); // 1 hour TTL
 
         let result = store.insert("ttl_test", doc);
-        assert!(result.is_ok(), "DOCSTORE-020: Failed to insert document with TTL");
+        assert!(
+            result.is_ok(),
+            "DOCSTORE-020: Failed to insert document with TTL"
+        );
 
         let found = store.find_by_id("ttl_test", &DocumentId::new_custom("ttl001"));
         assert!(found.is_ok(), "DOCSTORE-020: Document should exist");

@@ -38,18 +38,18 @@
 // MemorySanitizer::sanitize_slice(&mut key_material);
 // ```
 
-use std::fmt;
-use std::collections::VecDeque;
-use std::sync::Mutex;
-use std::ops::{Deref, DerefMut};
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, Weak};
-use std::ptr;
-use std::alloc::{alloc, dealloc, Layout};
 use parking_lot::RwLock;
-use std::collections::{HashMap};
-use std::time::Instant;
 use rand::RngCore;
+use std::alloc::{alloc, dealloc, Layout};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::fmt;
+use std::ops::{Deref, DerefMut};
+use std::ptr;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
+use std::sync::Mutex;
+use std::sync::{Arc, Weak};
+use std::time::Instant;
 
 // ============================================================================
 // Core Sanitization Primitives
@@ -72,7 +72,6 @@ pub enum Pattern {
 pub struct MemorySanitizer;
 
 impl MemorySanitizer {
-
     // Sanitize a memory slice with the specified pattern
     #[inline]
     pub fn sanitize_slice(data: &mut [u8]) {
@@ -190,9 +189,7 @@ pub struct SecureDrop<T> {
 impl<T> SecureDrop<T> {
     // Create a new SecureDrop wrapper
     pub fn new(value: T) -> Self {
-        Self {
-            value: Some(value),
-        }
+        Self { value: Some(value) }
     }
 
     // Take the value out, leaving None
@@ -626,18 +623,14 @@ impl DelayedSanitizer {
     //
     // # Safety
     // Caller must ensure the pointer remains valid until sanitization
-    pub unsafe fn queue_sanitization(
-        &self,
-        ptr: *mut u8,
-        size: usize,
-        pattern: Pattern,
-    ) {
+    pub unsafe fn queue_sanitization(&self, ptr: *mut u8, size: usize, pattern: Pattern) {
         let mut queue = self.queue.lock().unwrap();
 
         if queue.len() >= self.max_queue_size {
             // Queue full, sanitize immediately
             MemorySanitizer::sanitize_ptr(ptr, size);
-            self.bytes_sanitized.fetch_add(size as u64, Ordering::Relaxed);
+            self.bytes_sanitized
+                .fetch_add(size as u64, Ordering::Relaxed);
         } else {
             queue.push_back(SanitizationTask {
                 ptr,
@@ -658,7 +651,8 @@ impl DelayedSanitizer {
                 unsafe {
                     MemorySanitizer::sanitize_ptr(task.ptr, task.size);
                 }
-                self.bytes_sanitized.fetch_add(task.size as u64, Ordering::Relaxed);
+                self.bytes_sanitized
+                    .fetch_add(task.size as u64, Ordering::Relaxed);
                 processed += 1;
             }
         }
@@ -673,7 +667,8 @@ impl DelayedSanitizer {
             unsafe {
                 MemorySanitizer::sanitize_ptr(task.ptr, task.size);
             }
-            self.bytes_sanitized.fetch_add(task.size as u64, Ordering::Relaxed);
+            self.bytes_sanitized
+                .fetch_add(task.size as u64, Ordering::Relaxed);
         }
     }
 
@@ -771,7 +766,10 @@ impl HeapGuard {
             canary_value,
             _allocated_at: Instant::now(),
         };
-        self.regions.lock().unwrap().insert(data_ptr as usize, region);
+        self.regions
+            .lock()
+            .unwrap()
+            .insert(data_ptr as usize, region);
 
         Some(HeapGuardBlock {
             ptr: data_ptr,
@@ -874,8 +872,8 @@ pub struct HeapGuardStats {
 
 #[cfg(test)]
 mod tests {
-    use std::mem;
     use super::*;
+    use std::mem;
 
     #[test]
     fn test_memory_sanitizer_zero() {

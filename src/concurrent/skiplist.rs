@@ -101,7 +101,10 @@ impl<K, V> Node<K, V> {
     }
 
     /// Create sentinel node (head or tail)
-    fn sentinel(key: K, height: usize) -> Self where V: Default {
+    fn sentinel(key: K, height: usize) -> Self
+    where
+        V: Default,
+    {
         Self::new(key, V::default(), height)
     }
 }
@@ -141,7 +144,11 @@ where
     V: Clone + 'static,
 {
     /// Create a new lock-free skip list
-    pub fn new() -> Self where K: Default, V: Default {
+    pub fn new() -> Self
+    where
+        K: Default,
+        V: Default,
+    {
         let _guard = Epoch::pin();
 
         let head = Owned::new(Node::sentinel(K::default(), MAX_HEIGHT));
@@ -241,8 +248,7 @@ where
                 let succ = pred_node.next[level].load(Ordering::Acquire, &guard);
 
                 // Set next pointer for new node
-                new_node_ptr.as_ref().unwrap()
-                    .next[level].store(succ, Ordering::Release);
+                new_node_ptr.as_ref().unwrap().next[level].store(succ, Ordering::Release);
 
                 // Try to CAS predecessor's next pointer
                 let result = pred_node.next[level].compare_exchange(
@@ -261,8 +267,11 @@ where
 
             if success {
                 // Mark as fully linked
-                new_node_ptr.as_ref().unwrap()
-                    .fully_linked.store(true, Ordering::Release);
+                new_node_ptr
+                    .as_ref()
+                    .unwrap()
+                    .fully_linked
+                    .store(true, Ordering::Release);
 
                 self.size.fetch_add(1, Ordering::Relaxed);
                 self.insert_count.fetch_add(1, Ordering::Relaxed);
@@ -270,12 +279,14 @@ where
                 // Update skip list height if needed
                 let current_height = self.height.load(Ordering::Relaxed);
                 if height > current_height {
-                    self.height.compare_exchange(
-                        current_height,
-                        height,
-                        Ordering::Relaxed,
-                        Ordering::Relaxed,
-                    ).ok();
+                    self.height
+                        .compare_exchange(
+                            current_height,
+                            height,
+                            Ordering::Relaxed,
+                            Ordering::Relaxed,
+                        )
+                        .ok();
                 }
 
                 return true;
@@ -309,12 +320,11 @@ where
             }
 
             // Try to mark node for logical deletion
-            if node.marked.compare_exchange(
-                false,
-                true,
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            ).is_err() {
+            if node
+                .marked
+                .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+                .is_err()
+            {
                 // Another thread marked it
                 return false;
             }
@@ -330,13 +340,9 @@ where
                 let succ = node.next[level].load(Ordering::Acquire, &guard);
 
                 // Try to unlink
-                pred_node.next[level].compare_exchange(
-                    node_ptr,
-                    succ,
-                    Ordering::Release,
-                    Ordering::Acquire,
-                    &guard,
-                ).ok();
+                pred_node.next[level]
+                    .compare_exchange(node_ptr, succ, Ordering::Release, Ordering::Acquire, &guard)
+                    .ok();
             }
 
             // Defer node reclamation
@@ -353,8 +359,11 @@ where
     fn find_node<'g>(
         &self,
         key: &K,
-        guard: &'g EpochGuard
-    ) -> ([Shared<'g, Node<K, V>>; MAX_HEIGHT], Option<Shared<'g, Node<K, V>>>) {
+        guard: &'g EpochGuard,
+    ) -> (
+        [Shared<'g, Node<K, V>>; MAX_HEIGHT],
+        Option<Shared<'g, Node<K, V>>>,
+    ) {
         let mut preds = [Shared::null(); MAX_HEIGHT];
         let mut succs = [Shared::null(); MAX_HEIGHT];
 
@@ -376,13 +385,16 @@ where
                     if curr_node.marked.load(Ordering::Acquire) {
                         // Try to help remove marked node
                         let pred_node = pred.as_ref().unwrap();
-                        if pred_node.next[level].compare_exchange(
-                            curr,
-                            next,
-                            Ordering::Release,
-                            Ordering::Acquire,
-                            guard,
-                        ).is_ok() {
+                        if pred_node.next[level]
+                            .compare_exchange(
+                                curr,
+                                next,
+                                Ordering::Release,
+                                Ordering::Acquire,
+                                guard,
+                            )
+                            .is_ok()
+                        {
                             curr = next;
                             continue;
                         } else {
@@ -492,7 +504,9 @@ impl ThreadLocalRng {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos() as u64;
-        Self { state: seed ^ 0x123456789abcdef0 }
+        Self {
+            state: seed ^ 0x123456789abcdef0,
+        }
     }
 
     fn next(&mut self) -> u32 {
@@ -509,7 +523,9 @@ thread_local! {
 }
 
 fn thread_local_rng() -> ThreadLocalRng {
-    RNG.with(|rng| ThreadLocalRng { state: rng.borrow().state })
+    RNG.with(|rng| ThreadLocalRng {
+        state: rng.borrow().state,
+    })
 }
 
 /// Range iterator

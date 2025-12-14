@@ -25,7 +25,6 @@ impl LargeObject {
     unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
         #[cfg(unix)]
         {
-
             let mut flags = libc::MAP_PRIVATE | libc::MAP_ANONYMOUS;
             if cow {
                 flags |= libc::MAP_PRIVATE;
@@ -38,13 +37,15 @@ impl LargeObject {
                 if size >= HUGE_PAGE_1GB && size % HUGE_PAGE_1GB == 0 {
                     #[cfg(target_os = "linux")]
                     {
-                        flags |= libc::MAP_HUGETLB | (30 << libc::MAP_HUGE_SHIFT); // 1GB pages
+                        flags |= libc::MAP_HUGETLB | (30 << libc::MAP_HUGE_SHIFT);
+                        // 1GB pages
                     }
                     huge_page_size = HUGE_PAGE_1GB;
                 } else if size >= HUGE_PAGE_2MB {
                     #[cfg(target_os = "linux")]
                     {
-                        flags |= libc::MAP_HUGETLB | (21 << libc::MAP_HUGE_SHIFT); // 2MB pages
+                        flags |= libc::MAP_HUGETLB | (21 << libc::MAP_HUGE_SHIFT);
+                        // 2MB pages
                     }
                     huge_page_size = HUGE_PAGE_2MB;
                 }
@@ -109,7 +110,9 @@ impl LargeObject {
 
             let ptr = System.alloc(layout);
             if ptr.is_null() {
-                return Err(DbError::OutOfMemory("Failed to allocate large object".to_string()));
+                return Err(DbError::OutOfMemory(
+                    "Failed to allocate large object".to_string(),
+                ));
             }
 
             Ok(Self {
@@ -131,7 +134,8 @@ impl LargeObject {
                 self.base.as_ptr() as *mut libc::c_void,
                 self.size,
                 libc::MADV_FREE,
-            ) != 0 {
+            ) != 0
+            {
                 return Err(DbError::Internal("madvise failed".to_string()));
             }
         }
@@ -146,7 +150,8 @@ impl LargeObject {
                 self.base.as_ptr() as *mut libc::c_void,
                 self.size,
                 libc::MADV_WILLNEED,
-            ) != 0 {
+            ) != 0
+            {
                 return Err(DbError::Internal("madvise failed".to_string()));
             }
         }
@@ -161,7 +166,8 @@ impl LargeObject {
                 self.base.as_ptr() as *mut libc::c_void,
                 self.size,
                 libc::MADV_SEQUENTIAL,
-            ) != 0 {
+            ) != 0
+            {
                 return Err(DbError::Internal("madvise failed".to_string()));
             }
         }
@@ -232,21 +238,20 @@ impl LargeObjectAllocator {
     }
 
     // Allocate a large object
-    pub fn allocate(
-        &self,
-        size: usize,
-        use_huge_pages: bool,
-        cow: bool,
-    ) -> Result<NonNull<u8>> {
+    pub fn allocate(&self, size: usize, use_huge_pages: bool, cow: bool) -> Result<NonNull<u8>> {
         let obj = unsafe { LargeObject::allocate(size, use_huge_pages, cow)? };
         let ptr = obj.base;
         let addr = ptr.as_ptr() as usize;
 
         self.stats.allocations.fetch_add(1, Ordering::Relaxed);
-        self.stats.bytes_allocated.fetch_add(size as u64, Ordering::Relaxed);
+        self.stats
+            .bytes_allocated
+            .fetch_add(size as u64, Ordering::Relaxed);
 
         if obj.huge_pages {
-            self.stats.huge_page_allocations.fetch_add(1, Ordering::Relaxed);
+            self.stats
+                .huge_page_allocations
+                .fetch_add(1, Ordering::Relaxed);
             if obj.huge_page_size == HUGE_PAGE_2MB {
                 self.stats.huge_page_2mb.fetch_add(1, Ordering::Relaxed);
             } else if obj.huge_page_size == HUGE_PAGE_1GB {
@@ -265,10 +270,14 @@ impl LargeObjectAllocator {
 
         if let Some(obj) = self.objects.write().unwrap().remove(&addr) {
             self.stats.deallocations.fetch_add(1, Ordering::Relaxed);
-            self.stats.bytes_deallocated.fetch_add(obj.size as u64, Ordering::Relaxed);
+            self.stats
+                .bytes_deallocated
+                .fetch_add(obj.size as u64, Ordering::Relaxed);
             Ok(())
         } else {
-            Err(DbError::InvalidArgument("Unknown large object pointer".to_string()))
+            Err(DbError::InvalidArgument(
+                "Unknown large object pointer".to_string(),
+            ))
         }
     }
 
@@ -280,7 +289,9 @@ impl LargeObjectAllocator {
         if let Some(obj) = objects.get(&addr) {
             unsafe { obj.enable_lazy_allocation() }
         } else {
-            Err(DbError::InvalidArgument("Unknown large object pointer".to_string()))
+            Err(DbError::InvalidArgument(
+                "Unknown large object pointer".to_string(),
+            ))
         }
     }
 
@@ -292,7 +303,9 @@ impl LargeObjectAllocator {
         if let Some(obj) = objects.get(&addr) {
             unsafe { obj.prefault() }
         } else {
-            Err(DbError::InvalidArgument("Unknown large object pointer".to_string()))
+            Err(DbError::InvalidArgument(
+                "Unknown large object pointer".to_string(),
+            ))
         }
     }
 
@@ -304,7 +317,9 @@ impl LargeObjectAllocator {
         if let Some(obj) = objects.get(&addr) {
             unsafe { obj.set_sequential() }
         } else {
-            Err(DbError::InvalidArgument("Unknown large object pointer".to_string()))
+            Err(DbError::InvalidArgument(
+                "Unknown large object pointer".to_string(),
+            ))
         }
     }
 
@@ -352,7 +367,7 @@ pub struct LargeObjectAllocatorStats {
     pub total_allocated: u64,
     pub allocation_count: u64,
     pub deallocation_count: u64,
-    pub peak_usage: u64
+    pub peak_usage: u64,
 }
 
 // ============================================================================

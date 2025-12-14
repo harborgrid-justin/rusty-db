@@ -2,9 +2,9 @@
 // Includes predicate pushdown, join reordering, projection pushdown
 
 use crate::error::DbError;
-use crate::execution::optimizer::cost_model::{TableStatistics, SingleTableStatistics};
+use crate::execution::optimizer::cost_model::{SingleTableStatistics, TableStatistics};
 use crate::execution::optimizer::plan_transformation::{
-    MemoTable, MaterializedView, ExpressionHash, AdaptiveStatistics, BitSet,
+    AdaptiveStatistics, BitSet, ExpressionHash, MaterializedView, MemoTable,
 };
 use crate::execution::planner::PlanNode;
 use crate::parser::JoinType;
@@ -139,7 +139,12 @@ impl Optimizer {
         match plan {
             PlanNode::Filter { input, predicate } => {
                 match *input {
-                    PlanNode::Join { join_type, left, right, condition } => {
+                    PlanNode::Join {
+                        join_type,
+                        left,
+                        right,
+                        condition,
+                    } => {
                         // Try to push filter down to join children
                         // For simplicity, we'll keep it above the join for now
                         Ok(PlanNode::Filter {
@@ -158,35 +163,41 @@ impl Optimizer {
                     }),
                 }
             }
-            PlanNode::Join { join_type, left, right, condition } => {
-                Ok(PlanNode::Join {
-                    join_type,
-                    left: Box::new(self.push_down_predicates(*left)?),
-                    right: Box::new(self.push_down_predicates(*right)?),
-                    condition,
-                })
-            }
-            PlanNode::Aggregate { input, group_by, aggregates, having } => {
-                Ok(PlanNode::Aggregate {
-                    input: Box::new(self.push_down_predicates(*input)?),
-                    group_by,
-                    aggregates,
-                    having,
-                })
-            }
-            PlanNode::Sort { input, order_by } => {
-                Ok(PlanNode::Sort {
-                    input: Box::new(self.push_down_predicates(*input)?),
-                    order_by,
-                })
-            }
-            PlanNode::Limit { input, limit, offset } => {
-                Ok(PlanNode::Limit {
-                    input: Box::new(self.push_down_predicates(*input)?),
-                    limit,
-                    offset,
-                })
-            }
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => Ok(PlanNode::Join {
+                join_type,
+                left: Box::new(self.push_down_predicates(*left)?),
+                right: Box::new(self.push_down_predicates(*right)?),
+                condition,
+            }),
+            PlanNode::Aggregate {
+                input,
+                group_by,
+                aggregates,
+                having,
+            } => Ok(PlanNode::Aggregate {
+                input: Box::new(self.push_down_predicates(*input)?),
+                group_by,
+                aggregates,
+                having,
+            }),
+            PlanNode::Sort { input, order_by } => Ok(PlanNode::Sort {
+                input: Box::new(self.push_down_predicates(*input)?),
+                order_by,
+            }),
+            PlanNode::Limit {
+                input,
+                limit,
+                offset,
+            } => Ok(PlanNode::Limit {
+                input: Box::new(self.push_down_predicates(*input)?),
+                limit,
+                offset,
+            }),
             other => Ok(other),
         }
     }
@@ -200,7 +211,12 @@ impl Optimizer {
     // Reorder joins based on estimated costs using dynamic programming
     pub fn reorder_joins(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
-            PlanNode::Join { join_type, left, right, condition } => {
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => {
                 // Recursively optimize children first
                 let left = self.reorder_joins(*left)?;
                 let right = self.reorder_joins(*right)?;
@@ -227,20 +243,21 @@ impl Optimizer {
                     condition,
                 })
             }
-            PlanNode::Aggregate { input, group_by, aggregates, having } => {
-                Ok(PlanNode::Aggregate {
-                    input: Box::new(self.reorder_joins(*input)?),
-                    group_by,
-                    aggregates,
-                    having,
-                })
-            }
-            PlanNode::Filter { input, predicate } => {
-                Ok(PlanNode::Filter {
-                    input: Box::new(self.reorder_joins(*input)?),
-                    predicate,
-                })
-            }
+            PlanNode::Aggregate {
+                input,
+                group_by,
+                aggregates,
+                having,
+            } => Ok(PlanNode::Aggregate {
+                input: Box::new(self.reorder_joins(*input)?),
+                group_by,
+                aggregates,
+                having,
+            }),
+            PlanNode::Filter { input, predicate } => Ok(PlanNode::Filter {
+                input: Box::new(self.reorder_joins(*input)?),
+                predicate,
+            }),
             other => Ok(other),
         }
     }
@@ -257,14 +274,17 @@ impl Optimizer {
                 }
                 Ok(PlanNode::TableScan { table, columns })
             }
-            PlanNode::Join { join_type, left, right, condition } => {
-                Ok(PlanNode::Join {
-                    join_type,
-                    left: Box::new(self.select_access_paths(*left)?),
-                    right: Box::new(self.select_access_paths(*right)?),
-                    condition,
-                })
-            }
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => Ok(PlanNode::Join {
+                join_type,
+                left: Box::new(self.select_access_paths(*left)?),
+                right: Box::new(self.select_access_paths(*right)?),
+                condition,
+            }),
             other => Ok(other),
         }
     }
@@ -334,7 +354,12 @@ impl Optimizer {
                 let selectivity = self.estimate_filter_selectivity(predicate);
                 input_card * selectivity
             }
-            PlanNode::Join { left, right, join_type, condition } => {
+            PlanNode::Join {
+                left,
+                right,
+                join_type,
+                condition,
+            } => {
                 let left_card = self.estimate_cardinality(left);
                 let right_card = self.estimate_cardinality(right);
                 let selectivity = self.estimate_join_selectivity(condition);
@@ -347,7 +372,9 @@ impl Optimizer {
                     JoinType::Cross => left_card * right_card,
                 }
             }
-            PlanNode::Aggregate { input, group_by, .. } => {
+            PlanNode::Aggregate {
+                input, group_by, ..
+            } => {
                 let input_card = self.estimate_cardinality(input);
                 if group_by.is_empty() {
                     1.0 // Single row for global aggregate
@@ -356,18 +383,12 @@ impl Optimizer {
                     (input_card / 10.0).max(1.0).min(input_card)
                 }
             }
-            PlanNode::Sort { input, .. } => {
-                self.estimate_cardinality(input)
-            }
+            PlanNode::Sort { input, .. } => self.estimate_cardinality(input),
             PlanNode::Limit { input, limit, .. } => {
                 self.estimate_cardinality(input).min(*limit as f64)
             }
-            PlanNode::Project { input, .. } => {
-                self.estimate_cardinality(input)
-            }
-            PlanNode::Subquery { plan, .. } => {
-                self.estimate_cardinality(plan)
-            }
+            PlanNode::Project { input, .. } => self.estimate_cardinality(input),
+            PlanNode::Subquery { plan, .. } => self.estimate_cardinality(plan),
         }
     }
 
@@ -384,7 +405,12 @@ impl Optimizer {
     }
 
     // Estimate cost of a specific join
-    pub fn estimate_join_cost(&self, left: &PlanNode, right: &PlanNode, join_type: &JoinType) -> f64 {
+    pub fn estimate_join_cost(
+        &self,
+        left: &PlanNode,
+        right: &PlanNode,
+        join_type: &JoinType,
+    ) -> f64 {
         let left_card = self.estimate_cardinality(left);
         let right_card = self.estimate_cardinality(right);
 
@@ -443,7 +469,11 @@ impl Optimizer {
         Ok(plan)
     }
 
-    fn try_match_view(&self, plan: &PlanNode, view: &MaterializedView) -> Result<Option<PlanNode>, DbError> {
+    fn try_match_view(
+        &self,
+        plan: &PlanNode,
+        view: &MaterializedView,
+    ) -> Result<Option<PlanNode>, DbError> {
         match (plan, &view.definition) {
             (PlanNode::TableScan { table: t1, .. }, PlanNode::TableScan { table: t2, .. })
                 if t1 == t2 =>
@@ -467,18 +497,38 @@ impl Optimizer {
         }
 
         let optimized = match plan {
-            PlanNode::Join { join_type, left, right, condition } => {
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => {
                 let left = Box::new(self.eliminate_common_subexpressions(*left)?);
                 let right = Box::new(self.eliminate_common_subexpressions(*right)?);
-                PlanNode::Join { join_type, left, right, condition }
+                PlanNode::Join {
+                    join_type,
+                    left,
+                    right,
+                    condition,
+                }
             }
             PlanNode::Filter { input, predicate } => {
                 let input = Box::new(self.eliminate_common_subexpressions(*input)?);
                 PlanNode::Filter { input, predicate }
             }
-            PlanNode::Aggregate { input, group_by, aggregates, having } => {
+            PlanNode::Aggregate {
+                input,
+                group_by,
+                aggregates,
+                having,
+            } => {
                 let input = Box::new(self.eliminate_common_subexpressions(*input)?);
-                PlanNode::Aggregate { input, group_by, aggregates, having }
+                PlanNode::Aggregate {
+                    input,
+                    group_by,
+                    aggregates,
+                    having,
+                }
             }
             other => other,
         };
@@ -499,7 +549,12 @@ impl Optimizer {
 
     fn pull_up_predicates(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
-            PlanNode::Join { join_type, left, right, condition } => {
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => {
                 let left = self.pull_up_predicates(*left)?;
                 let right = self.pull_up_predicates(*right)?;
                 Ok(PlanNode::Join {
@@ -515,20 +570,21 @@ impl Optimizer {
 
     fn decorrelate_subqueries(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
-            PlanNode::Filter { input, predicate } => {
-                Ok(PlanNode::Filter {
-                    input: Box::new(self.decorrelate_subqueries(*input)?),
-                    predicate,
-                })
-            }
-            PlanNode::Join { join_type, left, right, condition } => {
-                Ok(PlanNode::Join {
-                    join_type,
-                    left: Box::new(self.decorrelate_subqueries(*left)?),
-                    right: Box::new(self.decorrelate_subqueries(*right)?),
-                    condition,
-                })
-            }
+            PlanNode::Filter { input, predicate } => Ok(PlanNode::Filter {
+                input: Box::new(self.decorrelate_subqueries(*input)?),
+                predicate,
+            }),
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => Ok(PlanNode::Join {
+                join_type,
+                left: Box::new(self.decorrelate_subqueries(*left)?),
+                right: Box::new(self.decorrelate_subqueries(*right)?),
+                condition,
+            }),
             other => Ok(other),
         }
     }
@@ -539,7 +595,12 @@ impl Optimizer {
 
     fn reorder_joins_dpccp(&self, plan: PlanNode) -> Result<PlanNode, DbError> {
         match plan {
-            PlanNode::Join { join_type, left, right, condition } => {
+            PlanNode::Join {
+                join_type,
+                left,
+                right,
+                condition,
+            } => {
                 let left = self.reorder_joins_dpccp(*left)?;
                 let right = self.reorder_joins_dpccp(*right)?;
                 let tables = self.extract_tables(&left, &right);
@@ -551,20 +612,21 @@ impl Optimizer {
                 let best_plan = self.dpccp_enumerate(&tables, &join_type, &condition)?;
                 Ok(best_plan)
             }
-            PlanNode::Filter { input, predicate } => {
-                Ok(PlanNode::Filter {
-                    input: Box::new(self.reorder_joins_dpccp(*input)?),
-                    predicate,
-                })
-            }
-            PlanNode::Aggregate { input, group_by, aggregates, having } => {
-                Ok(PlanNode::Aggregate {
-                    input: Box::new(self.reorder_joins_dpccp(*input)?),
-                    group_by,
-                    aggregates,
-                    having,
-                })
-            }
+            PlanNode::Filter { input, predicate } => Ok(PlanNode::Filter {
+                input: Box::new(self.reorder_joins_dpccp(*input)?),
+                predicate,
+            }),
+            PlanNode::Aggregate {
+                input,
+                group_by,
+                aggregates,
+                having,
+            } => Ok(PlanNode::Aggregate {
+                input: Box::new(self.reorder_joins_dpccp(*input)?),
+                group_by,
+                aggregates,
+                having,
+            }),
             other => Ok(other),
         }
     }
@@ -688,7 +750,9 @@ impl Optimizer {
     }
 
     pub fn record_execution_feedback(&self, operator: String, estimated: f64, actual: f64) {
-        self.adaptive_stats.write().record_error(operator, estimated, actual);
+        self.adaptive_stats
+            .write()
+            .record_error(operator, estimated, actual);
     }
 }
 

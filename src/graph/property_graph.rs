@@ -7,14 +7,14 @@
 // - Graph partitioning for distributed storage
 // - Efficient ID generation and management
 
-use std::fmt;
-use std::collections::HashSet;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::{Arc, RwLock};
-use std::sync::atomic::{AtomicU64, Ordering};
-use crate::error::{Result, DbError};
 use crate::common::Value;
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fmt;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, RwLock};
 
 // ============================================================================
 // Type Aliases and Constants
@@ -273,7 +273,18 @@ impl Vertex {
 // ============================================================================
 
 // Edge direction enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    Deserialize,
+    bincode::Encode,
+    bincode::Decode,
+)]
 pub enum EdgeDirection {
     // Directed edge from source to target
     Directed,
@@ -562,12 +573,11 @@ impl GraphPartitioner {
     // Assign a vertex to a partition
     pub fn assign_vertex(&mut self, vertex_id: VertexId) -> PartitionId {
         let partition_id = match self.strategy {
-            PartitioningStrategy::Hash => {
-                (vertex_id % self.num_partitions as u64) as PartitionId
-            }
+            PartitioningStrategy::Hash => (vertex_id % self.num_partitions as u64) as PartitionId,
             PartitioningStrategy::Range => {
                 // Simple range partitioning
-                ((vertex_id / DEFAULT_PARTITION_SIZE as u64) % self.num_partitions as u64) as PartitionId
+                ((vertex_id / DEFAULT_PARTITION_SIZE as u64) % self.num_partitions as u64)
+                    as PartitionId
             }
             _ => {
                 // Default to hash for other strategies (would need graph structure for advanced partitioning)
@@ -582,15 +592,12 @@ impl GraphPartitioner {
     // Get partition for a vertex
     pub fn get_partition(&self, vertex_id: VertexId) -> PartitionId {
         match self.strategy {
-            PartitioningStrategy::Hash => {
-                (vertex_id % self.num_partitions as u64) as PartitionId
-            }
+            PartitioningStrategy::Hash => (vertex_id % self.num_partitions as u64) as PartitionId,
             PartitioningStrategy::Range => {
-                ((vertex_id / DEFAULT_PARTITION_SIZE as u64) % self.num_partitions as u64) as PartitionId
+                ((vertex_id / DEFAULT_PARTITION_SIZE as u64) % self.num_partitions as u64)
+                    as PartitionId
             }
-            _ => {
-                (vertex_id % self.num_partitions as u64) as PartitionId
-            }
+            _ => (vertex_id % self.num_partitions as u64) as PartitionId,
         }
     }
 
@@ -610,7 +617,8 @@ impl GraphPartitioner {
         let mut underloaded: Vec<PartitionId> = Vec::new();
 
         for partition in &self.partitions {
-            if partition.load() > avg_load * 11 / 10 { // 10% tolerance
+            if partition.load() > avg_load * 11 / 10 {
+                // 10% tolerance
                 overloaded.push(partition.id);
             } else if partition.load() < avg_load * 9 / 10 {
                 underloaded.push(partition.id);
@@ -844,7 +852,9 @@ impl PropertyGraph {
     pub fn remove_vertex(&mut self, id: VertexId) -> Result<()> {
         if let Some(vertex) = self.vertices.remove(&id) {
             // Remove all connected edges
-            let edge_ids: Vec<EdgeId> = vertex.outgoing_edges.iter()
+            let edge_ids: Vec<EdgeId> = vertex
+                .outgoing_edges
+                .iter()
                 .chain(vertex.incoming_edges.iter())
                 .copied()
                 .collect();
@@ -885,10 +895,16 @@ impl PropertyGraph {
     ) -> Result<EdgeId> {
         // Verify vertices exist
         if !self.vertices.contains_key(&source) {
-            return Err(DbError::Internal(format!("Source vertex {} not found", source)));
+            return Err(DbError::Internal(format!(
+                "Source vertex {} not found",
+                source
+            )));
         }
         if !self.vertices.contains_key(&target) {
-            return Err(DbError::Internal(format!("Target vertex {} not found", target)));
+            return Err(DbError::Internal(format!(
+                "Target vertex {} not found",
+                target
+            )));
         }
 
         let id = self.generate_edge_id();
@@ -992,7 +1008,8 @@ impl PropertyGraph {
     // Get vertices by label
     pub fn get_vertices_by_label(&self, label: &str) -> Vec<&Vertex> {
         if let Some(vertex_ids) = self.vertex_label_index.get(label) {
-            vertex_ids.iter()
+            vertex_ids
+                .iter()
                 .filter_map(|id| self.vertices.get(id))
                 .collect()
         } else {
@@ -1003,7 +1020,8 @@ impl PropertyGraph {
     // Get edges by label
     pub fn get_edges_by_label(&self, label: &str) -> Vec<&Edge> {
         if let Some(edge_ids) = self.edge_label_index.get(label) {
-            edge_ids.iter()
+            edge_ids
+                .iter()
                 .filter_map(|id| self.edges.get(id))
                 .collect()
         } else {
@@ -1039,7 +1057,9 @@ impl PropertyGraph {
     // Get outgoing neighbors
     pub fn get_outgoing_neighbors(&self, vertex_id: VertexId) -> Result<Vec<VertexId>> {
         if let Some(vertex) = self.vertices.get(&vertex_id) {
-            let neighbors: Vec<VertexId> = vertex.outgoing_edges.iter()
+            let neighbors: Vec<VertexId> = vertex
+                .outgoing_edges
+                .iter()
                 .filter_map(|&edge_id| self.edges.get(&edge_id))
                 .map(|edge| edge.target)
                 .collect();
@@ -1052,7 +1072,9 @@ impl PropertyGraph {
     // Get incoming neighbors
     pub fn get_incoming_neighbors(&self, vertex_id: VertexId) -> Result<Vec<VertexId>> {
         if let Some(vertex) = self.vertices.get(&vertex_id) {
-            let neighbors: Vec<VertexId> = vertex.incoming_edges.iter()
+            let neighbors: Vec<VertexId> = vertex
+                .incoming_edges
+                .iter()
                 .filter_map(|&edge_id| self.edges.get(&edge_id))
                 .map(|edge| edge.source)
                 .collect();
@@ -1088,7 +1110,9 @@ impl PropertyGraph {
             stats.update_basic(self.vertices.len() as u64, self.edges.len() as u64);
             stats.num_hyperedges = self.hyperedges.len() as u64;
 
-            let degrees: Vec<usize> = self.vertices.values()
+            let degrees: Vec<usize> = self
+                .vertices
+                .values()
                 .map(|v| v.in_degree() + v.out_degree())
                 .collect();
 
@@ -1132,7 +1156,10 @@ impl fmt::Debug for PropertyGraph {
             .field("vertices", &self.vertices)
             .field("edges", &self.edges)
             .field("hyperedges", &self.hyperedges)
-            .field("next_vertex_id", &self.next_vertex_id.load(Ordering::SeqCst))
+            .field(
+                "next_vertex_id",
+                &self.next_vertex_id.load(Ordering::SeqCst),
+            )
             .field("next_edge_id", &self.next_edge_id.load(Ordering::SeqCst))
             .field("stats", &self.stats)
             .finish()
@@ -1159,25 +1186,31 @@ impl Clone for PropertyGraph {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::UNIX_EPOCH;
-use std::time::SystemTime;
+    use std::time::SystemTime;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_property_graph_basic() {
         let mut graph = PropertyGraph::new();
 
         // Add vertices
-        let v1 = graph.add_vertex(vec!["Person".to_string()], Properties::new()).unwrap();
-        let v2 = graph.add_vertex(vec!["Person".to_string()], Properties::new()).unwrap();
+        let v1 = graph
+            .add_vertex(vec!["Person".to_string()], Properties::new())
+            .unwrap();
+        let v2 = graph
+            .add_vertex(vec!["Person".to_string()], Properties::new())
+            .unwrap();
 
         // Add edge
-        let _e1 = graph.add_edge(
-            v1,
-            v2,
-            "KNOWS".to_string(),
-            Properties::new(),
-            EdgeDirection::Directed,
-        ).unwrap();
+        let _e1 = graph
+            .add_edge(
+                v1,
+                v2,
+                "KNOWS".to_string(),
+                Properties::new(),
+                EdgeDirection::Directed,
+            )
+            .unwrap();
 
         assert_eq!(graph.vertex_count(), 2);
         assert_eq!(graph.edge_count(), 1);

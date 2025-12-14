@@ -16,10 +16,10 @@
 // lm.release_all_locks(txn_id)?;
 // ```
 
-use std::fmt;
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
-use std::collections::{HashMap};
+use std::fmt;
 use std::sync::Arc;
 use std::time::SystemTime;
 
@@ -375,14 +375,20 @@ impl ReadWriteLockManager {
         resource: String,
     ) -> TransactionResult<()> {
         let mut locks = self.locks.write();
-        let lock = locks.entry(resource.clone()).or_insert_with(RWLockState::new);
+        let lock = locks
+            .entry(resource.clone())
+            .or_insert_with(RWLockState::new);
 
         // Can acquire read if no writer and no waiting writers
         if lock.writer.is_none() && lock.waiting_writers.is_empty() {
             lock.readers.insert(txn_id);
             Ok(())
         } else {
-            Err(TransactionError::lock_timeout(txn_id, resource, LockMode::Shared))
+            Err(TransactionError::lock_timeout(
+                txn_id,
+                resource,
+                LockMode::Shared,
+            ))
         }
     }
 
@@ -397,7 +403,9 @@ impl ReadWriteLockManager {
         resource: String,
     ) -> TransactionResult<()> {
         let mut locks = self.locks.write();
-        let lock = locks.entry(resource.clone()).or_insert_with(RWLockState::new);
+        let lock = locks
+            .entry(resource.clone())
+            .or_insert_with(RWLockState::new);
 
         if lock.writer.is_none() && lock.readers.is_empty() {
             lock.writer = Some(txn_id);
@@ -407,7 +415,11 @@ impl ReadWriteLockManager {
             if !lock.waiting_writers.contains(&txn_id) {
                 lock.waiting_writers.push_back(txn_id);
             }
-            Err(TransactionError::lock_timeout(txn_id, resource, LockMode::Exclusive))
+            Err(TransactionError::lock_timeout(
+                txn_id,
+                resource,
+                LockMode::Exclusive,
+            ))
         }
     }
 
@@ -551,10 +563,14 @@ mod tests {
         let lm = LockManager::new();
 
         // Acquire shared lock
-        assert!(lm.acquire_lock(1, "r1".to_string(), LockMode::Shared).is_ok());
+        assert!(lm
+            .acquire_lock(1, "r1".to_string(), LockMode::Shared)
+            .is_ok());
 
         // Another transaction can also acquire shared
-        assert!(lm.acquire_lock(2, "r1".to_string(), LockMode::Shared).is_ok());
+        assert!(lm
+            .acquire_lock(2, "r1".to_string(), LockMode::Shared)
+            .is_ok());
 
         // Verify lock counts
         assert_eq!(lm.lock_count(1), 1);
@@ -566,7 +582,9 @@ mod tests {
         let lm = LockManager::new();
 
         // Acquire exclusive lock
-        assert!(lm.acquire_lock(1, "r1".to_string(), LockMode::Exclusive).is_ok());
+        assert!(lm
+            .acquire_lock(1, "r1".to_string(), LockMode::Exclusive)
+            .is_ok());
 
         // Another transaction cannot acquire
         let result = lm.acquire_lock(2, "r1".to_string(), LockMode::Shared);
@@ -577,8 +595,10 @@ mod tests {
     fn test_release_all_locks() {
         let lm = LockManager::new();
 
-        lm.acquire_lock(1, "r1".to_string(), LockMode::Shared).unwrap();
-        lm.acquire_lock(1, "r2".to_string(), LockMode::Shared).unwrap();
+        lm.acquire_lock(1, "r1".to_string(), LockMode::Shared)
+            .unwrap();
+        lm.acquire_lock(1, "r2".to_string(), LockMode::Shared)
+            .unwrap();
 
         assert_eq!(lm.lock_count(1), 2);
 
@@ -592,10 +612,13 @@ mod tests {
         let lm = LockManager::new();
 
         // Acquire shared, then upgrade to exclusive
-        lm.acquire_lock(1, "r1".to_string(), LockMode::Shared).unwrap();
+        lm.acquire_lock(1, "r1".to_string(), LockMode::Shared)
+            .unwrap();
 
         // When alone, upgrade should succeed
-        assert!(lm.acquire_lock(1, "r1".to_string(), LockMode::Exclusive).is_ok());
+        assert!(lm
+            .acquire_lock(1, "r1".to_string(), LockMode::Exclusive)
+            .is_ok());
     }
 
     #[test]

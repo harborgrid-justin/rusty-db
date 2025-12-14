@@ -2,23 +2,23 @@
 //
 // Part of the API Gateway and Security system for RustyDB
 
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use hmac::{Hmac, Mac};
+use parking_lot::RwLock;
+use reqwest::Client;
+use rsa::{pkcs1::DecodeRsaPublicKey, Pkcs1v15Sign, RsaPublicKey};
+use serde::{Deserialize, Serialize};
+use sha1::Sha1;
+use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
-use std::sync::{Arc};
+use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use parking_lot::RwLock;
-use serde::{Deserialize, Serialize};
-use sha2::{Sha256, Digest};
-use hmac::{Hmac, Mac};
-use rsa::{Pkcs1v15Sign, RsaPublicKey, pkcs1::DecodeRsaPublicKey};
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use uuid::Uuid;
-use reqwest::Client;
 use x509_parser::prelude::*;
-use sha1::Sha1;
 
-use crate::error::DbError;
 use super::types::*;
+use crate::error::DbError;
 
 // ============================================================================
 // Authentication System - JWT, OAuth, API Keys, mTLS
@@ -263,21 +263,35 @@ impl AuthenticationManager {
             }
         }
 
-        Err(DbError::InvalidOperation("Authentication failed".to_string()))
+        Err(DbError::InvalidOperation(
+            "Authentication failed".to_string(),
+        ))
     }
 
     // Create session from JWT claims
-    fn create_session_from_jwt(&self, claims: JwtClaims, request: &ApiRequest) -> Result<Session, DbError> {
+    fn create_session_from_jwt(
+        &self,
+        claims: JwtClaims,
+        request: &ApiRequest,
+    ) -> Result<Session, DbError> {
         let session = Session {
             session_id: Uuid::new_v4().to_string(),
             user_id: claims.sub.clone(),
-            username: claims.custom.get("username")
+            username: claims
+                .custom
+                .get("username")
                 .and_then(|v| v.as_str())
                 .unwrap_or(&claims.sub)
                 .to_string(),
-            roles: claims.custom.get("roles")
+            roles: claims
+                .custom
+                .get("roles")
                 .and_then(|v| v.as_array())
-                .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str().map(String::from))
+                        .collect()
+                })
                 .unwrap_or_default(),
             permissions: Vec::new(),
             created_at: SystemTime::now(),
@@ -292,7 +306,11 @@ impl AuthenticationManager {
     }
 
     // Authenticate using API key
-    async fn authenticate_api_key(&self, api_key: &str, request: &ApiRequest) -> Result<Session, DbError> {
+    async fn authenticate_api_key(
+        &self,
+        api_key: &str,
+        request: &ApiRequest,
+    ) -> Result<Session, DbError> {
         let key_store = self.api_key_store.read();
 
         // Hash the provided key
@@ -349,7 +367,11 @@ impl AuthenticationManager {
     }
 
     // Generate new API key
-    pub fn generate_api_key(&self, user_id: String, scopes: Vec<String>) -> Result<String, DbError> {
+    pub fn generate_api_key(
+        &self,
+        user_id: String,
+        scopes: Vec<String>,
+    ) -> Result<String, DbError> {
         let key = Uuid::new_v4().to_string();
         let key_hash = Self::hash_api_key(&key);
 
@@ -385,7 +407,9 @@ impl AuthenticationManager {
     // List API keys for user
     pub fn list_api_keys(&self, user_id: &str) -> Vec<ApiKeyMetadata> {
         let key_store = self.api_key_store.read();
-        key_store.keys.values()
+        key_store
+            .keys
+            .values()
             .filter(|m| m.user_id == user_id)
             .cloned()
             .collect()
@@ -413,7 +437,8 @@ impl JwtValidator {
         }
 
         // Decode header
-        let header_data = BASE64.decode(parts[0])
+        let header_data = BASE64
+            .decode(parts[0])
             .map_err(|_| DbError::InvalidOperation("Invalid JWT header".to_string()))?;
         let header: serde_json::Value = serde_json::from_slice(&header_data)
             .map_err(|_| DbError::InvalidOperation("Invalid JWT header JSON".to_string()))?;
@@ -421,13 +446,15 @@ impl JwtValidator {
         let kid = header.get("kid").and_then(|v| v.as_str());
 
         // Decode payload
-        let payload_data = BASE64.decode(parts[1])
+        let payload_data = BASE64
+            .decode(parts[1])
             .map_err(|_| DbError::InvalidOperation("Invalid JWT payload".to_string()))?;
         let claims: JwtClaims = serde_json::from_slice(&payload_data)
             .map_err(|_| DbError::InvalidOperation("Invalid JWT claims".to_string()))?;
 
         // Verify signature
-        let signature = BASE64.decode(parts[2])
+        let signature = BASE64
+            .decode(parts[2])
             .map_err(|_| DbError::InvalidOperation("Invalid JWT signature".to_string()))?;
 
         let message = format!("{}.{}", parts[0], parts[1]);
@@ -440,7 +467,12 @@ impl JwtValidator {
     }
 
     // Verify signature
-    fn verify_signature(&self, message: &str, signature: &[u8], kid: Option<&str>) -> Result<(), DbError> {
+    fn verify_signature(
+        &self,
+        message: &str,
+        signature: &[u8],
+        kid: Option<&str>,
+    ) -> Result<(), DbError> {
         let keys = self.signing_keys.read();
 
         // If kid is provided, use that key
@@ -448,8 +480,11 @@ impl JwtValidator {
             return if let Some(key) = keys.get(kid) {
                 self.verify_with_key(message, signature, key)
             } else {
-                Err(DbError::InvalidOperation(format!("Unknown key ID: {}", kid)))
-            }
+                Err(DbError::InvalidOperation(format!(
+                    "Unknown key ID: {}",
+                    kid
+                )))
+            };
         }
 
         // If no kid, try all keys (inefficient but fallback)
@@ -471,15 +506,18 @@ impl JwtValidator {
                 mac.update(message.as_bytes());
                 mac.verify_slice(signature)
                     .map_err(|_| DbError::InvalidOperation("Invalid signature".to_string()))
-            },
+            }
             JwtAlgorithm::RS256 => {
                 let pub_key = RsaPublicKey::from_pkcs1_der(key)
                     .map_err(|_| DbError::InvalidOperation("Invalid RSA key".to_string()))?;
                 let verifying_key = Pkcs1v15Sign::new::<Sha256>();
-                pub_key.verify(verifying_key, message.as_bytes(), signature)
+                pub_key
+                    .verify(verifying_key, message.as_bytes(), signature)
                     .map_err(|_| DbError::InvalidOperation("Invalid signature".to_string()))
-            },
-            _ => Err(DbError::InvalidOperation("Unsupported algorithm".to_string())),
+            }
+            _ => Err(DbError::InvalidOperation(
+                "Unsupported algorithm".to_string(),
+            )),
         }
     }
 
@@ -550,17 +588,22 @@ impl OAuthProvider {
             ("client_secret", &config.client_secret),
         ];
 
-        let response = client.post(&config.token_endpoint)
+        let response = client
+            .post(&config.token_endpoint)
             .form(&params)
             .send()
             .await
             .map_err(|e| DbError::Network(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(DbError::InvalidOperation(format!("OAuth error: {}", response.status())));
+            return Err(DbError::InvalidOperation(format!(
+                "OAuth error: {}",
+                response.status()
+            )));
         }
 
-        let token: OAuthToken = response.json()
+        let token: OAuthToken = response
+            .json()
             .await
             .map_err(|e| DbError::InvalidOperation(format!("Failed to parse token: {}", e)))?;
 
@@ -583,17 +626,22 @@ impl OAuthProvider {
             ("client_secret", &config.client_secret),
         ];
 
-        let response = client.post(&config.token_endpoint)
+        let response = client
+            .post(&config.token_endpoint)
             .form(&params)
             .send()
             .await
             .map_err(|e| DbError::Network(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(DbError::InvalidOperation(format!("OAuth error: {}", response.status())));
+            return Err(DbError::InvalidOperation(format!(
+                "OAuth error: {}",
+                response.status()
+            )));
         }
 
-        let token: OAuthToken = response.json()
+        let token: OAuthToken = response
+            .json()
             .await
             .map_err(|e| DbError::InvalidOperation(format!("Failed to parse token: {}", e)))?;
 
@@ -688,7 +736,9 @@ impl MtlsValidator {
             .unwrap()
             .as_secs() as i64;
 
-        if now < x509.validity().not_before.timestamp() || now > x509.validity().not_after.timestamp() {
+        if now < x509.validity().not_before.timestamp()
+            || now > x509.validity().not_after.timestamp()
+        {
             return Ok(false);
         }
 
@@ -763,8 +813,7 @@ impl MfaManager {
 
     fn generate_totp(&self, secret: &[u8], time_step: u64) -> String {
         type HmacSha1 = Hmac<Sha1>;
-        let mut mac = HmacSha1::new_from_slice(secret)
-            .expect("HMAC can take any key length");
+        let mut mac = HmacSha1::new_from_slice(secret).expect("HMAC can take any key length");
         mac.update(&time_step.to_be_bytes());
         let result = mac.finalize().into_bytes();
 

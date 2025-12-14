@@ -1,15 +1,15 @@
 // RustyDB SQL Monitor - Real-time SQL execution monitoring
 // Provides real-time monitoring of SQL execution with plan tracking and wait analysis
 
-use std::time::SystemTime;
-use std::collections::VecDeque;
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
-use std::time::{Duration};
-use parking_lot::RwLock;
-use crate::Result;
 use crate::error::DbError;
+use crate::Result;
+use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::VecDeque;
+use std::sync::Arc;
+use std::time::Duration;
+use std::time::SystemTime;
 
 /// Real-time SQL Monitor for tracking query execution
 pub struct SqlMonitor {
@@ -375,9 +375,9 @@ impl SqlMonitor {
         let (elapsed_secs, should_alert) = {
             let mut active = self.active_executions.write();
 
-            let execution = active
-                .get_mut(&execution_id)
-                .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?;
+            let execution = active.get_mut(&execution_id).ok_or_else(|| {
+                DbError::NotFound(format!("Execution {} not found", execution_id))
+            })?;
 
             let now = SystemTime::now();
             execution.elapsed_time = now.duration_since(execution.start_time).unwrap_or_default();
@@ -454,7 +454,11 @@ impl SqlMonitor {
             .ok_or_else(|| DbError::NotFound(format!("Execution {} not found", execution_id)))?;
 
         // Find or create operation metrics
-        if let Some(op) = execution.plan_operations.iter_mut().find(|o| o.operation_id == operation_id) {
+        if let Some(op) = execution
+            .plan_operations
+            .iter_mut()
+            .find(|o| o.operation_id == operation_id)
+        {
             op.actual_rows = actual_rows;
             op.actual_time_micros = actual_time_micros;
             op.starts = starts;
@@ -470,7 +474,11 @@ impl SqlMonitor {
     }
 
     /// Complete an execution
-    pub fn complete_execution(&self, execution_id: ExecutionId, status: ExecutionStatus) -> Result<()> {
+    pub fn complete_execution(
+        &self,
+        execution_id: ExecutionId,
+        status: ExecutionStatus,
+    ) -> Result<()> {
         let mut execution = {
             let mut active = self.active_executions.write();
             active.remove(&execution_id)
@@ -494,7 +502,10 @@ impl SqlMonitor {
 
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("Execution {} not found", execution_id)))
+            Err(DbError::NotFound(format!(
+                "Execution {} not found",
+                execution_id
+            )))
         }
     }
 
@@ -532,21 +543,24 @@ impl SqlMonitor {
 
     /// Get top queries by elapsed time
     pub fn get_top_queries_by_elapsed_time(&self, limit: usize) -> Vec<SqlExecution> {
-        let mut executions: Vec<SqlExecution> = self.execution_history.read().iter().cloned().collect();
+        let mut executions: Vec<SqlExecution> =
+            self.execution_history.read().iter().cloned().collect();
         executions.sort_by(|a, b| b.elapsed_time.cmp(&a.elapsed_time));
         executions.into_iter().take(limit).collect()
     }
 
     /// Get top queries by CPU time
     pub fn get_top_queries_by_cpu_time(&self, limit: usize) -> Vec<SqlExecution> {
-        let mut executions: Vec<SqlExecution> = self.execution_history.read().iter().cloned().collect();
+        let mut executions: Vec<SqlExecution> =
+            self.execution_history.read().iter().cloned().collect();
         executions.sort_by(|a, b| b.cpu_time.cmp(&a.cpu_time));
         executions.into_iter().take(limit).collect()
     }
 
     /// Get top queries by I/O
     pub fn get_top_queries_by_io(&self, limit: usize) -> Vec<SqlExecution> {
-        let mut executions: Vec<SqlExecution> = self.execution_history.read().iter().cloned().collect();
+        let mut executions: Vec<SqlExecution> =
+            self.execution_history.read().iter().cloned().collect();
         executions.sort_by(|a, b| b.physical_reads.cmp(&a.physical_reads));
         executions.into_iter().take(limit).collect()
     }
@@ -693,7 +707,9 @@ mod tests {
             )
             .unwrap();
 
-        monitor.complete_execution(exec_id, ExecutionStatus::Completed).unwrap();
+        monitor
+            .complete_execution(exec_id, ExecutionStatus::Completed)
+            .unwrap();
 
         let active = monitor.get_active_execution(exec_id);
         assert!(active.is_none());
@@ -716,7 +732,9 @@ mod tests {
                 )
                 .unwrap();
 
-            monitor.complete_execution(exec_id, ExecutionStatus::Completed).unwrap();
+            monitor
+                .complete_execution(exec_id, ExecutionStatus::Completed)
+                .unwrap();
         }
 
         let stats = monitor.get_execution_statistics();
@@ -724,5 +742,3 @@ mod tests {
         assert_eq!(stats.active_executions, 0);
     }
 }
-
-

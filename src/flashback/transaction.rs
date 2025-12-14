@@ -23,18 +23,17 @@
 // FLASHBACK TRANSACTION 0500120000AB0001 CASCADE;
 // ```
 
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt;
-use std::collections::HashSet;
-use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use std::time::SystemTime;
-use serde::{Deserialize, Serialize};
 
-use crate::common::{TransactionId, TableId, RowId, Value};
-use crate::error::{Result, DbError};
-use super::time_travel::{SCN, Timestamp};
-
+use super::time_travel::{Timestamp, SCN};
+use crate::common::{RowId, TableId, TransactionId, Value};
+use crate::error::{DbError, Result};
 
 // ============================================================================
 // Transaction Flashback Manager
@@ -84,10 +83,7 @@ impl TransactionFlashbackManager {
     }
 
     /// Query transaction history
-    pub fn query_transaction_history(
-        &self,
-        txn_id: TransactionId,
-    ) -> Result<TransactionHistory> {
+    pub fn query_transaction_history(&self, txn_id: TransactionId) -> Result<TransactionHistory> {
         let log = self.transaction_log.read().unwrap();
         log.get_transaction_history(txn_id)
     }
@@ -108,7 +104,10 @@ impl TransactionFlashbackManager {
     }
 
     /// Flashback a single transaction (without cascade)
-    pub fn flashback_transaction(&self, txn_id: TransactionId) -> Result<FlashbackTransactionResult> {
+    pub fn flashback_transaction(
+        &self,
+        txn_id: TransactionId,
+    ) -> Result<FlashbackTransactionResult> {
         let start_time = SystemTime::now();
 
         // 1. Check for dependencies
@@ -116,9 +115,10 @@ impl TransactionFlashbackManager {
         let deps = tracker.get_dependencies(txn_id)?;
 
         if !deps.is_empty() {
-            return Err(DbError::Validation(
-                format!("Transaction has {} dependent transactions. Use CASCADE option.", deps.len())
-            ));
+            return Err(DbError::Validation(format!(
+                "Transaction has {} dependent transactions. Use CASCADE option.",
+                deps.len()
+            )));
         }
 
         // 2. Generate and execute undo
@@ -141,7 +141,10 @@ impl TransactionFlashbackManager {
     }
 
     /// Flashback transaction with cascade (undo dependent transactions)
-    pub fn flashback_transaction_cascade(&self, txn_id: TransactionId) -> Result<FlashbackTransactionResult> {
+    pub fn flashback_transaction_cascade(
+        &self,
+        txn_id: TransactionId,
+    ) -> Result<FlashbackTransactionResult> {
         let start_time = SystemTime::now();
 
         // 1. Get dependency tree
@@ -244,11 +247,10 @@ impl TransactionLog {
     }
 
     fn get_transaction_history(&self, txn_id: TransactionId) -> Result<TransactionHistory> {
-        let operations = self.transactions
+        let operations = self
+            .transactions
             .get(&txn_id)
-            .ok_or_else(|| DbError::Validation(
-                format!("Transaction {} not found in log", txn_id)
-            ))?
+            .ok_or_else(|| DbError::Validation(format!("Transaction {} not found in log", txn_id)))?
             .clone();
 
         Ok(TransactionHistory {
@@ -347,7 +349,8 @@ impl DependencyTracker {
     }
 
     fn get_dependencies(&self, txn_id: TransactionId) -> Result<Vec<TransactionId>> {
-        Ok(self.dependencies
+        Ok(self
+            .dependencies
             .get(&txn_id)
             .map(|deps| deps.iter().copied().collect())
             .unwrap_or_default())
@@ -398,10 +401,7 @@ impl DependencyGraph {
     }
 
     fn add_dependency(&mut self, from: TransactionId, to: TransactionId) {
-        self.edges
-            .entry(from)
-            .or_insert_with(Vec::new)
-            .push(to);
+        self.edges.entry(from).or_insert_with(Vec::new).push(to);
     }
 
     fn transaction_count(&self) -> usize {
@@ -498,7 +498,9 @@ impl UndoSqlGenerator {
                         operation.table_id, values_str, operation.row_id
                     ))
                 } else {
-                    Err(DbError::Validation("No old values for UPDATE operation".to_string()))
+                    Err(DbError::Validation(
+                        "No old values for UPDATE operation".to_string(),
+                    ))
                 }
             }
             OperationType::Delete => {
@@ -515,7 +517,9 @@ impl UndoSqlGenerator {
                         operation.table_id, values_str
                     ))
                 } else {
-                    Err(DbError::Validation("No old values for DELETE operation".to_string()))
+                    Err(DbError::Validation(
+                        "No old values for DELETE operation".to_string(),
+                    ))
                 }
             }
         }
@@ -576,8 +580,8 @@ pub struct TransactionFlashbackStats {
 
 #[cfg(test)]
 mod tests {
-    use crate::flashback::current_timestamp;
     use super::*;
+    use crate::flashback::current_timestamp;
 
     #[test]
     fn test_transaction_log() {

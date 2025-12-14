@@ -21,16 +21,16 @@
 // - **Health Monitoring**: CDB and PDB health checks
 // - **Kubernetes Integration**: Native K8s operator support
 
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::sync::Mutex;
+use super::isolation::ResourceLimits;
+use super::pdb::{PdbConfig, PdbCreateMode, PdbId, PluggableDatabase};
+use crate::error::{DbError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
-use tokio::sync::{RwLock};
-use serde::{Serialize, Deserialize};
-use crate::error::{Result, DbError};
-use super::pdb::{PluggableDatabase, PdbId, PdbConfig, PdbCreateMode};
-use super::isolation::ResourceLimits;
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::sync::RwLock;
 
 // Container Database (CDB) configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -190,8 +190,8 @@ impl SystemMetadata {
 
     // Generate a unique database ID
     fn generate_db_id() -> u64 {
-        use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         SystemTime::now().hash(&mut hasher);
@@ -249,25 +249,28 @@ impl CdbResourcePool {
     pub fn allocate(&mut self, pdb_id: PdbId, limits: ResourceLimits) -> Result<()> {
         // Check if resources are available
         if self.allocated_memory + limits.memory_bytes > self.total_memory {
-            return Err(DbError::ResourceExhausted(
-                format!("Insufficient memory: requested {}, available {}",
-                    limits.memory_bytes, self.total_memory - self.allocated_memory)
-            ));
+            return Err(DbError::ResourceExhausted(format!(
+                "Insufficient memory: requested {}, available {}",
+                limits.memory_bytes,
+                self.total_memory - self.allocated_memory
+            )));
         }
 
         if self.allocated_cpu_shares + limits.cpu_shares > self.total_cpu_shares {
-            return Err(DbError::ResourceExhausted(
-                format!("Insufficient CPU shares: requested {}, available {}",
-                    limits.cpu_shares, self.total_cpu_shares - self.allocated_cpu_shares)
-            ));
+            return Err(DbError::ResourceExhausted(format!(
+                "Insufficient CPU shares: requested {}, available {}",
+                limits.cpu_shares,
+                self.total_cpu_shares - self.allocated_cpu_shares
+            )));
         }
 
-        if self.allocated_io_bandwidth + limits.io_bandwidth_bytes_per_sec > self.total_io_bandwidth {
-            return Err(DbError::ResourceExhausted(
-                format!("Insufficient I/O bandwidth: requested {}, available {}",
-                    limits.io_bandwidth_bytes_per_sec,
-                    self.total_io_bandwidth - self.allocated_io_bandwidth)
-            ));
+        if self.allocated_io_bandwidth + limits.io_bandwidth_bytes_per_sec > self.total_io_bandwidth
+        {
+            return Err(DbError::ResourceExhausted(format!(
+                "Insufficient I/O bandwidth: requested {}, available {}",
+                limits.io_bandwidth_bytes_per_sec,
+                self.total_io_bandwidth - self.allocated_io_bandwidth
+            )));
         }
 
         // Allocate resources
@@ -309,7 +312,8 @@ impl CdbResourcePool {
         ResourceUtilization {
             memory_percent: (self.allocated_memory as f64 / self.total_memory as f64) * 100.0,
             cpu_percent: (self.allocated_cpu_shares as f64 / self.total_cpu_shares as f64) * 100.0,
-            io_percent: (self.allocated_io_bandwidth as f64 / self.total_io_bandwidth as f64) * 100.0,
+            io_percent: (self.allocated_io_bandwidth as f64 / self.total_io_bandwidth as f64)
+                * 100.0,
         }
     }
 }
@@ -431,13 +435,13 @@ pub struct BackgroundProcessState {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum BackgroundProcessType {
-    DatabaseWriter,   // DBWR
-    LogWriter,        // LGWR
-    Checkpoint,       // CKPT
-    ProcessMonitor,   // PMON
-    SystemMonitor,    // SMON
-    Archiver,         // ARCH
-    Recoverer,        // RECO
+    DatabaseWriter, // DBWR
+    LogWriter,      // LGWR
+    Checkpoint,     // CKPT
+    ProcessMonitor, // PMON
+    SystemMonitor,  // SMON
+    Archiver,       // ARCH
+    Recoverer,      // RECO
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -462,58 +466,44 @@ impl BackgroundProcessManager {
     pub async fn start_all(&self) -> Result<()> {
         // Start DBWR processes
         for i in 0..self.config.dbwr_processes {
-            self.start_process(
-                format!("DBWR{}", i),
-                BackgroundProcessType::DatabaseWriter,
-            ).await?;
+            self.start_process(format!("DBWR{}", i), BackgroundProcessType::DatabaseWriter)
+                .await?;
         }
 
         // Start LGWR processes
         for i in 0..self.config.lgwr_processes {
-            self.start_process(
-                format!("LGWR{}", i),
-                BackgroundProcessType::LogWriter,
-            ).await?;
+            self.start_process(format!("LGWR{}", i), BackgroundProcessType::LogWriter)
+                .await?;
         }
 
         // Start CKPT processes
         for i in 0..self.config.ckpt_processes {
-            self.start_process(
-                format!("CKPT{}", i),
-                BackgroundProcessType::Checkpoint,
-            ).await?;
+            self.start_process(format!("CKPT{}", i), BackgroundProcessType::Checkpoint)
+                .await?;
         }
 
         // Start PMON if enabled
         if self.config.pmon_enabled {
-            self.start_process(
-                "PMON".to_string(),
-                BackgroundProcessType::ProcessMonitor,
-            ).await?;
+            self.start_process("PMON".to_string(), BackgroundProcessType::ProcessMonitor)
+                .await?;
         }
 
         // Start SMON if enabled
         if self.config.smon_enabled {
-            self.start_process(
-                "SMON".to_string(),
-                BackgroundProcessType::SystemMonitor,
-            ).await?;
+            self.start_process("SMON".to_string(), BackgroundProcessType::SystemMonitor)
+                .await?;
         }
 
         // Start archiver if enabled
         if self.config.archiver_enabled {
-            self.start_process(
-                "ARCH".to_string(),
-                BackgroundProcessType::Archiver,
-            ).await?;
+            self.start_process("ARCH".to_string(), BackgroundProcessType::Archiver)
+                .await?;
         }
 
         // Start recovery processes
         for i in 0..self.config.recovery_processes {
-            self.start_process(
-                format!("RECO{}", i),
-                BackgroundProcessType::Recoverer,
-            ).await?;
+            self.start_process(format!("RECO{}", i), BackgroundProcessType::Recoverer)
+                .await?;
         }
 
         Ok(())
@@ -717,9 +707,10 @@ impl ContainerDatabase {
     pub async fn create_pdb(&self, config: PdbConfig) -> Result<PdbId> {
         // Check if we've reached max PDBs
         if self.registry.count().await >= self.config.max_pdbs {
-            return Err(DbError::LimitExceeded(
-                format!("Maximum PDB limit reached: {}", self.config.max_pdbs)
-            ));
+            return Err(DbError::LimitExceeded(format!(
+                "Maximum PDB limit reached: {}",
+                self.config.max_pdbs
+            )));
         }
 
         // Allocate resources

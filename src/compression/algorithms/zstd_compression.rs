@@ -1,6 +1,9 @@
 // Zstandard-like and Huffman Compression Implementation
 
-use crate::compression::{Compressor, CompressionLevel, CompressionAlgorithm, CompressionResult, CompressionStats, CompressionError};
+use crate::compression::{
+    CompressionAlgorithm, CompressionError, CompressionLevel, CompressionResult, CompressionStats,
+    Compressor,
+};
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -102,7 +105,7 @@ impl ZstdCompressor {
     fn entropy_decode(&self, data: &[u8]) -> CompressionResult<Vec<u8>> {
         if data.len() < 256 * 4 {
             return Err(CompressionError::DecompressionFailed(
-                "Invalid compressed data".to_string()
+                "Invalid compressed data".to_string(),
             ));
         }
 
@@ -112,16 +115,16 @@ impl ZstdCompressor {
         while pos < data.len() {
             if data[pos] == 0xFF && pos + 5 < data.len() {
                 pos += 1;
-                let distance = u32::from_le_bytes([
-                    data[pos], data[pos + 1], data[pos + 2], data[pos + 3]
-                ]) as usize;
+                let distance =
+                    u32::from_le_bytes([data[pos], data[pos + 1], data[pos + 2], data[pos + 3]])
+                        as usize;
                 pos += 4;
                 let length = data[pos] as usize;
                 pos += 1;
 
                 if distance > decoded.len() {
                     return Err(CompressionError::DecompressionFailed(
-                        "Invalid match distance".to_string()
+                        "Invalid match distance".to_string(),
                     ));
                 }
 
@@ -151,7 +154,10 @@ impl Compressor for ZstdCompressor {
         let compressed = self.entropy_encode(input, &freq_table);
 
         if compressed.len() > output.len() {
-            return Err(CompressionError::BufferTooSmall(compressed.len(), output.len()));
+            return Err(CompressionError::BufferTooSmall(
+                compressed.len(),
+                output.len(),
+            ));
         }
 
         output[..compressed.len()].copy_from_slice(&compressed);
@@ -170,7 +176,10 @@ impl Compressor for ZstdCompressor {
         let decoded = self.entropy_decode(input)?;
 
         if decoded.len() > output.len() {
-            return Err(CompressionError::BufferTooSmall(decoded.len(), output.len()));
+            return Err(CompressionError::BufferTooSmall(
+                decoded.len(),
+                output.len(),
+            ));
         }
 
         output[..decoded.len()].copy_from_slice(&decoded);
@@ -284,8 +293,13 @@ impl HuffmanCompressor {
         table
     }
 
-    fn build_codes_recursive(&self, node: &HuffmanNode, code: u32, bits: u8,
-                             table: &mut HashMap<u8, (u32, u8)>) {
+    fn build_codes_recursive(
+        &self,
+        node: &HuffmanNode,
+        code: u32,
+        bits: u8,
+        table: &mut HashMap<u8, (u32, u8)>,
+    ) {
         if let Some(symbol) = node.symbol {
             table.insert(symbol, (code, bits));
             return;
@@ -335,7 +349,8 @@ impl Compressor for HuffmanCompressor {
         }
 
         let frequencies = self.build_frequency_table(input);
-        let tree = self.build_huffman_tree(&frequencies)
+        let tree = self
+            .build_huffman_tree(&frequencies)
             .ok_or_else(|| CompressionError::CompressionFailed("Empty input".to_string()))?;
         let code_table = self.build_code_table(&tree);
 
@@ -350,7 +365,10 @@ impl Compressor for HuffmanCompressor {
         compressed.extend_from_slice(&encoded);
 
         if compressed.len() > output.len() {
-            return Err(CompressionError::BufferTooSmall(compressed.len(), output.len()));
+            return Err(CompressionError::BufferTooSmall(
+                compressed.len(),
+                output.len(),
+            ));
         }
 
         output[..compressed.len()].copy_from_slice(&compressed);
@@ -368,22 +386,27 @@ impl Compressor for HuffmanCompressor {
         let start = Instant::now();
 
         if input.len() < 256 * 4 + 4 {
-            return Err(CompressionError::DecompressionFailed("Invalid input".to_string()));
+            return Err(CompressionError::DecompressionFailed(
+                "Invalid input".to_string(),
+            ));
         }
 
         let mut frequencies = [0u32; 256];
         for i in 0..256 {
             frequencies[i] = u32::from_le_bytes([
-                input[i * 4], input[i * 4 + 1], input[i * 4 + 2], input[i * 4 + 3]
+                input[i * 4],
+                input[i * 4 + 1],
+                input[i * 4 + 2],
+                input[i * 4 + 3],
             ]);
         }
 
-        let tree = self.build_huffman_tree(&frequencies)
+        let tree = self
+            .build_huffman_tree(&frequencies)
             .ok_or_else(|| CompressionError::DecompressionFailed("Invalid tree".to_string()))?;
 
-        let encoded_len = u32::from_le_bytes([
-            input[1024], input[1025], input[1026], input[1027]
-        ]) as usize;
+        let encoded_len =
+            u32::from_le_bytes([input[1024], input[1025], input[1026], input[1027]]) as usize;
 
         let encoded_data = &input[1028..1028 + encoded_len];
         let mut decoded = Vec::new();
@@ -397,7 +420,8 @@ impl Compressor for HuffmanCompressor {
                     current_node.left.as_ref().map(|b| b.as_ref())
                 } else {
                     current_node.right.as_ref().map(|b| b.as_ref())
-                }.ok_or_else(|| CompressionError::DecompressionFailed("Invalid bit".to_string()))?;
+                }
+                .ok_or_else(|| CompressionError::DecompressionFailed("Invalid bit".to_string()))?;
 
                 if let Some(symbol) = current_node.symbol {
                     decoded.push(symbol);
@@ -407,7 +431,10 @@ impl Compressor for HuffmanCompressor {
         }
 
         if decoded.len() > output.len() {
-            return Err(CompressionError::BufferTooSmall(decoded.len(), output.len()));
+            return Err(CompressionError::BufferTooSmall(
+                decoded.len(),
+                output.len(),
+            ));
         }
 
         output[..decoded.len()].copy_from_slice(&decoded);
@@ -452,7 +479,9 @@ mod tests {
         let mut decompressed = vec![0u8; input.len() * 2];
 
         let comp_size = compressor.compress(input, &mut compressed).unwrap();
-        let decomp_size = compressor.decompress(&compressed[..comp_size], &mut decompressed).unwrap();
+        let decomp_size = compressor
+            .decompress(&compressed[..comp_size], &mut decompressed)
+            .unwrap();
 
         assert_eq!(&decompressed[..decomp_size], input);
     }

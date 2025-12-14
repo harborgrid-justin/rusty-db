@@ -2,12 +2,12 @@
 // Optimized for analytical (OLAP) workloads
 // Features: Dictionary encoding, run-length encoding, delta encoding, SIMD decompression
 
-use std::collections::HashSet;
-use std::collections::HashMap;
-use std::sync::Arc;
+use crate::error::{DbError, Result};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use crate::error::{DbError, Result};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
 
 // Column data type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -35,11 +35,11 @@ impl ColumnType {
 // Encoding strategy for column data
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EncodingType {
-    Plain,          // No encoding
-    Dictionary,     // Dictionary encoding for low cardinality
-    RunLength,      // Run-length encoding for repeated values
-    Delta,          // Delta encoding for sorted/sequential data
-    BitPacked,      // Bit-packing for small integers
+    Plain,      // No encoding
+    Dictionary, // Dictionary encoding for low cardinality
+    RunLength,  // Run-length encoding for repeated values
+    Delta,      // Delta encoding for sorted/sequential data
+    BitPacked,  // Bit-packing for small integers
 }
 
 // Column statistics for query optimization
@@ -151,8 +151,7 @@ impl DictionaryEncoder {
     }
 
     fn memory_usage(&self) -> usize {
-        self.reverse_dict.iter().map(|s| s.len()).sum::<usize>()
-            + self.dictionary.len() * 8
+        self.reverse_dict.iter().map(|s| s.len()).sum::<usize>() + self.dictionary.len() * 8
     }
 }
 
@@ -165,9 +164,7 @@ struct RunLengthEncoder {
 #[allow(dead_code)]
 impl RunLengthEncoder {
     fn new() -> Self {
-        Self {
-            runs: Vec::new(),
-        }
+        Self { runs: Vec::new() }
     }
 
     fn encode(&mut self, values: &[ColumnValue]) {
@@ -292,7 +289,8 @@ impl BitPackedEncoder {
     }
 
     fn encode(&mut self, values: &[i32]) {
-        self.values = values.iter()
+        self.values = values
+            .iter()
             .map(|&v| v as u64 & ((1u64 << self.bit_width) - 1))
             .collect();
     }
@@ -382,9 +380,7 @@ impl ColumnChunk {
             .map_err(|e| DbError::Storage(format!("Encoding error: {}", e)))?;
 
         // Convert i64 to ColumnValue for stats
-        let col_values: Vec<ColumnValue> = values.iter()
-            .map(|&v| ColumnValue::Int64(v))
-            .collect();
+        let col_values: Vec<ColumnValue> = values.iter().map(|&v| ColumnValue::Int64(v)).collect();
         self.update_stats(&col_values);
 
         Ok(())
@@ -413,15 +409,14 @@ impl ColumnChunk {
 
     fn decode(&self) -> Result<Vec<ColumnValue>> {
         match self.encoding {
-            EncodingType::Plain => {
-                serde_json::from_slice(&self.data)
-                    .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))
-            }
+            EncodingType::Plain => serde_json::from_slice(&self.data)
+                .map_err(|e| DbError::Storage(format!("Decoding error: {}", e))),
             EncodingType::Dictionary => {
                 let (dict, ids): (Vec<String>, Vec<u32>) = serde_json::from_slice(&self.data)
                     .map_err(|e| DbError::Storage(format!("Decoding error: {}", e)))?;
 
-                let values = ids.iter()
+                let values = ids
+                    .iter()
                     .map(|&id| {
                         dict.get(id as usize)
                             .map(|s| ColumnValue::String(s.clone()))
@@ -551,18 +546,16 @@ impl ColumnarTable {
         let mut chunks = self.chunks.write();
 
         for col_def in &self.columns {
-            let values: Vec<ColumnValue> = rows.iter()
-                .map(|row| {
-                    row.get(&col_def.name)
-                        .cloned()
-                        .unwrap_or(ColumnValue::Null)
-                })
+            let values: Vec<ColumnValue> = rows
+                .iter()
+                .map(|row| row.get(&col_def.name).cloned().unwrap_or(ColumnValue::Null))
                 .collect();
 
             let mut chunk = ColumnChunk::new(col_def.column_type);
             chunk.auto_encode(&values)?;
 
-            chunks.entry(col_def.name.clone())
+            chunks
+                .entry(col_def.name.clone())
                 .or_insert_with(Vec::new)
                 .push(chunk);
         }
@@ -575,7 +568,8 @@ impl ColumnarTable {
     pub fn scan_column(&self, column_name: &str) -> Result<Vec<ColumnValue>> {
         let chunks = self.chunks.read();
 
-        let column_chunks = chunks.get(column_name)
+        let column_chunks = chunks
+            .get(column_name)
             .ok_or_else(|| DbError::Storage(format!("Column {} not found", column_name)))?;
 
         let mut result = Vec::new();
@@ -619,7 +613,8 @@ impl ColumnarTable {
     pub fn column_stats(&self, column_name: &str) -> Result<ColumnStats> {
         let chunks = self.chunks.read();
 
-        let column_chunks = chunks.get(column_name)
+        let column_chunks = chunks
+            .get(column_name)
             .ok_or_else(|| DbError::Storage(format!("Column {} not found", column_name)))?;
 
         if column_chunks.is_empty() {

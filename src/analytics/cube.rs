@@ -9,12 +9,12 @@
 // - Slice and dice operations
 // - Pivot table generation
 
-use std::collections::HashSet;
-use crate::error::{Result, DbError};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
-use std::sync::Arc;
+use crate::error::{DbError, Result};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::Arc;
 
 // OLAP Cube definition
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -260,7 +260,8 @@ impl CubeBuilder {
             HashMap::new();
 
         for row in &self.source_data {
-            let key: Vec<Option<String>> = groupingcolumns.iter()
+            let key: Vec<Option<String>> = groupingcolumns
+                .iter()
                 .map(|col| row.get(col).cloned())
                 .collect();
 
@@ -298,11 +299,9 @@ impl CubeBuilder {
         measure: &Measure,
         rows: &[&HashMap<String, String>],
     ) -> Result<f64> {
-        let values: Vec<f64> = rows.iter()
-            .filter_map(|row| {
-                row.get(&measure.column)
-                    .and_then(|v| v.parse::<f64>().ok())
-            })
+        let values: Vec<f64> = rows
+            .iter()
+            .filter_map(|row| row.get(&measure.column).and_then(|v| v.parse::<f64>().ok()))
             .collect();
 
         if values.is_empty() {
@@ -313,29 +312,28 @@ impl CubeBuilder {
             AggregationType::Sum => values.iter().sum(),
             AggregationType::Avg => values.iter().sum::<f64>() / values.len() as f64,
             AggregationType::Count => values.len() as f64,
-            AggregationType::Min => values.iter().cloned()
+            AggregationType::Min => values
+                .iter()
+                .cloned()
                 .min_by(|a, b| a.partial_cmp(b).unwrap())
                 .unwrap_or(0.0),
-            AggregationType::Max => values.iter().cloned()
+            AggregationType::Max => values
+                .iter()
+                .cloned()
                 .max_by(|a, b| a.partial_cmp(b).unwrap())
                 .unwrap_or(0.0),
             AggregationType::StdDev => {
                 let mean = values.iter().sum::<f64>() / values.len() as f64;
-                let variance = values.iter()
-                    .map(|v| (v - mean).powi(2))
-                    .sum::<f64>() / values.len() as f64;
+                let variance =
+                    values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
                 variance.sqrt()
             }
             AggregationType::Variance => {
                 let mean = values.iter().sum::<f64>() / values.len() as f64;
-                values.iter()
-                    .map(|v| (v - mean).powi(2))
-                    .sum::<f64>() / values.len() as f64
+                values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64
             }
             AggregationType::DistinctCount => {
-                let unique: HashSet<_> = values.iter()
-                    .map(|v| v.to_bits())
-                    .collect();
+                let unique: HashSet<_> = values.iter().map(|v| v.to_bits()).collect();
                 unique.len() as f64
             }
         };
@@ -348,7 +346,10 @@ impl CubeBuilder {
         self.cube.metadata.cell_count = self.cube.aggregations.len() as u64;
 
         // Calculate theoretical maximum cells
-        let max_cells: u64 = self.cube.dimensions.iter()
+        let max_cells: u64 = self
+            .cube
+            .dimensions
+            .iter()
             .map(|d| d.cardinality as u64)
             .product();
 
@@ -380,7 +381,9 @@ impl CubeQuery {
         let mut results = Vec::new();
 
         // Find dimension index
-        let dim_index = cube.dimensions.iter()
+        let dim_index = cube
+            .dimensions
+            .iter()
             .position(|d| d.name == dimension)
             .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dimension)))?;
 
@@ -404,7 +407,9 @@ impl CubeQuery {
         // Get dimension indices
         let mut filter_indices = HashMap::new();
         for (dim_name, value) in &filters {
-            let index = cube.dimensions.iter()
+            let index = cube
+                .dimensions
+                .iter()
                 .position(|d| &d.name == dim_name)
                 .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?;
             filter_indices.insert(index, value);
@@ -443,19 +448,21 @@ impl CubeQuery {
         let cube = self.cube.read();
 
         // Find hierarchy
-        let hier = cube.hierarchies.iter()
+        let hier = cube
+            .hierarchies
+            .iter()
             .find(|h| h.name == hierarchy)
             .ok_or_else(|| DbError::NotFound(format!("Hierarchy: {}", hierarchy)))?;
 
         // Find current level and next level
-        let current_index = hier.levels.iter()
+        let current_index = hier
+            .levels
+            .iter()
             .position(|l| l == current_level)
             .ok_or_else(|| DbError::NotFound(format!("Level: {}", current_level)))?;
 
         if current_index + 1 >= hier.levels.len() {
-            return Err(DbError::InvalidInput(
-                "Already at lowest level".to_string()
-            ));
+            return Err(DbError::InvalidInput("Already at lowest level".to_string()));
         }
 
         // Query lower level
@@ -464,26 +471,26 @@ impl CubeQuery {
     }
 
     // Roll up - navigate from lower to higher level in hierarchy
-    pub fn roll_up(
-        &self,
-        hierarchy: &str,
-        current_level: &str,
-    ) -> Result<Vec<AggregationResult>> {
+    pub fn roll_up(&self, hierarchy: &str, current_level: &str) -> Result<Vec<AggregationResult>> {
         let cube = self.cube.read();
 
         // Find hierarchy
-        let hier = cube.hierarchies.iter()
+        let hier = cube
+            .hierarchies
+            .iter()
             .find(|h| h.name == hierarchy)
             .ok_or_else(|| DbError::NotFound(format!("Hierarchy: {}", hierarchy)))?;
 
         // Find current level and parent level
-        let current_index = hier.levels.iter()
+        let current_index = hier
+            .levels
+            .iter()
             .position(|l| l == current_level)
             .ok_or_else(|| DbError::NotFound(format!("Level: {}", current_level)))?;
 
         if current_index == 0 {
             return Err(DbError::InvalidInput(
-                "Already at highest level".to_string()
+                "Already at highest level".to_string(),
             ));
         }
 
@@ -539,11 +546,15 @@ impl CubeQuery {
         let mut values = Vec::new();
 
         for dim_name in dimensions {
-            let dim_index = cube.dimensions.iter()
+            let dim_index = cube
+                .dimensions
+                .iter()
                 .position(|d| &d.name == dim_name)
                 .ok_or_else(|| DbError::NotFound(format!("Dimension: {}", dim_name)))?;
 
-            let value = key.values.get(dim_index)
+            let value = key
+                .values
+                .get(dim_index)
                 .and_then(|v| v.clone())
                 .unwrap_or_else(|| "ALL".to_string());
 
@@ -556,7 +567,7 @@ impl CubeQuery {
     // Get GROUPING function value
     pub fn grouping(&self, key: &GroupingKey, dimension_index: usize) -> u8 {
         match key.values.get(dimension_index) {
-            Some(None) => 1, // Aggregated (ALL level)
+            Some(None) => 1,    // Aggregated (ALL level)
             Some(Some(_)) => 0, // Not aggregated
             None => 1,
         }
@@ -614,7 +625,7 @@ impl PivotTable {
 #[cfg(test)]
 mod tests {
     use super::*;
-use std::time::SystemTime;
+    use std::time::SystemTime;
 
     #[test]
     fn test_rollup_generation() {
@@ -638,11 +649,7 @@ use std::time::SystemTime;
     #[test]
     fn test_cube_generation() {
         let builder = CubeBuilder::new("test_cube".to_string());
-        let columns = vec![
-            "a".to_string(),
-            "b".to_string(),
-            "c".to_string(),
-        ];
+        let columns = vec!["a".to_string(), "b".to_string(), "c".to_string()];
 
         let sets = builder.generate_cube_sets(&columns);
 

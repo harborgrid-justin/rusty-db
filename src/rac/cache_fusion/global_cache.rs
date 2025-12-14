@@ -10,18 +10,18 @@
 // - **Resource Directory**: Maps resources to master instances
 // - **Local Cache Management**: Tracks local cache states and pending requests
 
-use tokio::sync::oneshot;
-use std::sync::Mutex;
-use std::time::Instant;
-use std::collections::HashSet;
+use crate::common::{NodeId, PageId, TransactionId};
 use crate::error::DbError;
-use crate::common::{PageId, TransactionId, NodeId};
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Arc;
-use std::time::{Duration};
-use parking_lot::{RwLock};
-use tokio::sync::{mpsc};
+use std::sync::Mutex;
+use std::time::Duration;
+use std::time::Instant;
+use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 
 // ============================================================================
 // Constants
@@ -362,10 +362,10 @@ impl Default for GcsConfig {
             enable_prefetch: true,
             max_retries: 3,
             adaptive_threshold: 100,
-            batch_window_ms: 1,          // 1ms batching window for optimal latency/throughput
-            batch_size: 64,               // Batch up to 64 requests
-            enable_work_stealing: true,   // Enable work stealing for load balancing
-            speculation_threshold: 2.0,   // Speculate after 2 standard deviations
+            batch_window_ms: 1, // 1ms batching window for optimal latency/throughput
+            batch_size: 64,     // Batch up to 64 requests
+            enable_work_stealing: true, // Enable work stealing for load balancing
+            speculation_threshold: 2.0, // Speculate after 2 standard deviations
         }
     }
 }
@@ -467,7 +467,9 @@ impl GlobalCacheService {
 
         // If we are the master, handle locally
         if master == self.node_id {
-            return self.handle_local_block_request(resource_id, mode, transaction_id).await;
+            return self
+                .handle_local_block_request(resource_id, mode, transaction_id)
+                .await;
         }
 
         // Send request to master instance
@@ -515,7 +517,9 @@ impl GlobalCacheService {
             }
             Ok(Err(_)) => {
                 self.stats.write().failed_requests += 1;
-                Err(DbError::Internal("Block request channel closed".to_string()))
+                Err(DbError::Internal(
+                    "Block request channel closed".to_string(),
+                ))
             }
             Err(_) => {
                 self.stats.write().failed_requests += 1;
@@ -534,8 +538,9 @@ impl GlobalCacheService {
 
         if let Some(state) = cache.get(resource_id) {
             // Check if current mode is compatible
-            if state.mode.is_compatible(&requested_mode) ||
-               state.mode.priority() >= requested_mode.priority() {
+            if state.mode.is_compatible(&requested_mode)
+                || state.mode.priority() >= requested_mode.priority()
+            {
                 return Ok(Some(BlockGrant {
                     resource_id: resource_id.clone(),
                     granted_mode: state.mode,
@@ -559,8 +564,9 @@ impl GlobalCacheService {
         let mut cache = self.local_cache.write();
 
         // Get or create block state
-        let state = cache.entry(resource_id.clone()).or_insert_with(|| {
-            BlockState {
+        let state = cache
+            .entry(resource_id.clone())
+            .or_insert_with(|| BlockState {
                 resource_id: resource_id.clone(),
                 mode: BlockMode::Null,
                 holder: None,
@@ -569,8 +575,7 @@ impl GlobalCacheService {
                 lvb: LockValueBlock::default(),
                 last_access: Instant::now(),
                 transfer_count: 0,
-            }
-        });
+            });
 
         // Check if mode upgrade is needed
         if state.mode == BlockMode::Null || mode.priority() > state.mode.priority() {
@@ -618,7 +623,9 @@ impl GlobalCacheService {
             block_data,
             source_mode,
             target_mode,
-            scn: self.local_cache.read()
+            scn: self
+                .local_cache
+                .read()
                 .get(&resource_id)
                 .map(|s| s.scn)
                 .unwrap_or(0),
@@ -633,8 +640,7 @@ impl GlobalCacheService {
         let elapsed = start.elapsed().as_micros() as u64;
         let mut stats = self.stats.write();
         stats.bytes_transferred += MAX_BLOCK_SIZE as u64;
-        stats.avg_transfer_latency_us =
-            (stats.avg_transfer_latency_us + elapsed) / 2;
+        stats.avg_transfer_latency_us = (stats.avg_transfer_latency_us + elapsed) / 2;
 
         Ok(())
     }
@@ -667,7 +673,11 @@ impl GlobalCacheService {
     }
 
     // Invalidate block across all instances
-    pub async fn invalidate_block(&self, resource_id: ResourceId, new_scn: u64) -> Result<(), DbError> {
+    pub async fn invalidate_block(
+        &self,
+        resource_id: ResourceId,
+        new_scn: u64,
+    ) -> Result<(), DbError> {
         let _message = CacheFusionMessage::BlockInvalidate {
             resource_id: resource_id.clone(),
             new_scn,
@@ -755,7 +765,8 @@ impl GlobalCacheService {
                     requestor,
                     transaction_id,
                     force_current,
-                ).await
+                )
+                .await
             }
 
             CacheFusionMessage::BlockTransfer {
@@ -765,13 +776,8 @@ impl GlobalCacheService {
                 target_mode,
                 scn,
             } => {
-                self.handle_block_transfer(
-                    resource_id,
-                    block_data,
-                    source_mode,
-                    target_mode,
-                    scn,
-                ).await
+                self.handle_block_transfer(resource_id, block_data, source_mode, target_mode, scn)
+                    .await
             }
 
             CacheFusionMessage::BlockInvalidate {
@@ -779,7 +785,8 @@ impl GlobalCacheService {
                 new_scn,
                 invalidator,
             } => {
-                self.handle_block_invalidate(resource_id, new_scn, invalidator).await
+                self.handle_block_invalidate(resource_id, new_scn, invalidator)
+                    .await
             }
 
             _ => Ok(()),
@@ -795,11 +802,9 @@ impl GlobalCacheService {
         _force_current: bool,
     ) -> Result<(), DbError> {
         // Handle the request and send grant
-        let grant = self.handle_local_block_request(
-            resource_id,
-            requested_mode,
-            transaction_id,
-        ).await?;
+        let grant = self
+            .handle_local_block_request(resource_id, requested_mode, transaction_id)
+            .await?;
 
         let message = CacheFusionMessage::BlockGrant {
             resource_id: grant.resource_id,
@@ -826,8 +831,9 @@ impl GlobalCacheService {
     ) -> Result<(), DbError> {
         let mut cache = self.local_cache.write();
 
-        let state = cache.entry(resource_id.clone()).or_insert_with(|| {
-            BlockState {
+        let state = cache
+            .entry(resource_id.clone())
+            .or_insert_with(|| BlockState {
                 resource_id: resource_id.clone(),
                 mode: BlockMode::Null,
                 holder: None,
@@ -836,8 +842,7 @@ impl GlobalCacheService {
                 lvb: LockValueBlock::default(),
                 last_access: Instant::now(),
                 transfer_count: 0,
-            }
-        });
+            });
 
         state.mode = target_mode;
         state.holder = Some(self.node_id.clone());

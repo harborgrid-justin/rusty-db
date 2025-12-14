@@ -2,14 +2,14 @@
 //
 // Health monitoring, self-healing, and state restoration components.
 
-use std::collections::VecDeque;
 use crate::Result;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
+use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use std::sync::Mutex as StdMutex;
 use std::time::{Duration, SystemTime};
-use parking_lot::RwLock;
 use tokio::time::{interval, sleep};
 
 use super::recovery_strategies::{DetectedFailure, FailureType};
@@ -103,13 +103,12 @@ impl HealthMonitor {
         let network_score = self.check_network_health().await?;
         let database_score = self.check_database_health().await?;
 
-        let overall = (
-            cpu_score.0 as u32 * 2 +
-            memory_score.0 as u32 * 2 +
-            disk_score.0 as u32 * 2 +
-            network_score.0 as u32 +
-            database_score.0 as u32 * 3
-        ) / 10;
+        let overall = (cpu_score.0 as u32 * 2
+            + memory_score.0 as u32 * 2
+            + disk_score.0 as u32 * 2
+            + network_score.0 as u32
+            + database_score.0 as u32 * 3)
+            / 10;
 
         let metrics = HealthMetrics {
             overall_score: HealthScore::new(overall as u8),
@@ -168,7 +167,8 @@ impl HealthMonitor {
             return 0.0;
         }
 
-        let recent: Vec<u8> = history.iter()
+        let recent: Vec<u8> = history
+            .iter()
             .rev()
             .take(10)
             .map(|m| m.overall_score.0)
@@ -235,25 +235,35 @@ impl SelfHealer {
         let action_id = self.next_id.fetch_add(1, Ordering::SeqCst);
 
         let (action_type, target, success) = match &failure.failure_type {
-            FailureType::ProcessCrash => {
-                ("restart_process".to_string(), failure.affected_resource.clone(),
-                    self.restart_process(&failure.affected_resource).await.is_ok())
-            }
-            FailureType::DataCorruption => {
-                ("repair_from_replica".to_string(), failure.affected_resource.clone(),
-                    self.repair_corrupted_data(&failure.affected_resource).await.is_ok())
-            }
-            FailureType::MemoryExhaustion => {
-                ("clear_caches".to_string(), "memory".to_string(),
-                    self.clear_caches().await.is_ok())
-            }
-            FailureType::ConnectionPoolExhaustion => {
-                ("expand_pool".to_string(), "connection_pool".to_string(),
-                    self.expand_connection_pool().await.is_ok())
-            }
-            _ => {
-                ("manual_intervention".to_string(), failure.affected_resource.clone(), false)
-            }
+            FailureType::ProcessCrash => (
+                "restart_process".to_string(),
+                failure.affected_resource.clone(),
+                self.restart_process(&failure.affected_resource)
+                    .await
+                    .is_ok(),
+            ),
+            FailureType::DataCorruption => (
+                "repair_from_replica".to_string(),
+                failure.affected_resource.clone(),
+                self.repair_corrupted_data(&failure.affected_resource)
+                    .await
+                    .is_ok(),
+            ),
+            FailureType::MemoryExhaustion => (
+                "clear_caches".to_string(),
+                "memory".to_string(),
+                self.clear_caches().await.is_ok(),
+            ),
+            FailureType::ConnectionPoolExhaustion => (
+                "expand_pool".to_string(),
+                "connection_pool".to_string(),
+                self.expand_connection_pool().await.is_ok(),
+            ),
+            _ => (
+                "manual_intervention".to_string(),
+                failure.affected_resource.clone(),
+                false,
+            ),
         };
 
         let action = HealingAction {

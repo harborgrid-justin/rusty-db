@@ -69,7 +69,6 @@
 // # }
 // ```
 
-use std::time::SystemTime;
 use crate::error::DbError;
 use crate::replication::types::*;
 use async_trait::async_trait;
@@ -77,7 +76,8 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{Duration};
+use std::time::Duration;
+use std::time::SystemTime;
 use thiserror::Error;
 use tokio::sync::mpsc;
 use uuid::Uuid;
@@ -95,7 +95,10 @@ pub enum ReplicationManagerError {
     OperationNotAllowed { reason: String },
 
     #[error("Replication failed for {replica_count} replicas: {reason}")]
-    ReplicationFailed { replica_count: usize, reason: String },
+    ReplicationFailed {
+        replica_count: usize,
+        reason: String,
+    },
 
     #[error("Service unavailable: {service}")]
     ServiceUnavailable { service: String },
@@ -165,31 +168,75 @@ impl Default for ReplicationConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ReplicationEvent {
     // Replica was added to the replication set
-    ReplicaAdded { replica_id: String, address: String, role: ReplicaRole },
+    ReplicaAdded {
+        replica_id: String,
+        address: String,
+        role: ReplicaRole,
+    },
     // Replica was removed from the replication set
-    ReplicaRemoved { replica_id: String, reason: String },
+    ReplicaRemoved {
+        replica_id: String,
+        reason: String,
+    },
     // Replica status changed
-    ReplicaStatusChanged { replica_id: String, old_status: ReplicaStatus, new_status: ReplicaStatus },
+    ReplicaStatusChanged {
+        replica_id: String,
+        old_status: ReplicaStatus,
+        new_status: ReplicaStatus,
+    },
     // Replication conflict detected
-    ConflictDetected { conflict_id: u64, table: String, replica_id: String },
+    ConflictDetected {
+        conflict_id: u64,
+        table: String,
+        replica_id: String,
+    },
     // Replication conflict resolved
-    ConflictResolved { conflict_id: u64, strategy: ConflictResolutionStrategy },
+    ConflictResolved {
+        conflict_id: u64,
+        strategy: ConflictResolutionStrategy,
+    },
     // Snapshot was created
-    SnapshotCreated { snapshot_id: String, tables: Vec<String>, size_bytes: u64 },
+    SnapshotCreated {
+        snapshot_id: String,
+        tables: Vec<String>,
+        size_bytes: u64,
+    },
     // Snapshot restore completed
-    SnapshotRestored { snapshot_id: String, replica_id: String },
+    SnapshotRestored {
+        snapshot_id: String,
+        replica_id: String,
+    },
     // Replication lag warning
-    LagWarning { replica_id: String, lag_bytes: u64, threshold_bytes: u64 },
+    LagWarning {
+        replica_id: String,
+        lag_bytes: u64,
+        threshold_bytes: u64,
+    },
     // Failover initiated
-    FailoverInitiated { old_primary: String, new_primary: String },
+    FailoverInitiated {
+        old_primary: String,
+        new_primary: String,
+    },
     // Failover completed
-    FailoverCompleted { new_primary: String, duration_ms: u64 },
+    FailoverCompleted {
+        new_primary: String,
+        duration_ms: u64,
+    },
     // Synchronization completed
-    SyncCompleted { replica_id: String, lsn: LogSequenceNumber },
+    SyncCompleted {
+        replica_id: String,
+        lsn: LogSequenceNumber,
+    },
     // Connection established with replica
-    ConnectionEstablished { replica_id: String, address: String },
+    ConnectionEstablished {
+        replica_id: String,
+        address: String,
+    },
     // Connection lost with replica
-    ConnectionLost { replica_id: String, reason: String },
+    ConnectionLost {
+        replica_id: String,
+        reason: String,
+    },
 }
 
 // Event publisher trait for dependency injection
@@ -227,7 +274,11 @@ pub trait ReplicaService: Send + Sync {
     async fn get_replica(&self, replica_id: &ReplicaId) -> Result<ReplicaNode, DbError>;
 
     // Update replica status
-    async fn update_status(&self, replica_id: &ReplicaId, status: ReplicaStatus) -> Result<(), DbError>;
+    async fn update_status(
+        &self,
+        replica_id: &ReplicaId,
+        status: ReplicaStatus,
+    ) -> Result<(), DbError>;
 
     // Send data to a specific replica
     async fn send_to_replica(&self, replica_id: &ReplicaId, data: Vec<u8>) -> Result<(), DbError>;
@@ -246,7 +297,11 @@ pub trait WalService: Send + Sync {
     async fn append(&self, entry: WalEntry) -> Result<LogSequenceNumber, DbError>;
 
     // Get WAL entries starting from a specific LSN
-    async fn get_entries(&self, from_lsn: LogSequenceNumber, limit: usize) -> Result<Vec<WalEntry>, DbError>;
+    async fn get_entries(
+        &self,
+        from_lsn: LogSequenceNumber,
+        limit: usize,
+    ) -> Result<Vec<WalEntry>, DbError>;
 
     // Truncate WAL up to a specific LSN
     async fn truncate(&self, up_to_lsn: LogSequenceNumber) -> Result<(), DbError>;
@@ -258,7 +313,11 @@ pub trait WalService: Send + Sync {
     async fn get_stats(&self) -> Result<WalStats, DbError>;
 
     // Stream WAL entries to a replica
-    async fn stream_to_replica(&self, replica_id: &ReplicaId, from_lsn: LogSequenceNumber) -> Result<(), DbError>;
+    async fn stream_to_replica(
+        &self,
+        replica_id: &ReplicaId,
+        from_lsn: LogSequenceNumber,
+    ) -> Result<(), DbError>;
 }
 
 // WAL statistics for monitoring
@@ -460,10 +519,11 @@ impl ReplicationManager {
     // and event processing.
     pub async fn start(&self) -> Result<(), ReplicationManagerError> {
         // Start health monitoring
-        self.health_monitor.start_monitoring().await
-            .map_err(|_| ReplicationManagerError::ServiceUnavailable {
+        self.health_monitor.start_monitoring().await.map_err(|_| {
+            ReplicationManagerError::ServiceUnavailable {
                 service: "health_monitor".to_string(),
-            })?;
+            }
+        })?;
 
         // Start background tasks
         self.start_health_check_task().await?;
@@ -473,13 +533,18 @@ impl ReplicationManager {
         let event = ReplicationEvent::ReplicaAdded {
             replica_id: self.id.to_string(),
             address: "local".to_string(),
-            role: if self.is_primary { ReplicaRole::Primary } else { ReplicaRole::ReadOnly },
+            role: if self.is_primary {
+                ReplicaRole::Primary
+            } else {
+                ReplicaRole::ReadOnly
+            },
         };
 
-        self.event_publisher.publish(event).await
-            .map_err(|_| ReplicationManagerError::ServiceUnavailable {
+        self.event_publisher.publish(event).await.map_err(|_| {
+            ReplicationManagerError::ServiceUnavailable {
                 service: "event_publisher".to_string(),
-            })?;
+            }
+        })?;
 
         Ok(())
     }
@@ -494,10 +559,11 @@ impl ReplicationManager {
         }
 
         // Stop health monitoring
-        self.health_monitor.stop_monitoring().await
-            .map_err(|_| ReplicationManagerError::ServiceUnavailable {
+        self.health_monitor.stop_monitoring().await.map_err(|_| {
+            ReplicationManagerError::ServiceUnavailable {
                 service: "health_monitor".to_string(),
-            })?;
+            }
+        })?;
 
         Ok(())
     }
@@ -526,13 +592,17 @@ impl ReplicationManager {
             });
         }
 
-        let replica = ReplicaNode::new(replica_id.clone(), address.clone(), role.clone())
-            .map_err(|e| ReplicationManagerError::InvalidConfiguration {
-                reason: format!("Invalid replica configuration: {}", e),
+        let replica =
+            ReplicaNode::new(replica_id.clone(), address.clone(), role.clone()).map_err(|e| {
+                ReplicationManagerError::InvalidConfiguration {
+                    reason: format!("Invalid replica configuration: {}", e),
+                }
             })?;
 
         // Add to replica service
-        self.replica_service.add_replica(replica.clone()).await
+        self.replica_service
+            .add_replica(replica.clone())
+            .await
             .map_err(|_| ReplicationManagerError::ServiceUnavailable {
                 service: "replica_service".to_string(),
             })?;
@@ -550,10 +620,11 @@ impl ReplicationManager {
             role,
         };
 
-        self.event_publisher.publish(event).await
-            .map_err(|_| ReplicationManagerError::ServiceUnavailable {
+        self.event_publisher.publish(event).await.map_err(|_| {
+            ReplicationManagerError::ServiceUnavailable {
                 service: "event_publisher".to_string(),
-            })?;
+            }
+        })?;
 
         Ok(())
     }
@@ -575,7 +646,9 @@ impl ReplicationManager {
         reason: String,
     ) -> Result<(), ReplicationManagerError> {
         // Remove from replica service
-        self.replica_service.remove_replica(replica_id).await
+        self.replica_service
+            .remove_replica(replica_id)
+            .await
             .map_err(|_| ReplicationManagerError::ReplicaNotFound {
                 replica_id: replica_id.to_string(),
             })?;
@@ -596,10 +669,11 @@ impl ReplicationManager {
             reason,
         };
 
-        self.event_publisher.publish(event).await
-            .map_err(|_| ReplicationManagerError::ServiceUnavailable {
+        self.event_publisher.publish(event).await.map_err(|_| {
+            ReplicationManagerError::ServiceUnavailable {
                 service: "event_publisher".to_string(),
-            })?;
+            }
+        })?;
 
         Ok(())
     }
@@ -643,15 +717,18 @@ impl ReplicationManager {
             })?;
 
         // Append to WAL
-        self.wal_service.append(wal_entry).await
-            .map_err(|_| ReplicationManagerError::ServiceUnavailable {
+        self.wal_service.append(wal_entry).await.map_err(|_| {
+            ReplicationManagerError::ServiceUnavailable {
                 service: "wal_service".to_string(),
-            })?;
+            }
+        })?;
 
         // Get active replicas
         let replicas = {
             let state = self.state.lock();
-            state.replicas.values()
+            state
+                .replicas
+                .values()
                 .filter(|r| r.status == ReplicaStatus::Active)
                 .map(|r| r.id.clone())
                 .collect::<Vec<_>>()
@@ -682,10 +759,11 @@ impl ReplicationManager {
         }
 
         // Broadcast to all replicas
-        let _failed_replicas = self.replica_service.broadcast(data).await
-            .map_err(|_| ReplicationManagerError::ServiceUnavailable {
+        let _failed_replicas = self.replica_service.broadcast(data).await.map_err(|_| {
+            ReplicationManagerError::ServiceUnavailable {
                 service: "replica_service".to_string(),
-            })?;
+            }
+        })?;
 
         // Handle replication mode
         match self.config.mode {
@@ -701,7 +779,8 @@ impl ReplicationManager {
             }
             ReplicationMode::Synchronous => {
                 // Wait for all replica acknowledgments
-                self.wait_for_acknowledgments(sequence, replicas.len()).await
+                self.wait_for_acknowledgments(sequence, replicas.len())
+                    .await
             }
         }
     }
@@ -801,20 +880,24 @@ impl ReplicationManager {
     pub fn get_stats(&self) -> ReplicationStats {
         let state = self.state.lock();
 
-        let healthy_replicas = state.replicas.values()
+        let healthy_replicas = state
+            .replicas
+            .values()
             .filter(|r| r.status == ReplicaStatus::Active)
             .count();
 
-        let lagging_replicas = state.replicas.values()
+        let lagging_replicas = state
+            .replicas
+            .values()
             .filter(|r| r.status == ReplicaStatus::Lagging)
             .count();
 
         let average_lag_ms = if state.replicas.is_empty() {
             0
         } else {
-            state.replicas.values()
-                .map(|r| r.lag_bytes)
-                .sum::<u64>() / state.replicas.len() as u64 / 1000 // Convert to rough ms estimate
+            state.replicas.values().map(|r| r.lag_bytes).sum::<u64>()
+                / state.replicas.len() as u64
+                / 1000 // Convert to rough ms estimate
         };
 
         ReplicationStats {
@@ -944,11 +1027,11 @@ impl ReplicationManagerBuilder {
             }
         })?;
 
-        let wal_service = self.wal_service.ok_or_else(|| {
-            ReplicationManagerError::DependencyInjectionFailed {
-                component: "wal_service".to_string(),
-            }
-        })?;
+        let wal_service =
+            self.wal_service
+                .ok_or_else(|| ReplicationManagerError::DependencyInjectionFailed {
+                    component: "wal_service".to_string(),
+                })?;
 
         let health_monitor = self.health_monitor.ok_or_else(|| {
             ReplicationManagerError::DependencyInjectionFailed {
@@ -975,17 +1058,20 @@ impl Default for ReplicationManagerBuilder {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::time::Duration;
-    use async_trait::async_trait;
     use crate::api::rest::ReplicaStatus;
     use crate::common::LogSequenceNumber;
-    use crate::DbError;
-    use crate::replication::manager::{EventPublisher, HealthMonitor, HealthStats, ReplicaService, ReplicationConfig, ReplicationManager, ReplicationManagerBuilder, WalService, WalStats};
-    use crate::replication::{ReplicaNode, ReplicationEvent};
+    use crate::replication::manager::{
+        EventPublisher, HealthMonitor, HealthStats, ReplicaService, ReplicationConfig,
+        ReplicationManager, ReplicationManagerBuilder, WalService, WalStats,
+    };
     use crate::replication::monitor::ReplicaHealthStatus;
     use crate::replication::types::{LogSequenceNumber, ReplicaId, WalEntry};
+    use crate::replication::{ReplicaNode, ReplicationEvent};
+    use crate::DbError;
+    use async_trait::async_trait;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
+    use std::time::Duration;
     // Mock implementations for testing
 
     struct MockEventPublisher {
@@ -1007,7 +1093,9 @@ mod tests {
             Ok(())
         }
 
-        async fn subscribe(&self) -> Result<tokio::sync::mpsc::Receiver<ReplicationEvent>, DbError> {
+        async fn subscribe(
+            &self,
+        ) -> Result<tokio::sync::mpsc::Receiver<ReplicationEvent>, DbError> {
             let (_tx, rx) = tokio::sync::mpsc::unbounded_channel();
             Ok(())
         }
@@ -1037,11 +1125,19 @@ mod tests {
             Err(DbError::NotFound("Mock replica not found".to_string()))
         }
 
-        async fn update_status(&self, _replica_id: &ReplicaId, _status: ReplicaStatus) -> Result<(), DbError> {
+        async fn update_status(
+            &self,
+            _replica_id: &ReplicaId,
+            _status: ReplicaStatus,
+        ) -> Result<(), DbError> {
             Ok(())
         }
 
-        async fn send_to_replica(&self, _replica_id: &ReplicaId, _data: Vec<u8>) -> Result<(), DbError> {
+        async fn send_to_replica(
+            &self,
+            _replica_id: &ReplicaId,
+            _data: Vec<u8>,
+        ) -> Result<(), DbError> {
             Ok(())
         }
 
@@ -1062,7 +1158,11 @@ mod tests {
             Ok(entry.lsn)
         }
 
-        async fn get_entries(&self, _from_lsn: LogSequenceNumber, _limit: usize) -> Result<Vec<WalEntry>, DbError> {
+        async fn get_entries(
+            &self,
+            _from_lsn: LogSequenceNumber,
+            _limit: usize,
+        ) -> Result<Vec<WalEntry>, DbError> {
             Ok(vec![])
         }
 
@@ -1075,16 +1175,20 @@ mod tests {
         }
 
         async fn get_stats(&self) -> Result<WalStats, DbError> {
-                    Ok(WalStats {
-                        total_entries: 0,
-                        size_bytes: 0,
-                        oldest_lsn: LogSequenceNumber::new(1),
-                        newest_lsn: LogSequenceNumber::new(1000),
-                        entries_per_second: 10.0,
-                    })
-                }
+            Ok(WalStats {
+                total_entries: 0,
+                size_bytes: 0,
+                oldest_lsn: LogSequenceNumber::new(1),
+                newest_lsn: LogSequenceNumber::new(1000),
+                entries_per_second: 10.0,
+            })
+        }
 
-        async fn stream_to_replica(&self, _replica_id: &ReplicaId, _from_lsn: LogSequenceNumber) -> Result<(), DbError> {
+        async fn stream_to_replica(
+            &self,
+            _replica_id: &ReplicaId,
+            _from_lsn: LogSequenceNumber,
+        ) -> Result<(), DbError> {
             Ok(())
         }
     }
@@ -1097,7 +1201,10 @@ mod tests {
             Ok(vec![])
         }
 
-        async fn check_replica(&self, _replica_id: &ReplicaId) -> Result<ReplicaHealthStatus, DbError> {
+        async fn check_replica(
+            &self,
+            _replica_id: &ReplicaId,
+        ) -> Result<ReplicaHealthStatus, DbError> {
             Err(DbError::NotFound("Mock replica not found".to_string()))
         }
 
@@ -1161,32 +1268,32 @@ mod tests {
     }
 
     #[tokio::test]
-async fn test_invalid_configuration() {
-    let mut config = ReplicationConfig::default();
-    config.max_lag_bytes = 1024; // Valid value
+    async fn test_invalid_configuration() {
+        let mut config = ReplicationConfig::default();
+        config.max_lag_bytes = 1024; // Valid value
 
-    let result = ReplicationManager::new(
-        config,
-        true,
-        Arc::new(MockEventPublisher::new()),
-        Arc::new(MockReplicaService),
-        Arc::new(MockWalService),
-        Arc::new(MockHealthMonitor),
-    );
+        let result = ReplicationManager::new(
+            config,
+            true,
+            Arc::new(MockEventPublisher::new()),
+            Arc::new(MockReplicaService),
+            Arc::new(MockWalService),
+            Arc::new(MockHealthMonitor),
+        );
 
-    assert!(result.is_ok());
-}
+        assert!(result.is_ok());
+    }
 
-#[tokio::test]
-        async fn test_builder_missing_dependencies() {
-            let result = ReplicationManagerBuilder::new()
-                .with_config(ReplicationConfig::default())
-                .with_event_publisher(Arc::new(MockEventPublisher::new()))
-                .with_replica_service(Arc::new(MockReplicaService))
-                .with_wal_service(Arc::new(MockWalService))
-                .with_health_monitor(Arc::new(MockHealthMonitor))
-                .build();
+    #[tokio::test]
+    async fn test_builder_missing_dependencies() {
+        let result = ReplicationManagerBuilder::new()
+            .with_config(ReplicationConfig::default())
+            .with_event_publisher(Arc::new(MockEventPublisher::new()))
+            .with_replica_service(Arc::new(MockReplicaService))
+            .with_wal_service(Arc::new(MockWalService))
+            .with_health_monitor(Arc::new(MockHealthMonitor))
+            .build();
 
-            assert!(result.is_ok());
-        }
+        assert!(result.is_ok());
+    }
 }

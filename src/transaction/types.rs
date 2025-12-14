@@ -15,11 +15,11 @@
 // assert_eq!(txn.state, TransactionState::Active);
 // ```
 
-use std::fmt;
-use std::time::SystemTime;
 use std::collections::HashSet;
-use std::time::{Duration};
+use std::fmt;
 use std::mem::size_of;
+use std::time::Duration;
+use std::time::SystemTime;
 
 use serde::{Deserialize, Serialize};
 
@@ -112,16 +112,16 @@ impl TransactionState {
     /// Returns true if the transaction is in a terminal state.
     #[inline]
     pub fn is_terminal(&self) -> bool {
-        matches!(self, TransactionState::Committed | TransactionState::Aborted)
+        matches!(
+            self,
+            TransactionState::Committed | TransactionState::Aborted
+        )
     }
 
     /// Returns true if the transaction can still accept operations.
     #[inline]
     pub fn is_active(&self) -> bool {
-        matches!(
-            self,
-            TransactionState::Active | TransactionState::Growing
-        )
+        matches!(self, TransactionState::Active | TransactionState::Growing)
     }
 }
 
@@ -279,7 +279,12 @@ impl Version {
     /// * `lsn` - The log sequence number.
     /// * `data` - The version data.
     /// * `is_deleted` - Whether this is a delete marker.
-    pub fn new(txn_id: TransactionId, lsn: LogSequenceNumber, data: Vec<u8>, is_deleted: bool) -> Self {
+    pub fn new(
+        txn_id: TransactionId,
+        lsn: LogSequenceNumber,
+        data: Vec<u8>,
+        is_deleted: bool,
+    ) -> Self {
         Self {
             txn_id,
             timestamp: SystemTime::now(),
@@ -422,7 +427,11 @@ impl Transaction {
     }
 
     /// Creates a nested transaction under a parent.
-    pub fn new_nested(id: TransactionId, parent_id: TransactionId, isolation_level: IsolationLevel) -> Self {
+    pub fn new_nested(
+        id: TransactionId,
+        parent_id: TransactionId,
+        isolation_level: IsolationLevel,
+    ) -> Self {
         let mut txn = Self::new(id, isolation_level);
         txn.parent_txn = Some(parent_id);
         txn
@@ -498,9 +507,9 @@ impl Transaction {
 #[cfg(test)]
 mod tests {
     use crate::common::LockMode;
-    use crate::IsolationLevel;
     use crate::network::distributed::TransactionState;
     use crate::transaction::{Transaction, Version};
+    use crate::IsolationLevel;
 
     #[test]
     fn test_isolation_level_default() {
@@ -529,16 +538,16 @@ mod tests {
     }
 
     #[test]
-use crate::transaction::types::{IsolationLevel, TransactionState};
-        use crate::transaction::Transaction;
+    use crate::transaction::types::{IsolationLevel, TransactionState};
+    use crate::transaction::Transaction;
 
-        fn test_transaction_new() {
-            let txn = Transaction::new(1, IsolationLevel::Serializable);
-            assert_eq!(txn.id, 1);
-            assert_eq!(txn.state, TransactionState::Active);
-            assert_eq!(txn.isolation_level, IsolationLevel::Serializable);
-            assert!(!txn.is_readonly);
-        }
+    fn test_transaction_new() {
+        let txn = Transaction::new(1, IsolationLevel::Serializable);
+        assert_eq!(txn.id, 1);
+        assert_eq!(txn.state, TransactionState::Active);
+        assert_eq!(txn.isolation_level, IsolationLevel::Serializable);
+        assert!(!txn.is_readonly);
+    }
 
     #[test]
     fn test_transaction_savepoint() {

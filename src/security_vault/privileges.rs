@@ -32,11 +32,11 @@
 // └─────────────────────────────────────────┘
 // ```
 
-use std::collections::HashSet;
 use crate::{DbError, Result};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap};
 use parking_lot::RwLock;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::collections::HashSet;
 
 // Privilege type enumeration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -58,7 +58,11 @@ impl PrivilegeType {
     pub fn name(&self) -> String {
         match self {
             Self::System(name) => name.clone(),
-            Self::Object { privilege, object_name, .. } => {
+            Self::Object {
+                privilege,
+                object_name,
+                ..
+            } => {
                 format!("{} ON {}", privilege, object_name)
             }
             Self::Role(name) => format!("ROLE {}", name),
@@ -77,14 +81,12 @@ impl PrivilegeType {
                     5 // Medium
                 }
             }
-            Self::Object { privilege, .. } => {
-                match privilege.to_uppercase().as_str() {
-                    "DELETE" | "DROP" => 8,
-                    "INSERT" | "UPDATE" => 6,
-                    "SELECT" => 3,
-                    _ => 5,
-                }
-            }
+            Self::Object { privilege, .. } => match privilege.to_uppercase().as_str() {
+                "DELETE" | "DROP" => 8,
+                "INSERT" | "UPDATE" => 6,
+                "SELECT" => 3,
+                _ => 5,
+            },
             Self::Role(_) => 5,
         }
     }
@@ -282,14 +284,11 @@ impl PrivilegeAnalyzer {
         privilege: PrivilegeType,
         grantor: &str,
     ) -> Result<()> {
-        let grant = PrivilegeGrant::new(
-            user_id.to_string(),
-            privilege,
-            grantor.to_string(),
-        );
+        let grant = PrivilegeGrant::new(user_id.to_string(), privilege, grantor.to_string());
 
         let mut grants = self.user_grants.write();
-        grants.entry(user_id.to_string())
+        grants
+            .entry(user_id.to_string())
             .or_insert_with(Vec::new)
             .push(grant);
 
@@ -299,18 +298,17 @@ impl PrivilegeAnalyzer {
     }
 
     // Revoke a privilege from a user
-    pub fn revoke_privilege(
-        &mut self,
-        user_id: &str,
-        privilege: &PrivilegeType,
-    ) -> Result<()> {
+    pub fn revoke_privilege(&mut self, user_id: &str, privilege: &PrivilegeType) -> Result<()> {
         let mut grants = self.user_grants.write();
 
         if let Some(user_grants) = grants.get_mut(user_id) {
             user_grants.retain(|g| &g.privilege != privilege);
             Ok(())
         } else {
-            Err(DbError::NotFound(format!("No grants found for user: {}", user_id)))
+            Err(DbError::NotFound(format!(
+                "No grants found for user: {}",
+                user_id
+            )))
         }
     }
 
@@ -324,7 +322,8 @@ impl PrivilegeAnalyzer {
     // Add privilege to role
     pub fn grant_to_role(&mut self, role_name: &str, privilege: PrivilegeType) -> Result<()> {
         let mut roles = self.roles.write();
-        let role = roles.get_mut(role_name)
+        let role = roles
+            .get_mut(role_name)
             .ok_or_else(|| DbError::NotFound(format!("Role not found: {}", role_name)))?;
 
         role.add_privilege(privilege);
@@ -338,7 +337,8 @@ impl PrivilegeAnalyzer {
             return Err(DbError::NotFound(format!("Role not found: {}", role_name)));
         }
 
-        self.user_roles.write()
+        self.user_roles
+            .write()
             .entry(user_id.to_string())
             .or_insert_with(Vec::new)
             .push(role_name.to_string());
@@ -521,9 +521,7 @@ impl PrivilegeAnalyzer {
         // Check if privileges match an existing role
         let roles = self.roles.read();
         for (role_name, role) in roles.iter() {
-            let grant_privs: HashSet<_> = user_grants.iter()
-                .map(|g| &g.privilege)
-                .collect();
+            let grant_privs: HashSet<_> = user_grants.iter().map(|g| &g.privilege).collect();
 
             let role_privs: HashSet<_> = role.privileges.iter().collect();
 
@@ -550,12 +548,12 @@ impl PrivilegeAnalyzer {
 
         let grants = self.user_grants.read();
         for (user_id, user_grants) in grants.iter() {
-            let mut privs: Vec<PrivilegeType> = user_grants.iter()
-                .map(|g| g.privilege.clone())
-                .collect();
+            let mut privs: Vec<PrivilegeType> =
+                user_grants.iter().map(|g| g.privilege.clone()).collect();
             privs.sort_by_key(|p| p.name());
 
-            privilege_sets.entry(privs)
+            privilege_sets
+                .entry(privs)
                 .or_insert_with(Vec::new)
                 .push(user_id.clone());
         }
@@ -636,7 +634,8 @@ impl PrivilegeAnalyzer {
 
     // Get user's direct grants
     pub fn get_user_grants(&self, user_id: &str) -> Vec<PrivilegeGrant> {
-        self.user_grants.read()
+        self.user_grants
+            .read()
             .get(user_id)
             .cloned()
             .unwrap_or_default()
@@ -644,7 +643,8 @@ impl PrivilegeAnalyzer {
 
     // Get user's roles
     pub fn get_user_roles(&self, user_id: &str) -> Vec<String> {
-        self.user_roles.read()
+        self.user_roles
+            .read()
             .get(user_id)
             .cloned()
             .unwrap_or_default()
@@ -660,7 +660,9 @@ mod tests {
         let mut analyzer = PrivilegeAnalyzer::new().unwrap();
 
         let privilege = PrivilegeType::System("CREATE TABLE".to_string());
-        analyzer.grant_privilege("user1", privilege.clone(), "admin").unwrap();
+        analyzer
+            .grant_privilege("user1", privilege.clone(), "admin")
+            .unwrap();
 
         let grants = analyzer.get_user_grants("user1");
         assert_eq!(grants.len(), 1);
@@ -672,7 +674,9 @@ mod tests {
         let mut analyzer = PrivilegeAnalyzer::new().unwrap();
 
         let privilege = PrivilegeType::System("CREATE TABLE".to_string());
-        analyzer.grant_privilege("user1", privilege.clone(), "admin").unwrap();
+        analyzer
+            .grant_privilege("user1", privilege.clone(), "admin")
+            .unwrap();
         analyzer.revoke_privilege("user1", &privilege).unwrap();
 
         let grants = analyzer.get_user_grants("user1");
@@ -707,7 +711,9 @@ mod tests {
         let mut analyzer = PrivilegeAnalyzer::new().unwrap();
 
         let privilege = PrivilegeType::System("CREATE TABLE".to_string());
-        analyzer.grant_privilege("user1", privilege.clone(), "admin").unwrap();
+        analyzer
+            .grant_privilege("user1", privilege.clone(), "admin")
+            .unwrap();
 
         let paths = analyzer.trace_privilege_path("user1", &privilege);
         assert_eq!(paths.len(), 1);
@@ -719,7 +725,9 @@ mod tests {
         let mut analyzer = PrivilegeAnalyzer::new().unwrap();
 
         let privilege = PrivilegeType::System("CREATE TABLE".to_string());
-        analyzer.grant_privilege("user1", privilege.clone(), "admin").unwrap();
+        analyzer
+            .grant_privilege("user1", privilege.clone(), "admin")
+            .unwrap();
 
         let recommendations = analyzer.analyze_user("user1").unwrap();
 
@@ -748,7 +756,9 @@ mod tests {
         let mut analyzer = PrivilegeAnalyzer::new().unwrap();
 
         let dangerous = PrivilegeType::System("DROP ANY TABLE".to_string());
-        analyzer.grant_privilege("user1", dangerous, "admin").unwrap();
+        analyzer
+            .grant_privilege("user1", dangerous, "admin")
+            .unwrap();
 
         let escalations = analyzer.detect_escalation("user1");
         assert!(!escalations.is_empty());
@@ -765,9 +775,15 @@ mod tests {
         // Grant same privileges to multiple users
         for i in 1..=5 {
             let user = format!("user{}", i);
-            analyzer.grant_privilege(&user, priv1.clone(), "admin").unwrap();
-            analyzer.grant_privilege(&user, priv2.clone(), "admin").unwrap();
-            analyzer.grant_privilege(&user, priv3.clone(), "admin").unwrap();
+            analyzer
+                .grant_privilege(&user, priv1.clone(), "admin")
+                .unwrap();
+            analyzer
+                .grant_privilege(&user, priv2.clone(), "admin")
+                .unwrap();
+            analyzer
+                .grant_privilege(&user, priv3.clone(), "admin")
+                .unwrap();
         }
 
         let recommendations = analyzer.mine_roles(3);

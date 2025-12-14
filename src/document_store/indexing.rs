@@ -14,16 +14,16 @@
 // - Index lookup: O(log n) with minimal cache misses
 // - Full-text search: BM25 provides 15-30% better relevance
 
-use std::collections::HashSet;
-use std::collections::BTreeMap;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
-use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
-use std::time::{SystemTime, UNIX_EPOCH};
-use crate::error::Result;
 use super::document::{Document, DocumentId};
 use super::jsonpath::JsonPathEvaluator;
+use crate::error::Result;
+use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::sync::atomic::{AtomicU64, Ordering as AtomicOrdering};
+use std::sync::{Arc, RwLock};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // Index type enumeration
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -219,10 +219,12 @@ impl Default for TextIndexOptions {
             language: "english".to_string(),
             case_sensitive: false,
             stop_words: vec![
-                "a", "an", "and", "are", "as", "at", "be", "by", "for",
-                "from", "has", "he", "in", "is", "it", "its", "of", "on",
-                "that", "the", "to", "was", "will", "with",
-            ].iter().map(|s| s.to_string()).collect(),
+                "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "he", "in",
+                "is", "it", "its", "of", "on", "that", "the", "to", "was", "will", "with",
+            ]
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
             min_word_length: 2,
         }
     }
@@ -284,9 +286,10 @@ impl BTreeIndex {
             for key in &keys {
                 if let Some(existing_ids) = self.entries.get(key) {
                     if !existing_ids.is_empty() {
-                        return Err(crate::error::DbError::ConstraintViolation(
-                            format!("Unique constraint violation on index '{}'", self.definition.name)
-                        ));
+                        return Err(crate::error::DbError::ConstraintViolation(format!(
+                            "Unique constraint violation on index '{}'",
+                            self.definition.name
+                        )));
                     }
                 }
             }
@@ -538,11 +541,12 @@ impl FullTextIndex {
 
         // Find documents containing the first term
         let first_term = &tokens[0];
-        let candidates: HashSet<DocumentId> = if let Some(doc_positions) = self.inverted_index.get(first_term) {
-            doc_positions.keys().cloned().collect()
-        } else {
-            return HashSet::new();
-        };
+        let candidates: HashSet<DocumentId> =
+            if let Some(doc_positions) = self.inverted_index.get(first_term) {
+                doc_positions.keys().cloned().collect()
+            } else {
+                return HashSet::new();
+            };
 
         // Filter documents that contain the phrase
         let mut results = HashSet::new();
@@ -619,7 +623,10 @@ impl FullTextIndex {
 
     fn tokenize(&self, text: &str) -> Vec<String> {
         let default_options = TextIndexOptions::default();
-        let options = self.definition.text_options.as_ref()
+        let options = self
+            .definition
+            .text_options
+            .as_ref()
             .unwrap_or(&default_options);
 
         let text = if options.case_sensitive {
@@ -717,24 +724,21 @@ impl IndexManager {
         let mut indexes = self.indexes.write().unwrap();
 
         if indexes.contains_key(&definition.name) {
-            return Err(crate::error::DbError::AlreadyExists(
-                format!("Index '{}' already exists", definition.name)
-            ));
+            return Err(crate::error::DbError::AlreadyExists(format!(
+                "Index '{}' already exists",
+                definition.name
+            )));
         }
 
         let index = match definition.index_type {
             IndexType::Single | IndexType::Compound | IndexType::Unique | IndexType::Partial => {
                 Index::BTree(BTreeIndex::new(definition.clone()))
             }
-            IndexType::FullText => {
-                Index::FullText(FullTextIndex::new(definition.clone()))
-            }
-            IndexType::TTL => {
-                Index::TTL(TTLIndex::new(definition.clone()))
-            }
+            IndexType::FullText => Index::FullText(FullTextIndex::new(definition.clone())),
+            IndexType::TTL => Index::TTL(TTLIndex::new(definition.clone())),
             IndexType::Geospatial => {
                 return Err(crate::error::DbError::not_supported(
-                    "Geospatial indexes not yet implemented".to_string()
+                    "Geospatial indexes not yet implemented".to_string(),
                 ));
             }
         };
@@ -751,9 +755,10 @@ impl IndexManager {
         if indexes.remove(name).is_some() {
             Ok(())
         } else {
-            Err(crate::error::DbError::NotFound(
-                format!("Index '{}' not found", name)
-            ))
+            Err(crate::error::DbError::NotFound(format!(
+                "Index '{}' not found",
+                name
+            )))
         }
     }
 
@@ -773,7 +778,7 @@ impl Default for IndexManager {
 mod tests {
     use super::*;
     use serde_json::json;
-use std::time::UNIX_EPOCH;
+    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_btree_index() {
@@ -786,13 +791,15 @@ use std::time::UNIX_EPOCH;
             DocumentId::new_custom("1"),
             "users".to_string(),
             json!({"name": "Alice", "age": 30}),
-        ).unwrap();
+        )
+        .unwrap();
 
         let doc2 = Document::from_json(
             DocumentId::new_custom("2"),
             "users".to_string(),
             json!({"name": "Bob", "age": 25}),
-        ).unwrap();
+        )
+        .unwrap();
 
         index.insert(DocumentId::new_custom("1"), &doc1).unwrap();
         index.insert(DocumentId::new_custom("2"), &doc2).unwrap();
@@ -813,7 +820,8 @@ use std::time::UNIX_EPOCH;
             DocumentId::new_custom("1"),
             "docs".to_string(),
             json!({"content": "The quick brown fox jumps over the lazy dog"}),
-        ).unwrap();
+        )
+        .unwrap();
 
         index.insert(DocumentId::new_custom("1"), &doc).unwrap();
 
