@@ -846,7 +846,7 @@ impl RegressionDetector {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceBaseline {
     pub avg_time_ms: f64,
-    pub stddev_time_ms: f64,
+    pub std_dev_time_ms: f64,
     pub sample_count: usize,
     pub established_at: SystemTime,
 }
@@ -1137,7 +1137,7 @@ mod tests {
 
         let baseline = PerformanceBaseline {
             avg_time_ms: 100.0,
-            stddev_time_ms: 10.0,
+            std_dev_time_ms: 10.0,
             sample_count: 100,
             established_at: SystemTime::now(),
         };
@@ -1976,18 +1976,10 @@ mod extended_tests {
         governor
             .create_group(
                 "default".to_string(),
-                ResourceGroup {
-                    name: "".to_string(),
-                    priority: 0,
-                    limits: Default::default(),
-                    active_sessions: vec![],
-                    total_cpu_time_us: 0,
-                    total_memory_bytes: 0,
-                    total_io_bytes: 0,
+                crate::performance::ResourceGroup {
                     max_memory_mb: 1000,
                     max_cpu_percent: 80.0,
                     max_concurrent_queries: 10,
-                    created_at: (),
                 },
             )
             .unwrap();
@@ -2777,7 +2769,7 @@ impl PerformanceReportGenerator {
     fn generate_recommendations(
         &self,
         workload: &WorkloadAnalysis,
-        slowqueries: &[QueryPerformanceStats],
+        slow_queries: &[QueryPerformanceStats],
     ) -> Vec<String> {
         let mut recommendations = Vec::new();
 
@@ -2788,10 +2780,10 @@ impl PerformanceReportGenerator {
             ));
         }
 
-        if !slowqueries.is_empty() {
+        if !slow_queries.is_empty() {
             recommendations.push(format!(
                 "{} queries identified as slow. Review and optimize top performers.",
-                slowqueries.len()
+                slow_queries.len()
             ));
         }
 
@@ -3168,10 +3160,10 @@ pub enum ComplexityFactor {
 // Performance utility functions for common operations
 
 // Calculate the expected number of disk I/O operations for a given query
-pub fn estimate_disk_io(table_size_pages: u64, indexlevels: u32, selectivity: f64) -> u64 {
+pub fn estimate_disk_io(table_size_pages: u64, index_levels: u32, selectivity: f64) -> u64 {
     // For index scan: levels + selectivity * table_size
     // For table scan: table_size
-    let index_cost = indexlevels as u64 + (selectivity * table_size_pages as f64) as u64;
+    let index_cost = index_levels as u64 + (selectivity * table_size_pages as f64) as u64;
     let table_scan_cost = table_size_pages;
 
     // Return the minimum cost
