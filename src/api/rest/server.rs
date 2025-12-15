@@ -30,6 +30,24 @@ use super::handlers::transaction_handlers::{
 use super::handlers::transaction_websocket_handlers::{
     ws_transaction_lifecycle, ws_lock_events, ws_deadlock_events, ws_mvcc_events, ws_wal_events,
 };
+
+// Specialized Data WebSocket Handlers
+use super::handlers::{
+    ws_graph_algorithms, ws_graph_traversal, ws_document_changes,
+    ws_document_aggregation, ws_spatial_query, ws_spatial_routing,
+};
+
+// Transaction WebSocket Handlers (Extended)
+use super::handlers::{
+    ws_transaction_locks, ws_transaction_deadlocks, ws_transaction_mvcc,
+    ws_transaction_wal, ws_transaction_stats,
+};
+
+// Enterprise WebSocket Handlers
+use super::handlers::{
+    ws_multitenant_events, ws_backup_progress, ws_blockchain_events,
+    ws_autonomous_events, ws_cep_matches, ws_flashback_events,
+};
 use super::handlers::optimizer_handlers::{
     list_hints, get_active_hints, apply_hints, remove_hint, get_hint_recommendations,
     list_baselines, create_baseline, get_baseline, update_baseline, delete_baseline,
@@ -327,6 +345,28 @@ impl RestApiServer {
             .route("/api/v1/ws/transactions/deadlocks", get(ws_deadlock_events))
             .route("/api/v1/ws/transactions/mvcc", get(ws_mvcc_events))
             .route("/api/v1/ws/transactions/wal", get(ws_wal_events))
+            // Transaction WebSocket Streams (Extended)
+            .route("/api/v1/ws/transactions/lock-monitoring", get(ws_transaction_locks))
+            .route("/api/v1/ws/transactions/deadlock-monitoring", get(ws_transaction_deadlocks))
+            .route("/api/v1/ws/transactions/mvcc-monitoring", get(ws_transaction_mvcc))
+            .route("/api/v1/ws/transactions/wal-monitoring", get(ws_transaction_wal))
+            .route("/api/v1/ws/transactions/stats", get(ws_transaction_stats))
+            // Specialized Data WebSocket Streams - Graph
+            .route("/api/v1/ws/graph/algorithms", get(ws_graph_algorithms))
+            .route("/api/v1/ws/graph/traversal", get(ws_graph_traversal))
+            // Specialized Data WebSocket Streams - Document
+            .route("/api/v1/ws/documents/changes", get(ws_document_changes))
+            .route("/api/v1/ws/documents/aggregation", get(ws_document_aggregation))
+            // Specialized Data WebSocket Streams - Spatial
+            .route("/api/v1/ws/spatial/query", get(ws_spatial_query))
+            .route("/api/v1/ws/spatial/routing", get(ws_spatial_routing))
+            // Enterprise WebSocket Streams
+            .route("/api/v1/ws/multitenant/events", get(ws_multitenant_events))
+            .route("/api/v1/ws/backup/progress", get(ws_backup_progress))
+            .route("/api/v1/ws/blockchain/events", get(ws_blockchain_events))
+            .route("/api/v1/ws/autonomous/events", get(ws_autonomous_events))
+            .route("/api/v1/ws/cep/matches", get(ws_cep_matches))
+            .route("/api/v1/ws/flashback/events", get(ws_flashback_events))
 
             .route(
                 "/api/v1/ws/dashboard",

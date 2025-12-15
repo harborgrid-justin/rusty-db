@@ -376,3 +376,21 @@ pub use transaction_websocket_handlers::{
     ws_deadlock_events, ws_lock_events, ws_mvcc_events,
     ws_transaction_lifecycle, ws_wal_events
 };
+
+// Specialized Data WebSocket handlers
+pub use specialized_data_websocket_handlers::{
+    ws_graph_algorithms, ws_graph_traversal, ws_document_changes,
+    ws_document_aggregation, ws_spatial_query, ws_spatial_routing,
+};
+
+// Transaction WebSocket handlers (Extended)
+pub use transaction_ws_handlers::{
+    ws_transaction_locks, ws_transaction_deadlocks, ws_transaction_mvcc,
+    ws_transaction_wal, ws_transaction_stats,
+};
+
+// Enterprise WebSocket handlers
+pub use enterprise_websocket_handlers::{
+    ws_multitenant_events, ws_backup_progress, ws_blockchain_events,
+    ws_autonomous_events, ws_cep_matches, ws_flashback_events,
+};
