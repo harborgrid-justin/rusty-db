@@ -544,9 +544,7 @@ async fn handle_document_changes_websocket(mut socket: WebSocket, _state: Arc<Ap
         if let Ok(msg) = msg {
             match msg {
                 Message::Text(text) => {
-                    if let Ok(request) = serde_json::from_str::<DocumentChangeStreamRequest>(&text) {
-                        collection_name = request.collection;
-                    }
+                    if let Ok(request) = serde_json::from_str::<DocumentChangeStreamRequest>(&text) {request.collection; }
                 }
                 Message::Close(_) => break,
                 _ => {}
