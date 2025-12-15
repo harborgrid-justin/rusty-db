@@ -52,6 +52,7 @@ impl QueryResult {
             columns,
             rows,
             rows_affected,
+            affected_rows: (),
         }
     }
 

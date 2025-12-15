@@ -32,6 +32,9 @@ impl LargeObject {
 
             let mut huge_page_size = 0;
 
+            // Try to use huge pages for large allocations
+            let use_huge_pages = size >= HUGE_PAGE_2MB;
+
             // Try to use huge pages if requested
             if use_huge_pages {
                 if size >= HUGE_PAGE_1GB && size % HUGE_PAGE_1GB == 0 {
