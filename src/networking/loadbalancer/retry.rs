@@ -422,38 +422,52 @@ mod tests {
 
     #[tokio::test]
     async fn test_retry_policy_execute_success() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
         let policy = RetryPolicy::fixed(Duration::from_millis(10), 3);
 
-        let mut attempts = 0;
+        let attempts = Arc::new(AtomicUsize::new(0));
+        let attempts_clone = attempts.clone();
         let result = policy
-            .execute(|| async {
-                attempts += 1;
-                if attempts < 2 {
-                    Err(DbError::Network("Transient error".to_string()))
-                } else {
-                    Ok(42)
+            .execute(move || {
+                let attempts = attempts_clone.clone();
+                async move {
+                    let count = attempts.fetch_add(1, Ordering::SeqCst) + 1;
+                    if count < 2 {
+                        Err(DbError::Network("Transient error".to_string()))
+                    } else {
+                        Ok(42)
+                    }
                 }
             })
             .await;
 
         assert_eq!(result.unwrap(), 42);
-        assert_eq!(attempts, 2); // Failed once, succeeded on second attempt
+        assert_eq!(attempts.load(Ordering::SeqCst), 2); // Failed once, succeeded on second attempt
     }
 
     #[tokio::test]
     async fn test_retry_policy_execute_exhausted() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
         let policy = RetryPolicy::fixed(Duration::from_millis(10), 2);
 
-        let mut attempts = 0;
+        let attempts = Arc::new(AtomicUsize::new(0));
+        let attempts_clone = attempts.clone();
         let result = policy
-            .execute(|| async {
-                attempts += 1;
-                Err::<(), _>(DbError::Network("Persistent error".to_string()))
+            .execute(move || {
+                let attempts = attempts_clone.clone();
+                async move {
+                    attempts.fetch_add(1, Ordering::SeqCst);
+                    Err::<(), _>(DbError::Network("Persistent error".to_string()))
+                }
             })
             .await;
 
         assert!(result.is_err());
-        assert_eq!(attempts, 2); // Initial attempt + 2 retries = 2 total
+        assert_eq!(attempts.load(Ordering::SeqCst), 2); // Initial attempt + 2 retries = 2 total
     }
 
     #[test]
@@ -491,17 +505,24 @@ mod tests {
 
     #[tokio::test]
     async fn test_no_retry_policy() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
         let policy = RetryPolicy::none();
 
-        let mut attempts = 0;
+        let attempts = Arc::new(AtomicUsize::new(0));
+        let attempts_clone = attempts.clone();
         let result = policy
-            .execute(|| async {
-                attempts += 1;
-                Err::<(), _>(DbError::Network("Error".to_string()))
+            .execute(move || {
+                let attempts = attempts_clone.clone();
+                async move {
+                    attempts.fetch_add(1, Ordering::SeqCst);
+                    Err::<(), _>(DbError::Network("Error".to_string()))
+                }
             })
             .await;
 
         assert!(result.is_err());
-        assert_eq!(attempts, 1); // Only initial attempt, no retries
+        assert_eq!(attempts.load(Ordering::SeqCst), 1); // Only initial attempt, no retries
     }
 }

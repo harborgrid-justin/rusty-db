@@ -506,10 +506,9 @@ impl Transaction {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::common::LockMode;
-    use crate::network::distributed::TransactionState;
-    use crate::transaction::{Transaction, Version};
-    use crate::IsolationLevel;
+    use crate::transaction::Version;
 
     #[test]
     fn test_isolation_level_default() {
@@ -538,9 +537,6 @@ mod tests {
     }
 
     #[test]
-    use crate::transaction::types::{IsolationLevel as OtherIsolationLevel, TransactionState};
-    use crate::transaction::Transaction;
-
     fn test_transaction_new() {
         let txn = Transaction::new(1, IsolationLevel::Serializable);
         assert_eq!(txn.id, 1);
