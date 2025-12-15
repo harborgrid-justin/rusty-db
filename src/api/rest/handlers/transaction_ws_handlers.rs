@@ -10,6 +10,7 @@ use futures::{SinkExt, StreamExt};
 use serde_json::json;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
+use axum::extract::ws::Utf8Bytes;
 use tokio::time::{interval, Duration};
 
 use super::super::types::ApiState;
@@ -155,7 +156,7 @@ async fn handle_transaction_lifecycle(mut socket: WebSocket, _state: Arc<ApiStat
     };
 
     if let Ok(msg) = serde_json::to_string(&welcome) {
-        let _ = socket.send(Message::Text(msg)).await;
+        let _ = socket.send(Message::Text(Utf8Bytes::from(msg))).await;
     }
 
     // Simulate sending transaction events
@@ -185,7 +186,7 @@ async fn handle_transaction_lifecycle(mut socket: WebSocket, _state: Arc<ApiStat
                 };
 
                 if let Ok(json) = serde_json::to_string(&msg) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -222,7 +223,7 @@ async fn handle_lock_events(mut socket: WebSocket, _state: Arc<ApiState>) {
     };
 
     if let Ok(msg) = serde_json::to_string(&welcome) {
-        let _ = socket.send(Message::Text(msg)).await;
+        let _ = socket.send(Message::Text(Utf8Bytes::from(msg))).await;
     }
 
     let mut ticker = interval(Duration::from_secs(3));
@@ -248,7 +249,7 @@ async fn handle_lock_events(mut socket: WebSocket, _state: Arc<ApiState>) {
                 };
 
                 if let Ok(json) = serde_json::to_string(&msg) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -285,7 +286,7 @@ async fn handle_deadlock_events(mut socket: WebSocket, _state: Arc<ApiState>) {
     };
 
     if let Ok(msg) = serde_json::to_string(&welcome) {
-        let _ = socket.send(Message::Text(msg)).await;
+        let _ = socket.send(Message::Text(Utf8Bytes::from(msg))).await;
     }
 
     // Deadlocks are rare, simulate one every 30 seconds
@@ -315,7 +316,7 @@ async fn handle_deadlock_events(mut socket: WebSocket, _state: Arc<ApiState>) {
                 };
 
                 if let Ok(json) = serde_json::to_string(&msg) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -352,7 +353,7 @@ async fn handle_mvcc_events(mut socket: WebSocket, _state: Arc<ApiState>) {
     };
 
     if let Ok(msg) = serde_json::to_string(&welcome) {
-        let _ = socket.send(Message::Text(msg)).await;
+        let _ = socket.send(Message::Text(Utf8Bytes::from(msg))).await;
     }
 
     let mut ticker = interval(Duration::from_secs(5));
@@ -378,7 +379,7 @@ async fn handle_mvcc_events(mut socket: WebSocket, _state: Arc<ApiState>) {
                 };
 
                 if let Ok(json) = serde_json::to_string(&msg) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -415,7 +416,7 @@ async fn handle_wal_events(mut socket: WebSocket, _state: Arc<ApiState>) {
     };
 
     if let Ok(msg) = serde_json::to_string(&welcome) {
-        let _ = socket.send(Message::Text(msg)).await;
+        let _ = socket.send(Message::Text(Utf8Bytes::from(msg))).await;
     }
 
     let mut ticker = interval(Duration::from_millis(500));
@@ -443,7 +444,7 @@ async fn handle_wal_events(mut socket: WebSocket, _state: Arc<ApiState>) {
                 };
 
                 if let Ok(json) = serde_json::to_string(&msg) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -480,7 +481,7 @@ async fn handle_transaction_stats(mut socket: WebSocket, state: Arc<ApiState>) {
     };
 
     if let Ok(msg) = serde_json::to_string(&welcome) {
-        let _ = socket.send(Message::Text(msg)).await;
+        let _ = socket.send(Message::Text(Utf8Bytes::from(msg))).await;
     }
 
     let mut ticker = interval(Duration::from_secs(1));
@@ -508,7 +509,7 @@ async fn handle_transaction_stats(mut socket: WebSocket, state: Arc<ApiState>) {
                 };
 
                 if let Ok(json) = serde_json::to_string(&msg) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }

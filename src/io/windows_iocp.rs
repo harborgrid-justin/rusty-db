@@ -569,7 +569,7 @@ mod tests {
         let handle = IocpHandle::invalid();
         assert!(!handle.is_valid());
 
-        let handle = IocpHandle(123);
+        let handle = IocpHandle(());
         assert!(handle.is_valid());
     }
 

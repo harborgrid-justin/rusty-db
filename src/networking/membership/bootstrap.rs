@@ -359,6 +359,7 @@ pub async fn join_cluster(config: MembershipConfig) -> Result<MembershipCoordina
 
 #[cfg(test)]
 mod tests {
+    use crate::networking::membership::NodeMetadata;
     use super::*;
 
     #[tokio::test]

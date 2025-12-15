@@ -22,7 +22,7 @@ struct LargeObject {
 
 impl LargeObject {
     // Allocate a large object using mmap
-    unsafe fn allocate(size: usize, use_huge_pages: bool, cow: bool) -> Result<Self> {
+    unsafe fn allocate(size: usize, cow: bool) -> Result<Self> {
         #[cfg(unix)]
         {
             let mut flags = libc::MAP_PRIVATE | libc::MAP_ANONYMOUS;
@@ -238,8 +238,8 @@ impl LargeObjectAllocator {
     }
 
     // Allocate a large object
-    pub fn allocate(&self, size: usize, use_huge_pages: bool, cow: bool) -> Result<NonNull<u8>> {
-        let obj = unsafe { LargeObject::allocate(size, use_huge_pages, cow)? };
+    pub fn allocate(&self, size: usize, cow: bool) -> Result<NonNull<u8>> {
+        let obj = unsafe { LargeObject::allocate(size, cow)? };
         let ptr = obj.base;
         let addr = ptr.as_ptr() as usize;
 

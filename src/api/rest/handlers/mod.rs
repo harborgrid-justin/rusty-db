@@ -119,27 +119,27 @@ pub use sql::*;
 
 // Storage handlers
 pub use storage_handlers::{
-    create_partition, create_tablespace, delete_partition, delete_tablespace, flush_buffer_pool,
-    get_buffer_pool_stats, get_disks, get_io_stats, get_partitions, get_storage_status,
-    get_tablespaces, update_tablespace,
+    columnar_batch_insert, columnar_project, columnar_scan, compact_page, create_columnar_table,
+    create_lsm_tree, create_page, create_partition, create_tablespace, delete_partition,
+    delete_tablespace, flush_buffer_pool,
     // Page Management
-    create_page, get_page, compact_page, flush_page, list_pages,
+    flush_page, get_buffer_pool_stats, get_columnar_stats, get_disks, get_io_stats,
     // LSM Tree
-    create_lsm_tree, lsm_put, lsm_get, lsm_delete, lsm_compact, get_lsm_stats,
+    get_lsm_stats, get_page, get_partitions, get_storage_status, get_tablespaces, get_tier_info,
     // Columnar Storage
-    create_columnar_table, columnar_batch_insert, columnar_scan, columnar_project, get_columnar_stats,
+    get_tier_stats, json_delete, json_extract, json_merge, json_set,
     // Tiered Storage
-    get_tier_stats, migrate_tier, get_tier_info,
+    list_pages, lsm_compact, lsm_delete,
     // JSON Storage
-    json_extract, json_set, json_delete, json_merge,
+    lsm_get, lsm_put, migrate_tier, update_tablespace,
     // Vectored I/O
     vectored_read, vectored_write
 };
 
 // Storage WebSocket handlers
 pub use storage_websocket_handlers::{
-    ws_buffer_pool_events, ws_lsm_events, ws_disk_io_events,
-    ws_tier_events, ws_page_events, ws_columnar_events
+    ws_buffer_pool_events, ws_columnar_events, ws_disk_io_events,
+    ws_lsm_events, ws_page_events, ws_tier_events
 };
 
 // Transaction handlers
@@ -296,31 +296,31 @@ pub use inmemory_handlers::{
 // Optimizer handlers
 pub use optimizer_handlers::{
     // Adaptive Execution
-    enable_adaptive_execution,
-    get_adaptive_statistics,
-    get_adaptive_status,
-    // Optimizer Hints
     apply_hints,
-    get_active_hints,
-    get_hint_recommendations,
-    list_hints,
-    remove_hint,
-    // EXPLAIN
+    create_baseline,
+    delete_baseline,
+    // Optimizer Hints
+    enable_adaptive_execution,
+    evolve_baseline,
     explain_analyze_query,
     explain_query,
     explain_query_with_visualization,
+    // EXPLAIN
+    get_active_hints,
+    get_adaptive_statistics,
+    get_adaptive_status,
     // Parallel Query Config
-    get_parallel_config,
-    get_parallel_statistics,
-    update_parallel_config,
-    // Plan Baselines
-    create_baseline,
-    delete_baseline,
-    evolve_baseline,
     get_baseline,
+    get_hint_recommendations,
+    get_parallel_config,
+    // Plan Baselines
+    get_parallel_statistics,
     list_baselines,
+    list_hints,
     load_baselines,
+    remove_hint,
     update_baseline,
+    update_parallel_config,
 };
 
 // Query Operations handlers
@@ -338,41 +338,41 @@ pub use query_websocket::{
 
 // Index handlers
 pub use index_handlers::{
-    list_indexes, get_index_stats, rebuild_index, analyze_index,
-    get_index_recommendations, get_index_advisor, coalesce_index,
+    analyze_index, coalesce_index, get_index_advisor, get_index_recommendations,
+    get_index_stats, list_indexes, rebuild_index,
 };
 
 // Memory handlers
 pub use memory_handlers::{
-    get_memory_status, get_allocator_stats, trigger_gc, get_memory_pressure,
-    update_memory_config, list_allocators, get_allocator_stats_by_name,
-    release_memory_pressure, list_memory_pools,
+    get_allocator_stats, get_allocator_stats_by_name, get_memory_pressure, get_memory_status,
+    list_allocators, list_memory_pools, release_memory_pressure,
+    trigger_gc, update_memory_config,
 };
 
 // Buffer Pool handlers
 pub use buffer_pool_handlers::{
-    get_buffer_pool_config, update_buffer_pool_config,
-    flush_buffer_pool as flush_buffer_pool_handler, get_eviction_stats, get_prefetch_config,
-    update_prefetch_config, get_hugepages_config, pin_page, unpin_page,
-    prefetch_pages, get_hit_ratio,
+    flush_buffer_pool as flush_buffer_pool_handler, get_buffer_pool_config,
+    get_eviction_stats, get_hit_ratio, get_hugepages_config,
+    get_prefetch_config, pin_page, prefetch_pages, unpin_page,
+    update_buffer_pool_config, update_prefetch_config,
 };
 
 // SIMD handlers
 pub use simd_handlers::{
-    get_cpu_features, get_simd_status, get_simd_capabilities, get_simd_stats,
-    get_all_simd_metrics, get_simd_config, update_simd_config, get_filter_stats,
-    get_aggregate_stats, get_scan_stats, get_hash_stats, get_string_stats,
-    reset_simd_stats,
+    get_aggregate_stats, get_all_simd_metrics, get_cpu_features, get_filter_stats,
+    get_hash_stats, get_scan_stats, get_simd_capabilities, get_simd_config,
+    get_simd_stats, get_simd_status, get_string_stats, reset_simd_stats,
+    update_simd_config,
 };
 
 // Index & Memory WebSocket handlers
 pub use index_memory_websocket_handlers::{
-    ws_index_events_stream, ws_memory_events_stream, ws_buffer_pool_events_stream,
-    ws_simd_metrics_stream, ws_inmemory_events_stream,
+    ws_buffer_pool_events_stream, ws_index_events_stream, ws_inmemory_events_stream,
+    ws_memory_events_stream, ws_simd_metrics_stream,
 };
 
 // Transaction WebSocket handlers
 pub use transaction_websocket_handlers::{
-    ws_transaction_lifecycle, ws_lock_events, ws_deadlock_events,
-    ws_mvcc_events, ws_wal_events
+    ws_deadlock_events, ws_lock_events, ws_mvcc_events,
+    ws_transaction_lifecycle, ws_wal_events
 };

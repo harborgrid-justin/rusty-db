@@ -26,7 +26,6 @@
 use super::message::WebSocketMessage;
 use super::protocol::{Protocol, ProtocolHandler};
 use crate::error::{DbError, Result};
-use futures_util::{SinkExt, StreamExt};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};

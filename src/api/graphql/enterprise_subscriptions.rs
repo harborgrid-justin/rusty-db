@@ -9,7 +9,6 @@
 
 use async_graphql::{SimpleObject, Subscription};
 use futures_util::stream::Stream;
-use futures_util::StreamExt;
 
 use std::time::Duration;
 

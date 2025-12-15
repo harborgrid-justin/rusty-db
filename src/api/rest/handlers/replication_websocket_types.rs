@@ -527,7 +527,7 @@ impl ClusterEvent {
             category: "rac".to_string(),
             event_type: event.event_type.clone(),
             severity: "info".to_string(),
-            source: format!("rac:cache_fusion"),
+            source: "rac:cache_fusion".to_string(),
             timestamp: event.timestamp,
             event_id: uuid::Uuid::new_v4().to_string(),
             payload: serde_json::to_value(event).unwrap_or_default(),

@@ -546,6 +546,7 @@ pub struct WebSocketStreamingData {
 
 #[cfg(test)]
 mod tests {
+    use crate::api::HealthStatus;
     use super::*;
 
     #[test]
@@ -553,7 +554,7 @@ mod tests {
         let registry = Arc::new(MetricsRegistry::default());
         let collector = WebSocketMetricsCollector::new(registry);
 
-        assert!(collector.ws_metrics.active_connections() == 0);
+        assert_eq!(collector.ws_metrics.active_connections(), 0);
     }
 
     #[test]

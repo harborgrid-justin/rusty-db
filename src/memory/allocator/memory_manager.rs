@@ -91,7 +91,7 @@ impl MemoryManager {
         } else {
             // Use large object allocator
             self.large_object_allocator
-                .allocate(size, size >= HUGE_PAGE_2MB, false)?
+                .allocate(size, false)?
         };
 
         // Record allocation

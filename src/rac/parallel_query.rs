@@ -403,6 +403,7 @@ struct WorkerPool {
 
     // Semaphore for worker allocation
     semaphore: Arc<Semaphore>,
+    max_workers: (),
 }
 
 type WorkerId = usize;

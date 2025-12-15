@@ -3,9 +3,9 @@
 // Real-time subscription resolvers for replication, clustering, and RAC operations
 
 use async_graphql::{Context, Enum, SimpleObject, Subscription, ID};
-use futures_util::stream::Stream;
 use std::time::Duration;
 use tokio_stream::wrappers::IntervalStream;
+use futures_util::stream::{Stream, StreamExt};
 
 // ============================================================================
 // Replication Subscription Types

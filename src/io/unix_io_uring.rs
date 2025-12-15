@@ -2,12 +2,11 @@
 //
 // High-performance asynchronous I/O using Linux io_uring.
 
-use crate::error::{DbError, Result};
-use crate::io::{IoCompletion, IoOpType, IoRequest, IoStatus};
+use crate::error::DbError;
+use crate::io::{IoCompletion, IoRequest};
 use parking_lot::Mutex;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::sync::Arc;
-use std::time::Duration;
 
 // ============================================================================
 // io_uring Configuration
@@ -578,8 +577,6 @@ impl IoUringEngine {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_sqe_creation() {
         let sqe = SqeEntry::read(3, std::ptr::null_mut(), 4096, 0, 42);

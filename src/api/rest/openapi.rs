@@ -445,7 +445,7 @@ mod tests {
         assert!(yaml.contains("RustyDB API"));
     }
 
-    fn get_openapi_yaml() -> _ {
+    fn get_openapi_yaml() -> Box<_> {
         todo!()
     }
 

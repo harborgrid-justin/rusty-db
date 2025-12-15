@@ -13,10 +13,11 @@ use axum::{
     extract::{ws::{WebSocket, WebSocketUpgrade}, State},
     response::Response,
 };
-use futures::{SinkExt, StreamExt};
+
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
+use axum::extract::ws::Utf8Bytes;
 use tokio::time::{interval, Duration};
 use utoipa::ToSchema;
 
@@ -187,7 +188,7 @@ async fn handle_multitenant_websocket(mut socket: WebSocket, _state: Arc<ApiStat
     };
 
     if let Ok(json) = serde_json::to_string(&welcome) {
-        let _ = socket.send(Message::Text(json)).await;
+        let _ = socket.send(Message::Text(Utf8Bytes::from(json))).await;
     }
 
     // Simulate streaming tenant events
@@ -213,7 +214,7 @@ async fn handle_multitenant_websocket(mut socket: WebSocket, _state: Arc<ApiStat
                 };
 
                 if let Ok(json) = serde_json::to_string(&event) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -273,7 +274,7 @@ async fn handle_backup_progress_websocket(mut socket: WebSocket, _state: Arc<Api
                 };
 
                 if let Ok(json) = serde_json::to_string(&event) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -330,7 +331,7 @@ async fn handle_blockchain_websocket(mut socket: WebSocket, _state: Arc<ApiState
                 };
 
                 if let Ok(json) = serde_json::to_string(&event) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -387,7 +388,7 @@ async fn handle_autonomous_websocket(mut socket: WebSocket, _state: Arc<ApiState
                     };
 
                     if let Ok(json) = serde_json::to_string(&event) {
-                        let _ = socket.send(Message::Text(json)).await;
+                        let _ = socket.send(Message::Text(Utf8Bytes::from(json))).await;
                     }
                 } else {
                     let event = WebSocketMessage {
@@ -404,7 +405,7 @@ async fn handle_autonomous_websocket(mut socket: WebSocket, _state: Arc<ApiState
                     };
 
                     if let Ok(json) = serde_json::to_string(&event) {
-                        let _ = socket.send(Message::Text(json)).await;
+                        let _ = socket.send(Message::Text(Utf8Bytes::from(json))).await;
                     }
                 }
             }
@@ -464,7 +465,7 @@ async fn handle_cep_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
                 };
 
                 if let Ok(json) = serde_json::to_string(&event) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }
@@ -520,7 +521,7 @@ async fn handle_flashback_websocket(mut socket: WebSocket, _state: Arc<ApiState>
                 };
 
                 if let Ok(json) = serde_json::to_string(&event) {
-                    if socket.send(Message::Text(json)).await.is_err() {
+                    if socket.send(Message::Text(Utf8Bytes::from(json))).await.is_err() {
                         break;
                     }
                 }

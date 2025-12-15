@@ -18,8 +18,8 @@ mod types;
 #[cfg(test)]
 mod tests {
     use crate::replication::snapshots::config::SnapshotConfig;
-    use crate::replication::snapshots::manager::FileSnapshotManager;
-    use crate::replication::snapshots::types::SnapshotId;
+    use crate::replication::snapshots::manager::{FileSnapshotManager, SnapshotManager};
+    use crate::replication::snapshots::types::{SnapshotId, SnapshotStatus, SnapshotType};
     use crate::replication::types::ReplicaId;
     use tempfile::TempDir;
 
