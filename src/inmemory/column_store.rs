@@ -793,8 +793,6 @@ mod tests {
                 nullable: false,
                 compression_type: None,
                 cardinality: None,
-                index: 0,
-                index: 0,
             },
             ColumnMetadata {
                 name: "value".to_string(),
@@ -803,8 +801,6 @@ mod tests {
                 nullable: true,
                 compression_type: None,
                 cardinality: None,
-                index: 0,
-                index: 0,
             },
         ];
 

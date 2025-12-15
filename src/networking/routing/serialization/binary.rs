@@ -299,7 +299,7 @@ const COMPRESSION_ZSTD: u8 = 0b0011_0000;
 mod tests {
     use super::*;
 
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
     struct TestMessage {
         id: u64,
         data: String,
