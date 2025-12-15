@@ -85,7 +85,7 @@ async fn basic_connection_example() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let auth_json = serde_json::to_string(&auth_message)?;
-    write.send(Message::Text(auth_json)).await?;
+    write.send(Message::Text(Utf8Bytes::from(auth_json))).await?;
     println!("✓ Sent authentication message");
 
     // Wait for authentication response

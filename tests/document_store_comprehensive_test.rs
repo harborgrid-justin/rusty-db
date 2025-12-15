@@ -181,6 +181,8 @@ fn test_004_create_collection_with_settings() -> TestResult {
         validation_action: collections::ValidationAction::Error,
         case_sensitive: false,
         audit_enabled: true,
+        max_documents: None,
+        capped: false,
     };
 
     match store.create_collection_with_settings("orders".to_string(), settings) {

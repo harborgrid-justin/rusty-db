@@ -32,8 +32,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         while let Ok(event) = events.recv().await {
             match event {
-                MembershipEvent::NodeJoined(node_id, addr) => {
-                    println!("   [EVENT] Node {} joined at {}", node_id, addr);
+                MembershipEvent::NodeJoined(node_id) => {
+                    println!("   [EVENT] Node {} joined at", node_id);
                 }
                 MembershipEvent::NodeFailed(node_id) => {
                     println!("   [EVENT] Node {} failed", node_id);
