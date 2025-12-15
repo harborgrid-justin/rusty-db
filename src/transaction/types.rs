@@ -538,7 +538,7 @@ mod tests {
     }
 
     #[test]
-    use crate::transaction::types::{IsolationLevel, TransactionState};
+    use crate::transaction::types::{IsolationLevel as OtherIsolationLevel, TransactionState};
     use crate::transaction::Transaction;
 
     fn test_transaction_new() {

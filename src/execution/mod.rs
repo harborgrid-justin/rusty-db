@@ -60,6 +60,7 @@ impl QueryResult {
             columns: Vec::new(),
             rows: Vec::new(),
             rows_affected: 0,
+            affected_rows: (),
         }
     }
 
@@ -68,6 +69,7 @@ impl QueryResult {
             columns: Vec::new(),
             rows: Vec::new(),
             rows_affected,
+            affected_rows: (),
         }
     }
 }

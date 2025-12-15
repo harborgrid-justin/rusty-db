@@ -1100,7 +1100,7 @@ mod tests {
             &self,
         ) -> Result<tokio::sync::mpsc::Receiver<ReplicationEvent>, DbError> {
             let (_tx, rx) = tokio::sync::mpsc::unbounded_channel();
-            Ok(())
+            Ok(rx)
         }
 
         fn name(&self) -> &str {
