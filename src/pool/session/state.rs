@@ -427,7 +427,6 @@ impl ResourceUsage {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Duration;
 
     #[test]
     fn test_session_state_creation() {

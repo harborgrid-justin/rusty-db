@@ -284,7 +284,6 @@ pub struct BackupSystemStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
 
     #[test]
     fn test_backup_system_initialization() {

@@ -219,7 +219,6 @@ mod tests {
     use crate::api::gateway::{
         IpFilter, IpFilterMode, RbacManager, Role, SlidingWindow, ThreatDetector, TokenBucket,
     };
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_token_bucket() {

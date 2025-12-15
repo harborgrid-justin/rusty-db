@@ -539,7 +539,6 @@ impl VectorizedJoin for HashJoinEngine {
 mod tests {
     use super::*;
     use crate::inmemory::column_store::ColumnDataType;
-    use std::time::Instant;
 
     #[test]
     fn test_bloom_filter() {

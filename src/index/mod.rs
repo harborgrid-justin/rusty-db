@@ -361,7 +361,6 @@ pub enum IndexStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
 
     #[test]
     fn test_btree_index() -> Result<()> {

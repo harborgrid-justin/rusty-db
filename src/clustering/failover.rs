@@ -254,7 +254,6 @@ pub trait ClusterState {
 mod tests {
     use super::*;
     use crate::clustering::node::NodeRole;
-    use std::time::Instant;
 
     struct MockClusterState {
         nodes: Vec<NodeInfo>,

@@ -1025,7 +1025,6 @@ mod tests {
     use crate::replication;
     use crate::replication::types::{LogSequenceNumber, ReplicaId, TableName, WalEntry};
     use crate::replication::wal::{WalBuffer, WalConfig, WalError, WalManager, WalSegment};
-    use crate::replication::ReplicationOperation;
     use std::path::PathBuf;
     use tempfile::TempDir;
 

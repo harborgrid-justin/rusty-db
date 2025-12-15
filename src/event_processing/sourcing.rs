@@ -715,7 +715,6 @@ impl Aggregate for ExampleAggregate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_event_store() {

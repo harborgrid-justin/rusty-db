@@ -835,7 +835,6 @@ impl PluggableDatabase {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_pdb_creation() {

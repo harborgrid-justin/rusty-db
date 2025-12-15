@@ -738,7 +738,6 @@ pub struct HintUsageStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::SystemTime;
 
     #[test]
     fn test_hint_parser() {

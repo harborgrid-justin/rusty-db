@@ -1186,8 +1186,6 @@ impl Clone for PropertyGraph {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::SystemTime;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_property_graph_basic() {

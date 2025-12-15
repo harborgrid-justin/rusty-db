@@ -778,7 +778,6 @@ impl Default for IndexManager {
 mod tests {
     use super::*;
     use serde_json::json;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_btree_index() {

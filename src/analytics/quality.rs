@@ -692,7 +692,6 @@ pub struct PerformanceMetrics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Instant;
 
     #[test]
     fn test_quality_metrics_calculation() {

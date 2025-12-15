@@ -16,7 +16,9 @@ mod types;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::replication::slots::config::SlotManagerConfig;
+    use crate::replication::slots::manager::{ReplicationSlotManager, SlotManager};
+    use crate::replication::slots::types::{SlotHealthStatus, SlotName, SlotStatus, SlotType};
     use crate::replication::types::{LogSequenceNumber, ReplicaId};
     use tempfile::TempDir;
 

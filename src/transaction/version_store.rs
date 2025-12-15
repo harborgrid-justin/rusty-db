@@ -332,7 +332,6 @@ impl Default for GarbageCollector {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::UNIX_EPOCH;
 
     fn make_version(txn_id: TransactionId, data: &[u8]) -> Version {
         Version {

@@ -445,6 +445,10 @@ mod tests {
         assert!(yaml.contains("RustyDB API"));
     }
 
+    fn get_openapi_yaml() -> _ {
+        todo!()
+    }
+
     #[test]
     fn test_security_schemes() {
         let openapi = ApiDoc::openapi();

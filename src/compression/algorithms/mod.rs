@@ -27,7 +27,6 @@ pub use zstd_compression::{HuffmanCompressor, ZstdCompressor};
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::compression::{CompressionLevel, Compressor};
 
     #[test]
     fn test_bit_packer() {

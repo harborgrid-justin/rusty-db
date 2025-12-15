@@ -2,9 +2,6 @@
 // Implements Analysis, Redo, Undo phases for crash recovery,
 // fuzzy checkpointing, media recovery, and point-in-time recovery
 
-use std::collections::BTreeMap;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 // Removed unused import: use std::io::{Write as IoWrite};
 use super::wal::{LogRecord, PageId, WALEntry, WALManager, LSN};
 use super::TransactionId;
@@ -12,6 +9,9 @@ use crate::error::{DbError, Result};
 use futures::future::BoxFuture;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::SystemTime;
 
@@ -839,7 +839,6 @@ impl MediaRecoveryManager {
 mod tests {
     use super::super::wal::WALConfig;
     use super::*;
-    use std::time::Instant;
     use tempfile::tempdir;
 
     #[tokio::test]

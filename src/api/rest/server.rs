@@ -1399,7 +1399,7 @@ impl RestApiServer {
         router = router
             .layer(TraceLayer::new_for_http())
             .layer(TimeoutLayer::with_status_code(
-                axum::http::StatusCode::REQUEST_TIMEOUT,
+                http::StatusCode::REQUEST_TIMEOUT,
                 Duration::from_secs(self.config.request_timeout_secs),
             ))
             .layer(RequestBodyLimitLayer::new(

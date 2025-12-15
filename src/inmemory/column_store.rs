@@ -733,7 +733,6 @@ fn current_timestamp() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_aligned_buffer() {

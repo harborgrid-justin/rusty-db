@@ -475,7 +475,6 @@ impl AnalyticsManagerBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::flashback::system_time_to_timestamp;
     use std::time::Duration;
     use std::time::{Instant, SystemTime};
 

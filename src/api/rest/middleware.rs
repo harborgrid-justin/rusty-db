@@ -557,10 +557,6 @@ mod tests {
         AuthMiddleware, DefaultAuthMiddleware, HealthCheckMiddleware, MetricsMiddleware,
         RateLimiter,
     };
-    use axum::body::Body;
-    use std::collections::HashMap;
-    use std::time::Duration;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_rate_limiter() {

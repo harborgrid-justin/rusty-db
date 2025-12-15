@@ -333,7 +333,7 @@ impl SlottedPage {
         for (original_slot_id, data) in records {
             let new_slot_id = self.insert_record(&data);
             assert_eq!(
-                Some(original_slot_id as usize),
+                Some(original_slot_id),
                 new_slot_id.map(|id| id as usize)
             );
         }

@@ -608,7 +608,6 @@ pub struct PerformanceReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Instant;
 
     #[test]
     fn test_query_execution() {

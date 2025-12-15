@@ -601,7 +601,6 @@ impl LockdownProfile {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_shared_services() {

@@ -801,7 +801,6 @@ impl Default for ProvisioningService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::thread::sleep;
 
     #[tokio::test]
     async fn test_template_registration() {

@@ -64,6 +64,10 @@ pub mod transaction_websocket_handlers;
 pub mod websocket_types;
 pub mod ml_websocket_handlers;
 pub mod analytics_websocket_handlers;
+mod specialized_data_websocket_handlers;
+mod transaction_ws_handlers;
+mod enterprise_websocket_handlers;
+mod transaction_ws_types;
 
 use crate::catalog::Catalog;
 use crate::parser::SqlParser;

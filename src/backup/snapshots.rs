@@ -620,7 +620,6 @@ pub struct SnapshotStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_snapshot_creation() {

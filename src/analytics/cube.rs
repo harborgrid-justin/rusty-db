@@ -625,7 +625,6 @@ impl PivotTable {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::SystemTime;
 
     #[test]
     fn test_rollup_generation() {

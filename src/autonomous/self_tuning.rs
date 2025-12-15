@@ -918,7 +918,6 @@ pub struct TuningReport {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_performance_metrics_score() {

@@ -414,7 +414,7 @@ pub async fn get_cluster_stats(
             total_resources: stats.grd.total_resources,
             resources_per_master: std::collections::HashMap::new(), // Not available in actual struct
             total_remasters: stats.grd.total_remasters,
-            avg_remaster_latency_ms: (stats.grd.avg_remaster_time_us / 1000), // Convert microseconds to milliseconds
+            avg_remaster_latency_ms: stats.grd.avg_remaster_time_us / 1000, // Convert microseconds to milliseconds
             affinity_updates: stats.grd.affinity_remasters,
             load_balances: stats.grd.load_balance_remasters,
         },

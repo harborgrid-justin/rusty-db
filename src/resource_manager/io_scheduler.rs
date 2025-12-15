@@ -807,7 +807,6 @@ impl IoScheduler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::VecDeque;
 
     #[test]
     fn test_io_scheduler_creation() {

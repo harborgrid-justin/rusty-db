@@ -18,19 +18,19 @@ use std::time::Duration;
 /// SAFETY: The caller must ensure the pointer is valid for the lifetime of the wrapper
 /// and that concurrent access is properly synchronized.
 #[derive(Clone, Copy)]
-struct SendPtr(*mut std::ffi::c_void);
+struct SendPtr(*mut c_void);
 
 unsafe impl Send for SendPtr {}
 unsafe impl Sync for SendPtr {}
 
 impl SendPtr {
     #[inline]
-    fn new(ptr: *mut std::ffi::c_void) -> Self {
+    fn new(ptr: *mut c_void) -> Self {
         Self(ptr)
     }
 
     #[inline]
-    fn as_ptr(self) -> *mut std::ffi::c_void {
+    fn as_ptr(self) -> *mut c_void {
         self.0
     }
 }
@@ -84,7 +84,7 @@ unsafe impl Sync for IocpHandle {}
 impl IocpHandle {
     /// Create invalid handle
     pub const fn invalid() -> Self {
-        Self(std::ptr::null_mut())
+        Self(ptr::null_mut())
     }
 
     /// Check if valid
@@ -250,7 +250,7 @@ impl WindowsIocp {
         let iocp_handle = unsafe {
             CreateIoCompletionPort(
                 INVALID_HANDLE_VALUE,
-                std::ptr::null_mut(),
+                ptr::null_mut(),
                 0,
                 config.concurrent_threads as u32,
             )
@@ -325,13 +325,13 @@ impl WindowsIocp {
         use windows_sys::Win32::Storage::FileSystem::ReadFile;
 
         let mut bytes_read = 0u32;
-        let buffer_ptr = SendPtr::new(request.buffer as *mut std::ffi::c_void);
+        let buffer_ptr = SendPtr::new(request.buffer as *mut c_void);
 
         let result = unsafe {
             ReadFile(
                 request.file_handle.0 as *mut c_void,
                 buffer_ptr.as_ptr() as *mut u8,
-                request.len as u32,
+                request.len,
                 &mut bytes_read,
                 overlapped.as_ptr(),
             )
@@ -356,13 +356,13 @@ impl WindowsIocp {
         use windows_sys::Win32::Storage::FileSystem::WriteFile;
 
         let mut bytes_written = 0u32;
-        let buffer_ptr = SendPtr::new(request.buffer as *mut std::ffi::c_void);
+        let buffer_ptr = SendPtr::new(request.buffer as *mut c_void);
 
         let result = unsafe {
             WriteFile(
                 request.file_handle.0 as *mut c_void,
                 buffer_ptr.as_ptr() as *const u8,
-                request.len as u32,
+                request.len,
                 &mut bytes_written,
                 overlapped.as_ptr(),
             )

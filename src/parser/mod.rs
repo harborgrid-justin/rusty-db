@@ -333,7 +333,7 @@ impl SqlParser {
                     sqlparser::ast::FromTable::WithFromKeyword(tables) => tables
                         .first()
                         .and_then(|t| {
-                            if let sqlparser::ast::TableFactor::Table { name, .. } = &t.relation {
+                            if let TableFactor::Table { name, .. } = &t.relation {
                                 Some(name.to_string())
                             } else {
                                 None
@@ -343,7 +343,7 @@ impl SqlParser {
                     sqlparser::ast::FromTable::WithoutKeyword(tables) => tables
                         .first()
                         .and_then(|t| {
-                            if let sqlparser::ast::TableFactor::Table { name, .. } = &t.relation {
+                            if let TableFactor::Table { name, .. } = &t.relation {
                                 Some(name.to_string())
                             } else {
                                 None

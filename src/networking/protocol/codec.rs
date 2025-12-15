@@ -257,7 +257,6 @@ impl Default for ProtocolCodec {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::networking::protocol::handshake::HandshakeRequest;
 
     #[test]
     fn test_message_codec_encode_decode() {

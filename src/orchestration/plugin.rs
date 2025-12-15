@@ -629,7 +629,6 @@ pub struct PluginRegistryStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Instant;
 
     struct TestPlugin {
         name: String,

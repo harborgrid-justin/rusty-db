@@ -128,8 +128,7 @@ impl ConfigMutation {
     /// Reload configuration from disk
     async fn reload_config(&self, _ctx: &Context<'_>) -> Result<ConfigReloadResultGql> {
         let now = SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
+            .duration_since(SystemTime::UNIX_EPOCH)?
             .as_secs() as i64;
 
         Ok(ConfigReloadResultGql {

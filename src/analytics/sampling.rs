@@ -511,7 +511,6 @@ impl ApproximateResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Instant;
 
     #[test]
     fn test_random_sampling() {

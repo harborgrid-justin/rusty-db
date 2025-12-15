@@ -693,7 +693,6 @@ impl DiffOperation {
 mod tests {
     use super::*;
     use serde_json::json;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_change_event_creation() {

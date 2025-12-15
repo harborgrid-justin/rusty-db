@@ -362,7 +362,6 @@ pub struct RouterStats {
 mod tests {
     use super::*;
     use crate::networking::routing::serialization::HeartbeatMessage;
-    use crate::networking::types::NodeAddress;
 
     struct TestHandler;
 

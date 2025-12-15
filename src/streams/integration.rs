@@ -494,7 +494,7 @@ impl ReadModelProjection {
         let key = format!("{}:{}", event.aggregate_type, event.aggregate_id);
         let serialized = bincode::serde::encode_to_vec(&event, bincode::config::standard())
             .map_err(|e| {
-                crate::error::DbError::Serialization(format!("Serialization failed: {}", e))
+                DbError::Serialization(format!("Serialization failed: {}", e))
             })?;
         self.data.write().insert(key, serialized);
         Ok(())

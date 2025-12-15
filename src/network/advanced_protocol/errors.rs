@@ -85,7 +85,7 @@ pub enum ProtocolError {
 #[cfg(test)]
 mod tests {
     use crate::network::advanced_protocol::{
-        ConnectionState, MessageType, Packet, ProtocolVersion,
+        ConnectionState, ProtocolVersion,
     };
 
     #[test]

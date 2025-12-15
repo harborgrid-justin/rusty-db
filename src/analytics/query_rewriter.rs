@@ -551,9 +551,6 @@ pub struct ViewDelta {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Instant;
-    use std::time::SystemTime;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_rewrite_rule_creation() {

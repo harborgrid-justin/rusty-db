@@ -299,7 +299,7 @@ impl DocumentContent {
                 // Advanced conversion: serialize to BSON using RawBson for efficient zero-copy operations
                 use bson::Bson;
 
-                fn json_to_bson(value: &serde_json::Value) -> bson::Bson {
+                fn json_to_bson(value: &serde_json::Value) -> Bson {
                     match value {
                         serde_json::Value::Null => Bson::Null,
                         serde_json::Value::Bool(b) => Bson::Boolean(*b),
@@ -699,7 +699,6 @@ impl DocumentBuilder {
 mod tests {
     use super::*;
     use serde_json::json;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_document_id_generation() {

@@ -958,8 +958,6 @@ pub struct CdbStatistics {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::thread::sleep;
-    use std::time::UNIX_EPOCH;
 
     #[tokio::test]
     async fn test_create_pdb() {

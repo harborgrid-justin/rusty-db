@@ -682,7 +682,6 @@ impl Default for ReplicationMonitor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::UNIX_EPOCH;
 
     #[test]
     fn test_record_lag() {

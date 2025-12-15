@@ -726,7 +726,6 @@ pub struct FileManagerStats {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::SystemTime;
 
     #[test]
     fn test_file_handle() {

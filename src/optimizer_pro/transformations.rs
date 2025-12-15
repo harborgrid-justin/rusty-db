@@ -758,7 +758,6 @@ impl ExpressionUtils {
 mod tests {
     use super::*;
     use crate::Value;
-    use std::time::SystemTime;
 
     #[test]
     fn test_query_transformer() {
