@@ -8,6 +8,8 @@
 // - Direct and indirect probing for failure detection
 // - Suspicion mechanism to reduce false positives
 // - Efficient scalability to large clusters
+
+#![allow(dead_code)]
 //
 // Reference: "SWIM: Scalable Weakly-consistent Infection-style Process Group
 // Membership Protocol" (Das et al., 2002)

@@ -10,13 +10,12 @@
 // - Buffer pool metrics
 // - I/O statistics
 
-use async_graphql::{Context, Enum, Object, SimpleObject, Subscription, ID};
+use async_graphql::{Enum, Object, SimpleObject, Subscription, ID};
 use futures_util::stream::Stream;
 use futures_util::StreamExt;
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
-use serde::{Deserialize, Serialize};
 
 use super::types::{DateTime, BigInt};
 
@@ -605,8 +604,8 @@ impl PerformanceSubscriptionRoot {
     /// * `include_recommendations` - Whether to include optimization recommendations
     async fn slow_queries_stream<'ctx>(
         &self,
-        threshold_ms: Option<i64>,
-        include_recommendations: Option<bool>,
+        _threshold_ms: Option<i64>,
+        _include_recommendations: Option<bool>,
     ) -> impl Stream<Item = SlowQueryEvent> + 'ctx {
         let (tx, rx) = broadcast::channel(1000);
 
@@ -661,11 +660,9 @@ impl PerformanceSubscriptionRoot {
 
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(30));
-            let mut counter = 0;
 
             loop {
                 interval.tick().await;
-                counter += 1;
 
                 let event = QueryPlanChangeEvent {
                     event_id: ID::from(format!("plan_change_{}", uuid::Uuid::new_v4())),

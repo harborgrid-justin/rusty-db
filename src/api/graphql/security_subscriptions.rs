@@ -3,10 +3,9 @@
 // Real-time subscriptions for security events including authentication,
 // authorization, audit, encryption, rate limiting, and threat detection.
 
-use async_graphql::{Context, Enum, Object, SimpleObject, Subscription, ID};
+use async_graphql::{Enum, Object, SimpleObject, Subscription, ID};
 use futures_util::stream::Stream;
 use futures_util::StreamExt;
-use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;

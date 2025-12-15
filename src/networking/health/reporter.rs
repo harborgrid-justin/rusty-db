@@ -3,6 +3,8 @@
 // Generates health reports, exports metrics, and provides status endpoints
 // for monitoring and observability.
 
+#![allow(dead_code)]
+
 use super::aggregator::HealthScore;
 use crate::common::{HealthStatus, MetricValue, NodeId};
 use crate::error::{DbError, Result};

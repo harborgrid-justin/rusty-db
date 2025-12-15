@@ -6,6 +6,8 @@
 // - Recovery from total cluster failure
 // - Seed node discovery
 
+#![allow(dead_code)]
+
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use crate::networking::membership::view::ViewManager;

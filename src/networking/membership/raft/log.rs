@@ -7,6 +7,8 @@
 // - Persistent storage support
 // - Efficient log matching
 
+#![allow(dead_code)]
+
 use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;

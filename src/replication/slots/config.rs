@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Replication slot configuration
 
 use serde::{Deserialize, Serialize};

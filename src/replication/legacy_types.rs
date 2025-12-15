@@ -8,6 +8,8 @@
 //
 // - **Strong Typing**: Newtypes for replica IDs, addresses, and sequence numbers
 // - **Comprehensive Validation**: Input validation with detailed error messages
+
+#![allow(dead_code)]
 // - **Serialization Support**: Full serde support for network transmission
 // - **Memory Safety**: Safe handling of replication data with proper lifetime management
 // - **Performance Metrics**: Detailed statistics and health monitoring types

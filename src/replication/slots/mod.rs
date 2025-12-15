@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // # Replication Slot Management
 //
 // This module provides comprehensive replication slot management, supporting

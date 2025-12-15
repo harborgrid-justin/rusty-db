@@ -60,6 +60,7 @@ pub struct ComponentHealthDetail {
 }
 
 // Helper function to convert HealthStatus to string
+#[allow(dead_code)]
 fn health_status_to_string(status: HealthStatus) -> String {
     match status {
         HealthStatus::Healthy => "healthy".to_string(),

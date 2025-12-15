@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // # Replication Manager
 //
 // This module provides the core replication management functionality,
@@ -8,6 +9,8 @@
 //
 // - **Trait-Driven Design**: Pluggable components for different replication strategies
 // - **Dependency Injection**: Configurable services and providers
+
+#![allow(dead_code)]
 // - **Event-Driven Architecture**: Comprehensive event system for monitoring
 // - **Async/Await Support**: Non-blocking operations for high performance
 // - **Error Recovery**: Automatic retry mechanisms and graceful degradation

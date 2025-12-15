@@ -6,6 +6,8 @@
 // - Catch-up mechanism for slow followers
 // - Snapshot installation for far-behind followers
 
+#![allow(dead_code)]
+
 use super::{LogEntry, LogIndex, RaftLog, RaftRole, RaftStateData, Term};
 use crate::common::NodeId;
 use crate::error::{DbError, Result};

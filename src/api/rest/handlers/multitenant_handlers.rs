@@ -8,7 +8,7 @@
 // - Metering and billing
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     Json,
 };

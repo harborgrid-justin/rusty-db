@@ -6,6 +6,8 @@
 // - Vote request/response handling
 // - Leadership transfer support
 
+#![allow(dead_code)]
+
 use super::{RaftLog, RaftRole, RaftStateData, Term};
 use crate::common::NodeId;
 use crate::error::{DbError, Result};

@@ -2,10 +2,9 @@
 //
 // Real-time GraphQL subscriptions for transaction layer monitoring
 
-use async_graphql::{Context, Object, SimpleObject, Subscription, ID};
+use async_graphql::{SimpleObject, Subscription, ID};
 use futures_util::stream::Stream;
 use std::time::Duration;
-use tokio_stream::wrappers::BroadcastStream;
 use serde::{Deserialize, Serialize};
 
 // ============================================================================

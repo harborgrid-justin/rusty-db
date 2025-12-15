@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Replication slot specific errors
 
 use thiserror::Error;

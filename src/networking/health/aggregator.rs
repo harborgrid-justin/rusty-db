@@ -3,6 +3,8 @@
 // Aggregates multiple health check results into overall health scores
 // with weighted scoring, dependency health tracking, and cascading failure detection.
 
+#![allow(dead_code)]
+
 use super::checker::HealthCheckResult;
 use crate::common::{HealthStatus, NodeId};
 use crate::error::{DbError, Result};

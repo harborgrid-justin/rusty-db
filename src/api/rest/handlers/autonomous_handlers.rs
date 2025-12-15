@@ -8,7 +8,7 @@
 // - Predictive capacity planning
 
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Query, State},
     http::StatusCode,
     Json,
 };

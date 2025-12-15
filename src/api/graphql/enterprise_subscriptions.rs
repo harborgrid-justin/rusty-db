@@ -7,13 +7,12 @@
 // - Autonomous operations
 // - Event processing matches
 
-use async_graphql::{Context, Object, SimpleObject, Subscription};
+use async_graphql::{SimpleObject, Subscription};
 use futures_util::stream::Stream;
 use futures_util::StreamExt;
-use std::sync::Arc;
+
 use std::time::Duration;
-use tokio::sync::broadcast;
-use tokio_stream::wrappers::BroadcastStream;
+
 use serde::{Deserialize, Serialize};
 
 // ============================================================================
@@ -101,7 +100,7 @@ impl EnterpriseSubscriptions {
     async fn multitenant_events<'ctx>(
         &self,
         tenant_id: Option<String>,
-        event_types: Option<Vec<String>>,
+        _event_types: Option<Vec<String>>,
     ) -> impl Stream<Item = MultiTenantEvent> + 'ctx {
         async_stream::stream! {
             let mut interval = tokio::time::interval(Duration::from_secs(5));

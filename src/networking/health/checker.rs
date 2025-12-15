@@ -3,6 +3,8 @@
 // Implements various health check types including TCP, HTTP, gRPC,
 // and custom health check plugins.
 
+#![allow(dead_code)]
+
 use crate::error::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // # Write-Ahead Log (WAL) Management
 //
 // This module provides comprehensive Write-Ahead Log functionality for

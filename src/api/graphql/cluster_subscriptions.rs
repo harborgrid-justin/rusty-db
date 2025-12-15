@@ -2,12 +2,10 @@
 //
 // Real-time subscription resolvers for replication, clustering, and RAC operations
 
-use async_graphql::{Context, Enum, Object, SimpleObject, Subscription, ID};
-use futures_util::stream::{Stream, StreamExt};
-use serde::{Deserialize, Serialize};
+use async_graphql::{Context, Enum, Subscription, ID};
+use futures_util::stream::Stream;
 use std::time::Duration;
-use tokio::sync::broadcast;
-use tokio_stream::wrappers::{BroadcastStream, IntervalStream};
+use tokio_stream::wrappers::IntervalStream;
 
 // ============================================================================
 // Replication Subscription Types
@@ -406,7 +404,7 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications when replication lag exceeds thresholds
     async fn replication_lag_updates<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
         replica_id: Option<ID>,
         threshold: Option<i64>,
     ) -> impl Stream<Item = ReplicationLagEvent> + 'ctx {
@@ -432,7 +430,7 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications when replicas change state (online/offline/etc)
     async fn replica_status_changes<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
         replica_id: Option<ID>,
     ) -> impl Stream<Item = ReplicaStatusEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(10));
@@ -454,8 +452,8 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications when conflicts are detected or resolved
     async fn replication_conflicts<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
-        group_id: Option<ID>,
+        _ctx: &Context<'ctx>,
+        _group_id: Option<ID>,
     ) -> impl Stream<Item = ConflictEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(30));
         let stream = IntervalStream::new(interval);
@@ -476,7 +474,7 @@ impl ClusterSubscriptionRoot {
     /// Receives real-time updates during shard rebalancing operations
     async fn shard_rebalance_progress<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
         table_id: Option<ID>,
     ) -> impl Stream<Item = RebalanceProgressEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(2));
@@ -494,7 +492,7 @@ impl ClusterSubscriptionRoot {
                 progress_percent: progress,
                 rows_migrated: (progress * 10000.0) as i64,
                 total_rows: 1000000,
-                eta_seconds: Some(((100.0 - progress) * 2.0)),
+                eta_seconds: Some((100.0 - progress) * 2.0),
                 phase: if progress < 100.0 {
                     RebalancePhase::Copying
                 } else {
@@ -510,7 +508,7 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications when overall cluster health status changes
     async fn cluster_health_changes<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
     ) -> impl Stream<Item = ClusterHealthEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(5));
         let stream = IntervalStream::new(interval);
@@ -531,7 +529,7 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications when individual nodes change health status
     async fn node_status_changes<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
         node_id: Option<ID>,
     ) -> impl Stream<Item = NodeStatusEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(15));
@@ -554,7 +552,7 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications when failovers are initiated or completed
     async fn failover_events<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
     ) -> impl Stream<Item = FailoverEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(60));
         let stream = IntervalStream::new(interval);
@@ -576,7 +574,7 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications when new cluster leaders are elected
     async fn leader_elections<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
     ) -> impl Stream<Item = LeaderElectionEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(120));
         let stream = IntervalStream::new(interval);
@@ -596,7 +594,7 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications about block transfers between RAC instances
     async fn cache_fusion_events<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
         instance_id: Option<ID>,
     ) -> impl Stream<Item = CacheFusionEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_millis(500));
@@ -622,7 +620,7 @@ impl ClusterSubscriptionRoot {
     /// Receives notifications when locks are granted, released, or converted
     async fn resource_lock_events<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
         resource_id: Option<String>,
     ) -> impl Stream<Item = LockEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(1));
@@ -647,7 +645,7 @@ impl ClusterSubscriptionRoot {
     /// Receives real-time updates during RAC instance recovery
     async fn instance_recovery_events<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
     ) -> impl Stream<Item = RecoveryEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(3));
         let stream = IntervalStream::new(interval);
@@ -667,7 +665,7 @@ impl ClusterSubscriptionRoot {
                 progress_percent: progress,
                 redo_logs_applied: (progress * 100.0) as i64,
                 total_redo_logs: 10000,
-                eta_seconds: Some(((100.0 - progress) * 0.3)),
+                eta_seconds: Some((100.0 - progress) * 0.3),
                 timestamp: chrono::Utc::now().timestamp(),
             }
         })
@@ -678,7 +676,7 @@ impl ClusterSubscriptionRoot {
     /// Receives updates about parallel queries executing across instances
     async fn parallel_query_events<'ctx>(
         &self,
-        ctx: &Context<'ctx>,
+        _ctx: &Context<'ctx>,
         query_id: Option<ID>,
     ) -> impl Stream<Item = ParallelQueryEvent> + 'ctx {
         let interval = tokio::time::interval(Duration::from_secs(10));

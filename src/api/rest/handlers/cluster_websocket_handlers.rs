@@ -203,6 +203,7 @@ async fn handle_replication_events_websocket(mut socket: WebSocket, _state: Arc<
         }
     }
 
+    #[allow(unused_assignments)]
     let mut config: Option<ReplicationEventsConfig> = None;
     let mut active = false;
 
@@ -282,6 +283,7 @@ async fn handle_replication_events_websocket(mut socket: WebSocket, _state: Arc<
                 Message::Text(text) => {
                     if let Ok(cfg) = serde_json::from_str::<ReplicationEventsConfig>(&text) {
                         config = Some(cfg);
+                        let _ = active;
                         active = true;
                     }
                 }
@@ -385,6 +387,7 @@ async fn handle_cluster_events_websocket(mut socket: WebSocket, _state: Arc<ApiS
             match msg {
                 Message::Text(text) => {
                     if let Ok(_cfg) = serde_json::from_str::<ClusterEventsConfig>(&text) {
+                        let _ = active;
                         active = true;
                     }
                 }
@@ -513,6 +516,7 @@ async fn handle_rac_events_websocket(mut socket: WebSocket, _state: Arc<ApiState
             match msg {
                 Message::Text(text) => {
                     if let Ok(_cfg) = serde_json::from_str::<RacEventsConfig>(&text) {
+                        let _ = active;
                         active = true;
                     }
                 }
@@ -607,6 +611,7 @@ async fn handle_sharding_events_websocket(mut socket: WebSocket, _state: Arc<Api
             match msg {
                 Message::Text(text) => {
                     if let Ok(_cfg) = serde_json::from_str::<ShardingEventsConfig>(&text) {
+                        let _ = active;
                         active = true;
                     }
                 }

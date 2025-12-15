@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Snapshot management specific errors
 
 use thiserror::Error;

@@ -23,16 +23,15 @@
 // pool.add_connection(conn).await;
 // ```
 
-use super::message::{MessageCodec, WebSocketMessage};
+use super::message::WebSocketMessage;
 use super::protocol::{Protocol, ProtocolHandler};
 use crate::error::{DbError, Result};
 use futures_util::{SinkExt, StreamExt};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tokio::sync::{mpsc, Mutex, RwLock};
-use tokio::time::{interval, sleep};
-use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
+use tokio::sync::{mpsc, RwLock};
+use tokio::time::interval;
 
 // ============================================================================
 // Connection State

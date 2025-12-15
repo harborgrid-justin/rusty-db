@@ -10,14 +10,14 @@
 use axum::{
     extract::{Path, Query as AxumQuery, State},
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::{IntoResponse},
     Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::SystemTime;
 
-use crate::api::rest::types::{ApiError, ApiResult, ApiState};
+use crate::api::rest::types::{ApiResult, ApiState};
 use crate::error::DbError;
 use crate::optimizer_pro::{
     HintParser, OptimizerConfig, PhysicalPlan, PlanBaselineManager, QueryFingerprint,
@@ -267,7 +267,7 @@ pub async fn get_hint_recommendations(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<ExplainRequest>,
 ) -> impl IntoResponse {
-    let hint_parser = HintParser::new();
+    let _hint_parser = HintParser::new();
 
     // Analyze query and recommend hints
     let recommendations = vec![
@@ -482,7 +482,7 @@ pub async fn load_baselines(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<LoadBaselinesRequest>,
 ) -> impl IntoResponse {
-    let baseline_manager = PlanBaselineManager::new();
+    let _baseline_manager = PlanBaselineManager::new();
     let start = std::time::Instant::now();
 
     // In production, load from repository based on criteria
@@ -1067,7 +1067,7 @@ pub struct CostBreakdown {
 }
 
 fn generate_visualization_nodes(plan: &PhysicalPlan) -> Vec<VisualizationNode> {
-    let mut nodes = vec![VisualizationNode {
+    let nodes = vec![VisualizationNode {
         id: format!("node_{}", plan.plan_id.0),
         label: format!("{:?}", plan.operator)
             .split('{')
@@ -1088,7 +1088,7 @@ fn generate_visualization_nodes(plan: &PhysicalPlan) -> Vec<VisualizationNode> {
     nodes
 }
 
-fn generate_visualization_edges(plan: &PhysicalPlan) -> Vec<VisualizationEdge> {
+fn generate_visualization_edges(_plan: &PhysicalPlan) -> Vec<VisualizationEdge> {
     // In production, generate edges based on plan structure
     vec![]
 }

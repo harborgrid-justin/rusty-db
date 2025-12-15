@@ -8,6 +8,8 @@
 //
 // - **Conflict Detection**: Automatic detection of replication conflicts
 // - **Pluggable Strategies**: Multiple built-in and custom resolution strategies
+
+#![allow(dead_code)]
 // - **Conflict Analysis**: Pattern analysis and root cause identification
 // - **Resolution Monitoring**: Comprehensive metrics and alerting
 // - **Manual Override**: Support for manual conflict resolution

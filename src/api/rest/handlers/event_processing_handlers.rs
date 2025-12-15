@@ -401,7 +401,7 @@ pub async fn get_event_analytics(
     State(_state): State<Arc<ApiState>>,
     Json(request): Json<EventAnalyticsRequest>,
 ) -> ApiResult<Json<EventAnalyticsResponse>> {
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
+    let _now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() as i64;
 
     Ok(Json(EventAnalyticsResponse {
         stream_name: request.stream_name,

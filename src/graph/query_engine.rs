@@ -273,6 +273,7 @@ impl QueryResult {
         self.row_count
     }
 
+    #[allow(dead_code)]
     pub(crate) fn is_empty(&self) -> bool {
         self.row_count == 0
     }

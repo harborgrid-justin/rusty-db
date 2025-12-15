@@ -334,7 +334,7 @@ impl SubscriptionRoot {
         event_types: Option<Vec<IndexEventType>>,
         interval_seconds: Option<i32>,
     ) -> impl Stream<Item = IndexOperationEvent> + 'ctx {
-        let engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
+        let _engine = ctx.data::<Arc<GraphQLEngine>>().unwrap().clone();
         let interval = Duration::from_secs(interval_seconds.unwrap_or(5) as u64);
 
         async_stream::stream! {

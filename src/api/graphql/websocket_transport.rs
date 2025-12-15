@@ -3,7 +3,7 @@
 // Implements the graphql-ws protocol for GraphQL subscriptions over WebSocket
 // Protocol spec: https://github.com/enisdenjo/graphql-ws/blob/master/PROTOCOL.md
 
-use async_graphql::{Data, ObjectType, Schema, SubscriptionType};
+use async_graphql::{ObjectType, Schema, SubscriptionType};
 use axum::{
     extract::{
         ws::{Message as WsMessage, WebSocket},
@@ -307,7 +307,7 @@ async fn handle_websocket<Q, M, S>(
             WsMessage::Binary(_) => {
                 warn!("Binary messages not supported");
             }
-            WsMessage::Ping(data) => {
+            WsMessage::Ping(_data) => {
                 debug!("Received WebSocket ping");
                 // Axum handles pong automatically
             }

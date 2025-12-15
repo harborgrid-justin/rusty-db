@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Snapshot manager trait and implementation
 
 use async_trait::async_trait;

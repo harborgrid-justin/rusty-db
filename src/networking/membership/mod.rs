@@ -8,6 +8,8 @@
 //
 // Architecture:
 // - RaftMembership: Provides strong consistency for membership changes
+
+#![allow(dead_code)]
 // - SwimMembership: Provides efficient failure detection via gossip
 // - MembershipView: Provides consistent view of cluster state
 // - MembershipCoordinator: Orchestrates join/leave operations

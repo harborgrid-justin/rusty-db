@@ -16,7 +16,6 @@ use utoipa::ToSchema;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use serde_json::json;
-use futures::{StreamExt, SinkExt};
 use tokio::time::{interval, Duration};
 
 use super::super::types::ApiState;

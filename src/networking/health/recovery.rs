@@ -3,6 +3,8 @@
 // Handles automatic recovery attempts, gradual traffic restoration,
 // quarantine periods, and manual override for failed nodes.
 
+#![allow(dead_code)]
+
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};

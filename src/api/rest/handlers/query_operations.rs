@@ -4,7 +4,6 @@
 
 use axum::{
     extract::{Path, State},
-    http::StatusCode,
     response::Json as AxumJson,
 };
 use serde::{Deserialize, Serialize};

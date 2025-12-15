@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // SnapshotManager trait implementation for FileSnapshotManager
 
 use async_trait::async_trait;

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // # Replication Snapshot Management
 //
 // This module provides comprehensive snapshot management for the replication

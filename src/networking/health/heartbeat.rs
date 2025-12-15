@@ -3,6 +3,8 @@
 // Implements heartbeat tracking with RTT measurement, failure counting,
 // and adaptive intervals for distributed node health monitoring.
 
+#![allow(dead_code)]
+
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};

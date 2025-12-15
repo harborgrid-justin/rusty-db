@@ -7,6 +7,8 @@
 // - Quorum calculations
 // - Split-brain detection
 
+#![allow(dead_code)]
+
 use crate::common::NodeId;
 use crate::error::Result;
 use crate::networking::membership::{NodeInfo, NodeStatus};

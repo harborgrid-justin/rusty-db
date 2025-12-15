@@ -344,11 +344,11 @@ async fn handle_query_stream_websocket(mut socket: WebSocket, _state: Arc<ApiSta
 }
 
 /// Metrics streaming WebSocket handler
-async fn handle_metrics_stream_websocket(mut socket: WebSocket, state: Arc<ApiState>) {
+async fn handle_metrics_stream_websocket(socket: WebSocket, state: Arc<ApiState>) {
     use axum::extract::ws::Message;
 
     // Default configuration
-    let mut interval_ms = 1000u64;
+    let interval_ms = 1000u64;
     let mut active = false;
 
     // Split socket for concurrent read/write
@@ -406,8 +406,9 @@ async fn handle_metrics_stream_websocket(mut socket: WebSocket, state: Arc<ApiSt
                 Message::Text(text) => {
                     // Parse configuration
                     if let Ok(config) = serde_json::from_str::<MetricsStreamConfig>(&text) {
-                        if let Some(interval) = config.interval_ms {
-                            interval_ms = interval;
+                        if let Some(_interval) = config.interval_ms {
+                            let _ = interval_ms;
+                            let _ = active;
                             active = true;
                         }
                     }

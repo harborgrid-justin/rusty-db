@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Replication slot manager
 
 use async_trait::async_trait;

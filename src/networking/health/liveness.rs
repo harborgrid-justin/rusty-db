@@ -3,6 +3,8 @@
 // Implements liveness probes (is the node alive?), readiness probes (can it serve traffic?),
 // and startup probes with configurable thresholds and graceful degradation.
 
+#![allow(dead_code)]
+
 use crate::error::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};

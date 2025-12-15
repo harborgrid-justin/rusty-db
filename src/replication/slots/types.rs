@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Replication slot core types
 
 use crate::replication::types::{LogSequenceNumber, ReplicaId};

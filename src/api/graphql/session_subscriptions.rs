@@ -6,13 +6,12 @@
 // - Session resource usage
 // - Connection metrics
 
-use async_graphql::{Context, Enum, Object, SimpleObject, Subscription, ID};
+use async_graphql::{Enum, Object, SimpleObject, Subscription, ID};
 use futures_util::stream::Stream;
 use futures_util::StreamExt;
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
-use serde::{Deserialize, Serialize};
 
 use super::types::{DateTime, BigInt};
 

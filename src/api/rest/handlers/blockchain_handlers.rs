@@ -365,7 +365,7 @@ pub async fn verify_integrity(
 )]
 pub async fn get_block_details(
     State(_state): State<Arc<ApiState>>,
-    Path((table_name, block_id)): Path<(String, String)>,
+    Path((_table_name, block_id)): Path<(String, String)>,
 ) -> ApiResult<Json<BlockDetailsResponse>> {
     Ok(Json(BlockDetailsResponse {
         block_id: block_id.clone(),

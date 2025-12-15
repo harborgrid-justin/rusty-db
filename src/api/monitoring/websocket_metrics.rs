@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use super::health::{HealthCheckResult, HealthStatus};
+use super::health::{HealthCheckResult};
 use super::metrics_core::*;
 use super::metrics_registry::MetricsRegistry;
 use crate::websocket::metrics::{ConnectionMetrics, ErrorType, MetricsSnapshot, WebSocketMetrics};
@@ -68,6 +68,7 @@ impl Default for CollectorConfig {
 }
 
 /// Cached references to frequently used metrics
+#[allow(dead_code)]
 struct WebSocketMetricRefs {
     // Connection metrics
     active_connections: Arc<GaugeMetric>,
@@ -91,7 +92,9 @@ struct WebSocketMetricRefs {
     backpressure_events: Arc<CounterMetric>,
 
     // Latency histograms
+    #[allow(dead_code)]
     connection_duration: Arc<HistogramMetric>,
+    #[allow(dead_code)]
     message_latency: Arc<HistogramMetric>,
 
     // Error counters by type

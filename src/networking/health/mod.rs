@@ -8,6 +8,8 @@
 // - Heartbeat management with adaptive intervals
 // - Phi Accrual failure detection
 // - Multiple health check types (TCP, HTTP, gRPC, custom)
+
+#![allow(dead_code)]
 // - Health aggregation and scoring
 // - Liveness and readiness probes
 // - Automatic recovery management

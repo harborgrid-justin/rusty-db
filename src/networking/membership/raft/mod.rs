@@ -9,6 +9,8 @@
 //
 // Reference: https://raft.github.io/raft.pdf
 
+#![allow(dead_code)]
+
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use crate::networking::membership::{MembershipEvent, NodeInfo, RaftConfig};

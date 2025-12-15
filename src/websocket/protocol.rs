@@ -24,7 +24,7 @@
 
 use super::message::WebSocketMessage;
 use crate::error::{DbError, Result};
-use crate::execution::QueryResult;
+
 use serde::{Deserialize, Serialize};
 
 // ============================================================================

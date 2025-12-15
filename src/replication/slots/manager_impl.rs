@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // SlotManager trait implementation for ReplicationSlotManager
 
 use async_trait::async_trait;

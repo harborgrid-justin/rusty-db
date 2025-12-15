@@ -3,6 +3,8 @@
 // Implements Phi Accrual failure detection algorithm with adaptive thresholds
 // and historical analysis for accurate distributed failure detection.
 
+#![allow(dead_code)]
+
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use serde::{Deserialize, Serialize};

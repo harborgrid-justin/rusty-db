@@ -6,6 +6,8 @@
 // - Node replacement
 // - Split-brain prevention
 
+#![allow(dead_code)]
+
 use crate::common::NodeId;
 use crate::error::{DbError, Result};
 use crate::networking::membership::view::ViewManager;

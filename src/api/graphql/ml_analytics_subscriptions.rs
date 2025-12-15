@@ -7,9 +7,9 @@
 // - Document store changes
 // - Spatial query updates
 
-use async_graphql::{Object, Subscription, Context, Schema, EmptyMutation, SimpleObject};
+use async_graphql::{Object, Subscription, Schema, EmptyMutation, SimpleObject};
 use futures_util::stream::{Stream};
-use futures_util::StreamExt;
+
 use tokio::time::{interval, Duration};
 use serde::{Deserialize, Serialize};
 use std::pin::Pin;

@@ -6,13 +6,12 @@
 // - Index creation/rebuilding
 // - Table modifications
 
-use async_graphql::{Context, Enum, Object, SimpleObject, Subscription, ID};
+use async_graphql::{Enum, Object, Subscription, ID};
 use futures_util::stream::Stream;
 use futures_util::StreamExt;
 use std::time::Duration;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
-use serde::{Deserialize, Serialize};
 
 use super::types::DateTime;
 
@@ -428,6 +427,8 @@ impl DdlSubscriptionRoot {
 // Sample Event Generators
 // ============================================================================
 
+#[allow(dead_code)]
+#[allow(dead_code)]
 fn create_sample_schema_change() -> SchemaChangeEvent {
     SchemaChangeEvent {
         change_id: ID::from(format!("ddl_{}", uuid::Uuid::new_v4())),
@@ -446,6 +447,8 @@ fn create_sample_schema_change() -> SchemaChangeEvent {
     }
 }
 
+#[allow(dead_code)]
+#[allow(dead_code)]
 fn create_sample_partition_event() -> PartitionOperationEvent {
     PartitionOperationEvent {
         event_id: ID::from(format!("part_{}", uuid::Uuid::new_v4())),

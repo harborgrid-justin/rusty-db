@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Snapshot configuration types
 
 use serde::{Deserialize, Serialize};
