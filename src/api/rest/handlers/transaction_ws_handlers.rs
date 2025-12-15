@@ -6,7 +6,6 @@ use axum::{
     extract::{State, ws::{WebSocket, WebSocketUpgrade}},
     response::Response,
 };
-use futures::{SinkExt, StreamExt};
 use serde_json::json;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -365,7 +364,7 @@ async fn handle_mvcc_events(mut socket: WebSocket, _state: Arc<ApiState>) {
                     transaction_id: crate::api::rest::types::TransactionId(rand::random()),
                     table: "users".to_string(),
                     key: format!("user_{}", rand::random::<u32>() % 1000),
-                    version_count: rand::random::<usize>() % 5 + 1,
+                    version_count: (rand::random::<u32>() % 5 + 1) as usize,
                     timestamp: SystemTime::now()
                         .duration_since(UNIX_EPOCH)
                         .unwrap()
