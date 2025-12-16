@@ -14,6 +14,9 @@
 
 use crate::error::DbError;
 use crate::Result;
+use crate::security::encryption_engine::{
+    Algorithm as CryptoAlgorithm, Ciphertext as CryptoCiphertext, EncryptionEngine, KeyMaterial,
+};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -223,6 +226,8 @@ pub struct EncryptionManager {
     master_key: Arc<RwLock<Option<Vec<u8>>>>,
     // Key version counter
     key_version_counter: Arc<RwLock<u32>>,
+    // Encryption engine for actual cryptographic operations
+    encryption_engine: EncryptionEngine,
 }
 
 impl EncryptionManager {
@@ -236,6 +241,7 @@ impl EncryptionManager {
             rotation_jobs: Arc::new(RwLock::new(HashMap::new())),
             master_key: Arc::new(RwLock::new(None)),
             key_version_counter: Arc::new(RwLock::new(0)),
+            encryption_engine: EncryptionEngine::new_aes(),
         }
     }
 
@@ -659,36 +665,113 @@ impl EncryptionManager {
     }
 
     fn encrypt_key_material(&self, key_material: &[u8]) -> Result<(Vec<u8>, Vec<u8>)> {
-        // Simplified - would use actual encryption with master key
-        let iv = self.generate_random_bytes(12)?;
-        let encrypted = key_material.to_vec(); // Placeholder
+        // SECURITY FIX: Use actual AES-256-GCM encryption with master key
+        let master_key_guard = self.master_key.read();
+        let master_key = master_key_guard
+            .as_ref()
+            .ok_or_else(|| DbError::Internal("Master key not initialized".to_string()))?;
+
+        if master_key.len() != 32 {
+            return Err(DbError::Internal("Invalid master key size".to_string()));
+        }
+
+        // Convert to KeyMaterial (32-byte array)
+        let mut key_array: KeyMaterial = [0u8; 32];
+        key_array.copy_from_slice(master_key);
+
+        // Encrypt using AES-256-GCM
+        let ciphertext = self
+            .encryption_engine
+            .encrypt(&key_array, key_material, None)?;
+
+        // Extract IV from ciphertext structure
+        let iv = ciphertext.iv.clone();
+        let encrypted = ciphertext.to_bytes();
 
         Ok((encrypted, iv))
     }
 
     fn decrypt_key_material(&self, key: &EncryptionKey) -> Result<Vec<u8>> {
-        // Simplified - would decrypt using master key
-        Ok(key.encrypted_key_material.clone())
+        // SECURITY FIX: Use actual AES-256-GCM decryption with master key
+        let master_key_guard = self.master_key.read();
+        let master_key = master_key_guard
+            .as_ref()
+            .ok_or_else(|| DbError::Internal("Master key not initialized".to_string()))?;
+
+        if master_key.len() != 32 {
+            return Err(DbError::Internal("Invalid master key size".to_string()));
+        }
+
+        // Convert to KeyMaterial (32-byte array)
+        let mut key_array: KeyMaterial = [0u8; 32];
+        key_array.copy_from_slice(master_key);
+
+        // Parse ciphertext
+        let ciphertext = CryptoCiphertext::from_bytes(&key.encrypted_key_material)?;
+
+        // Decrypt using AES-256-GCM
+        let plaintext = self.encryption_engine.decrypt(&key_array, &ciphertext, None)?;
+
+        Ok(plaintext)
     }
 
     fn perform_encryption(
         &self,
-        _key: &[u8],
+        key: &[u8],
         plaintext: &[u8],
-        _algorithm: &EncryptionAlgorithm,
+        algorithm: &EncryptionAlgorithm,
     ) -> Result<Vec<u8>> {
-        // Simplified - would use actual crypto library
-        Ok(plaintext.to_vec())
+        // SECURITY FIX: Use actual cryptographic encryption based on algorithm
+        if key.len() != 32 {
+            return Err(DbError::InvalidInput(
+                "Key must be 32 bytes for AES-256".to_string(),
+            ));
+        }
+
+        let mut key_array: KeyMaterial = [0u8; 32];
+        key_array.copy_from_slice(key);
+
+        let crypto_algo = match algorithm {
+            EncryptionAlgorithm::Aes256Gcm => CryptoAlgorithm::Aes256Gcm,
+            EncryptionAlgorithm::ChaCha20Poly1305 => CryptoAlgorithm::ChaCha20Poly1305,
+            EncryptionAlgorithm::Aes128Gcm | EncryptionAlgorithm::Aes192Gcm => {
+                // For now, use AES-256-GCM for all AES variants
+                CryptoAlgorithm::Aes256Gcm
+            }
+        };
+
+        let ciphertext = self
+            .encryption_engine
+            .encrypt_with_algorithm(crypto_algo, &key_array, plaintext, None)?;
+
+        Ok(ciphertext.to_bytes())
     }
 
     fn perform_decryption(
         &self,
-        _key: &[u8],
+        key: &[u8],
         ciphertext: &[u8],
         _algorithm: &EncryptionAlgorithm,
     ) -> Result<Vec<u8>> {
-        // Simplified - would use actual crypto library
-        Ok(ciphertext.to_vec())
+        // SECURITY FIX: Use actual cryptographic decryption
+        if key.len() != 32 {
+            return Err(DbError::InvalidInput(
+                "Key must be 32 bytes for AES-256".to_string(),
+            ));
+        }
+
+        let mut key_array: KeyMaterial = [0u8; 32];
+        key_array.copy_from_slice(key);
+
+        // Parse ciphertext (algorithm is auto-detected from ciphertext structure)
+        let parsed_ciphertext = CryptoCiphertext::from_bytes(ciphertext)?;
+
+        // Decrypt
+        let plaintext = self
+            .encryption_engine
+            .decrypt(&key_array, &parsed_ciphertext, None)?;
+
+        Ok(plaintext)
     }
 }
 

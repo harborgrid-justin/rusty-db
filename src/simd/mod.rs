@@ -430,6 +430,20 @@ impl SimdStats {
 /// SIMD execution context
 ///
 /// Provides context and configuration for SIMD operations
+///
+/// ## Clone Implementation
+///
+/// SimdContext implements Clone by deriving it, which provides a proper
+/// deep copy of all fields:
+/// - `features: CpuFeatures` - Copy trait (cheap copy)
+/// - `stats: SimdStats` - Clone trait (deep copy of statistics)
+/// - `enable_prefetch: bool` - Copy trait
+/// - `prefetch_distance: usize` - Copy trait
+/// - `batch_size: usize` - Copy trait
+///
+/// This ensures each cloned context has independent statistics tracking
+/// while sharing the same CPU feature detection results.
+#[derive(Clone)]
 pub struct SimdContext {
     /// CPU features
     pub features: CpuFeatures,
@@ -443,11 +457,6 @@ pub struct SimdContext {
     pub batch_size: usize,
 }
 
-impl SimdContext {
-    pub(crate) fn clone(&self) -> SimdContext {
-        todo!()
-    }
-}
 
 impl SimdContext {
     /// Create new SIMD context

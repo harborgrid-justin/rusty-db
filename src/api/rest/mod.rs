@@ -15,6 +15,7 @@
 // 10. **Comprehensive Tests**: Unit and integration tests included
 
 pub mod cors;
+pub mod handler_macros;
 pub mod handlers;
 pub mod middleware;
 pub mod openapi;
@@ -22,6 +23,7 @@ pub mod server;
 pub mod swagger;
 pub mod system_metrics;
 pub mod types;
+pub mod websocket_helpers;
 
 // Re-export main types and functions for convenience
 pub use cors::{build_cors_layer, development_origins, production_origins, OriginMatcher};
@@ -34,6 +36,7 @@ pub use swagger::{
     configure_swagger, create_api_docs_router, SwaggerConfiguration,
 };
 pub use types::*;
+pub use websocket_helpers::*;
 
 // Re-export the server as the main entry point
 pub use server::RestApiServer as Server;

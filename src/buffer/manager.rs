@@ -37,13 +37,13 @@ use crate::buffer::eviction::{create_eviction_policy, EvictionPolicy, EvictionPo
 use crate::buffer::page_cache::{
     BufferFrame, FrameBatch, FrameGuard, FrameId, PerCoreFramePool, INVALID_PAGE_ID, PAGE_SIZE,
 };
+use crate::buffer::page_table::PageTable;
 use crate::common::PageId;
 use crate::error::{DbError, Result};
 use crate::storage::disk::DiskManager;
 use crate::storage::page::Page;
 
-use parking_lot::{Mutex, RwLock};
-use std::collections::HashMap;
+use parking_lot::Mutex;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread;
@@ -102,7 +102,23 @@ pub struct BufferPoolConfig {
 impl Default for BufferPoolConfig {
     fn default() -> Self {
         Self {
-            num_frames: 1000,
+            /// Default buffer pool size: 10,000 frames = ~40MB (at 4KB page size)
+            ///
+            /// **Sizing Rationale:**
+            /// - 10,000 frames × 4KB/frame = 40MB base buffer pool
+            /// - Suitable for moderate workloads with good hit rates
+            /// - Increased from 1,000 frames (4MB) to reduce disk I/O pressure
+            /// - For production workloads, consider scaling based on:
+            ///   - Available RAM: Use 25-50% of system memory
+            ///   - Working set size: Should fit active tables + indexes
+            ///   - Concurrency: More concurrent queries → larger pool needed
+            ///
+            /// **Examples:**
+            /// - Small systems (8GB RAM): 10,000 frames (40MB)
+            /// - Medium systems (32GB RAM): 100,000 frames (400MB)
+            /// - Large systems (128GB RAM): 500,000 frames (2GB)
+            /// - Enterprise (512GB RAM): 2,000,000 frames (8GB)
+            num_frames: 10000,
             eviction_policy: EvictionPolicyType::Clock,
             page_table_partitions: 16,
             enable_per_core_pools: true,
@@ -121,135 +137,7 @@ impl Default for BufferPoolConfig {
 }
 
 // ============================================================================
-// Page Table - Partitioned Hash Map
-// ============================================================================
-
-/// Partitioned page table for concurrent access.
-///
-/// Uses multiple hash maps (partitions) to reduce lock contention.
-/// Page IDs are hashed to determine which partition to use.
-struct PageTable {
-    /// Partitions (each is a separate hash map)
-    partitions: Vec<RwLock<HashMap<PageId, FrameId>>>,
-
-    /// Number of partitions
-    num_partitions: usize,
-
-    /// Lookup statistics
-    lookups: AtomicU64,
-    hits: AtomicU64,
-    misses: AtomicU64,
-}
-
-impl PageTable {
-    /// Create a new partitioned page table
-    fn new(num_partitions: usize, initial_capacity_per_partition: usize) -> Self {
-        let mut partitions = Vec::with_capacity(num_partitions);
-        for _ in 0..num_partitions {
-            partitions.push(RwLock::new(HashMap::with_capacity(
-                initial_capacity_per_partition,
-            )));
-        }
-
-        Self {
-            partitions,
-            num_partitions,
-            lookups: AtomicU64::new(0),
-            hits: AtomicU64::new(0),
-            misses: AtomicU64::new(0),
-        }
-    }
-
-    /// Get partition index for a page ID
-    #[inline(always)]
-    fn partition_index(&self, page_id: PageId) -> usize {
-        // Fast hash: multiply by large prime and mask
-        (page_id.wrapping_mul(0x9e3779b97f4a7c15) as usize) % self.num_partitions
-    }
-
-    /// Look up a page in the table
-    #[inline]
-    fn lookup(&self, page_id: PageId) -> Option<FrameId> {
-        self.lookups.fetch_add(1, Ordering::Relaxed);
-
-        let partition_idx = self.partition_index(page_id);
-        // SAFETY: partition_idx is guaranteed to be < num_partitions
-        let partition = unsafe { self.partitions.get_unchecked(partition_idx) };
-
-        let result = partition.read().get(&page_id).copied();
-
-        if result.is_some() {
-            self.hits.fetch_add(1, Ordering::Relaxed);
-        } else {
-            self.misses.fetch_add(1, Ordering::Relaxed);
-        }
-
-        result
-    }
-
-    /// Insert a page into the table
-    #[inline]
-    fn insert(&self, page_id: PageId, frame_id: FrameId) {
-        let partition_idx = self.partition_index(page_id);
-        // SAFETY: partition_idx is guaranteed to be < num_partitions
-        let partition = unsafe { self.partitions.get_unchecked(partition_idx) };
-
-        partition.write().insert(page_id, frame_id);
-    }
-
-    /// Remove a page from the table
-    #[inline]
-    fn remove(&self, page_id: PageId) -> Option<FrameId> {
-        let partition_idx = self.partition_index(page_id);
-        // SAFETY: partition_idx is guaranteed to be < num_partitions
-        let partition = unsafe { self.partitions.get_unchecked(partition_idx) };
-
-        partition.write().remove(&page_id)
-    }
-
-    /// Clear all partitions (for testing and maintenance)
-    #[cold]
-    #[allow(dead_code)]
-    fn clear(&self) {
-        for partition in &self.partitions {
-            partition.write().clear();
-        }
-        self.lookups.store(0, Ordering::Relaxed);
-        self.hits.store(0, Ordering::Relaxed);
-        self.misses.store(0, Ordering::Relaxed);
-    }
-
-    /// Get hit rate
-    #[inline]
-    fn hit_rate(&self) -> f64 {
-        let lookups = self.lookups.load(Ordering::Relaxed);
-        let hits = self.hits.load(Ordering::Relaxed);
-
-        if lookups == 0 {
-            0.0
-        } else {
-            hits as f64 / lookups as f64
-        }
-    }
-
-    /// Get statistics
-    #[cold]
-    fn stats(&self) -> (u64, u64, u64, f64) {
-        let lookups = self.lookups.load(Ordering::Relaxed);
-        let hits = self.hits.load(Ordering::Relaxed);
-        let misses = self.misses.load(Ordering::Relaxed);
-        let hit_rate = self.hit_rate();
-
-        (lookups, hits, misses, hit_rate)
-    }
-
-    /// Get total number of entries
-    #[cold]
-    fn len(&self) -> usize {
-        self.partitions.iter().map(|p| p.read().len()).sum()
-    }
-}
-
+// Note: PageTable implementation moved to buffer/page_table.rs
 // ============================================================================
 // Free Frame Manager
 // ============================================================================
@@ -1822,10 +1710,9 @@ impl Default for BufferPoolBuilder {
 
 #[cfg(test)]
 mod tests {
-    use crate::buffer::manager::{FreeFrameManager, PageTable};
-    use crate::buffer::{
-        BufferPoolBuilder, BufferPoolConfig, BufferPoolManager, EvictionPolicyType,
-    };
+    use super::{BufferPoolConfig, BufferPoolManager, FreeFrameManager};
+    use crate::buffer::page_table::PageTable;
+    use crate::buffer::{BufferPoolBuilder, EvictionPolicyType};
 
     #[test]
     fn test_buffer_pool_creation() {

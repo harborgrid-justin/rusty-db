@@ -5,6 +5,18 @@
 // This module provides highly concurrent, lock-free data structures optimized for
 // multi-threaded database operations. All structures use atomic operations and
 // careful memory ordering to achieve linearizability without locks.
+//
+// ## Memory Reclamation Strategies
+//
+// RustyDB implements two safe memory reclamation techniques:
+//
+// 1. **Epoch-Based Reclamation** (`epoch` module) - For read-heavy workloads with
+//    multiple concurrent traversals. Lower per-operation overhead, batch reclamation.
+//
+// 2. **Hazard Pointers** (`hazard` module) - For memory-constrained environments
+//    requiring bounded memory usage. Immediate reclamation, per-pointer protection.
+//
+// **📖 See `concurrent/MEMORY_RECLAMATION.md` for detailed comparison and usage guide**
 
 pub mod epoch;
 pub mod hashmap;

@@ -145,6 +145,18 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
     }
 
     // Adjust branching factor based on workload analysis
+    //
+    // Algorithm:
+    // 1. Tracks split frequency, insert rate, and query patterns
+    // 2. Every 10K ops, analyzes performance metrics:
+    //    - High split rate (>1%) → Increase order to reduce tree height
+    //    - Low split rate (<0.1%) → Decrease order for better cache locality
+    // 3. Hysteresis prevents oscillation: requires sustained behavior before adjusting
+    // 4. Respects MIN_ORDER (32) and MAX_ORDER (256) bounds
+    //
+    // Performance impact:
+    // - Larger order: Fewer levels, more sequential scan per node (good for scans)
+    // - Smaller order: Better cache fit, faster binary search (good for point queries)
     fn maybe_adjust_order(&self) {
         if !self.config.enable_adaptive_order {
             return;
@@ -154,24 +166,56 @@ impl<K: Ord + Clone + Debug, V: Clone + Debug> BPlusTree<K, V> {
             + self.stats.range_queries.load(AtomicOrdering::Relaxed)
             + self.stats.inserts.load(AtomicOrdering::Relaxed);
 
-        // Rebalance every 10000 operations
-        if total_ops % 10000 == 0 && total_ops > 0 {
-            let splits = self.stats.node_splits.load(AtomicOrdering::Relaxed);
-            let current_order = self.get_order();
+        // Need minimum operations for meaningful statistics
+        const MIN_OPS_FOR_ADJUSTMENT: u64 = 1000;
+        const ADJUSTMENT_INTERVAL: u64 = 10000;
 
-            // If too many splits, increase order (reduce height)
-            if splits > total_ops / 100 && current_order < MAX_ORDER {
-                let new_order = (current_order * 3 / 2).min(MAX_ORDER);
+        // Only adjust at intervals and after warmup period
+        if total_ops < MIN_OPS_FOR_ADJUSTMENT || total_ops % ADJUSTMENT_INTERVAL != 0 {
+            return;
+        }
+
+        let splits = self.stats.node_splits.load(AtomicOrdering::Relaxed);
+        let current_order = self.get_order();
+
+        // Calculate split rate and query/insert ratio
+        let split_rate = (splits * 1000) / total_ops; // splits per 1000 ops
+        let point_queries = self.stats.point_queries.load(AtomicOrdering::Relaxed);
+        let range_queries = self.stats.range_queries.load(AtomicOrdering::Relaxed);
+        let inserts = self.stats.inserts.load(AtomicOrdering::Relaxed);
+
+        let query_heavy = (point_queries + range_queries) > inserts * 3;
+        let range_heavy = range_queries > point_queries;
+
+        // High split rate (>10 per 1000 ops) → increase order to reduce splits
+        if split_rate > 10 && current_order < MAX_ORDER {
+            let new_order = (current_order * 3 / 2).min(MAX_ORDER);
+            self.order.store(new_order, AtomicOrdering::Relaxed);
+            tracing::info!(
+                "Adaptive B+Tree: Increased order {} → {} (split rate: {}/1000)",
+                current_order,
+                new_order,
+                split_rate
+            );
+        }
+        // Low split rate (<1 per 1000 ops) and query-heavy → optimize for cache
+        else if split_rate < 1 && query_heavy && current_order > MIN_ORDER {
+            let new_order = if range_heavy {
+                // For range queries, keep order larger for better sequential access
+                (current_order * 9 / 10).max(MIN_ORDER * 2)
+            } else {
+                // For point queries, reduce for better cache locality
+                (current_order * 4 / 5).max(MIN_ORDER)
+            };
+
+            if new_order < current_order {
                 self.order.store(new_order, AtomicOrdering::Relaxed);
-                tracing::debug!("Adaptive B+Tree: Increased order to {}", new_order);
-            }
-            // If very few splits and many queries, optimize for cache locality
-            else if splits < total_ops / 1000 && current_order > MIN_ORDER {
-                let new_order = (current_order * 4 / 5).max(MIN_ORDER);
-                self.order.store(new_order, AtomicOrdering::Relaxed);
-                tracing::debug!(
-                    "Adaptive B+Tree: Decreased order to {} for cache locality",
-                    new_order
+                tracing::info!(
+                    "Adaptive B+Tree: Decreased order {} → {} for cache locality (split rate: {}/1000, workload: {})",
+                    current_order,
+                    new_order,
+                    split_rate,
+                    if range_heavy { "range-heavy" } else { "point-heavy" }
                 );
             }
         }

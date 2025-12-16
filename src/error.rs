@@ -77,29 +77,17 @@ pub enum DbError {
     #[error("Resource exhausted: {0}")]
     ResourceExhausted(String),
 
-    #[error("Serialization error: {0}")]
-    SerializationError(String),
-
     #[error("BSON error: {0}")]
     BsonError(String),
 
     #[error("Encryption error: {0}")]
     Encryption(String),
 
-    #[error("IO error: {0}")]
-    IoError(String),
-
     #[error("Out of memory: {0}")]
     OutOfMemory(String),
 
-    #[error("Transaction error: {0}")]
-    TransactionError(String),
-
     #[error("Limit exceeded: {0}")]
     LimitExceeded(String),
-
-    #[error("IO error: {0}")]
-    IOError(String),
 
     #[error("Configuration error: {0}")]
     Configuration(String),
@@ -167,9 +155,6 @@ pub enum DbError {
     #[error("Corruption error: {0}")]
     CorruptionError(String),
 
-    #[error("Deadlock detected: {0}")]
-    DeadlockDetected(String),
-
     #[error("Conflict: {0}")]
     Conflict(String),
 
@@ -189,7 +174,7 @@ impl DbError {
 impl Clone for DbError {
     fn clone(&self) -> Self {
         match self {
-            DbError::Io(e) => DbError::IoError(e.to_string()),
+            DbError::Io(e) => DbError::Internal(format!("IO error: {}", e)),
             DbError::SqlParse(s) => DbError::SqlParse(s.clone()),
             DbError::Transaction(s) => DbError::Transaction(s.clone()),
             DbError::Storage(s) => DbError::Storage(s.clone()),
@@ -214,13 +199,9 @@ impl Clone for DbError {
             DbError::Replication(s) => DbError::Replication(s.clone()),
             DbError::InvalidArgument(s) => DbError::InvalidArgument(s.clone()),
             DbError::ResourceExhausted(s) => DbError::ResourceExhausted(s.clone()),
-            DbError::SerializationError(s) => DbError::SerializationError(s.clone()),
             DbError::Encryption(s) => DbError::Encryption(s.clone()),
-            DbError::IoError(s) => DbError::IoError(s.clone()),
             DbError::OutOfMemory(s) => DbError::OutOfMemory(s.clone()),
-            DbError::TransactionError(s) => DbError::TransactionError(s.clone()),
             DbError::LimitExceeded(s) => DbError::LimitExceeded(s.clone()),
-            DbError::IOError(s) => DbError::IOError(s.clone()),
             DbError::Configuration(s) => DbError::Configuration(s.clone()),
             DbError::PermissionDenied(s) => DbError::PermissionDenied(s.clone()),
             DbError::Timeout(s) => DbError::Timeout(s.clone()),
@@ -243,7 +224,6 @@ impl Clone for DbError {
             DbError::Recovery(s) => DbError::Recovery(s.clone()),
             DbError::Memory(s) => DbError::Memory(s.clone()),
             DbError::CorruptionError(s) => DbError::CorruptionError(s.clone()),
-            DbError::DeadlockDetected(s) => DbError::DeadlockDetected(s.clone()),
             DbError::Conflict(s) => DbError::Conflict(s.clone()),
             DbError::ConstraintViolation(s) => DbError::ConstraintViolation(s.clone()),
             DbError::ParseError(s) => DbError::ParseError(s.clone()),

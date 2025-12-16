@@ -12,10 +12,11 @@
 // - Diego Ongaro's PhD thesis on consensus
 
 use crate::error::DbError;
+use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::time::Duration;
 use std::time::SystemTime;
 
@@ -449,24 +450,24 @@ impl RaftNode {
 
     // Get current state
     pub fn get_state(&self) -> RaftState {
-        *self.state.read().unwrap()
+        *self.state.read()
     }
 
     // Get current term
     pub fn get_current_term(&self) -> Term {
-        self.persistent.read().unwrap().current_term
+        self.persistent.read().current_term
     }
 
     // Get current leader ID
     pub fn get_leader(&self) -> Option<RaftNodeId> {
-        *self.current_leader.read().unwrap()
+        *self.current_leader.read()
     }
 
     // Convert to candidate and start election
     pub fn start_election(&self) -> Result<VoteRequest, DbError> {
-        let mut state = self.state.write().unwrap();
-        let mut persistent = self.persistent.write().unwrap();
-        let mut votes = self.votes_received.write().unwrap();
+        let mut state = self.state.write();
+        let mut persistent = self.persistent.write();
+        let mut votes = self.votes_received.write();
 
         // Increment term
         persistent.current_term += 1;
@@ -495,8 +496,8 @@ impl RaftNode {
 
     // Handle vote request
     pub fn handle_vote_request(&self, request: VoteRequest) -> Result<VoteResponse, DbError> {
-        let mut persistent = self.persistent.write().unwrap();
-        let mut state = self.state.write().unwrap();
+        let mut persistent = self.persistent.write();
+        let mut state = self.state.write();
 
         // Update term if we're behind
         if request.term > persistent.current_term {
@@ -535,8 +536,8 @@ impl RaftNode {
         from: RaftNodeId,
         response: VoteResponse,
     ) -> Result<bool, DbError> {
-        let mut state = self.state.write().unwrap();
-        let mut persistent = self.persistent.write().unwrap();
+        let mut state = self.state.write();
+        let mut persistent = self.persistent.write();
 
         // Update term if we're behind
         if response.term > persistent.current_term {
@@ -552,11 +553,11 @@ impl RaftNode {
         }
 
         // Record vote
-        let mut votes = self.votes_received.write().unwrap();
+        let mut votes = self.votes_received.write();
         votes.insert(from, response.vote_granted);
 
         // Check if we have majority
-        let config = self.configuration.read().unwrap();
+        let config = self.configuration.read();
         let won_election = if config.is_joint_consensus() {
             config.has_joint_quorum(&votes)
         } else {
@@ -576,13 +577,13 @@ impl RaftNode {
 
     // Transition to leader state
     fn become_leader(&self) -> Result<(), DbError> {
-        let mut current_leader = self.current_leader.write().unwrap();
+        let mut current_leader = self.current_leader.write();
         *current_leader = Some(self.config.node_id);
 
-        let persistent = self.persistent.read().unwrap();
+        let persistent = self.persistent.read();
         let last_log_index = persistent.last_log_index();
 
-        let mut leader_state = self.leader_state.write().unwrap();
+        let mut leader_state = self.leader_state.write();
         *leader_state = Some(LeaderState::new(&self.config.peers, last_log_index));
 
         Ok(())
@@ -593,9 +594,9 @@ impl RaftNode {
         &self,
         request: AppendEntriesRequest,
     ) -> Result<AppendEntriesResponse, DbError> {
-        let mut state = self.state.write().unwrap();
-        let mut persistent = self.persistent.write().unwrap();
-        let mut current_leader = self.current_leader.write().unwrap();
+        let mut state = self.state.write();
+        let mut persistent = self.persistent.write();
+        let mut current_leader = self.current_leader.write();
 
         // Update term if we're behind
         if request.term > persistent.current_term {
@@ -668,7 +669,7 @@ impl RaftNode {
         }
 
         // Update commit index
-        let mut volatile = self.volatile.write().unwrap();
+        let mut volatile = self.volatile.write();
         if request.leader_commit > volatile.commit_index {
             volatile.commit_index = request.leader_commit.min(persistent.last_log_index());
         }
@@ -684,16 +685,16 @@ impl RaftNode {
 
     // Send append entries to a peer
     pub fn send_append_entries(&self, peer: RaftNodeId) -> Result<AppendEntriesRequest, DbError> {
-        let persistent = self.persistent.read().unwrap();
-        let leader_state_guard = self.leader_state.read().unwrap();
-        let volatile = self.volatile.read().unwrap();
+        let persistent = self.persistent.read();
+        let leader_state_guard = self.leader_state.read();
+        let volatile = self.volatile.read();
 
         let leader_state = leader_state_guard
             .as_ref()
             .ok_or_else(|| DbError::Internal("Not a leader".into()))?;
 
         let next_index = leader_state.next_index.get(&peer).copied().unwrap_or(1);
-        let prev_log_index = next_index - 1;
+        let prev_log_index = next_index.saturating_sub(1);
         let prev_log_term = if prev_log_index > 0 {
             persistent.get_term(prev_log_index).unwrap_or(0)
         } else {
@@ -735,8 +736,8 @@ impl RaftNode {
         peer: RaftNodeId,
         response: AppendEntriesResponse,
     ) -> Result<(), DbError> {
-        let mut persistent = self.persistent.write().unwrap();
-        let mut state = self.state.write().unwrap();
+        let mut persistent = self.persistent.write();
+        let mut state = self.state.write();
 
         // Update term if we're behind
         if response.term > persistent.current_term {
@@ -751,7 +752,7 @@ impl RaftNode {
             return Ok(());
         }
 
-        let mut leader_state_guard = self.leader_state.write().unwrap();
+        let mut leader_state_guard = self.leader_state.write();
         let leader_state = leader_state_guard
             .as_mut()
             .ok_or_else(|| DbError::Internal("Not a leader".into()))?;
@@ -764,7 +765,7 @@ impl RaftNode {
 
                 // Update commit index
                 let new_commit = leader_state.calculate_commit_index(0);
-                let mut volatile = self.volatile.write().unwrap();
+                let mut volatile = self.volatile.write();
                 if new_commit > volatile.commit_index {
                     // Only commit entries from current term
                     if let Some(entry) = persistent.get_entry(new_commit) {
@@ -793,12 +794,12 @@ impl RaftNode {
 
     // Append command to log (leader only)
     pub fn append_command(&self, command: Vec<u8>) -> Result<LogIndex, DbError> {
-        let state = self.state.read().unwrap();
+        let state = self.state.read();
         if *state != RaftState::Leader {
             return Err(DbError::Internal("Not a leader".into()));
         }
 
-        let mut persistent = self.persistent.write().unwrap();
+        let mut persistent = self.persistent.write();
         let index = persistent.last_log_index() + 1;
         let term = persistent.current_term;
 
@@ -815,8 +816,8 @@ impl RaftNode {
         last_included_term: Term,
         _snapshot_data: Vec<u8>,
     ) -> Result<(), DbError> {
-        let mut persistent = self.persistent.write().unwrap();
-        let config = self.configuration.read().unwrap();
+        let mut persistent = self.persistent.write();
+        let config = self.configuration.read();
 
         let metadata = SnapshotMetadata {
             last_included_index,
@@ -848,8 +849,8 @@ impl RaftNode {
         &self,
         request: InstallSnapshotRequest,
     ) -> Result<InstallSnapshotResponse, DbError> {
-        let mut persistent = self.persistent.write().unwrap();
-        let mut state = self.state.write().unwrap();
+        let mut persistent = self.persistent.write();
+        let mut state = self.state.write();
 
         // Update term if we're behind
         if request.term > persistent.current_term {
@@ -876,7 +877,7 @@ impl RaftNode {
             // (Application-specific logic would go here)
 
             // Update commit and last applied
-            let mut volatile = self.volatile.write().unwrap();
+            let mut volatile = self.volatile.write();
             volatile.commit_index = request.metadata.last_included_index;
             volatile.last_applied = request.metadata.last_included_index;
         }
@@ -889,12 +890,12 @@ impl RaftNode {
 
     // Begin membership change (joint consensus)
     pub fn begin_membership_change(&self, new_members: Vec<RaftNodeId>) -> Result<(), DbError> {
-        let state = self.state.read().unwrap();
+        let state = self.state.read();
         if *state != RaftState::Leader {
             return Err(DbError::Internal("Not a leader".into()));
         }
 
-        let mut config = self.configuration.write().unwrap();
+        let mut config = self.configuration.write();
         config.new_members = Some(new_members);
 
         // Log the C_old,new configuration
@@ -910,12 +911,12 @@ impl RaftNode {
 
     // Finalize membership change
     pub fn finalize_membership_change(&self) -> Result<(), DbError> {
-        let state = self.state.read().unwrap();
+        let state = self.state.read();
         if *state != RaftState::Leader {
             return Err(DbError::Internal("Not a leader".into()));
         }
 
-        let mut config = self.configuration.write().unwrap();
+        let mut config = self.configuration.write();
         if let Some(new_members) = config.new_members.take() {
             config.members = new_members;
 
