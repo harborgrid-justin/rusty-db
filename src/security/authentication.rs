@@ -5,23 +5,49 @@
 //
 // ## Features
 //
-// - Password policies and Argon2 hashing
-// - Multi-factor authentication (TOTP, SMS, Email)
-// - LDAP/Active Directory integration
-// - OAuth2/OIDC authentication
-// - Session management
-// - Account lockout and brute-force protection
+// - Password policies and Argon2 hashing ✅ IMPLEMENTED
+// - Multi-factor authentication (TOTP) ✅ IMPLEMENTED (RFC 6238 compliant)
+// - Session management ✅ IMPLEMENTED
+// - Account lockout and brute-force protection ✅ IMPLEMENTED
+// - LDAP/Active Directory integration ⚠️ CONFIGURATION ONLY (flow not implemented)
+// - OAuth2 authentication ⚠️ CONFIGURATION ONLY (flow not implemented)
+// - OIDC authentication ⚠️ CONFIGURATION ONLY (flow not implemented)
+// - SMS/Email MFA ⚠️ NOT YET IMPLEMENTED
+//
+// ## Implementation Status
+//
+// ### Fully Implemented:
+// - Local username/password authentication with Argon2id hashing
+// - TOTP-based MFA with RFC 6238 compliance (HMAC-SHA1, 30s windows, ±1 window skew)
+// - Backup codes for MFA recovery
+// - Session management with timeout and activity tracking
+// - Password policies (complexity, history, expiration, lockout)
+// - Brute-force protection with account lockout
+//
+// ### Configuration Only (Implementation Pending):
+// - **LDAP/AD**: Configuration accepted but no LDAP bind/search operations
+// - **OAuth2**: Configuration accepted but no authorization code flow
+// - **OIDC**: Configuration accepted but no OpenID Connect flow
+//
+// ### Not Implemented:
+// - SMS-based MFA
+// - Email-based MFA
+// - Hardware token (U2F/FIDO2) support
 
 use crate::error::DbError;
 use crate::Result;
 use argon2::password_hash::{rand_core::OsRng, SaltString};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use base64::{engine::general_purpose, Engine as _};
+use hmac::{Hmac, Mac};
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
+use sha1::Sha1;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+type HmacSha1 = Hmac<Sha1>;
 
 // User identifier
 pub type UserId = String;
@@ -630,12 +656,26 @@ impl AuthenticationManager {
     }
 
     // Configure LDAP authentication
+    //
+    // NOTE: LDAP authentication configuration is accepted but the actual LDAP bind
+    // and search operations are not yet implemented. This is a placeholder for
+    // future LDAP/Active Directory integration.
+    //
+    // TODO: Implement LDAP bind and user search operations using an LDAP client library
     pub fn configure_ldap(&self, config: LdapConfig) -> Result<()> {
         *self.ldap_config.write() = Some(config);
         Ok(())
     }
 
     // Configure OAuth2 provider
+    //
+    // NOTE: OAuth2 configuration is accepted but the authorization code flow is
+    // not yet implemented. This includes:
+    // - Authorization redirect URL generation
+    // - Token exchange with provider
+    // - User info retrieval
+    //
+    // TODO: Implement OAuth2 authorization code flow with PKCE support
     pub fn configure_oauth2(&self, config: OAuth2Config) -> Result<()> {
         let provider = config.provider.clone();
         self.oauth2_configs.write().insert(provider, config);
@@ -643,6 +683,14 @@ impl AuthenticationManager {
     }
 
     // Configure OIDC provider
+    //
+    // NOTE: OpenID Connect configuration is accepted but the OIDC flow is not
+    // yet implemented. This includes:
+    // - Discovery endpoint handling
+    // - ID token validation
+    // - UserInfo endpoint integration
+    //
+    // TODO: Implement OIDC authentication flow with ID token validation
     pub fn configure_oidc(&self, config: OidcConfig) -> Result<()> {
         let provider = config.provider.clone();
         self.oidc_configs.write().insert(provider, config);
@@ -801,13 +849,76 @@ impl AuthenticationManager {
             return Ok(true);
         }
 
-        // Verify TOTP (simplified - would use actual TOTP library)
-        if let Some(_secret) = &user.mfa_secret {
-            // Would verify against current time-based code
-            Ok(code.len() == 6 && code.chars().all(|c| c.is_numeric()))
+        // SECURITY FIX: Implement proper RFC 6238 TOTP validation
+        if let Some(secret) = &user.mfa_secret {
+            self.verify_totp(secret, code)
         } else {
             Ok(false)
         }
+    }
+
+    // RFC 6238 TOTP (Time-based One-Time Password) validation
+    // Uses HMAC-SHA1 with 30-second time windows and ±1 window for clock skew
+    fn verify_totp(&self, secret: &str, code: &str) -> Result<bool> {
+        // Validate code format (6 digits)
+        if code.len() != 6 || !code.chars().all(|c| c.is_numeric()) {
+            return Ok(false);
+        }
+
+        let code_value = code.parse::<u32>().map_err(|_| {
+            DbError::InvalidInput("Invalid TOTP code format".to_string())
+        })?;
+
+        // Decode base64 secret
+        let secret_bytes = general_purpose::STANDARD
+            .decode(secret)
+            .map_err(|_| DbError::Internal("Invalid TOTP secret encoding".to_string()))?;
+
+        // Get current time
+        let now = current_timestamp() as u64;
+
+        // Try current time window and ±1 window for clock skew tolerance
+        let time_step = 30u64; // 30 seconds per TOTP window
+        let current_counter = now / time_step;
+
+        // Check current window and ±1 window (total 3 windows for clock skew)
+        for offset in &[-1i64, 0i64, 1i64] {
+            let counter = (current_counter as i64 + offset) as u64;
+            let expected_code = self.generate_totp(&secret_bytes, counter)?;
+
+            if expected_code == code_value {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
+    }
+
+    // Generate TOTP code for a given counter using RFC 6238 algorithm
+    fn generate_totp(&self, secret: &[u8], counter: u64) -> Result<u32> {
+        // Convert counter to 8-byte big-endian
+        let counter_bytes = counter.to_be_bytes();
+
+        // HMAC-SHA1(secret, counter)
+        let mut mac = HmacSha1::new_from_slice(secret)
+            .map_err(|e| DbError::Internal(format!("TOTP HMAC error: {}", e)))?;
+        mac.update(&counter_bytes);
+        let result = mac.finalize();
+        let hash = result.into_bytes();
+
+        // Dynamic truncation (RFC 4226 section 5.3)
+        let offset = (hash[19] & 0x0f) as usize;
+        let truncated = u32::from_be_bytes([
+            hash[offset] & 0x7f,
+            hash[offset + 1],
+            hash[offset + 2],
+            hash[offset + 3],
+        ]);
+
+        // Generate 6-digit code
+        let code = truncated % 1_000_000;
+
+        Ok(code)
     }
 
     fn generate_totp_secret(&self) -> String {

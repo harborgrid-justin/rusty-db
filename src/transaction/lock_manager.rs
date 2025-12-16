@@ -486,6 +486,8 @@ pub struct LockEscalationManager {
     escalation_threshold: usize,
     /// Count of row locks per (transaction, table).
     row_lock_count: Arc<RwLock<HashMap<(TransactionId, String), usize>>>,
+    /// Track which row locks exist per (transaction, table).
+    row_locks: Arc<RwLock<HashMap<(TransactionId, String), HashSet<String>>>>,
 }
 
 impl LockEscalationManager {
@@ -498,6 +500,7 @@ impl LockEscalationManager {
         Self {
             escalation_threshold,
             row_lock_count: Arc::new(RwLock::new(HashMap::new())),
+            row_locks: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
@@ -507,14 +510,23 @@ impl LockEscalationManager {
     ///
     /// * `txn_id` - The transaction.
     /// * `table` - The table name.
+    /// * `row_id` - The row identifier.
     ///
     /// # Returns
     ///
     /// `true` if the threshold has been reached and escalation should occur.
-    pub fn record_row_lock(&self, txn_id: TransactionId, table: String) -> bool {
+    pub fn record_row_lock(&self, txn_id: TransactionId, table: String, row_id: String) -> bool {
         let mut counts = self.row_lock_count.write();
-        let count = counts.entry((txn_id, table)).or_insert(0);
+        let mut locks = self.row_locks.write();
+
+        let count = counts.entry((txn_id, table.clone())).or_insert(0);
         *count += 1;
+
+        locks
+            .entry((txn_id, table))
+            .or_insert_with(HashSet::new)
+            .insert(row_id);
+
         *count >= self.escalation_threshold
     }
 
@@ -545,6 +557,70 @@ impl LockEscalationManager {
     /// Returns the escalation threshold.
     pub fn threshold(&self) -> usize {
         self.escalation_threshold
+    }
+
+    /// Performs lock escalation for a transaction/table pair.
+    ///
+    /// IMPORTANT: This is a two-phase operation:
+    /// 1. Release all row-level locks for the table
+    /// 2. Acquire a single table-level lock
+    ///
+    /// Lock escalation reduces lock manager overhead when a transaction
+    /// holds many row locks on the same table. The threshold is configurable
+    /// (default: 1000 row locks).
+    ///
+    /// # Arguments
+    ///
+    /// * `txn_id` - The transaction.
+    /// * `table` - The table name.
+    /// * `lock_manager` - The lock manager to use.
+    /// * `lock_mode` - The mode for the table lock (Shared or Exclusive).
+    ///
+    /// # Returns
+    ///
+    /// The number of row locks that were released and escalated.
+    pub fn escalate(
+        &self,
+        txn_id: TransactionId,
+        table: &str,
+        lock_manager: &LockManager,
+        lock_mode: LockMode,
+    ) -> TransactionResult<usize> {
+        let mut counts = self.row_lock_count.write();
+        let mut locks = self.row_locks.write();
+
+        let key = (txn_id, table.to_string());
+
+        // Get the row locks for this transaction/table
+        let row_ids = locks.remove(&key).unwrap_or_default();
+        let row_count = row_ids.len();
+
+        if row_count == 0 {
+            return Ok(0);
+        }
+
+        // Phase 1: Release all row locks
+        for row_id in &row_ids {
+            lock_manager.release_lock(txn_id, row_id)?;
+        }
+
+        // Clear the count
+        counts.remove(&key);
+
+        // Phase 2: Acquire table-level lock
+        // This replaces all the individual row locks with a single table lock
+        lock_manager.acquire_lock(txn_id, table.to_string(), lock_mode)?;
+
+        Ok(row_count)
+    }
+
+    /// Get the row locks for a transaction/table pair (for diagnostics).
+    pub fn get_row_locks(&self, txn_id: TransactionId, table: &str) -> HashSet<String> {
+        self.row_locks
+            .read()
+            .get(&(txn_id, table.to_string()))
+            .cloned()
+            .unwrap_or_default()
     }
 }
 
@@ -625,12 +701,16 @@ mod tests {
     fn test_escalation_manager() {
         let em = LockEscalationManager::new(5);
 
-        for _i in 0..4 {
-            assert!(!em.record_row_lock(1, "table1".to_string()));
+        for i in 0..4 {
+            assert!(!em.record_row_lock(
+                1,
+                "table1".to_string(),
+                format!("row{}", i)
+            ));
         }
 
         // 5th lock should trigger escalation
-        assert!(em.record_row_lock(1, "table1".to_string()));
+        assert!(em.record_row_lock(1, "table1".to_string(), "row4".to_string()));
     }
 
     #[test]

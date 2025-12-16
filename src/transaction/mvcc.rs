@@ -574,7 +574,11 @@ impl SnapshotIsolationManager {
         start_ts
     }
 
-    /// Record a read operation
+    /// Record a read operation (CRITICAL for write-skew detection)
+    ///
+    /// For SNAPSHOT_ISOLATION, tracking the read set is essential to detect
+    /// write-skew anomalies. Every read operation must be recorded to enable
+    /// validation at commit time.
     pub fn record_read(&self, txn_id: TransactionId, key: String) -> Result<(), DbError> {
         let mut txns = self.active_txns.write();
         if let Some(snapshot) = txns.get_mut(&txn_id) {
@@ -586,6 +590,24 @@ impl SnapshotIsolationManager {
                 txn_id
             )))
         }
+    }
+
+    /// Get read set size for a transaction (for monitoring/debugging)
+    pub fn get_read_set_size(&self, txn_id: TransactionId) -> usize {
+        self.active_txns
+            .read()
+            .get(&txn_id)
+            .map(|s| s.read_set.len())
+            .unwrap_or(0)
+    }
+
+    /// Get write set size for a transaction (for monitoring/debugging)
+    pub fn get_write_set_size(&self, txn_id: TransactionId) -> usize {
+        self.active_txns
+            .read()
+            .get(&txn_id)
+            .map(|s| s.write_set.len())
+            .unwrap_or(0)
     }
 
     /// Record a write operation
@@ -645,7 +667,17 @@ impl SnapshotIsolationManager {
         Ok(())
     }
 
-    /// Check for write-skew anomalies (requires serializable mode)
+    /// Check for write-skew anomalies (CRITICAL for SNAPSHOT_ISOLATION)
+    ///
+    /// Write skew occurs when:
+    /// 1. Transaction T1 reads items X and Y
+    /// 2. Transaction T2 reads items X and Y
+    /// 3. T1 writes to Y (based on read of X)
+    /// 4. T2 writes to X (based on read of Y)
+    /// 5. Both commit successfully, violating integrity constraints
+    ///
+    /// Detection: Track read sets and validate no concurrent transaction
+    /// wrote to items in our read set between our start time and commit time.
     pub fn check_write_skew(&self, txn_id: TransactionId) -> Result<(), DbError> {
         if !self.config.detect_write_skew {
             return Ok(());
@@ -660,18 +692,31 @@ impl SnapshotIsolationManager {
             return Ok(());
         }
 
-        // Check if any committed transaction wrote to our read set
+        // SNAPSHOT_ISOLATION requirement: Check read set against committed writes
+        // This prevents write-skew anomalies that can violate serializability
         let committed = self.committed_writes.read();
+
+        // Validate read set is not empty for write transactions
+        if !snapshot.write_set.is_empty() && snapshot.read_set.is_empty() {
+            // Write without reads is allowed (blind writes)
+            return Ok(());
+        }
+
+        // Check if any committed transaction wrote to our read set
+        // Only check commits that occurred after our snapshot start time
         for (commit_ts, committed_keys) in committed.range(snapshot.start_ts..) {
-            if snapshot
+            // Find intersection between our read set and committed write set
+            let conflicts: Vec<_> = snapshot
                 .read_set
                 .intersection(committed_keys)
-                .next()
-                .is_some()
-            {
+                .collect();
+
+            if !conflicts.is_empty() {
                 return Err(DbError::Transaction(format!(
-                    "Write-skew detected: transaction {} read data modified by commit at {:?}",
-                    txn_id, commit_ts
+                    "Write-skew detected for SNAPSHOT_ISOLATION: transaction {} read keys {:?} \
+                     that were modified by commit at {:?}. This violates snapshot isolation \
+                     guarantees and could lead to integrity constraint violations.",
+                    txn_id, conflicts, commit_ts
                 )));
             }
         }
@@ -680,11 +725,19 @@ impl SnapshotIsolationManager {
     }
 
     /// Commit a transaction
+    ///
+    /// Validates transaction can commit under SNAPSHOT_ISOLATION:
+    /// 1. Check write-write conflicts (first-committer-wins)
+    /// 2. Check write-skew anomalies (read set validation)
+    /// 3. Assign commit timestamp and persist write set
     pub fn commit_transaction(&self, txn_id: TransactionId) -> Result<HybridTimestamp, DbError> {
-        // Check for conflicts
+        // Phase 1: Check write-write conflicts (concurrent writes to same keys)
         self.check_write_conflicts(txn_id)?;
 
-        if self.config.serializable {
+        // Phase 2: CRITICAL - Check for write skew if detection is enabled
+        // This is essential for SNAPSHOT_ISOLATION correctness
+        // Without this check, non-serializable executions can occur
+        if self.config.detect_write_skew {
             self.check_write_skew(txn_id)?;
         }
 

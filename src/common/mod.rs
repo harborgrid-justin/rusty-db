@@ -539,15 +539,64 @@ impl LockMode {
     }
 
     /// Check if two lock modes are compatible (part of lock manager API)
+    ///
+    /// Full compatibility matrix:
+    /// ```
+    ///               | IS  | IX  | S   | SIX | U   | X   |
+    /// --------------|-----|-----|-----|-----|-----|-----|
+    /// IS (IntentSh) | YES | YES | YES | YES | YES | NO  |
+    /// IX (IntentEx) | YES | YES | NO  | NO  | NO  | NO  |
+    /// S  (Shared)   | YES | NO  | YES | NO  | YES | NO  |
+    /// SIX (ShIntEx) | YES | NO  | NO  | NO  | NO  | NO  |
+    /// U  (Update)   | YES | NO  | YES | NO  | NO  | NO  |
+    /// X  (Exclusive)| NO  | NO  | NO  | NO  | NO  | NO  |
+    /// ```
     #[allow(dead_code)]
     pub(crate) fn is_compatible(&self, other: &LockMode) -> bool {
-        // Basic compatibility: shared locks are compatible with each other
+        use LockMode::*;
         match (self, other) {
-            (LockMode::Shared, LockMode::Shared) => true,
-            (LockMode::IntentShared, LockMode::IntentShared) => true,
-            (LockMode::IntentShared, LockMode::Shared) => true,
-            (LockMode::Shared, LockMode::IntentShared) => true,
-            _ => false, // Exclusive locks are not compatible with anything
+            // Intent Shared is compatible with all except Exclusive
+            (IntentShared, IntentShared) => true,
+            (IntentShared, IntentExclusive) => true,
+            (IntentShared, Shared) => true,
+            (IntentShared, SharedIntentExclusive) => true,
+            (IntentShared, Update) => true,
+            (IntentShared, Exclusive) => false,
+
+            // Intent Exclusive is compatible with IS and IX only
+            (IntentExclusive, IntentShared) => true,
+            (IntentExclusive, IntentExclusive) => true,
+            (IntentExclusive, Shared) => false,
+            (IntentExclusive, SharedIntentExclusive) => false,
+            (IntentExclusive, Update) => false,
+            (IntentExclusive, Exclusive) => false,
+
+            // Shared is compatible with IS, S, and U
+            (Shared, IntentShared) => true,
+            (Shared, IntentExclusive) => false,
+            (Shared, Shared) => true,
+            (Shared, SharedIntentExclusive) => false,
+            (Shared, Update) => true,
+            (Shared, Exclusive) => false,
+
+            // Shared Intent Exclusive is compatible with IS only
+            (SharedIntentExclusive, IntentShared) => true,
+            (SharedIntentExclusive, IntentExclusive) => false,
+            (SharedIntentExclusive, Shared) => false,
+            (SharedIntentExclusive, SharedIntentExclusive) => false,
+            (SharedIntentExclusive, Update) => false,
+            (SharedIntentExclusive, Exclusive) => false,
+
+            // Update is compatible with IS and S only
+            (Update, IntentShared) => true,
+            (Update, IntentExclusive) => false,
+            (Update, Shared) => true,
+            (Update, SharedIntentExclusive) => false,
+            (Update, Update) => false,
+            (Update, Exclusive) => false,
+
+            // Exclusive is compatible with nothing
+            (Exclusive, _) => false,
         }
     }
 }
@@ -845,8 +894,8 @@ impl Default for DatabaseConfig {
             connection_timeout: Duration::from_secs(30),
 
             // Security
-            enable_tls: false,
-            enable_encryption: false,
+            enable_tls: true,
+            enable_encryption: true,
             password_min_length: 8,
             session_timeout: Duration::from_secs(3600),
 
@@ -923,6 +972,13 @@ impl ResourceUsage {
         self.start_time.and_then(|start| start.elapsed().ok())
     }
 }
+
+// ============================================================================
+// Submodules
+// ============================================================================
+
+/// Concurrent map patterns and DashMap migration guide
+pub mod concurrent_map;
 
 // ============================================================================
 // Tests

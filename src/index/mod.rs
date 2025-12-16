@@ -28,6 +28,312 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
+// ============================================================================
+// Common Index Traits
+// ============================================================================
+
+/// Trait for node splitting operations across different index structures
+///
+/// This trait consolidates the common splitting logic found in:
+/// - B+Tree (btree.rs): split_leaf() and split_internal()
+/// - LSM Tree (lsm_index.rs): quadratic_split() for memtable overflow
+/// - R-Tree (spatial.rs): quadratic_split() for spatial node overflow
+///
+/// ## Consolidation Benefits
+///
+/// 1. **Reduced Code Duplication**: Common split algorithms in one place
+/// 2. **Consistent Behavior**: All indexes split the same way
+/// 3. **Easier Testing**: Test splitting logic once, use everywhere
+/// 4. **Maintainability**: Changes propagate to all index types
+///
+/// ## Split Strategies
+///
+/// - **B+Tree**: Median split - divides keys at the middle point
+/// - **LSM Tree**: Quadratic split - minimizes wasted space
+/// - **R-Tree**: Quadratic split - minimizes bounding box overlap
+///
+/// ## Usage Example
+///
+/// ```rust,ignore
+/// impl NodeSplitting for BTreeNode<K, V> {
+///     type Entry = (K, V);
+///     type SplitKey = K;
+///
+///     fn split(&mut self, capacity: usize) -> Result<(K, Self)> {
+///         let split_point = self.find_split_point(capacity);
+///         // Split at middle
+///         let right_entries = self.entries.split_off(split_point);
+///         let separator_key = right_entries[0].0.clone();
+///         Ok((separator_key, Self::new_with_entries(right_entries)))
+///     }
+///
+///     fn needs_split(&self, capacity: usize) -> bool {
+///         self.entries.len() >= capacity
+///     }
+/// }
+/// ```
+pub trait NodeSplitting {
+    /// Type of entries stored in the node
+    type Entry;
+
+    /// Type representing the split key/separator
+    type SplitKey;
+
+    /// Split a node that has exceeded capacity
+    ///
+    /// Returns a tuple of:
+    /// - The split key/separator that divides the two groups
+    /// - The new node containing the right half of entries
+    fn split(&mut self, capacity: usize) -> Result<(Self::SplitKey, Self)>;
+
+    /// Determine if a node needs splitting based on capacity
+    fn needs_split(&self, capacity: usize) -> bool;
+
+    /// Calculate the optimal split point for entries
+    ///
+    /// Default implementation uses median split (divides at middle).
+    /// Override for custom strategies (e.g., quadratic split for R-trees)
+    fn find_split_point(&self, capacity: usize) -> usize {
+        capacity / 2
+    }
+}
+
+/// Helper utilities for node splitting operations
+pub mod split_utils {
+    use super::*;
+
+    /// Calculate the optimal split point using median strategy
+    ///
+    /// Used by B+Tree for balanced splits
+    #[inline]
+    pub fn median_split_point(num_entries: usize) -> usize {
+        num_entries / 2
+    }
+
+    /// Calculate split point with minimum fill threshold
+    ///
+    /// Ensures nodes maintain at least `min_fill_ratio` fullness
+    /// Used to prevent underflow in subsequent operations
+    #[inline]
+    pub fn split_point_with_min_fill(num_entries: usize, min_fill_ratio: f64) -> usize {
+        let min_entries = ((num_entries as f64) * min_fill_ratio).ceil() as usize;
+        num_entries.saturating_sub(min_entries).max(num_entries / 2)
+    }
+
+    /// Find the best split point that minimizes a cost function
+    ///
+    /// Generic helper for quadratic split algorithms (LSM, R-Tree)
+    /// The cost function receives (left_size, right_size) and returns cost
+    pub fn find_best_split<F>(num_entries: usize, cost_fn: F) -> usize
+    where
+        F: Fn(usize, usize) -> f64,
+    {
+        let mut best_split = num_entries / 2;
+        let mut best_cost = f64::MAX;
+
+        // Try split points from 1/3 to 2/3 of entries
+        let start = num_entries / 3;
+        let end = (num_entries * 2) / 3;
+
+        for split_point in start..=end {
+            let left_size = split_point;
+            let right_size = num_entries - split_point;
+            let cost = cost_fn(left_size, right_size);
+
+            if cost < best_cost {
+                best_cost = cost;
+                best_split = split_point;
+            }
+        }
+
+        best_split
+    }
+
+    /// Calculate imbalance factor for a split
+    ///
+    /// Returns a value from 0.0 (perfectly balanced) to 1.0 (maximally imbalanced)
+    #[inline]
+    pub fn split_imbalance(left_size: usize, right_size: usize) -> f64 {
+        let total = (left_size + right_size) as f64;
+        if total == 0.0 {
+            return 0.0;
+        }
+        let ideal = total / 2.0;
+        let actual_left = left_size as f64;
+        (actual_left - ideal).abs() / ideal
+    }
+}
+
+/// Trait for index iteration patterns
+///
+/// This trait consolidates iterator patterns found in:
+/// - B+Tree (btree.rs): range_scan() and collect_range()
+/// - LSM Tree (lsm_index.rs): range() with merge iterator
+/// - Hash Index (hash_index.rs): full table scan patterns
+///
+/// ## Common Iterator Patterns Consolidated
+///
+/// ### Pattern 1: Range Scan with Leaf Linking (B+Tree)
+/// ```rust,ignore
+/// // B+Tree traverses leaf chain for range scans
+/// let mut current = find_leaf(start_key);
+/// while let Some(leaf) = current {
+///     for (k, v) in leaf.entries {
+///         if k > end_key { break; }
+///         yield (k, v);
+///     }
+///     current = leaf.next_leaf;
+/// }
+/// ```
+///
+/// ### Pattern 2: Merge Iterator (LSM Tree)
+/// ```rust,ignore
+/// // LSM merges multiple sorted sources
+/// let mut heap = BinaryHeap::new();
+/// for level in levels {
+///     heap.push(level.iter());
+/// }
+/// while let Some(entry) = heap.pop() {
+///     yield entry;
+///     if let Some(next) = entry.iter.next() {
+///         heap.push(next);
+///     }
+/// }
+/// ```
+///
+/// ### Pattern 3: Hash Table Scan
+/// ```rust,ignore
+/// // Hash index scans all buckets
+/// for bucket in buckets {
+///     for entry in bucket {
+///         yield entry;
+///     }
+/// }
+/// ```
+///
+/// ## Design Considerations
+///
+/// - **Late Materialization**: Iterator yields keys/row IDs, fetches values on demand
+/// - **Prefetching**: Iterator hints at next access for cache optimization
+/// - **Lazy Evaluation**: Results computed only when pulled from iterator
+/// - **Memory Efficiency**: No intermediate vectors for large result sets
+pub trait IndexIterator {
+    /// Key type for iteration
+    type Key;
+
+    /// Value type for iteration
+    type Value;
+
+    /// Item type returned by iterator
+    type Item;
+
+    /// Create an iterator over all entries
+    ///
+    /// For ordered indexes (B+Tree, LSM), this yields in sorted order.
+    /// For unordered indexes (Hash), order is undefined.
+    fn iter(&self) -> Box<dyn Iterator<Item = Self::Item> + '_>;
+
+    /// Create an iterator over a range of keys
+    ///
+    /// Yields all entries where `start <= key <= end`.
+    /// Only implemented for ordered indexes.
+    fn range_iter(&self, start: &Self::Key, end: &Self::Key) -> Box<dyn Iterator<Item = Self::Item> + '_>;
+}
+
+/// Helper utilities for index iteration
+pub mod iter_utils {
+    use super::*;
+
+    /// Merge multiple sorted iterators into a single sorted stream
+    ///
+    /// Used by LSM Tree to merge results from multiple levels
+    pub struct MergeIterator<K: Ord, V, I: Iterator<Item = (K, V)>> {
+        iterators: Vec<std::iter::Peekable<I>>,
+    }
+
+    impl<K: Ord, V, I: Iterator<Item = (K, V)>> MergeIterator<K, V, I> {
+        pub fn new(iterators: Vec<I>) -> Self {
+            Self {
+                iterators: iterators.into_iter().map(|i| i.peekable()).collect(),
+            }
+        }
+    }
+
+    impl<K: Ord, V, I: Iterator<Item = (K, V)>> Iterator for MergeIterator<K, V, I> {
+        type Item = (K, V);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            // Find iterator with smallest key
+            let mut min_idx = None;
+            let mut min_key: Option<&K> = None;
+
+            for (idx, iter) in self.iterators.iter_mut().enumerate() {
+                if let Some((key, _)) = iter.peek() {
+                    if min_key.map_or(true, |mk| key < mk) {
+                        min_key = Some(key);
+                        min_idx = Some(idx);
+                    }
+                }
+            }
+
+            min_idx.and_then(|idx| self.iterators[idx].next())
+        }
+    }
+
+    /// Batching iterator that yields results in chunks
+    ///
+    /// Improves cache locality for processing large result sets
+    pub struct BatchIterator<I: Iterator> {
+        inner: I,
+        batch_size: usize,
+    }
+
+    impl<I: Iterator> BatchIterator<I> {
+        pub fn new(inner: I, batch_size: usize) -> Self {
+            Self { inner, batch_size }
+        }
+    }
+
+    impl<I: Iterator> Iterator for BatchIterator<I> {
+        type Item = Vec<I::Item>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let mut batch = Vec::with_capacity(self.batch_size);
+            for _ in 0..self.batch_size {
+                match self.inner.next() {
+                    Some(item) => batch.push(item),
+                    None => break,
+                }
+            }
+
+            if batch.is_empty() {
+                None
+            } else {
+                Some(batch)
+            }
+        }
+    }
+}
+
+/// Common statistics interface for all index types
+pub trait IndexStatistics {
+    /// Get the total number of entries in the index
+    fn entry_count(&self) -> usize;
+
+    /// Get the storage size in bytes (approximate)
+    fn storage_size(&self) -> usize;
+
+    /// Get the height/depth of the index structure (if applicable)
+    fn height(&self) -> Option<usize> {
+        None
+    }
+
+    /// Get load factor (0.0 to 1.0) indicating fullness
+    fn load_factor(&self) -> f64 {
+        0.0
+    }
+}
+
 // Index key type
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum IndexKey {

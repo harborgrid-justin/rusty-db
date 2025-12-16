@@ -145,6 +145,9 @@ pub struct RacConfig {
     // Cluster name
     pub cluster_name: String,
 
+    // Listen address for interconnect (e.g., "0.0.0.0:5000")
+    pub listen_address: String,
+
     // Cache Fusion configuration
     pub cache_fusion: GcsConfig,
 
@@ -180,6 +183,10 @@ impl Default for RacConfig {
     fn default() -> Self {
         Self {
             cluster_name: "rustydb_cluster".to_string(),
+            // Listen address is configurable - users can override this via RacConfig
+            // Default listens on all interfaces, port 5000
+            // Production deployments should specify explicit IP addresses for security
+            listen_address: Self::default_listen_address(),
             cache_fusion: GcsConfig::default(),
             grd: GrdConfig::default(),
             interconnect: InterconnectConfig::default(),
@@ -191,6 +198,27 @@ impl Default for RacConfig {
             connection_load_balancing: true,
             quorum_percentage: 0.5,
         }
+    }
+}
+
+impl RacConfig {
+    // Get default listen address from environment or use hardcoded fallback
+    fn default_listen_address() -> String {
+        // Check environment variable first for configurability
+        std::env::var("RUSTYDB_RAC_LISTEN_ADDRESS")
+            .unwrap_or_else(|_| "0.0.0.0:5000".to_string())
+    }
+
+    // Builder pattern for easy configuration
+    pub fn with_listen_address(mut self, address: String) -> Self {
+        self.listen_address = address;
+        self
+    }
+
+    // Convenience method to set listen address from host and port
+    pub fn with_host_port(mut self, host: &str, port: u16) -> Self {
+        self.listen_address = format!("{}:{}", host, port);
+        self
     }
 }
 
@@ -387,11 +415,11 @@ impl RacCluster {
     pub async fn new(cluster_name: &str, config: RacConfig) -> Result<Self, DbError> {
         let node_id = Self::generate_node_id();
 
-        // Initialize interconnect
-        let listen_address = "0.0.0.0:5000".to_string(); // Default, should be configurable
+        // Initialize interconnect with configurable address
+        let listen_address = config.listen_address.clone();
         let interconnect = Arc::new(ClusterInterconnect::new(
             node_id.clone(),
-            listen_address,
+            listen_address.clone(),
             config.interconnect.clone(),
         ));
 
@@ -429,7 +457,7 @@ impl RacCluster {
             node_id.clone(),
             ClusterNode {
                 node_id: node_id.clone(),
-                address: "localhost:5000".to_string(),
+                address: listen_address.clone(),
                 role: NodeRole::Coordinator,
                 capacity: NodeCapacity::default(),
                 services: vec!["database".to_string()],

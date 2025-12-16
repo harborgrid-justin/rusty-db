@@ -3,6 +3,11 @@
 // This module provides statistics collection for transaction operations,
 // enabling performance monitoring and capacity planning.
 //
+// # Unified Statistics Interface
+//
+// All statistics types implement the `ComponentStats` trait for consistent
+// access patterns across the transaction layer.
+//
 // # Example
 //
 // ```rust,ignore
@@ -17,6 +22,24 @@ use std::sync::Arc;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
+
+/// Common trait for all statistics components in the transaction layer.
+///
+/// This trait provides a unified interface for statistics collection,
+/// enabling consistent monitoring across different transaction components.
+pub trait ComponentStats: Send + Sync {
+    /// Type of summary produced by this statistics component.
+    type Summary: Clone + Send + Sync;
+
+    /// Gets a snapshot of current statistics.
+    fn get_summary(&self) -> Self::Summary;
+
+    /// Resets all statistics counters to zero.
+    fn reset(&self);
+
+    /// Returns a human-readable description of the component.
+    fn component_name(&self) -> &'static str;
+}
 
 /// Transaction statistics collector.
 ///
@@ -152,6 +175,22 @@ impl Default for TransactionStatistics {
     }
 }
 
+impl ComponentStats for TransactionStatistics {
+    type Summary = StatisticsSummary;
+
+    fn get_summary(&self) -> Self::Summary {
+        self.get_summary()
+    }
+
+    fn reset(&self) {
+        self.reset();
+    }
+
+    fn component_name(&self) -> &'static str {
+        "TransactionStatistics"
+    }
+}
+
 /// Summary of transaction statistics.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StatisticsSummary {
@@ -193,6 +232,10 @@ pub struct LockStatistics {
     lock_timeouts: Arc<Mutex<u64>>,
     /// Total deadlocks detected.
     deadlocks_detected: Arc<Mutex<u64>>,
+    /// Total lock escalations performed.
+    lock_escalations: Arc<Mutex<u64>>,
+    /// Total row locks escalated.
+    rows_escalated: Arc<Mutex<u64>>,
     /// Wait time samples (milliseconds).
     wait_times_ms: Arc<Mutex<Vec<u64>>>,
 }
@@ -205,6 +248,8 @@ impl LockStatistics {
             lock_waits: Arc::new(Mutex::new(0)),
             lock_timeouts: Arc::new(Mutex::new(0)),
             deadlocks_detected: Arc::new(Mutex::new(0)),
+            lock_escalations: Arc::new(Mutex::new(0)),
+            rows_escalated: Arc::new(Mutex::new(0)),
             wait_times_ms: Arc::new(Mutex::new(Vec::new())),
         }
     }
@@ -234,6 +279,16 @@ impl LockStatistics {
         *self.deadlocks_detected.lock() += 1;
     }
 
+    /// Records a lock escalation.
+    ///
+    /// # Arguments
+    ///
+    /// * `row_count` - Number of row locks that were escalated to a table lock.
+    pub fn record_escalation(&self, row_count: usize) {
+        *self.lock_escalations.lock() += 1;
+        *self.rows_escalated.lock() += row_count as u64;
+    }
+
     /// Gets a summary of lock statistics.
     pub fn get_summary(&self) -> LockStatisticsSummary {
         let wait_times = self.wait_times_ms.lock();
@@ -248,6 +303,8 @@ impl LockStatistics {
             total_waits: *self.lock_waits.lock(),
             total_timeouts: *self.lock_timeouts.lock(),
             total_deadlocks: *self.deadlocks_detected.lock(),
+            total_escalations: *self.lock_escalations.lock(),
+            total_rows_escalated: *self.rows_escalated.lock(),
             avg_wait_time_ms: avg_wait,
         }
     }
@@ -256,6 +313,28 @@ impl LockStatistics {
 impl Default for LockStatistics {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl ComponentStats for LockStatistics {
+    type Summary = LockStatisticsSummary;
+
+    fn get_summary(&self) -> Self::Summary {
+        self.get_summary()
+    }
+
+    fn reset(&self) {
+        *self.lock_requests.lock() = 0;
+        *self.lock_waits.lock() = 0;
+        *self.lock_timeouts.lock() = 0;
+        *self.deadlocks_detected.lock() = 0;
+        *self.lock_escalations.lock() = 0;
+        *self.rows_escalated.lock() = 0;
+        self.wait_times_ms.lock().clear();
+    }
+
+    fn component_name(&self) -> &'static str {
+        "LockStatistics"
     }
 }
 
@@ -270,6 +349,10 @@ pub struct LockStatisticsSummary {
     pub total_timeouts: u64,
     /// Total deadlocks detected.
     pub total_deadlocks: u64,
+    /// Total lock escalations performed (row -> table).
+    pub total_escalations: u64,
+    /// Total row locks escalated to table locks.
+    pub total_rows_escalated: u64,
     /// Average wait time in milliseconds.
     pub avg_wait_time_ms: u64,
 }
@@ -279,6 +362,24 @@ impl LockStatisticsSummary {
     pub fn contention_rate(&self) -> f64 {
         if self.total_requests > 0 {
             self.total_waits as f64 / self.total_requests as f64
+        } else {
+            0.0
+        }
+    }
+
+    /// Returns the escalation rate (escalations / requests).
+    pub fn escalation_rate(&self) -> f64 {
+        if self.total_requests > 0 {
+            self.total_escalations as f64 / self.total_requests as f64
+        } else {
+            0.0
+        }
+    }
+
+    /// Returns the average row locks per escalation.
+    pub fn avg_rows_per_escalation(&self) -> f64 {
+        if self.total_escalations > 0 {
+            self.total_rows_escalated as f64 / self.total_escalations as f64
         } else {
             0.0
         }
