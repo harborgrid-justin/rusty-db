@@ -414,7 +414,7 @@ impl DatabaseCore {
 
         // Create data directory if it doesn't exist
         std::fs::create_dir_all(&config.data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create data directory: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to create data directory: {}", e)))?;
 
         Ok(())
     }
@@ -806,17 +806,25 @@ impl IoEngine {
         }
     }
 
+    // TODO: CRITICAL - Implement actual disk I/O
+    // This is currently a stub that returns empty pages and doesn't persist data
+    // SECURITY ISSUE: Database does not persist data to disk!
     pub fn read_page(&self, _page_id: u64) -> Result<Vec<u8>> {
         self.stats.reads.fetch_add(1, Ordering::Relaxed);
         self.stats.bytes_read.fetch_add(4096, Ordering::Relaxed);
+        // STUB: Returns empty page instead of reading from disk
         Ok(vec![0u8; 4096])
     }
 
+    // TODO: CRITICAL - Implement actual disk I/O
+    // This is currently a stub that doesn't actually write to disk
+    // SECURITY ISSUE: Database does not persist data to disk!
     pub fn write_page(&self, _page_id: u64, _data: &[u8]) -> Result<()> {
         self.stats.writes.fetch_add(1, Ordering::Relaxed);
         self.stats
             .bytes_written
             .fetch_add(_data.len() as u64, Ordering::Relaxed);
+        // STUB: Does not actually write to disk
         Ok(())
     }
 
@@ -990,6 +998,13 @@ impl MemoryArena {
 
         self.allocation_count.fetch_add(1, Ordering::Relaxed);
 
+        // TODO: CRITICAL - Implement actual arena allocation
+        // This is currently a fake "arena" that just wraps Vec::new
+        // True arena allocation should:
+        // 1. Allocate from pre-allocated memory blocks (bump allocation)
+        // 2. Reuse memory blocks for performance
+        // 3. Reduce fragmentation through contiguous allocation
+        // Current implementation: Just allocates Vec from heap (not a real arena!)
         Ok(vec![0u8; size])
     }
 

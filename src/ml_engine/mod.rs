@@ -1,5 +1,46 @@
 // # In-Database Machine Learning Engine
 //
+// ⚠️ **CRITICAL: DUAL ML IMPLEMENTATION DETECTED** ⚠️
+//
+// **Issue**: This module (`src/ml_engine/`) duplicates functionality from `src/ml/`
+//
+// **Duplication Analysis**:
+// - Dataset: Both modules have separate Dataset implementations
+// - Algorithms: Linear regression, logistic regression, decision trees, k-means all duplicated
+// - Training: Separate training infrastructure in both modules
+// - Inference: Separate scoring/inference implementations
+//
+// **Unique to ml_engine/** (preserve during merge):
+// - automl.rs: Automated model selection and tuning
+// - model_store.rs: Model versioning and storage
+// - timeseries.rs: Time series forecasting
+//
+// **Unique to ml/** (preserve during merge):
+// - sql_integration.rs: SQL syntax for ML operations
+// - quantization.rs: Model quantization for efficiency
+// - simd_ops.rs: SIMD-optimized operations
+//
+// **TODO - HIGH PRIORITY**:
+// 1. Merge src/ml/ and src/ml_engine/ into unified src/ml/ module
+// 2. Consolidate duplicate Dataset, Hyperparameters, and Algorithm types
+// 3. Merge training infrastructure (ml/engine.rs + ml_engine/training.rs)
+// 4. Merge inference infrastructure (ml/inference.rs + ml_engine/scoring.rs)
+// 5. Preserve unique features from both modules:
+//    - AutoML (from ml_engine)
+//    - Model store with versioning (from ml_engine)
+//    - Time series (from ml_engine)
+//    - SQL integration (from ml)
+//    - Quantization & SIMD (from ml)
+// 6. Remove this module after merge complete
+//
+// **Temporary Delegation Pattern** (until merge):
+// - For now, this module should be considered the "extended" ML features
+// - Core ML operations should delegate to src/ml/ where possible
+// - New features should be added to src/ml/ only
+//
+// **Impact**: 2x code maintenance, ~3000 lines of duplication, API confusion
+// **Priority**: BLOCKER - merge before v1.0 release
+//
 // Production-grade machine learning engine integrated directly with RustyDB's query engine.
 // Provides zero-copy data access, GPU acceleration, federated learning, and incremental updates.
 //

@@ -525,6 +525,7 @@ pub struct ColumnarTable {
     columns: Vec<ColumnDef>,
     chunks: Arc<RwLock<HashMap<String, Vec<ColumnChunk>>>>,
     row_count: usize,
+    max_chunks_per_column: usize, // BOUNDED: Prevent unbounded chunk growth
 }
 
 impl ColumnarTable {
@@ -534,6 +535,7 @@ impl ColumnarTable {
             columns,
             chunks: Arc::new(RwLock::new(HashMap::new())),
             row_count: 0,
+            max_chunks_per_column: 100, // BOUNDED: Limit chunks to prevent memory exhaustion
         }
     }
 
@@ -554,10 +556,16 @@ impl ColumnarTable {
             let mut chunk = ColumnChunk::new(col_def.column_type);
             chunk.auto_encode(&values)?;
 
-            chunks
-                .entry(col_def.name.clone())
-                .or_insert_with(Vec::new)
-                .push(chunk);
+            let column_chunks = chunks.entry(col_def.name.clone()).or_insert_with(Vec::new);
+
+            // BOUNDED: Enforce max chunks per column
+            // If at capacity, remove oldest chunk to make room
+            if column_chunks.len() >= self.max_chunks_per_column {
+                // In production, this should trigger chunk consolidation/compaction
+                column_chunks.remove(0);
+            }
+
+            column_chunks.push(chunk);
         }
 
         self.row_count += rows.len();

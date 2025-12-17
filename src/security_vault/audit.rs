@@ -3,6 +3,13 @@
 // Comprehensive audit trail system with fine-grained auditing (FGA),
 // tamper-evident blockchain-backed logs, and compliance reporting.
 //
+// TODO(consolidation): Duplicate audit system #2 of 2 (Issue D-02)
+// This duplicates functionality from security/audit.rs (~1,500 lines total duplication).
+// Both implement AuditAction, AuditRecord, log_event() with similar logic.
+// See diagrams/07_security_enterprise_flow.md Section 1.1, Issue #1
+// Recommendation: Merge into single unified audit system in security/audit.rs
+// with routing rules for different audit destinations
+//
 // ## Features
 //
 // - **Fine-Grained Auditing**: Track specific column access and modifications
@@ -396,7 +403,7 @@ impl AuditVault {
     pub fn new<P: AsRef<Path>>(data_dir: P, retention_days: u32) -> Result<Self> {
         let data_dir = data_dir.as_ref().to_path_buf();
         fs::create_dir_all(&data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create audit directory: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to create audit directory: {}", e)))?;
 
         Ok(Self {
             data_dir,
@@ -530,14 +537,14 @@ impl AuditVault {
             .create(true)
             .append(true)
             .open(&log_file)
-            .map_err(|e| DbError::IoError(format!("Failed to open audit log: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to open audit log: {}", e)))?;
 
         for record in buffer.iter() {
             let json = serde_json::to_string(record).map_err(|e| {
                 DbError::Serialization(format!("Failed to serialize record: {}", e))
             })?;
             writeln!(file, "{}", json)
-                .map_err(|e| DbError::IoError(format!("Failed to write audit log: {}", e)))?;
+                .map_err(|e| DbError::Storage(format!("Failed to write audit log: {}", e)))?;
         }
 
         buffer.clear();
@@ -561,7 +568,7 @@ impl AuditVault {
         }
 
         let content = fs::read_to_string(&log_file)
-            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to read audit log: {}", e)))?;
 
         let mut records = Vec::new();
         for line in content.lines() {
@@ -605,7 +612,7 @@ impl AuditVault {
         }
 
         let content = fs::read_to_string(&log_file)
-            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to read audit log: {}", e)))?;
 
         let mut previous_hash = String::from("0");
 
@@ -750,7 +757,7 @@ impl AuditVault {
         }
 
         let content = fs::read_to_string(&log_file)
-            .map_err(|e| DbError::IoError(format!("Failed to read audit log: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to read audit log: {}", e)))?;
 
         let mut kept_records = Vec::new();
         let mut purged_count = 0;
@@ -772,7 +779,7 @@ impl AuditVault {
 
         // Write back kept records
         fs::write(&log_file, kept_records.join("\n"))
-            .map_err(|e| DbError::IoError(format!("Failed to write audit log: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to write audit log: {}", e)))?;
 
         Ok(purged_count)
     }

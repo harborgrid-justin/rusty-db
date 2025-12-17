@@ -1,5 +1,41 @@
 // # Change Data Capture (CDC) Engine
 //
+// ⚠️ **CRITICAL: TRIPLE CHANGE STREAM IMPLEMENTATION DETECTED** ⚠️
+//
+// **Issue**: There are THREE separate change stream implementations:
+// 1. `src/streams/cdc.rs` (this file) - WAL-based CDC for relational tables
+// 2. `src/document_store/changes.rs` - Change streams for document collections
+// 3. `src/event_processing/` - Event streams for CEP
+//
+// **Duplication Analysis**:
+// - All three have separate ChangeEvent types with similar fields
+// - All three implement buffering and subscription mechanisms
+// - All three track change types (Insert/Update/Delete)
+// - All three have separate cursor/position tracking
+//
+// **TODO - HIGH PRIORITY**:
+// 1. Unify all change tracking through this module (src/streams/cdc.rs)
+// 2. Make document_store/changes.rs delegate to this CDC infrastructure
+// 3. Make event_processing/ use this CDC for data change events
+// 4. Create adapter layer for domain-specific events (documents vs tables)
+// 5. Consolidate ChangeEvent types into single unified type with variants
+// 6. Share buffering and subscription infrastructure
+//
+// **Proposed Unified Architecture**:
+// ```
+// src/streams/
+//   ├── cdc.rs           (this file - core CDC engine)
+//   ├── adapters/
+//   │   ├── table_adapter.rs    (relational table changes)
+//   │   ├── document_adapter.rs (document changes)
+//   │   └── event_adapter.rs    (complex events)
+//   ├── publisher.rs     (unified event publishing)
+//   └── subscriber.rs    (unified event consumption)
+// ```
+//
+// **Impact**: 2x-3x code duplication, ~2000 lines affected, inconsistent semantics
+// **Priority**: HIGH - consolidate in next quarter
+//
 // Provides enterprise-grade change data capture from the Write-Ahead Log.
 // Captures INSERT, UPDATE, and DELETE operations with before/after images,
 // column-level tracking, and low-latency event delivery.

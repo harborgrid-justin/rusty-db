@@ -12,6 +12,13 @@
 // - **HSM Integration**: Hardware security module support
 // - **Performance**: Minimal overhead with hardware acceleration
 //
+// TODO(consolidation): Duplicate encryption implementation #4 of 5 (Issue D-01)
+// This is one of 5 separate encryption implementations (~3,850 lines total).
+// Consolidate with: networking/security/encryption.rs, security/encryption.rs,
+// security/encryption_engine.rs, backup/backup_encryption.rs
+// See diagrams/07_security_enterprise_flow.md Section 4.1
+// Recommendation: Create unified EncryptionService trait, TDE should delegate to it
+//
 // ## Encryption Flow
 //
 // ```text

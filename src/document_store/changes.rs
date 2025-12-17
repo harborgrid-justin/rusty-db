@@ -1,5 +1,39 @@
 // # Change Streams
 //
+// ⚠️ **WARNING: DUPLICATE CHANGE STREAM IMPLEMENTATION** ⚠️
+//
+// **Issue**: This module duplicates functionality from `src/streams/cdc.rs`
+//
+// **Duplication Details**:
+// - Separate ChangeEvent type (vs src/streams/cdc.rs::ChangeEvent)
+// - Separate change type enum (vs src/streams/cdc.rs::ChangeType)
+// - Separate buffering mechanism (vs unified CDC buffer)
+// - Separate subscription system (vs src/streams/subscriber.rs)
+//
+// **TODO - HIGH PRIORITY**:
+// 1. Migrate this module to use `src/streams/cdc.rs` as the underlying CDC engine
+// 2. Create DocumentChangeAdapter that wraps CDC events with document-specific metadata
+// 3. Keep document-specific features (resume tokens, updateDescription)
+// 4. Delegate buffering and event delivery to CDC infrastructure
+// 5. Remove duplicate ChangeEvent/ChangeEventType definitions
+//
+// **Migration Path**:
+// ```rust
+// // Before: Direct implementation
+// pub struct ChangeStream { /* ... */ }
+//
+// // After: Delegation to CDC
+// use crate::streams::cdc::CDCEngine;
+// pub struct ChangeStream {
+//     cdc: Arc<CDCEngine>,
+//     adapter: DocumentChangeAdapter,
+// }
+// ```
+//
+// **Cross-Reference**: See `src/streams/cdc.rs` header for full consolidation plan
+// **Impact**: ~500 lines of duplication, inconsistent with table-based CDC
+// **Priority**: HIGH - merge with CDC infrastructure
+//
 // Real-time document change notifications with change stream cursors,
 // resume tokens, filtered streams, and document diff generation.
 

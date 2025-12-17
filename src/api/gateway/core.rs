@@ -30,10 +30,19 @@ impl ApiGateway {
         }
     }
 
-    // Register a new route
-    pub fn register_route(&self, route: Route) {
+    /// Register a new route with bounds checking
+    /// Returns error if MAX_ROUTES limit is reached
+    pub fn register_route(&self, route: Route) -> Result<(), DbError> {
         let mut routes = self.routes.write();
+        if routes.len() >= super::types::MAX_ROUTES {
+            return Err(DbError::Internal(format!(
+                "Route registry full: {} routes (max: {})",
+                routes.len(),
+                super::types::MAX_ROUTES
+            )));
+        }
         routes.insert(route.id.clone(), route);
+        Ok(())
     }
 
     // Remove a route

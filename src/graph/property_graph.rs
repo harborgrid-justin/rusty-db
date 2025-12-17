@@ -41,6 +41,20 @@ pub const MAX_PARTITIONS: u32 = 1024;
 // Default partition size (number of vertices)
 pub const DEFAULT_PARTITION_SIZE: usize = 100_000;
 
+// TODO(ARCHITECTURE): Implement bounded vertex storage to prevent OOM
+// Maximum number of vertices in the entire graph (prevents unbounded memory growth)
+// Current implementation uses unbounded HashMap - see PropertyGraph struct for fix plan
+// Recommended: Use BoundedHashMap or partition-based storage with disk backing
+// See detailed fix recommendations in PropertyGraph struct documentation (line ~750)
+pub const MAX_VERTICES: usize = 10_000_000; // 10 million vertices
+
+// TODO(ARCHITECTURE): Implement bounded edge storage to prevent OOM
+// Maximum number of edges in the entire graph (prevents unbounded memory growth)
+// Current implementation uses unbounded HashMap - see PropertyGraph struct for fix plan
+// Assumes average degree of 5 (typical for social/knowledge graphs)
+// See detailed fix recommendations in PropertyGraph struct documentation (line ~750)
+pub const MAX_EDGES: usize = 50_000_000; // 50 million edges (5x vertices)
+
 // ============================================================================
 // Property Storage
 // ============================================================================
@@ -738,13 +752,68 @@ impl Default for GraphStats {
 // ============================================================================
 
 // Main property graph structure
+//
+// ⚠️ **CRITICAL: UNBOUNDED IN-MEMORY GROWTH** ⚠️
+//
+// **Issue**: All graph data stored in unbounded HashMaps
+//
+// **Risk**: Memory exhaustion on graphs with >10M vertices
+//
+// **Unbounded Structures**:
+// 1. vertices: HashMap<VertexId, Vertex> - No capacity limit
+// 2. edges: HashMap<EdgeId, Edge> - No capacity limit
+// 3. hyperedges: HashMap<EdgeId, HyperEdge> - No capacity limit
+// 4. Per-vertex edge sets (HashSet in Vertex struct) - No limits
+// 5. Per-vertex/edge properties (HashMap in Properties struct) - No limits
+//
+// **TODO - HIGH PRIORITY**:
+// 1. Option A: Add capacity limits with eviction to disk
+//    - Use BoundedHashMap from common::bounded_map
+//    - Evict cold vertices/edges to disk-backed storage
+//    - Keep hot vertices in memory
+//
+// 2. Option B: Implement graph partitioning (RECOMMENDED)
+//    - Partition large graphs across multiple storage units
+//    - Load partitions on-demand
+//    - Use existing GraphPartitioner but enforce partition limits
+//    - Default partition size: 100K vertices (already defined)
+//
+// 3. Option C: Hybrid approach
+//    - BoundedHashMap for each partition
+//    - Partition capacity: 100K vertices
+//    - Max partitions in memory: 100 (= 10M total vertices)
+//    - Evict entire partitions to disk when needed
+//
+// **Recommended Fix**:
+// ```rust
+// use crate::common::BoundedHashMap;
+//
+// pub struct PropertyGraph {
+//     // In-memory partitions (limited capacity)
+//     partitions: BoundedHashMap<PartitionId, GraphPartition>,
+//     // Disk-backed partition storage
+//     partition_store: PartitionStore,
+// }
+//
+// struct GraphPartition {
+//     vertices: BoundedHashMap<VertexId, Vertex>,  // Max 100K
+//     edges: BoundedHashMap<EdgeId, Edge>,         // Max 500K
+// }
+// ```
+//
+// **Impact**: Can cause OOM on large graphs, no production-ready scalability
+// **Priority**: HIGH - implement before large graph workloads
+//
 pub struct PropertyGraph {
+    // TODO: Replace with BoundedHashMap or partition-based storage
     // All vertices in the graph
     vertices: HashMap<VertexId, Vertex>,
 
+    // TODO: Replace with BoundedHashMap or partition-based storage
     // All edges in the graph
     edges: HashMap<EdgeId, Edge>,
 
+    // TODO: Replace with BoundedHashMap or partition-based storage
     // Hyperedges (for hypergraph support)
     hyperedges: HashMap<EdgeId, HyperEdge>,
 

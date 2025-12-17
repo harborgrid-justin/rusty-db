@@ -20,6 +20,20 @@ use uuid::Uuid;
 use crate::error::DbError;
 use crate::networking::NetworkManager;
 
+// ============================================================================
+// Constants - Bounds for Open-Ended Data Structures
+// ============================================================================
+
+/// Maximum number of tracked active queries to prevent unbounded memory growth
+/// TODO: Implement TTL-based cleanup or LRU eviction for old queries
+/// See: diagrams/06_network_api_flow.md - Issue #5.3
+pub const MAX_ACTIVE_QUERIES: usize = 100_000;
+
+/// Maximum number of tracked active sessions to prevent unbounded memory growth
+/// TODO: Implement TTL-based cleanup or LRU eviction for stale sessions
+/// See: diagrams/06_network_api_flow.md - Issue #5.3
+pub const MAX_ACTIVE_SESSIONS: usize = 50_000;
+
 // Newtype for API configuration to ensure domain-specific handling
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ApiConfig {
@@ -108,11 +122,45 @@ pub struct TransactionId(pub u64);
 pub struct ApiState {
     pub config: ApiConfig,
     pub connection_semaphore: Arc<Semaphore>,
+    /// Active queries tracking - BOUNDED to MAX_ACTIVE_QUERIES
+    /// NOTE: Callers must check size before inserting. TODO: Add automatic TTL-based cleanup
     pub active_queries: Arc<RwLock<HashMap<Uuid, QueryExecution>>>,
+    /// Active sessions tracking - BOUNDED to MAX_ACTIVE_SESSIONS
+    /// NOTE: Callers must check size before inserting. TODO: Add automatic TTL-based cleanup
     pub active_sessions: Arc<RwLock<HashMap<SessionId, SessionInfo>>>,
     pub metrics: Arc<RwLock<ApiMetrics>>,
     pub rate_limiter: Arc<RwLock<RateLimiter>>,
     pub network_manager: Option<Arc<NetworkManager>>,
+}
+
+impl ApiState {
+    /// Add a query to active tracking with bounds checking
+    pub fn add_active_query(&self, query: QueryExecution) -> Result<(), DbError> {
+        let mut queries = self.active_queries.write();
+        if queries.len() >= MAX_ACTIVE_QUERIES {
+            return Err(DbError::Internal(format!(
+                "Active queries limit reached: {} (max: {}). Old queries not cleaned up.",
+                queries.len(),
+                MAX_ACTIVE_QUERIES
+            )));
+        }
+        queries.insert(query.query_id, query);
+        Ok(())
+    }
+
+    /// Add a session to active tracking with bounds checking
+    pub fn add_active_session(&self, session: SessionInfo) -> Result<(), DbError> {
+        let mut sessions = self.active_sessions.write();
+        if sessions.len() >= MAX_ACTIVE_SESSIONS {
+            return Err(DbError::Internal(format!(
+                "Active sessions limit reached: {} (max: {}). Old sessions not cleaned up.",
+                sessions.len(),
+                MAX_ACTIVE_SESSIONS
+            )));
+        }
+        sessions.insert(session.session_id, session);
+        Ok(())
+    }
 }
 
 // API error with structured information
@@ -193,6 +241,21 @@ pub struct ApiMetrics {
     pub requests_by_endpoint: HashMap<String, u64>,
 }
 
+// TODO: CONSOLIDATION NEEDED - RateLimiter Implementation #1 of 6
+// This is one of 6 separate RateLimiter implementations in the codebase:
+//   1. src/api/rest/types.rs - THIS FILE (Simple token bucket)
+//   2. src/api/gateway/ratelimit.rs - Token bucket + sliding window
+//   3. src/api/graphql/complexity.rs - Query complexity limiter
+//   4. src/security/network_hardening/rate_limiting.rs - Adaptive with DDoS protection
+//   5. src/network/advanced_protocol/flow_control.rs - Protocol-level flow control
+//   6. src/enterprise/cross_cutting.rs - Enterprise API rate limiter
+//
+// RECOMMENDATION: Create unified src/common/rate_limiter.rs with:
+//   - RateLimiter trait with pluggable algorithms
+//   - Token bucket, sliding window, adaptive implementations
+//   - Single well-tested implementation used by all modules
+// See: diagrams/06_network_api_flow.md - Issue #4.2
+//
 // Rate limiter implementation
 #[derive(Debug)]
 pub struct RateLimiter {

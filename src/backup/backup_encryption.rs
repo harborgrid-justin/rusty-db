@@ -1,5 +1,12 @@
 // Backup Encryption - AES-256 encryption with key management
 // Provides secure backup encryption with key rotation and management
+//
+// TODO(consolidation): Duplicate encryption implementation #5 of 5 (Issue D-01)
+// This is one of 5 separate encryption implementations (~3,850 lines total).
+// Consolidate with: networking/security/encryption.rs, security/encryption.rs,
+// security/encryption_engine.rs, security_vault/tde.rs
+// See diagrams/07_security_enterprise_flow.md Section 4.1 & 8.1
+// Recommendation: Backups should use TDE DEKs wrapped in backup MEK
 
 use crate::error::DbError;
 use crate::Result;

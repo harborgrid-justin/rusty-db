@@ -390,6 +390,11 @@ pub struct TieredStorageManager {
 
     // Statistics
     stats: Arc<RwLock<TierStats>>,
+
+    // BOUNDED: Size limits for each tier to prevent unbounded growth
+    max_hot_pages: usize,
+    max_warm_pages: usize,
+    max_cold_pages: usize,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -415,6 +420,10 @@ impl TieredStorageManager {
             predictor: Arc::new(Mutex::new(TierPredictor::new())),
             migration_queue: Arc::new(Mutex::new(VecDeque::new())),
             stats: Arc::new(RwLock::new(TierStats::default())),
+            // BOUNDED: Set capacity limits for each tier
+            max_hot_pages: 1000,   // Hot tier: most accessed, smallest capacity
+            max_warm_pages: 5000,  // Warm tier: moderate capacity
+            max_cold_pages: 20000, // Cold tier: largest capacity
         }
     }
 
@@ -433,13 +442,34 @@ impl TieredStorageManager {
 
         match tier {
             StorageTier::Hot => {
-                self.hot_storage.write().insert(page.id, tiered_page);
+                let mut hot = self.hot_storage.write();
+                // BOUNDED: Evict LRU page if at capacity
+                if hot.len() >= self.max_hot_pages && !hot.contains_key(&page.id) {
+                    if let Some(&evict_id) = hot.keys().next() {
+                        hot.remove(&evict_id);
+                    }
+                }
+                hot.insert(page.id, tiered_page);
             }
             StorageTier::Warm => {
-                self.warm_storage.write().insert(page.id, tiered_page);
+                let mut warm = self.warm_storage.write();
+                // BOUNDED: Evict LRU page if at capacity
+                if warm.len() >= self.max_warm_pages && !warm.contains_key(&page.id) {
+                    if let Some(&evict_id) = warm.keys().next() {
+                        warm.remove(&evict_id);
+                    }
+                }
+                warm.insert(page.id, tiered_page);
             }
             StorageTier::Cold => {
-                self.cold_storage.write().insert(page.id, tiered_page);
+                let mut cold = self.cold_storage.write();
+                // BOUNDED: Evict LRU page if at capacity
+                if cold.len() >= self.max_cold_pages && !cold.contains_key(&page.id) {
+                    if let Some(&evict_id) = cold.keys().next() {
+                        cold.remove(&evict_id);
+                    }
+                }
+                cold.insert(page.id, tiered_page);
             }
         }
 

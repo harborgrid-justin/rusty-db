@@ -95,7 +95,7 @@ impl ExternalMergeSorter {
 
         // Need external sort
         std::fs::create_dir_all(&self.config.temp_dir)
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+            .map_err(|e| DbError::Storage(e.to_string()))?;
 
         // Phase 1: Generate sorted runs
         let runs = self.generate_sorted_runs(&data, order_by)?;
@@ -192,7 +192,7 @@ impl ExternalMergeSorter {
         // Open readers for all runs
         let mut readers: Vec<BufReader<File>> = Vec::new();
         for run_path in runs {
-            let file = File::open(run_path).map_err(|e| DbError::IoError(e.to_string()))?;
+            let file = File::open(run_path).map_err(|e| DbError::Storage(e.to_string()))?;
             readers.push(BufReader::new(file));
         }
 
@@ -217,7 +217,7 @@ impl ExternalMergeSorter {
         // Create output run
         let output_path = self.create_run_path()?;
         let output_file =
-            File::create(&output_path).map_err(|e| DbError::IoError(e.to_string()))?;
+            File::create(&output_path).map_err(|e| DbError::Storage(e.to_string()))?;
         let mut writer = BufWriter::new(output_file);
 
         // Merge loop
@@ -238,7 +238,7 @@ impl ExternalMergeSorter {
 
         writer
             .flush()
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+            .map_err(|e| DbError::Storage(e.to_string()))?;
 
         Ok(output_path)
     }
@@ -289,7 +289,7 @@ impl ExternalMergeSorter {
     // Write sorted run to disk
     fn write_run_to_disk(&self, rows: &[Vec<String>]) -> Result<PathBuf, DbError> {
         let path = self.create_run_path()?;
-        let file = File::create(&path).map_err(|e| DbError::IoError(e.to_string()))?;
+        let file = File::create(&path).map_err(|e| DbError::Storage(e.to_string()))?;
         let mut writer = BufWriter::new(file);
 
         for row in rows {
@@ -298,14 +298,14 @@ impl ExternalMergeSorter {
 
         writer
             .flush()
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+            .map_err(|e| DbError::Storage(e.to_string()))?;
 
         Ok(path)
     }
 
     // Read sorted run from disk
     fn read_run_from_disk(&self, path: &Path) -> Result<Vec<Vec<String>>, DbError> {
-        let file = File::open(path).map_err(|e| DbError::IoError(e.to_string()))?;
+        let file = File::open(path).map_err(|e| DbError::Storage(e.to_string()))?;
         let mut reader = BufReader::new(file);
 
         let mut rows = Vec::new();
@@ -321,7 +321,7 @@ impl ExternalMergeSorter {
         let line = row.join("\t") + "\n";
         writer
             .write_all(line.as_bytes())
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+            .map_err(|e| DbError::Storage(e.to_string()))?;
         Ok(())
     }
 
@@ -330,7 +330,7 @@ impl ExternalMergeSorter {
         let mut line = String::new();
         let bytes_read = reader
             .read_line(&mut line)
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+            .map_err(|e| DbError::Storage(e.to_string()))?;
 
         if bytes_read == 0 {
             return Ok(None);

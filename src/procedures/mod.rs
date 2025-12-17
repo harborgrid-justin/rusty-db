@@ -1,5 +1,59 @@
 // RustyDB Stored Procedures Module
 // Enterprise-grade PL/SQL-compatible stored procedures, functions, triggers, and packages
+//
+// ⚠️ **CRITICAL: NO QUERY EXECUTOR INTEGRATION** ⚠️
+//
+// **Issue**: Procedures parse SQL but don't actually execute it
+//
+// **Missing Integration**:
+// 1. No connection to `src/execution/executor.rs` - SQL parsing only
+// 2. No transaction integration - procedures can't commit/rollback
+// 3. No parameter passing to SQL executor
+// 4. No OUT parameter collection from query results
+// 5. No cursor support for result sets
+//
+// **TODO - HIGH PRIORITY**:
+// 1. Integrate with QueryExecutor:
+//    ```rust
+//    use crate::execution::executor::QueryExecutor;
+//
+//    pub struct ProcedureRuntime {
+//        executor: Arc<QueryExecutor>,
+//        context: ProcedureContext,
+//    }
+//
+//    impl ProcedureRuntime {
+//        fn execute_statement(&mut self, sql: &str) -> Result<QueryResult> {
+//            self.executor.execute_sql(sql, &self.context.parameters)
+//        }
+//    }
+//    ```
+//
+// 2. Add transaction support:
+//    - Procedures should start transaction at BEGIN
+//    - COMMIT/ROLLBACK statements should work
+//    - Automatic rollback on exception
+//
+// 3. Implement parameter substitution:
+//    - Replace :param_name with actual values
+//    - Type checking and conversion
+//    - Support for IN/OUT/INOUT parameters
+//
+// 4. Implement cursor support:
+//    - Open cursor for SELECT statements
+//    - Fetch rows from cursor
+//    - Close cursor when done
+//
+// 5. Add exception handling:
+//    - RAISE statements
+//    - EXCEPTION blocks
+//    - Error propagation
+//
+// **Cross-Reference**: Same issues in `src/triggers/mod.rs`
+// **Impact**: Procedures are non-functional without executor integration
+// **Priority**: HIGH - required for enterprise features
+//
+// **See Also**: Analysis diagram section 8 in diagrams/08_specialized_engines_flow.md
 
 use crate::error::DbError;
 use crate::Result;
@@ -7,6 +61,26 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+// ============================================================================
+// Capacity Limits - Prevent Unbounded Memory Growth
+// ============================================================================
+
+// TODO(ARCHITECTURE): Implement bounded procedure storage to prevent OOM
+// Maximum number of stored procedures in the database
+// Current implementation uses unbounded HashMap - see ProcedureManager struct
+// Recommended: Use BoundedHashMap with eviction policy or disk-backed storage
+// Oracle typical production limit: ~100K procedures
+pub const MAX_STORED_PROCEDURES: usize = 100_000;
+
+// TODO(ARCHITECTURE): Limit procedure body size to prevent excessive memory usage
+// Maximum size of a single procedure body in bytes
+// Oracle PL/SQL limit: ~32KB per procedure
+pub const MAX_PROCEDURE_BODY_SIZE: usize = 32_768; // 32 KB
+
+// Maximum number of parameters per procedure
+// Oracle limit: 65,535 parameters (unrealistic, but we'll be conservative)
+pub const MAX_PARAMETERS_PER_PROCEDURE: usize = 1_000;
 
 // Sub-modules
 pub mod builtins;
@@ -59,7 +133,13 @@ pub struct ProcedureContext {
 }
 
 // Stored procedure manager
+//
+// TODO: Add capacity limit - unbounded procedure storage
+// Recommended: 10,000 max procedures (enterprise databases rarely exceed 1,000)
+// TODO: Add integration with query executor (procedures don't actually execute SQL yet)
 pub struct ProcedureManager {
+    // WARNING: Unbounded - can store unlimited procedures
+    // TODO: Replace with BoundedHashMap<String, StoredProcedure> (capacity: 10,000)
     procedures: Arc<RwLock<HashMap<String, StoredProcedure>>>,
 }
 

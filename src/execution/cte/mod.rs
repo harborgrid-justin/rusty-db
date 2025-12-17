@@ -60,7 +60,7 @@ mod tests {
             ],
         );
 
-        context.materialize("test_cte".to_string(), result);
+        context.materialize("test_cte".to_string(), result)?;
 
         let materialized = context.get_materialized("test_cte");
         assert!(materialized.is_some());

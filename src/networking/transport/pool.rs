@@ -5,6 +5,12 @@
 // - Idle connection cleanup
 // - Connection health checking
 // - Load-balanced connection selection
+//
+// TODO: CONSOLIDATION NEEDED - ConnectionPool Implementation #4 of 4
+// This transport pool duplicates connection pooling logic from src/pool/connection_pool.rs.
+// RECOMMENDATION: Either delegate to main pool or implement ConnectionPool<T> trait.
+// See src/pool/connection_pool.rs for full consolidation analysis.
+// See: diagrams/06_network_api_flow.md - Issue #4.3
 
 use crate::common::NodeId;
 use crate::error::{DbError, Result};

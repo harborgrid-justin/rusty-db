@@ -1,5 +1,15 @@
 // # Time Series Analysis and Forecasting
 //
+// ⚠️ **WARNING: DUPLICATE TIME SERIES IMPLEMENTATION** ⚠️
+//
+// **Issue**: Duplicates functionality from:
+// - `src/analytics/timeseries.rs` - Basic analytics
+// - `src/analytics/timeseries_analyzer.rs` - Analysis features
+//
+// **TODO**: Merge with other time series modules (move this to analytics/timeseries/)
+// **Cross-Reference**: See detailed consolidation plan in `src/analytics/timeseries.rs`
+// **Priority**: MEDIUM
+//
 // Advanced time series capabilities including ARIMA-like forecasting,
 // exponential smoothing, seasonality detection, trend analysis, and anomaly detection.
 

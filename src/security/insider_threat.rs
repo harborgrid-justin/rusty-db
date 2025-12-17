@@ -25,6 +25,12 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+// SAFETY: Maximum records to prevent OOM (Issues C-03, C-04)
+const MAX_FORENSIC_RECORDS: usize = 100_000; // Forensic logs (Issue C-03)
+const MAX_THREAT_ASSESSMENTS: usize = 100_000; // Threat assessments (Issue C-04)
+const MAX_EXFILTRATION_ATTEMPTS: usize = 10_000;
+const MAX_ESCALATION_ATTEMPTS: usize = 10_000;
+
 // Threat score (0-100)
 pub type ThreatScore = u8;
 
@@ -895,6 +901,19 @@ impl DataExfiltrationGuard {
             None => attempts.clone(),
         }
     }
+
+    /// Cleanup old attempts to prevent unbounded growth (Issue C-04)
+    pub fn cleanup_old_attempts(&self, older_than_seconds: i64) {
+        let cutoff = current_timestamp() - older_than_seconds;
+        let mut attempts = self.attempts.write();
+        attempts.retain(|a| a.timestamp > cutoff);
+
+        // SAFETY: Enforce hard limit to prevent OOM
+        if attempts.len() > MAX_EXFILTRATION_ATTEMPTS {
+            let drain_count = attempts.len() - MAX_EXFILTRATION_ATTEMPTS;
+            attempts.drain(0..drain_count);
+        }
+    }
 }
 
 // Privilege Escalation Detector
@@ -1006,6 +1025,19 @@ impl PrivilegeEscalationDetector {
             None => attempts.clone(),
         }
     }
+
+    /// Cleanup old attempts to prevent unbounded growth (Issue C-04)
+    pub fn cleanup_old_attempts(&self, older_than_seconds: i64) {
+        let cutoff = current_timestamp() - older_than_seconds;
+        let mut attempts = self.attempts.write();
+        attempts.retain(|a| a.timestamp > cutoff);
+
+        // SAFETY: Enforce hard limit to prevent OOM
+        if attempts.len() > MAX_ESCALATION_ATTEMPTS {
+            let drain_count = attempts.len() - MAX_ESCALATION_ATTEMPTS;
+            attempts.drain(0..drain_count);
+        }
+    }
 }
 
 // Query Sanitizer
@@ -1056,11 +1088,14 @@ pub struct ForensicLogger {
 
 impl ForensicLogger {
     pub fn new(max_records: usize) -> Self {
+        // SAFETY: Clamp to prevent OOM (Issue C-03)
+        let safe_max_records = max_records.min(MAX_FORENSIC_RECORDS);
+
         Self {
-            records: Arc::new(RwLock::new(VecDeque::new())),
+            records: Arc::new(RwLock::new(VecDeque::with_capacity(safe_max_records))),
             id_counter: Arc::new(RwLock::new(0)),
             previous_hash: Arc::new(RwLock::new(String::from("0"))),
-            max_records,
+            max_records: safe_max_records,
         }
     }
 

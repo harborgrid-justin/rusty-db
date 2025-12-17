@@ -1,6 +1,23 @@
 // Buffer Pool Manager Public API
 //
 // Main interface for buffer pool operations.
+//
+// TODO: CRITICAL - TRIPLE BUFFER POOL DUPLICATION!
+// This is BufferPoolManager implementation #3 of 3 with identical names.
+//
+// Three separate BufferPoolManager implementations exist:
+//   1. src/storage/buffer.rs - COW semantics, NUMA, LRU-K eviction
+//   2. src/buffer/manager.rs - Lock-free, per-core pools, IOCP, prefetch
+//   3. src/memory/buffer_pool/manager.rs (THIS FILE) - Multi-tier, ARC, 2Q, checkpoint
+//
+// RECOMMENDATION: Consolidate enterprise features into canonical implementation
+//   - Migrate multi-tier, ARC, 2Q features to src/buffer/manager.rs
+//   - Rename this module to avoid naming conflicts (e.g., EnterpriseBufferPool)
+//   - Keep checkpoint and double-write features as optional add-ons
+//   - This should become a wrapper/extension, not a standalone manager
+//   - Estimated effort: 3-5 days
+//
+// See: diagrams/02_storage_layer_flow.md - Issue #2.1
 
 use super::arc::*;
 use super::checkpoint::*;

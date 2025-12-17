@@ -1,7 +1,21 @@
 // Buffer Management Module
 //
 // Network buffer pooling, scatter-gather I/O, and large object handling
-
+//
+// TODO: CONSOLIDATION NEEDED - BufferPool Implementation #4 of 4
+// This is one of 4 separate BufferPool implementations in the codebase:
+//   1. src/buffer/manager.rs - Page-based buffer pool (4KB pages) for database
+//   2. src/memory/buffer_pool/ - General-purpose memory pooling
+//   3. src/io/buffer_pool.rs - Async I/O buffer management
+//   4. src/network/advanced_protocol/buffer_management.rs - THIS FILE (8KB network buffers)
+//
+// RECOMMENDATION: Consolidate to 2 pools:
+//   - Keep src/buffer/manager.rs for database page caching (4KB pages)
+//   - Merge this with src/memory/buffer_pool/ for general-purpose buffering
+//     with configurable size classes (8KB, 64KB, 1MB, etc.)
+//
+// See: diagrams/06_network_api_flow.md - Issue #4.1
+//
 // ============================================================================
 // Buffer Pool
 // ============================================================================

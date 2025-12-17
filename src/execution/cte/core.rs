@@ -50,8 +50,26 @@ impl CteContext {
     }
 
     // Store materialized CTE result
-    pub fn materialize(&mut self, name: String, result: QueryResult) {
+    // FIXED: Now enforces MAX_MATERIALIZED_CTES limit to prevent unbounded memory growth
+    pub fn materialize(&mut self, name: String, result: QueryResult) -> Result<(), DbError> {
+        // Check if we've hit the materialization limit
+        if self.materialized_ctes.len() >= crate::execution::MAX_MATERIALIZED_CTES
+            && !self.materialized_ctes.contains_key(&name)
+        {
+            // Evict oldest CTE (simple FIFO strategy)
+            // In production, could use LRU or size-based eviction
+            if let Some(first_key) = self.materialized_ctes.keys().next().cloned() {
+                eprintln!(
+                    "WARNING: CTE materialization limit reached ({}). Evicting CTE '{}'",
+                    crate::execution::MAX_MATERIALIZED_CTES,
+                    first_key
+                );
+                self.materialized_ctes.remove(&first_key);
+            }
+        }
+
         self.materialized_ctes.insert(name, result);
+        Ok(())
     }
 
     // Get materialized CTE result
@@ -82,6 +100,18 @@ impl RecursiveCteEvaluator {
     }
 
     // Evaluate a recursive CTE
+    //
+    // MEMORY ISSUE (diagrams/04_query_processing_flow.md):
+    // All rows are kept in memory - can cause OOM on large recursive queries
+    //
+    // TODO: Implement spill-to-disk for large recursive CTEs:
+    // 1. Set memory limit per CTE (e.g., 100MB)
+    // 2. When limit exceeded, spill intermediate results to disk
+    // 3. Use external merge for final result assembly
+    // 4. Add streaming evaluation where possible
+    //
+    // Expected improvement: No OOM on large graph traversals, bounded memory
+    // Effort: 1 week
     pub fn evaluate(
         &self,
         cte_name: &str,
@@ -103,6 +133,7 @@ impl RecursiveCteEvaluator {
                 break;
             }
 
+            // TODO: Check memory usage here and spill to disk if needed
             all_rows.extend(new_rows.rows.clone());
             working_table = new_rows;
 

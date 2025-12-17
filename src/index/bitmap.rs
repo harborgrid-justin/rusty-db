@@ -8,9 +8,15 @@
 // - Efficient bitmap scans
 
 use crate::Result;
+use crate::error::DbError;
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+// Maximum runs in compressed bitmap to prevent fragmentation
+// If exceeded, bitmap will be rejected to prevent pathological fragmentation
+// For truly fragmented workloads, consider using uncompressed bitmaps
+const MAX_RUNS: usize = 10000;
 
 // Bitmap Index
 //
@@ -69,7 +75,7 @@ impl<T: Eq + std::hash::Hash + Clone> BitmapIndex<T> {
             .or_insert_with(|| CompressedBitmap::new(*num_rows));
 
         // Set the bit for this row
-        bitmap.set(row_id, true);
+        bitmap.set(row_id, true)?;
 
         Ok(())
     }
@@ -175,7 +181,7 @@ impl CompressedBitmap {
     }
 
     // Set a bit at a position
-    pub fn set(&mut self, position: usize, value: bool) {
+    pub fn set(&mut self, position: usize, value: bool) -> Result<()> {
         let mut current_pos = 0;
         let mut run_idx = 0;
 
@@ -189,17 +195,29 @@ impl CompressedBitmap {
 
                 if run.value == value {
                     // Already has the correct value
-                    return;
+                    return Ok(());
+                }
+
+                // Check if split would exceed MAX_RUNS
+                if self.runs.len() >= MAX_RUNS {
+                    return Err(DbError::ResourceExhausted(
+                        format!(
+                            "Bitmap fragmentation limit reached ({} runs). Consider using uncompressed bitmaps.",
+                            MAX_RUNS
+                        )
+                    ));
                 }
 
                 // Need to split the run
                 self.split_run(run_idx, offset, value);
-                return;
+                return Ok(());
             }
 
             current_pos += run.length;
             run_idx += 1;
         }
+
+        Ok(())
     }
 
     // Split a run to set a different value
@@ -452,7 +470,7 @@ impl RangeEncodedBitmap {
     }
 
     // Insert a value
-    pub fn insert(&mut self, value: i64, row_id: usize, total_rows: usize) {
+    pub fn insert(&mut self, value: i64, row_id: usize, total_rows: usize) -> Result<()> {
         let bucket = self.get_bucket(value);
 
         let bitmap = self
@@ -460,7 +478,8 @@ impl RangeEncodedBitmap {
             .entry(bucket)
             .or_insert_with(|| CompressedBitmap::new(total_rows));
 
-        bitmap.set(row_id, true);
+        bitmap.set(row_id, true)?;
+        Ok(())
     }
 
     // Query a range
@@ -559,9 +578,9 @@ mod tests {
     fn test_compressed_bitmap() {
         let mut bitmap = CompressedBitmap::new(100);
 
-        bitmap.set(10, true);
-        bitmap.set(20, true);
-        bitmap.set(30, true);
+        bitmap.set(10, true).unwrap();
+        bitmap.set(20, true).unwrap();
+        bitmap.set(30, true).unwrap();
 
         let set_bits = bitmap.get_set_bits();
         assert_eq!(set_bits, vec![10, 20, 30]);

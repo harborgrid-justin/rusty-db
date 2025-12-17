@@ -282,6 +282,42 @@ pub fn hash_str(s: &str) -> u64 {
 /// ## Complexity
 /// - Time: O(n/8) for n strings with AVX2
 /// - Space: O(n) for output array
+///
+/// ## Performance Opportunity
+///
+/// TODO: Implement true SIMD parallel batch hashing
+///
+/// **Current State**: This function processes strings serially despite the comment
+/// claiming parallel processing. The loop at line 299-301 hashes one string at a time.
+///
+/// **Performance Impact**: No actual SIMD parallelism - throughput same as sequential
+///
+/// **Proposed Improvement**:
+/// ```rust,ignore
+/// #[target_feature(enable = "avx2")]
+/// unsafe fn hash_8_strings_avx2(strings: [&str; 8]) -> [u64; 8] {
+///     // Load 8 string lengths into AVX2 register
+///     let mut hashes = [0u64; 8];
+///
+///     // Process each string's chunks in parallel
+///     for chunk_idx in 0..max_chunks {
+///         let data0 = load_or_zero(strings[0], chunk_idx);
+///         // ... data1-7
+///
+///         // Mix 8 hashes in parallel using AVX2
+///         let mixed0 = mix_avx2(hashes[0], data0);
+///         // ... mixed1-7
+///
+///         hashes = [mixed0, mixed1, ..., mixed7];
+///     }
+///
+///     hashes
+/// }
+/// ```
+///
+/// **Expected Gain**: 8x throughput improvement (10 GB/s → 80 GB/s for 8-string batches)
+///
+/// **Related**: See diagrams/05_index_simd_flow.md section 2.3 for detailed analysis
 pub fn hash_str_batch(strings: &[&str]) -> Vec<u64> {
     let mut hashes = Vec::with_capacity(strings.len());
 

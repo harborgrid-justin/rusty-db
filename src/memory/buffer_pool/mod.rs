@@ -2,6 +2,14 @@
 //
 // Comprehensive multi-tier buffer pool implementation with advanced caching,
 // replacement policies, and dirty page management for high-performance database operations.
+//
+// NOTE: BufferPool Implementation #2 of 4 - General-purpose memory pooling
+// TODO: CONSOLIDATION TARGET - This should become the unified buffer pool for:
+//   - src/io/buffer_pool.rs (#3) - Async I/O buffer management
+//   - src/network/advanced_protocol/buffer_management.rs (#4) - Network buffers
+// RECOMMENDATION: Add configurable size classes (8KB, 64KB, 1MB) to support all use cases.
+// Keep src/buffer/manager.rs separate for database page caching (4KB pages).
+// See: diagrams/06_network_api_flow.md - Issue #4.1
 
 // Internal modules
 mod arc;

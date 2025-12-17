@@ -164,7 +164,7 @@ impl HashJoinExecutor {
     ) -> Result<QueryResult, DbError> {
         // Ensure temp directory exists
         std::fs::create_dir_all(&self.config.temp_dir)
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+            .map_err(|e| DbError::Storage(e.to_string()))?;
 
         // Phase 1: Partition build side
         let build_partitions = self.partition_to_disk(&build_side, build_key_col, "build")?;
@@ -366,7 +366,7 @@ impl HashJoinExecutor {
         // Create partition files
         for i in 0..self.config.num_partitions {
             let path = self.config.temp_dir.join(format!("{}_{}.part", prefix, i));
-            let file = File::create(&path).map_err(|e| DbError::IoError(e.to_string()))?;
+            let file = File::create(&path).map_err(|e| DbError::Storage(e.to_string()))?;
             partition_writers.push(BufWriter::new(file));
             partition_files.push(path);
         }
@@ -381,7 +381,7 @@ impl HashJoinExecutor {
                 let row_str = row.join(",") + "\n";
                 writer
                     .write_all(row_str.as_bytes())
-                    .map_err(|e| DbError::IoError(e.to_string()))?;
+                    .map_err(|e| DbError::Storage(e.to_string()))?;
             }
         }
 
@@ -389,7 +389,7 @@ impl HashJoinExecutor {
         for writer in &mut partition_writers {
             writer
                 .flush()
-                .map_err(|e| DbError::IoError(e.to_string()))?;
+                .map_err(|e| DbError::Storage(e.to_string()))?;
         }
 
         Ok(partition_files)
@@ -397,14 +397,14 @@ impl HashJoinExecutor {
 
     // Load partition from disk
     fn load_partition(&self, path: &Path) -> Result<QueryResult, DbError> {
-        let file = File::open(path).map_err(|e| DbError::IoError(e.to_string()))?;
+        let file = File::open(path).map_err(|e| DbError::Storage(e.to_string()))?;
         let reader = BufReader::new(file);
 
         let mut rows = Vec::new();
 
         use std::io::BufRead;
         for line in reader.lines() {
-            let line = line.map_err(|e| DbError::IoError(e.to_string()))?;
+            let line = line.map_err(|e| DbError::Storage(e.to_string()))?;
             if !line.is_empty() {
                 let row: Vec<String> = line.split(',').map(|s| s.to_string()).collect();
                 rows.push(row);
@@ -432,19 +432,19 @@ impl HashJoinExecutor {
             .temp_dir
             .join(format!("{}_{}_{}.spill", prefix, partition_id, spill_id));
 
-        let file = File::create(&path).map_err(|e| DbError::IoError(e.to_string()))?;
+        let file = File::create(&path).map_err(|e| DbError::Storage(e.to_string()))?;
         let mut writer = BufWriter::new(file);
 
         for row in partition {
             let row_str = row.join(",") + "\n";
             writer
                 .write_all(row_str.as_bytes())
-                .map_err(|e| DbError::IoError(e.to_string()))?;
+                .map_err(|e| DbError::Storage(e.to_string()))?;
         }
 
         writer
             .flush()
-            .map_err(|e| DbError::IoError(e.to_string()))?;
+            .map_err(|e| DbError::Storage(e.to_string()))?;
 
         Ok(path)
     }

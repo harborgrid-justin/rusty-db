@@ -1,5 +1,43 @@
 // Event Processing and Complex Event Processing (CEP) Engine
 //
+// ⚠️ **WARNING: OVERLAPPING CHANGE STREAM IMPLEMENTATION** ⚠️
+//
+// **Issue**: Event streams overlap with CDC infrastructure
+//
+// **Overlap Analysis**:
+// - Event type similar to ChangeEvent in `src/streams/cdc.rs`
+// - Stream processing overlaps with CDC event delivery
+// - Both track Insert/Update/Delete-like operations
+// - Both implement buffering and watermarking
+//
+// **TODO - MEDIUM PRIORITY**:
+// 1. Use `src/streams/cdc.rs` for database change events
+// 2. Keep this module focused on Complex Event Processing (CEP) patterns
+// 3. Separate concerns:
+//    - CDC (src/streams/cdc.rs): Database changes (INSERT/UPDATE/DELETE)
+//    - CEP (this module): Complex event patterns, aggregations, windows
+// 4. Create integration: CEP operators can consume CDC events
+// 5. Share watermarking and out-of-order handling infrastructure
+//
+// **Recommended Architecture**:
+// ```
+// src/event_processing/  (CEP - Complex patterns)
+//   ├── cep/             (Pattern matching, NFA)
+//   ├── operators/       (Filter, Map, Aggregate, Join)
+//   ├── windows/         (Tumbling, Sliding, Session)
+//   └── sources/
+//       └── cdc_source.rs  (Consume from src/streams/cdc.rs)
+//
+// src/streams/         (CDC - Data changes)
+//   ├── cdc.rs          (Core change capture)
+//   └── integration/
+//       └── cep_sink.rs   (Publish to CEP engine)
+// ```
+//
+// **Cross-Reference**: See `src/streams/cdc.rs` header for full consolidation plan
+// **Impact**: Architectural confusion, potential duplication in stream processing
+// **Priority**: MEDIUM - clarify boundaries and integrate with CDC
+//
 // This module provides Oracle Streams-like event processing capabilities with modern
 // innovations including out-of-order event handling, GPU-accelerated pattern matching,
 // and ML model serving in streams.
@@ -11,6 +49,29 @@ use std::time::SystemTime;
 
 use std::sync::Arc;
 use std::time::Duration;
+
+// ============================================================================
+// Capacity Limits - Prevent Unbounded Memory Growth
+// ============================================================================
+
+// TODO(ARCHITECTURE): Implement bounded pattern storage to prevent OOM
+// Maximum number of CEP patterns that can be registered
+// Current implementation uses unbounded HashMap - prevents DoS attacks
+// Recommended: Use BoundedHashMap with eviction policy
+pub const MAX_CEP_PATTERNS: usize = 10_000;
+
+// TODO(ARCHITECTURE): Implement bounded event buffer to prevent OOM
+// Maximum number of events buffered per stream partition
+// Current implementation may have unbounded event batch vectors
+pub const MAX_EVENTS_PER_PARTITION: usize = 100_000;
+
+// Maximum number of stream partitions
+// Used for stream state tracking and watermark management
+pub const MAX_STREAM_PARTITIONS: usize = 1_000;
+
+// Maximum event payload size (prevents memory exhaustion from large payloads)
+// Nested EventValue::Object and EventValue::Array can grow unbounded
+pub const MAX_EVENT_PAYLOAD_SIZE_BYTES: usize = 1_048_576; // 1 MB
 
 pub mod analytics;
 pub mod cep;

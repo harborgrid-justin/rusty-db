@@ -1,9 +1,13 @@
 use thiserror::Error;
+use std::sync::Arc;
 
+// TODO: Consider reducing String allocations by using Cow<'static, str> for static error messages
+// TODO: Add capacity limits to prevent unbounded String allocations from user input
 #[derive(Error, Debug)]
 pub enum DbError {
+    // Note: Wrapped in Arc to enable Clone while preserving error data
     #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
+    Io(Arc<std::io::Error>),
 
     #[error("SQL parsing error: {0}")]
     SqlParse(String),
@@ -174,7 +178,8 @@ impl DbError {
 impl Clone for DbError {
     fn clone(&self) -> Self {
         match self {
-            DbError::Io(e) => DbError::Internal(format!("IO error: {}", e)),
+            // Arc::clone is cheap and preserves the original error
+            DbError::Io(e) => DbError::Io(Arc::clone(e)),
             DbError::SqlParse(s) => DbError::SqlParse(s.clone()),
             DbError::Transaction(s) => DbError::Transaction(s.clone()),
             DbError::Storage(s) => DbError::Storage(s.clone()),
@@ -235,6 +240,13 @@ impl Clone for DbError {
 pub type Result<T> = std::result::Result<T, DbError>;
 
 // Error conversions for common error types
+
+// Custom From implementation to wrap std::io::Error in Arc
+impl From<std::io::Error> for DbError {
+    fn from(e: std::io::Error) -> Self {
+        DbError::Io(Arc::new(e))
+    }
+}
 
 impl From<bincode::error::EncodeError> for DbError {
     fn from(e: bincode::error::EncodeError) -> Self {

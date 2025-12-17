@@ -36,6 +36,22 @@ pub use vectorized::{AggregationType, ColumnBatch, ColumnValue, VectorizedExecut
 
 use serde::{Deserialize, Serialize};
 
+// ============================================================================
+// Query Processing Constants
+// ============================================================================
+
+/// Maximum number of rows in a result set to prevent OOM
+/// Queries returning more rows should use streaming or pagination
+pub const MAX_RESULT_ROWS: usize = 1_000_000;
+
+/// Maximum number of materialized CTEs to keep in memory
+/// Prevents unbounded memory growth from CTE execution
+pub const MAX_MATERIALIZED_CTES: usize = 100;
+
+/// Maximum number of entries in the plan cache
+/// Prevents unbounded memory growth from plan caching
+pub const MAX_PLAN_CACHE_SIZE: usize = 10_000;
+
 // Query execution result
 #[derive(Debug, Clone, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct QueryResult {
@@ -46,7 +62,19 @@ pub struct QueryResult {
 }
 
 impl QueryResult {
-    pub fn new(columns: Vec<String>, rows: Vec<Vec<String>>) -> Self {
+    pub fn new(columns: Vec<String>, mut rows: Vec<Vec<String>>) -> Self {
+        // Enforce MAX_RESULT_ROWS limit to prevent OOM
+        // NOTE: In production, queries exceeding this limit should use
+        // streaming execution or server-side cursors
+        if rows.len() > MAX_RESULT_ROWS {
+            eprintln!(
+                "WARNING: Result set truncated from {} to {} rows. Use LIMIT clause or streaming execution for large results.",
+                rows.len(),
+                MAX_RESULT_ROWS
+            );
+            rows.truncate(MAX_RESULT_ROWS);
+        }
+
         let rows_affected = rows.len();
         Self {
             columns,

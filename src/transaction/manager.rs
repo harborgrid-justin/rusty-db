@@ -15,6 +15,7 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 use parking_lot::{Mutex, RwLock};
 
@@ -23,6 +24,10 @@ use crate::common::TransactionId;
 use super::error::{TransactionError, TransactionResult};
 use super::lock_manager::LockManager;
 use super::types::{IsolationLevel, Transaction, TransactionState};
+
+/// CRITICAL FIX: Default transaction timeout to prevent indefinite lock holding
+/// Prevents long-running transactions from blocking others indefinitely
+const DEFAULT_TRANSACTION_TIMEOUT_SECS: u64 = 3600; // 1 hour
 
 /// Transaction manager for lifecycle management.
 ///
@@ -302,6 +307,63 @@ impl TransactionManager {
             .get(&txn_id)
             .map(|t| t.write_set.iter().cloned().collect())
             .unwrap_or_default()
+    }
+
+    /// CRITICAL FIX: Check for and abort timed-out transactions
+    /// Prevents indefinite lock holding and resource leaks
+    ///
+    /// Returns the number of transactions aborted due to timeout
+    pub fn abort_timed_out_transactions(&self) -> TransactionResult<usize> {
+        let now = SystemTime::now();
+        let mut timed_out_txns = Vec::new();
+
+        {
+            let active_txns = self.active_txns.read();
+            for (txn_id, txn) in active_txns.iter() {
+                let timeout = txn
+                    .timeout_duration
+                    .unwrap_or(Duration::from_secs(DEFAULT_TRANSACTION_TIMEOUT_SECS));
+
+                if let Ok(elapsed) = now.duration_since(txn.start_time) {
+                    if elapsed > timeout {
+                        timed_out_txns.push(*txn_id);
+                    }
+                }
+            }
+        }
+
+        // Abort timed-out transactions (outside the read lock)
+        for txn_id in &timed_out_txns {
+            // Ignore errors - transaction might have already committed/aborted
+            let _ = self.abort(*txn_id);
+        }
+
+        Ok(timed_out_txns.len())
+    }
+
+    /// Check if a specific transaction has timed out
+    pub fn is_timed_out(&self, txn_id: TransactionId) -> bool {
+        let active_txns = self.active_txns.read();
+        if let Some(txn) = active_txns.get(&txn_id) {
+            let timeout = txn
+                .timeout_duration
+                .unwrap_or(Duration::from_secs(DEFAULT_TRANSACTION_TIMEOUT_SECS));
+
+            if let Ok(elapsed) = SystemTime::now().duration_since(txn.start_time) {
+                return elapsed > timeout;
+            }
+        }
+        false
+    }
+
+    /// Get the age of a transaction (duration since start)
+    pub fn get_transaction_age(&self, txn_id: TransactionId) -> Option<Duration> {
+        let active_txns = self.active_txns.read();
+        active_txns.get(&txn_id).and_then(|txn| {
+            SystemTime::now()
+                .duration_since(txn.start_time)
+                .ok()
+        })
     }
 }
 

@@ -3,6 +3,13 @@
 // Oracle-like row-level security and column-level security with policy-based
 // access control and dynamic predicate injection.
 //
+// TODO(consolidation): Overlaps with FGAC (Issue #3)
+// This module and security/fgac.rs both implement row-level security
+// with similar predicate evaluation and policy management.
+// Also imports SecurityContext from security/fgac.rs (circular-ish dependency).
+// See diagrams/07_security_enterprise_flow.md Section 1.3, Issue #3
+// Recommendation: Clarify boundary or consolidate. Define shared types in common module.
+//
 // ## Features
 //
 // - **Row-Level Security (RLS)**: Filter rows based on security policies

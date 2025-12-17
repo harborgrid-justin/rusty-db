@@ -1,5 +1,24 @@
 // Cost Model and Statistics for Query Optimization
 // Includes table statistics, histograms, and cardinality estimation
+//
+// ============================================================================
+// DUPLICATE CODE WARNING (diagrams/04_query_processing_flow.md)
+// ============================================================================
+//
+// This module contains ~750 lines of code duplicated with optimizer_pro/cost_model.rs:
+// - TableStatistics, ColumnStatistics, IndexStatistics
+// - Histogram types (EquiWidth, EquiDepth, Hybrid, MultiDimensional)
+// - CardinalityEstimator with ML models
+// - Selectivity estimation defaults
+//
+// TODO: Consolidate into src/common/statistics.rs
+// - Extract shared statistics types to common module
+// - Update both optimizers to use shared implementation
+// - Ensure consistent behavior across basic and pro optimizers
+//
+// Impact: Eliminates 750+ lines of duplication, ensures consistency
+// Effort: 2-3 days
+// ============================================================================
 
 use crate::execution::planner::PlanNode;
 use parking_lot::RwLock;

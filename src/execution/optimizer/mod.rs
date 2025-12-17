@@ -3,6 +3,35 @@
 // This module provides cost-based query optimization with advanced techniques
 // including memoization, CSE, view matching, and dynamic programming join enumeration.
 //
+// ## Dual Optimizer Architecture
+//
+// RustyDB has TWO optimizer implementations that serve different purposes:
+//
+// 1. **Basic Optimizer** (this module: `src/execution/optimizer/`)
+//    - Fast, lightweight optimization for simple queries
+//    - Used when: Query complexity is low, quick results needed
+//    - Outputs: PlanNode (logical plan)
+//    - Features: Predicate pushdown, simple join ordering, view matching
+//    - Overhead: Minimal (microseconds)
+//
+// 2. **Pro Optimizer** (`src/optimizer_pro/`)
+//    - Advanced cost-based optimization for complex queries
+//    - Used when: Complex joins, large datasets, performance critical
+//    - Outputs: PhysicalPlan (execution-ready plan)
+//    - Features: ML cardinality estimation, adaptive execution, plan baselines
+//    - Overhead: Higher (milliseconds) but produces better plans
+//
+// ## When to Use Each
+//
+// - **Use Basic Optimizer**: OLTP queries, single-table queries, simple filters
+// - **Use Pro Optimizer**: OLAP queries, multi-way joins, aggregations
+//
+// ## Future Direction
+//
+// These optimizers will be consolidated into a unified architecture with
+// shared statistics and cost models (see diagrams/04_query_processing_flow.md
+// for consolidation plan).
+//
 // Structure:
 // - cost_model: Statistics and cardinality estimation
 // - plan_transformation: Advanced optimization techniques (CSE, memoization, DPccp)

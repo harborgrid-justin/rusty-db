@@ -2,7 +2,21 @@
 //
 // Request/response pipeline, priority queuing, and request management
 
-use std::collections::HashMap;
+use std::collections::{HashMap, BinaryHeap};
+use std::cmp::Ordering;
+use crate::error::DbError;
+
+// ============================================================================
+// Constants - Bounds for Open-Ended Data Structures
+// ============================================================================
+
+/// Maximum number of pending requests to prevent unbounded memory growth
+/// See: diagrams/06_network_api_flow.md - Issue #5.1
+pub const MAX_PENDING_REQUESTS: usize = 10_000;
+
+/// Maximum size of priority queue to prevent DoS attacks
+/// See: diagrams/06_network_api_flow.md - Issue #5.2
+pub const MAX_PRIORITY_QUEUE_SIZE: usize = 1_000;
 
 // ============================================================================
 // Request/Response Types
@@ -73,8 +87,18 @@ impl RequestResponsePipeline {
         id
     }
 
-    pub fn add_pending(&mut self, request: ProtocolRequest) {
+    /// Add a pending request with backpressure control
+    /// Returns error if MAX_PENDING_REQUESTS limit is reached
+    pub fn add_pending(&mut self, request: ProtocolRequest) -> Result<(), DbError> {
+        if self.pending.len() >= MAX_PENDING_REQUESTS {
+            return Err(DbError::Network(format!(
+                "Request pipeline full: {} pending requests (max: {})",
+                self.pending.len(),
+                MAX_PENDING_REQUESTS
+            )));
+        }
         self.pending.insert(request.id, request);
+        Ok(())
     }
 
     pub fn remove_pending(&mut self, request_id: RequestId) -> Option<ProtocolRequest> {
@@ -113,34 +137,70 @@ pub struct PipelineStats {
 }
 
 // ============================================================================
-// Priority Queue
+// Priority Queue - Using BinaryHeap for O(log n) operations
 // ============================================================================
 
+// Wrapper for ProtocolRequest to implement Ord for BinaryHeap (max-heap by priority)
+#[derive(Debug, Clone)]
+struct PriorityWrapper(ProtocolRequest);
+
+impl PartialEq for PriorityWrapper {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.priority == other.0.priority && self.0.id == other.0.id
+    }
+}
+
+impl Eq for PriorityWrapper {}
+
+impl PartialOrd for PriorityWrapper {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for PriorityWrapper {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // Higher priority first, then by request ID (FIFO within priority)
+        self.0.priority.cmp(&other.0.priority)
+            .then_with(|| other.0.id.cmp(&self.0.id))
+    }
+}
+
+/// Priority-based request queue with bounded size
+/// FIXED: Replaced Vec (O(n log n) sort + O(n) remove) with BinaryHeap (O(log n) operations)
+/// See: diagrams/06_network_api_flow.md - Issue #3.1
 pub struct PriorityRequestQueue {
-    queue: Vec<ProtocolRequest>,
+    queue: BinaryHeap<PriorityWrapper>,
 }
 
 impl PriorityRequestQueue {
     pub fn new() -> Self {
-        Self { queue: Vec::new() }
-    }
-
-    pub fn enqueue(&mut self, request: ProtocolRequest) {
-        self.queue.push(request);
-        // Sort by priority (highest first)
-        self.queue.sort_by(|a, b| b.priority.cmp(&a.priority));
-    }
-
-    pub fn dequeue(&mut self) -> Option<ProtocolRequest> {
-        if self.queue.is_empty() {
-            None
-        } else {
-            Some(self.queue.remove(0))
+        Self {
+            queue: BinaryHeap::new(),
         }
     }
 
+    /// Enqueue a request with backpressure control
+    /// Returns error if MAX_PRIORITY_QUEUE_SIZE limit is reached
+    pub fn enqueue(&mut self, request: ProtocolRequest) -> Result<(), DbError> {
+        if self.queue.len() >= MAX_PRIORITY_QUEUE_SIZE {
+            return Err(DbError::Network(format!(
+                "Priority queue full: {} requests (max: {})",
+                self.queue.len(),
+                MAX_PRIORITY_QUEUE_SIZE
+            )));
+        }
+        self.queue.push(PriorityWrapper(request));
+        Ok(())
+    }
+
+    /// Dequeue highest priority request - O(log n) operation
+    pub fn dequeue(&mut self) -> Option<ProtocolRequest> {
+        self.queue.pop().map(|w| w.0)
+    }
+
     pub fn peek(&self) -> Option<&ProtocolRequest> {
-        self.queue.first()
+        self.queue.peek().map(|w| &w.0)
     }
 
     pub fn len(&self) -> usize {

@@ -4,6 +4,20 @@
 // with advanced features including elastic sizing, sophisticated wait queue management,
 // pool partitioning, and extensive monitoring capabilities.
 //
+// NOTE: ConnectionPool Implementation #1 of 4 - Main database connection pool
+// This is the PRIMARY connection pool implementation and should be KEPT as the reference.
+// Other connection pool implementations should either:
+//   1. Delegate to this pool, or
+//   2. Implement a common ConnectionPool<T> trait defined in src/common.rs
+//
+// The other 3 connection pool implementations are:
+//   2. src/network/cluster_network/communication.rs - NodeConnectionPool
+//   3. src/network/advanced_protocol/flow_control.rs - ConnectionPool
+//   4. src/networking/transport/pool.rs - Transport connection pool
+//
+// RECOMMENDATION: Define ConnectionPool<T> trait in src/common.rs and have all pools implement it.
+// See: diagrams/06_network_api_flow.md - Issue #4.3
+//
 // ## Key Features
 //
 // - **Elastic Pool Sizing**: Dynamic adjustment between min/max connections

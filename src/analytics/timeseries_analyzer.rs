@@ -1,5 +1,15 @@
 // Time Series Analysis
 //
+// ⚠️ **WARNING: DUPLICATE TIME SERIES IMPLEMENTATION** ⚠️
+//
+// **Issue**: Duplicates functionality from:
+// - `src/analytics/timeseries.rs` - Overlapping analysis features
+// - `src/ml_engine/timeseries.rs` - Advanced forecasting
+//
+// **TODO**: Merge with other time series modules
+// **Cross-Reference**: See detailed consolidation plan in `src/analytics/timeseries.rs`
+// **Priority**: MEDIUM
+//
 // This module provides time series analytics capabilities:
 //
 // - **Moving Averages**: Simple and exponential

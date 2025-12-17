@@ -3,6 +3,13 @@
 // Oracle RAC-like clustering technology for RustyDB, providing shared-disk clustering
 // with Cache Fusion technology for high availability and horizontal scalability.
 //
+// TODO(consolidation): Redundant statistics collection (Issue D-03)
+// Found 33 get_statistics() implementations across 26 files (~3,300 lines of boilerplate).
+// Each component duplicates statistics infrastructure with similar patterns.
+// Examples: GcsStatistics, GrdStatistics, InterconnectStatistics, etc.
+// See diagrams/07_security_enterprise_flow.md Section 4.3, Issue #4
+// Recommendation: Create generic Statistics trait with common metrics, use atomic counters
+//
 // ## Overview
 //
 // The RAC engine enables multiple database instances to run on different servers while

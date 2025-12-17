@@ -605,14 +605,14 @@ impl EventSerializer for DefaultSerializer {
     fn serialize<T: Serialize>(&self, value: &T, format: SerializationFormat) -> Result<Vec<u8>> {
         match format {
             SerializationFormat::Json => {
-                serde_json::to_vec(value).map_err(|e| DbError::SerializationError(e.to_string()))
+                serde_json::to_vec(value).map_err(|e| DbError::Serialization(e.to_string()))
             }
             SerializationFormat::MessagePack => {
-                rmp_serde::to_vec(value).map_err(|e| DbError::SerializationError(e.to_string()))
+                rmp_serde::to_vec(value).map_err(|e| DbError::Serialization(e.to_string()))
             }
             SerializationFormat::Binary => {
                 // Use JSON as fallback for binary format to avoid bincode trait requirements
-                serde_json::to_vec(value).map_err(|e| DbError::SerializationError(e.to_string()))
+                serde_json::to_vec(value).map_err(|e| DbError::Serialization(e.to_string()))
             }
             _ => Err(DbError::NotImplemented(
                 "Serialization format not supported".to_string(),
@@ -627,14 +627,14 @@ impl EventSerializer for DefaultSerializer {
     ) -> Result<T> {
         match format {
             SerializationFormat::Json => {
-                serde_json::from_slice(data).map_err(|e| DbError::SerializationError(e.to_string()))
+                serde_json::from_slice(data).map_err(|e| DbError::Serialization(e.to_string()))
             }
             SerializationFormat::MessagePack => {
-                rmp_serde::from_slice(data).map_err(|e| DbError::SerializationError(e.to_string()))
+                rmp_serde::from_slice(data).map_err(|e| DbError::Serialization(e.to_string()))
             }
             SerializationFormat::Binary => {
                 // Use JSON as fallback for binary format to avoid bincode trait requirements
-                serde_json::from_slice(data).map_err(|e| DbError::SerializationError(e.to_string()))
+                serde_json::from_slice(data).map_err(|e| DbError::Serialization(e.to_string()))
             }
             _ => Err(DbError::NotImplemented(
                 "Deserialization format not supported".to_string(),

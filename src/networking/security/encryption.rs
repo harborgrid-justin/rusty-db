@@ -2,6 +2,13 @@
 //
 // This module provides envelope encryption, key derivation,
 // perfect forward secrecy, and at-rest encryption keys.
+//
+// TODO(consolidation): Duplicate encryption implementation #1 of 5 (Issue D-01)
+// This is one of 5 separate encryption implementations (~3,850 lines total).
+// Consolidate with: security/encryption.rs, security/encryption_engine.rs,
+// security_vault/tde.rs, backup/backup_encryption.rs
+// See diagrams/07_security_enterprise_flow.md Section 4.1
+// Recommendation: Create unified EncryptionService trait
 
 use crate::error::{DbError, Result};
 use std::collections::HashMap;

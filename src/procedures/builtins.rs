@@ -870,20 +870,20 @@ impl UtlFile {
 
         let file = match file_mode {
             FileMode::Read => {
-                File::open(&file_path).map_err(|e| DbError::IoError(e.to_string()))?
+                File::open(&file_path).map_err(|e| DbError::Storage(e.to_string()))?
             }
             FileMode::Write => OpenOptions::new()
                 .write(true)
                 .create(true)
                 .truncate(true)
                 .open(&file_path)
-                .map_err(|e| DbError::IoError(e.to_string()))?,
+                .map_err(|e| DbError::Storage(e.to_string()))?,
             FileMode::Append => OpenOptions::new()
                 .write(true)
                 .create(true)
                 .append(true)
                 .open(&file_path)
-                .map_err(|e| DbError::IoError(e.to_string()))?,
+                .map_err(|e| DbError::Storage(e.to_string()))?,
         };
 
         let mut next_id = self.next_handle_id.write();
@@ -919,7 +919,7 @@ impl UtlFile {
         }
 
         if let Some(ref mut file) = handle.file {
-            writeln!(file, "{}", text).map_err(|e| DbError::IoError(e.to_string()))?;
+            writeln!(file, "{}", text).map_err(|e| DbError::Storage(e.to_string()))?;
         }
 
         Ok(())
@@ -944,7 +944,7 @@ impl UtlFile {
             let mut line = String::new();
             reader
                 .read_line(&mut line)
-                .map_err(|e| DbError::IoError(e.to_string()))?;
+                .map_err(|e| DbError::Storage(e.to_string()))?;
 
             // Remove trailing newline
             if line.ends_with('\n') {

@@ -14,6 +14,13 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::SystemTime;
 
+// SAFETY: Maximum catalog entries to prevent OOM (Issue C-08)
+// Daily backups = 365/year, but allow for multiple databases
+const MAX_BACKUP_SETS: usize = 50_000; // ~137 years of daily backups
+const MAX_BACKUP_PIECES: usize = 500_000; // Assumes ~10 pieces per set
+const MAX_ARCHIVED_LOGS: usize = 100_000;
+const DEFAULT_BACKUP_HISTORY_LIMIT: usize = 10_000;
+
 // Catalog database configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CatalogConfig {
@@ -33,7 +40,16 @@ impl Default for CatalogConfig {
             auto_register_backups: true,
             cross_database_tracking: true,
             enable_reporting: true,
-            backup_history_limit: 10000,
+            backup_history_limit: DEFAULT_BACKUP_HISTORY_LIMIT,
+        }
+    }
+}
+
+impl CatalogConfig {
+    /// Validates and clamps limits to prevent OOM
+    pub fn validate(&mut self) {
+        if self.backup_history_limit > MAX_BACKUP_SETS {
+            self.backup_history_limit = MAX_BACKUP_SETS;
         }
     }
 }
@@ -599,6 +615,70 @@ impl BackupCatalog {
                 1.0
             },
         }
+    }
+
+    /// Cleanup old catalog entries to prevent unbounded growth (Issue C-08)
+    /// This should be called periodically (e.g., daily) to maintain reasonable catalog size
+    pub fn cleanup_old_entries(&self, retention_days: u64) -> Result<(usize, usize, usize)> {
+        let cutoff = SystemTime::now() - Duration::from_secs(retention_days * 86400);
+
+        // Remove old backup sets
+        let mut sets = self.backup_sets.write();
+        let original_sets_count = sets.len();
+        sets.retain(|_, s| {
+            s.completion_time
+                .map(|t| t > cutoff)
+                .unwrap_or(true) // Keep incomplete backups
+                && !s.is_obsolete()
+        });
+        let sets_removed = original_sets_count - sets.len();
+
+        // SAFETY: Enforce hard limits to prevent OOM (Issue C-08)
+        if sets.len() > MAX_BACKUP_SETS {
+            // Remove oldest backup sets beyond the limit
+            let mut sorted_sets: Vec<_> = sets.iter().collect();
+            sorted_sets.sort_by_key(|(_, s)| s.start_time);
+            let to_remove = sets.len() - MAX_BACKUP_SETS;
+            for (set_id, _) in sorted_sets.iter().take(to_remove) {
+                sets.remove(*set_id);
+            }
+        }
+        drop(sets);
+
+        // Remove orphaned backup pieces
+        let sets_read = self.backup_sets.read();
+        let mut pieces = self.backup_pieces.write();
+        let original_pieces_count = pieces.len();
+        pieces.retain(|_, p| sets_read.contains_key(&p.backup_set_id));
+        let pieces_removed = original_pieces_count - pieces.len();
+
+        // SAFETY: Enforce hard limits for pieces
+        if pieces.len() > MAX_BACKUP_PIECES {
+            let to_remove = pieces.len() - MAX_BACKUP_PIECES;
+            let keys_to_remove: Vec<_> = pieces.keys().take(to_remove).cloned().collect();
+            for key in keys_to_remove {
+                pieces.remove(&key);
+            }
+        }
+        drop(pieces);
+        drop(sets_read);
+
+        // Remove old archived logs
+        let mut logs = self.archived_logs.write();
+        let original_logs_count = logs.len();
+        logs.retain(|_, log| log.archived_time > cutoff);
+        let logs_removed = original_logs_count - logs.len();
+
+        // SAFETY: Enforce hard limits for archived logs
+        if logs.len() > MAX_ARCHIVED_LOGS {
+            let to_remove = logs.len() - MAX_ARCHIVED_LOGS;
+            let keys_to_remove: Vec<_> = logs.keys().take(to_remove).copied().collect();
+            for key in keys_to_remove {
+                logs.remove(&key);
+            }
+        }
+
+        Ok((sets_removed, pieces_removed, logs_removed))
     }
 }
 

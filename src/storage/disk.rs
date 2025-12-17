@@ -1,6 +1,8 @@
 use crate::common::PageId;
 use crate::error::{DbError, Result};
 use crate::storage::page::Page;
+// Use shared checksum module (deduplication)
+use super::checksum::hardware_crc32c;
 use parking_lot::RwLock;
 use std::collections::{HashMap, VecDeque};
 use std::fs::{File, OpenOptions};
@@ -9,8 +11,28 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
+// Buffer size limits to prevent unbounded growth
+// See: diagrams/02_storage_layer_flow.md - Issue #2.2
+/// Maximum pages in read-ahead buffer (default: 64 pages = 256KB at 4KB/page)
+const MAX_READ_AHEAD_PAGES: usize = 64;
+
+/// Maximum dirty pages in write-behind buffer (default: 128 pages = 512KB at 4KB/page)
+const MAX_WRITE_BEHIND_PAGES: usize = 128;
+
+/// Batch size for write-behind flushing (default: 32 pages = 128KB at 4KB/page)
+const WRITE_BATCH_SIZE: usize = 32;
+
+/// Write coalescing window in microseconds (default: 5ms)
+const COALESCE_WINDOW_US: u64 = 5000;
+
+/// Maximum batch size for write coalescer (default: 64 pages)
+const COALESCE_MAX_BATCH: usize = 64;
+
+/// Maximum io_uring queue depth (default: 256 operations)
+const IO_URING_QUEUE_DEPTH: usize = 256;
+
+/// Sequential access detection window size
+const ACCESS_PATTERN_WINDOW: usize = 10;
 
 // I/O operation priority levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -296,76 +318,7 @@ impl Default for DirectIoConfig {
     }
 }
 
-// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
-#[inline]
-pub fn hardware_crc32c(data: &[u8]) -> u32 {
-    #[cfg(target_arch = "x86_64")]
-    {
-        if is_x86_feature_detected!("sse4.2") {
-            return unsafe { hardware_crc32c_impl(data) };
-        }
-    }
-    // Fallback to software CRC32
-    software_crc32c(data)
-}
-
-#[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "sse4.2")]
-unsafe fn hardware_crc32c_impl(data: &[u8]) -> u32 {
-    let mut crc: u32 = 0xFFFFFFFF;
-    let mut ptr = data.as_ptr();
-    let mut remaining = data.len();
-
-    // Process 8 bytes at a time for maximum throughput
-    while remaining >= 8 {
-        let value = (ptr as *const u64).read_unaligned();
-        crc = _mm_crc32_u64(crc as u64, value) as u32;
-        ptr = ptr.add(8);
-        remaining -= 8;
-    }
-
-    // Process remaining bytes
-    while remaining > 0 {
-        let value = *ptr;
-        crc = _mm_crc32_u8(crc, value);
-        ptr = ptr.add(1);
-        remaining -= 1;
-    }
-
-    !crc
-}
-
-// Software fallback CRC32C
-fn software_crc32c(data: &[u8]) -> u32 {
-    const CRC32C_TABLE: [u32; 256] = generate_crc32c_table();
-    let mut crc: u32 = 0xFFFFFFFF;
-    for &byte in data {
-        let index = ((crc ^ byte as u32) & 0xFF) as usize;
-        crc = (crc >> 8) ^ CRC32C_TABLE[index];
-    }
-    !crc
-}
-
-const fn generate_crc32c_table() -> [u32; 256] {
-    let mut table = [0u32; 256];
-    let poly: u32 = 0x82F63B78; // CRC32C polynomial
-    let mut i = 0;
-    while i < 256 {
-        let mut crc = i as u32;
-        let mut j = 0;
-        while j < 8 {
-            if crc & 1 != 0 {
-                crc = (crc >> 1) ^ poly;
-            } else {
-                crc >>= 1;
-            }
-            j += 1;
-        }
-        table[i] = crc;
-        i += 1;
-    }
-    table
-}
+// CRC32C implementation moved to shared checksum module (deduplication)
 
 // Vectored I/O batch for efficient multi-page operations
 #[derive(Debug, Clone)]
@@ -411,6 +364,7 @@ struct WriteCoalescer {
     coalesce_window_us: u64,
     last_flush: Instant,
     max_batch_size: usize,
+    max_pending_writes: usize, // Hard limit to prevent unbounded growth
 }
 
 impl WriteCoalescer {
@@ -420,10 +374,17 @@ impl WriteCoalescer {
             coalesce_window_us,
             last_flush: Instant::now(),
             max_batch_size,
+            // Allow 2x max_batch_size as hard limit for pending writes
+            max_pending_writes: max_batch_size * 2,
         }
     }
 
     fn add_write(&mut self, page: Page, offset: u64) -> bool {
+        // Enforce hard limit: refuse to add if we're at max capacity
+        if self.pending_writes.len() >= self.max_pending_writes {
+            return true; // Signal immediate flush required
+        }
+
         self.pending_writes.insert(page.id, (page, offset));
         self.should_flush()
     }
@@ -619,10 +580,19 @@ impl DiskManager {
             page_size,
             num_pages: Arc::new(Mutex::new(num_pages)),
             scheduler: Arc::new(Mutex::new(IoScheduler::new())),
-            read_ahead: Arc::new(Mutex::new(ReadAheadBuffer::new(64, 10))),
-            write_behind: Arc::new(Mutex::new(WriteBehindBuffer::new(128, 32))),
-            write_coalescer: Arc::new(Mutex::new(WriteCoalescer::new(5000, 64))), // 5ms window, 64 pages
-            io_uring: Arc::new(Mutex::new(IoUring::new(256, false))),             // 256 queue depth
+            read_ahead: Arc::new(Mutex::new(ReadAheadBuffer::new(
+                MAX_READ_AHEAD_PAGES,
+                ACCESS_PATTERN_WINDOW,
+            ))),
+            write_behind: Arc::new(Mutex::new(WriteBehindBuffer::new(
+                MAX_WRITE_BEHIND_PAGES,
+                WRITE_BATCH_SIZE,
+            ))),
+            write_coalescer: Arc::new(Mutex::new(WriteCoalescer::new(
+                COALESCE_WINDOW_US,
+                COALESCE_MAX_BATCH,
+            ))),
+            io_uring: Arc::new(Mutex::new(IoUring::new(IO_URING_QUEUE_DEPTH, false))),
             direct_io_config,
             adaptive_page_size: false,
             min_page_size: 4096,
@@ -645,6 +615,10 @@ impl DiskManager {
                 let mut stats = self.stats.write();
                 stats.read_ahead_hits += 1;
                 stats.reads += 1;
+                // TODO: MEMORY COPY #1 - Page::from_bytes copies data
+                // Recommendation: Use Arc<[u8]> or return reference instead of owned Vec<u8>
+                // This copies 4KB per page read from read-ahead buffer
+                // See: diagrams/02_storage_layer_flow.md - Issue #3.1
                 return Ok(Page::from_bytes(page_id, data));
             }
         }
@@ -764,6 +738,10 @@ impl DiskManager {
             drop(write_behind);
 
             for (page_id, data) in batch {
+                // TODO: MEMORY COPY #2 - Page::from_bytes copies data again
+                // Data was already copied into write_behind buffer, now copied into Page
+                // Recommendation: WriteBehindBuffer should store Arc<Page> instead
+                // See: diagrams/02_storage_layer_flow.md - Issue #3.1
                 let page = Page::from_bytes(page_id, data);
                 self.write_to_disk(&page)?;
             }
@@ -827,6 +805,9 @@ impl DiskManager {
         self.scheduler.lock().unwrap().schedule(op);
 
         // Buffer the write
+        // TODO: MEMORY COPY #4 - page.data.clone() copies 4KB per async write
+        // Recommendation: Use Arc<[u8]> for page data to enable zero-copy sharing
+        // See: diagrams/02_storage_layer_flow.md - Issue #3.1
         self.write_behind
             .lock()
             .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?
@@ -898,6 +879,11 @@ impl DiskManager {
             file.seek(SeekFrom::Start(offset))?;
             file.read_exact(&mut bufs[idx])?;
 
+            // TODO: MEMORY COPY #3 - Unnecessary clone in vectored read
+            // Buffer is already allocated, no need to clone it
+            // Recommendation: Use std::mem::take or swap to avoid copy
+            // This copies 4KB * N pages in vectored reads
+            // See: diagrams/02_storage_layer_flow.md - Issue #3.1
             pages.push(Page::from_bytes(page_id, bufs[idx].clone()));
         }
 
@@ -1012,6 +998,9 @@ impl DiskManager {
     // Submit async write via io_uring
     pub fn write_page_io_uring(&self, page: &Page) -> Result<()> {
         let offset = page.id as u64 * self.page_size as u64;
+        // TODO: MEMORY COPY #5 - page.data.clone() for io_uring submission
+        // Recommendation: io_uring should take Arc<[u8]> to avoid copy
+        // See: diagrams/02_storage_layer_flow.md - Issue #3.1
         let op = IoUringOp::write(page.id, offset, page.data.clone());
 
         let mut io_uring = self

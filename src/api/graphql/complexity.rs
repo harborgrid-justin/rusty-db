@@ -1,6 +1,12 @@
 // GraphQL Complexity Analysis
 //
 // Query complexity analyzer for performance and security
+//
+// TODO: CONSOLIDATION NEEDED - RateLimiter Implementation #3 of 6
+// See src/api/rest/types.rs for full consolidation analysis.
+// NOTE: This is query complexity limiting, not request rate limiting, but uses similar patterns.
+// RECOMMENDATION: Consider using unified rate limiter for query complexity budgeting.
+// See: diagrams/06_network_api_flow.md - Issue #4.2
 
 use crate::api::RowType;
 use crate::error::DbError;

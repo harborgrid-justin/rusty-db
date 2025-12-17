@@ -568,7 +568,7 @@ impl ExternalConnector for WebhookConnector {
     fn send_event(&self, event: &ChangeEvent) -> Result<()> {
         // In production, use reqwest or similar to send HTTP POST
         let _payload =
-            serde_json::to_string(event).map_err(|e| DbError::SerializationError(e.to_string()))?;
+            serde_json::to_string(event).map_err(|e| DbError::Serialization(e.to_string()))?;
 
         // Simulate HTTP request
         // reqwest::Client::new()

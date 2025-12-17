@@ -14,11 +14,17 @@
 // - Cache-efficient layouts reducing miss rate by 78%
 
 use crate::Result;
+use crate::error::DbError;
+use crate::index::hash_helpers::hash_key;
 use parking_lot::RwLock;
 use std::collections::hash_map::DefaultHasher;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
+
+// Maximum global depth to prevent exponential directory growth
+// 2^16 = 65,536 directory entries maximum (~1MB with Arc<RwLock> overhead)
+const MAX_GLOBAL_DEPTH: usize = 16;
 
 // Extendible Hash Index
 //
@@ -179,6 +185,16 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
     fn increase_global_depth(&self) -> Result<()> {
         let mut global_depth = self.global_depth.write();
         let mut directory = self.directory.write();
+
+        if *global_depth >= MAX_GLOBAL_DEPTH {
+            return Err(DbError::ResourceExhausted(
+                format!(
+                    "Hash index depth limit reached ({}). Directory would require {} entries.",
+                    MAX_GLOBAL_DEPTH,
+                    1usize << (*global_depth + 1)
+                )
+            ));
+        }
 
         *global_depth += 1;
 
@@ -440,19 +456,9 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> LinearHashIndex<K, V> {
 
     // Hash a key
     //
-    // Now uses xxHash3-AVX2 for 10x faster hashing
+    // Now uses xxHash3-AVX2 for 10x faster hashing (via hash_helpers)
     fn hash(&self, key: &K) -> usize {
-        // Fast path for string keys
-        if std::any::TypeId::of::<K>() == std::any::TypeId::of::<String>() {
-            // Use SIMD hash for strings
-            let key_str = unsafe { &*(key as *const K as *const String) };
-            return crate::simd::hash::hash_str(key_str) as usize;
-        }
-
-        // Fallback to DefaultHasher for other types
-        let mut hasher = DefaultHasher::new();
-        key.hash(&mut hasher);
-        hasher.finish() as usize
+        hash_key(key) as usize
     }
 
     // Get statistics

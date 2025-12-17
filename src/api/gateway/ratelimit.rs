@@ -1,6 +1,11 @@
 // Gateway Module
 //
 // Part of the API Gateway and Security system for RustyDB
+//
+// TODO: CONSOLIDATION NEEDED - RateLimiter Implementation #2 of 6
+// See src/api/rest/types.rs for full consolidation analysis.
+// RECOMMENDATION: Migrate to unified src/common/rate_limiter.rs
+// See: diagrams/06_network_api_flow.md - Issue #4.2
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};

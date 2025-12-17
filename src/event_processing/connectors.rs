@@ -451,7 +451,7 @@ impl FileSinkConnector {
                         crate::error::DbError::Serialization(format!("Failed to serialize: {}", e))
                     })?;
                     writeln!(writer, "{}", json).map_err(|e| {
-                        crate::error::DbError::IoError(format!("Failed to write: {}", e))
+                        crate::error::DbError::Storage(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += json.len() as u64;
                 }
@@ -461,7 +461,7 @@ impl FileSinkConnector {
                         crate::error::DbError::Serialization(format!("Failed to serialize: {}", e))
                     })?;
                     writeln!(writer, "{}", json).map_err(|e| {
-                        crate::error::DbError::IoError(format!("Failed to write: {}", e))
+                        crate::error::DbError::Storage(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += json.len() as u64;
                 }
@@ -475,7 +475,7 @@ impl FileSinkConnector {
                         serde_json::to_string(&event.payload).unwrap_or_default()
                     );
                     write!(writer, "{}", csv_line).map_err(|e| {
-                        crate::error::DbError::IoError(format!("Failed to write: {}", e))
+                        crate::error::DbError::Storage(format!("Failed to write: {}", e))
                     })?;
                     self.current_size += csv_line.len() as u64;
                 }
@@ -504,7 +504,7 @@ impl FileSinkConnector {
             let mut writer = writer.lock().unwrap();
             writer
                 .flush()
-                .map_err(|e| crate::error::DbError::IoError(format!("Failed to flush: {}", e)))?;
+                .map_err(|e| crate::error::DbError::Storage(format!("Failed to flush: {}", e)))?;
         }
 
         // Rename current file with timestamp
@@ -515,7 +515,7 @@ impl FileSinkConnector {
 
         let new_path = self.file_path.with_extension(format!("{}.old", timestamp));
         std::fs::rename(&self.file_path, &new_path)
-            .map_err(|e| crate::error::DbError::IoError(format!("Failed to rename file: {}", e)))?;
+            .map_err(|e| crate::error::DbError::Storage(format!("Failed to rename file: {}", e)))?;
 
         // Reset writer
         self.writer = None;
@@ -537,7 +537,7 @@ impl SinkConnector for FileSinkConnector {
             let mut writer = writer.lock().unwrap();
             writer
                 .flush()
-                .map_err(|e| crate::error::DbError::IoError(format!("Failed to flush: {}", e)))?;
+                .map_err(|e| crate::error::DbError::Storage(format!("Failed to flush: {}", e)))?;
         }
 
         Ok(())
@@ -575,7 +575,7 @@ impl SinkConnector for FileSinkConnector {
             let mut writer = writer.lock().unwrap();
             writer
                 .flush()
-                .map_err(|e| crate::error::DbError::IoError(format!("Failed to flush: {}", e)))?;
+                .map_err(|e| crate::error::DbError::Storage(format!("Failed to flush: {}", e)))?;
         }
 
         Ok(())

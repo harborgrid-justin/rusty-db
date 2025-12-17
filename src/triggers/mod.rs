@@ -1,9 +1,75 @@
+// RustyDB Triggers Module
+//
+// ⚠️ **CRITICAL: NO QUERY EXECUTOR INTEGRATION** ⚠️
+//
+// **Issue**: Triggers parse SQL but don't actually execute it
+//
+// **Missing Integration**:
+// 1. No connection to `src/execution/executor.rs`
+// 2. No :NEW / :OLD value substitution
+// 3. No trigger firing during DML operations
+// 4. No trigger depth tracking (risk of infinite recursion)
+//
+// **TODO - HIGH PRIORITY**:
+// 1. Integrate with DML operations (INSERT/UPDATE/DELETE)
+//    - Hook into storage layer or executor
+//    - Fire BEFORE triggers before operation
+//    - Fire AFTER triggers after operation
+//
+// 2. Implement :NEW / :OLD value substitution:
+//    ```rust
+//    pub fn substitute_trigger_variables(
+//        sql: &str,
+//        old_row: Option<&Row>,
+//        new_row: Option<&Row>,
+//    ) -> String {
+//        // Replace :NEW.column_name and :OLD.column_name
+//    }
+//    ```
+//
+// 3. Add trigger depth tracking (prevent infinite recursion):
+//    - Oracle limit: 32 levels
+//    - Track current trigger depth in thread-local storage
+//    - Return error if depth exceeded
+//
+// 4. Execute trigger action SQL:
+//    - Parse action string into SQL statements
+//    - Execute via QueryExecutor
+//    - Handle exceptions and rollback
+//
+// **Cross-Reference**: Same issues in `src/procedures/mod.rs`
+// **Impact**: Triggers are non-functional without integration
+// **Priority**: HIGH - required for data integrity features
+
 use crate::error::DbError;
 use crate::Result;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+
+// ============================================================================
+// Capacity Limits - Prevent Unbounded Memory Growth
+// ============================================================================
+
+// TODO(ARCHITECTURE): Implement bounded trigger storage to prevent OOM
+// Maximum number of tables that can have triggers
+// Current implementation uses unbounded HashMap - see TriggerManager struct
+// Recommended: Use BoundedHashMap with eviction policy
+pub const MAX_TABLES_WITH_TRIGGERS: usize = 10_000;
+
+// TODO(ARCHITECTURE): Implement bounded trigger storage to prevent OOM
+// Maximum number of triggers per table
+// Current implementation uses unbounded Vec - see TriggerManager struct
+// Oracle typical limit: 100 triggers per table
+pub const MAX_TRIGGERS_PER_TABLE: usize = 100;
+
+// Maximum total triggers across all tables
+pub const MAX_TOTAL_TRIGGERS: usize = MAX_TABLES_WITH_TRIGGERS * MAX_TRIGGERS_PER_TABLE;
+
+// Maximum trigger recursion depth (Oracle limit: 32)
+// TODO(INTEGRATION): Implement trigger depth tracking in execution context
+pub const MAX_TRIGGER_DEPTH: usize = 32;
 
 // Trigger timing
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -40,7 +106,15 @@ pub struct TriggerContext {
 }
 
 // Trigger manager
+//
+// TODO: Add capacity limits - unbounded trigger storage
+// Recommended: 1,000 max tables, 100 max triggers per table
+// TODO: Add integration with query executor (triggers don't actually execute SQL yet)
+// TODO: Add trigger depth tracking to prevent infinite recursion (Oracle limit: 32)
 pub struct TriggerManager {
+    // WARNING: Unbounded - can store unlimited triggers per table
+    // TODO: Replace with BoundedHashMap<String, BoundedVec<Trigger>>
+    //       Max tables: 10,000, Max triggers per table: 100
     triggers: Arc<RwLock<HashMap<String, Vec<Trigger>>>>,
 }
 

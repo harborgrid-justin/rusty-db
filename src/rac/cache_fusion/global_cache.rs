@@ -3,6 +3,13 @@
 // Oracle RAC-like Global Cache Service (GCS) for direct memory-to-memory block transfers
 // between cluster instances without requiring disk I/O.
 //
+// TODO(performance): Locks during network I/O issue (Issue P-02)
+// transfer_block() method (lines 450-550) holds write locks during network I/O:
+// - Acquires block_map lock, then sends block over network while holding lock
+// - Causes 40% throughput degradation vs lock-free design
+// See diagrams/07_security_enterprise_flow.md Section 6.2
+// Recommendation: Use optimistic locking + zero-copy transfers, release locks before I/O
+//
 // ## Key Components
 //
 // - **Block Mode Management**: Coordinates data block access modes (Shared, Exclusive, etc.)

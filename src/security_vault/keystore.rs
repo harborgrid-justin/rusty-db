@@ -158,7 +158,7 @@ impl KeyStore {
     pub fn new<P: AsRef<Path>>(data_dir: P) -> Result<Self> {
         let data_dir = data_dir.as_ref().to_path_buf();
         fs::create_dir_all(&data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create keystore directory: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to create keystore directory: {}", e)))?;
 
         Ok(Self {
             data_dir,
@@ -536,7 +536,7 @@ impl KeyStore {
             .map_err(|e| DbError::Serialization(format!("Failed to serialize metadata: {}", e)))?;
 
         fs::write(&metadata_path, json)
-            .map_err(|e| DbError::IoError(format!("Failed to write metadata: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to write metadata: {}", e)))?;
 
         // Persist DEKs (encrypted)
         let deks_path = self.data_dir.join("deks.bin");
@@ -545,7 +545,7 @@ impl KeyStore {
             .map_err(|e| DbError::Serialization(format!("Failed to serialize DEKs: {}", e)))?;
 
         fs::write(&deks_path, serialized)
-            .map_err(|e| DbError::IoError(format!("Failed to write DEKs: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to write DEKs: {}", e)))?;
 
         Ok(())
     }
@@ -556,7 +556,7 @@ impl KeyStore {
         let metadata_path = self.data_dir.join("metadata.json");
         if metadata_path.exists() {
             let json = fs::read_to_string(&metadata_path)
-                .map_err(|e| DbError::IoError(format!("Failed to read metadata: {}", e)))?;
+                .map_err(|e| DbError::Storage(format!("Failed to read metadata: {}", e)))?;
             let loaded_metadata: KeyStoreMetadata = serde_json::from_str(&json)
                 .map_err(|e| DbError::Serialization(format!("Failed to parse metadata: {}", e)))?;
             *self.metadata.write() = loaded_metadata;
@@ -569,7 +569,7 @@ impl KeyStore {
         let deks_path = self.data_dir.join("deks.bin");
         if deks_path.exists() {
             let data = fs::read(&deks_path)
-                .map_err(|e| DbError::IoError(format!("Failed to read DEKs: {}", e)))?;
+                .map_err(|e| DbError::Storage(format!("Failed to read DEKs: {}", e)))?;
             let loaded_deks: HashMap<String, DataEncryptionKey> =
                 bincode::decode_from_slice(&data, bincode::config::standard())
                     .map(|(deks, _)| deks)

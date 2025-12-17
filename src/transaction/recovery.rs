@@ -824,12 +824,12 @@ impl MediaRecoveryManager {
         // Copy WAL segment to archive directory
         let filename = segment_path
             .file_name()
-            .ok_or_else(|| DbError::IOError("Invalid segment path".to_string()))?;
+            .ok_or_else(|| DbError::Storage("Invalid segment path".to_string()))?;
 
         let archive_path = self.archive_dir.join(filename);
 
         std::fs::copy(segment_path, archive_path)
-            .map_err(|e| DbError::IOError(format!("Failed to archive segment: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to archive segment: {}", e)))?;
 
         Ok(())
     }

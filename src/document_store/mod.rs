@@ -91,9 +91,91 @@ pub use jsonpath::{query as jsonpath_query, JsonPath, JsonPathEvaluator};
 pub use qbe::{Projection, QueryBuilder, QueryDocument};
 pub use sql_json::{JsonDataType, JsonTableColumn, SqlJsonFunctions};
 
+// ============================================================================
+// Capacity Limits - Prevent Unbounded Memory Growth
+// ============================================================================
+
+// TODO(ARCHITECTURE): Implement bounded document storage to prevent OOM
+// Maximum number of collections (prevents unbounded collection HashMap)
+// Current implementation uses unbounded HashMap - see DocumentStore struct for fix plan
+// Recommended: Use BoundedHashMap or disk-backed storage with in-memory cache
+// See detailed fix recommendations in DocumentStore struct documentation (line ~112)
+pub const MAX_COLLECTIONS: usize = 10_000;
+
+// TODO(ARCHITECTURE): Implement bounded document storage to prevent OOM
+// Maximum number of documents per collection (prevents unbounded document HashMap)
+// Current implementation uses triple-nested unbounded HashMap - see DocumentStore struct
+// Recommended: Use disk-backed storage with LRU cache (default 100K documents in memory)
+// See detailed fix recommendations in DocumentStore struct documentation (line ~112)
+pub const MAX_DOCUMENTS_PER_COLLECTION: usize = 1_000_000;
+
+// Maximum total documents across all collections
+pub const MAX_TOTAL_DOCUMENTS: usize = MAX_COLLECTIONS * MAX_DOCUMENTS_PER_COLLECTION;
+
 // Main document store interface
 //
 // Provides a unified API for document storage, querying, and management.
+//
+// ⚠️ **CRITICAL: UNBOUNDED IN-MEMORY GROWTH** ⚠️
+//
+// **Issue**: Triple-nested HashMap with no capacity limits
+//
+// **Structure Analysis**:
+// ```rust
+// HashMap<String, HashMap<DocumentId, Document>>
+//    ^              ^                  ^
+//    Collection     Documents          Full document in memory
+// ```
+//
+// **Problems**:
+// 1. No limit on number of collections
+// 2. No limit on documents per collection
+// 3. All documents stored in memory (no disk backing)
+// 4. Three levels of indirection for every document access
+// 5. RwLock contention on the entire collections HashMap
+//
+// **Risk**: Memory exhaustion on large document collections (>1M documents)
+//
+// **TODO - HIGH PRIORITY**:
+// 1. Option A: Add capacity limits with BoundedHashMap
+//    ```rust
+//    use crate::common::BoundedHashMap;
+//    collections: BoundedHashMap<String, BoundedHashMap<DocumentId, Document>>
+//    // Max collections: 10,000
+//    // Max documents per collection: 1,000,000
+//    ```
+//
+// 2. Option B: Shard collections with finer-grained locking
+//    ```rust
+//    // Shard documents by hash of DocumentId
+//    struct CollectionShard {
+//        documents: BoundedHashMap<DocumentId, Document>,  // Max 10K per shard
+//        lock: RwLock<()>,
+//    }
+//    collections: HashMap<String, Vec<CollectionShard>>,  // 100 shards per collection
+//    ```
+//
+// 3. Option C: Disk-backed storage (RECOMMENDED)
+//    - Keep hot documents in memory (LRU cache)
+//    - Persist documents to page-based storage
+//    - Use existing storage layer infrastructure
+//    - Document cache size: configurable (default 100K documents)
+//    ```rust
+//    struct DocumentStore {
+//        // In-memory cache
+//        document_cache: BoundedHashMap<(String, DocumentId), Document>,
+//        // Persistent storage
+//        storage_engine: Arc<StorageEngine>,
+//    }
+//    ```
+//
+// **Also Address**:
+// - Index Manager: Likely has unbounded index storage (see indexing.rs)
+// - Change Stream Manager: Fixed circular buffer may overflow (see changes.rs)
+//
+// **Impact**: Can cause OOM, poor scalability, lock contention
+// **Priority**: HIGH - implement before production document workloads
+//
 pub struct DocumentStore {
     // Collection manager
     collection_manager: CollectionManager,
@@ -101,6 +183,9 @@ pub struct DocumentStore {
     index_manager: IndexManager,
     // Change stream manager
     change_stream_manager: ChangeStreamManager,
+
+    // TODO: Replace with disk-backed storage + in-memory cache
+    // ⚠️ WARNING: Unbounded triple-nested HashMap - see header comments
     // Documents by collection (in-memory storage)
     collections: Arc<RwLock<HashMap<String, HashMap<DocumentId, Document>>>>,
 }

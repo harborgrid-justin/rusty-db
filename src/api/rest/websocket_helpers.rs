@@ -26,7 +26,7 @@ pub async fn send_welcome_message(socket: &mut WebSocket, connection_type: &str)
     });
 
     if let Ok(welcome_json) = serde_json::to_string(&welcome) {
-        socket.send(Message::Text(welcome_json)).await.map_err(|_| ())
+        socket.send(Message::Text(welcome_json.into())).await.map_err(|_| ())
     } else {
         Err(())
     }
@@ -48,7 +48,7 @@ pub async fn send_json_message(
     });
 
     if let Ok(json_str) = serde_json::to_string(&message) {
-        socket.send(Message::Text(json_str)).await.map_err(|_| ())
+        socket.send(Message::Text(json_str.into())).await.map_err(|_| ())
     } else {
         Err(())
     }
@@ -71,7 +71,7 @@ pub async fn send_error_message(
     });
 
     if let Ok(error_json) = serde_json::to_string(&error) {
-        socket.send(Message::Text(error_json)).await.map_err(|_| ())
+        socket.send(Message::Text(error_json.into())).await.map_err(|_| ())
     } else {
         Err(())
     }
@@ -201,8 +201,8 @@ where
     while let Some(msg) = socket.recv().await {
         match msg {
             Ok(Message::Text(text)) => {
-                if let Some(response) = message_handler(text).await {
-                    if socket.send(Message::Text(response)).await.is_err() {
+                if let Some(response) = message_handler(text.to_string()).await {
+                    if socket.send(Message::Text(response.into())).await.is_err() {
                         break;
                     }
                 }

@@ -44,6 +44,37 @@ use std::fmt;
 use std::time::{Duration, SystemTime};
 
 // ============================================================================
+// Collection Size Limits - Prevent unbounded memory allocation
+// ============================================================================
+
+// TODO: Enforce these limits in collection operations to prevent DoS attacks
+// These limits prevent unbounded memory growth from malicious or buggy code
+
+/// Maximum number of columns per table (prevents schema bloat)
+pub const MAX_COLUMNS_PER_TABLE: usize = 1024;
+
+/// Maximum number of values in a tuple (same as MAX_COLUMNS_PER_TABLE)
+pub const MAX_TUPLE_VALUES: usize = MAX_COLUMNS_PER_TABLE;
+
+/// Maximum number of foreign keys per table
+pub const MAX_FOREIGN_KEYS_PER_TABLE: usize = 256;
+
+/// Maximum number of unique constraints per table
+pub const MAX_UNIQUE_CONSTRAINTS_PER_TABLE: usize = 256;
+
+/// Maximum number of active transactions in a snapshot
+pub const MAX_ACTIVE_TRANSACTIONS: usize = 100_000;
+
+/// Maximum number of custom metrics per component
+pub const MAX_CUSTOM_METRICS: usize = 1_000;
+
+/// Maximum depth of nested Value::Array to prevent stack overflow
+pub const MAX_VALUE_NESTING_DEPTH: usize = 32;
+
+/// Maximum size of error message strings (prevent memory exhaustion)
+pub const MAX_ERROR_MESSAGE_LENGTH: usize = 4096;
+
+// ============================================================================
 // Type Aliases - Shared Identifiers
 // ============================================================================
 
@@ -979,6 +1010,10 @@ impl ResourceUsage {
 
 /// Concurrent map patterns and DashMap migration guide
 pub mod concurrent_map;
+
+/// Bounded HashMap with LRU eviction for memory-safe collections
+pub mod bounded_map;
+pub use bounded_map::BoundedHashMap;
 
 // ============================================================================
 // Tests

@@ -2,6 +2,32 @@
 //
 // Server setup, routing, and core functionality for the REST API.
 // Uses dependency injection and proper error handling.
+//
+// TODO: MONOLITHIC ROUTER - REFACTORING NEEDED (1688 lines)
+// This file contains a massive router with 300+ routes in a single build_router() function.
+//
+// ISSUES:
+//   - Hard to maintain and modify
+//   - Long compilation time
+//   - High risk of merge conflicts
+//   - Difficult to test individual route groups
+//
+// RECOMMENDATION: Split into domain-specific route modules:
+//   - src/api/rest/routes/db.rs - Database operations (query, table, schema)
+//   - src/api/rest/routes/transactions.rs - Transaction management
+//   - src/api/rest/routes/cluster.rs - Cluster management
+//   - src/api/rest/routes/security.rs - Security and auth endpoints
+//   - src/api/rest/routes/monitoring.rs - Metrics, logs, alerts
+//   - src/api/rest/routes/ml.rs - ML and analytics
+//   - src/api/rest/routes/graph.rs - Graph database
+//   - src/api/rest/routes/document.rs - Document store
+//   - src/api/rest/routes/spatial.rs - Spatial queries
+//   - src/api/rest/routes/storage.rs - Storage management
+//   - src/api/rest/routes/websocket.rs - WebSocket endpoints (50+ handlers)
+//
+// Each module should export a router fragment that gets merged in server.rs::build_router().
+//
+// See: diagrams/06_network_api_flow.md - Issue #3.2
 
 use super::cors::build_cors_layer;
 use super::handlers::admin::{
@@ -1505,9 +1531,18 @@ fn get_executor() -> Executor {
     Executor::new(Arc::new(catalog_snapshot), TXN_MANAGER.clone())
 }
 
+// TODO: BACKPRESSURE NEEDED - WebSocket Message Queue
+// This WebSocket handler has NO backpressure control - clients can send messages faster than we process.
+// ISSUE: Unbounded message queue can cause memory exhaustion from fast-sending clients (50+ WS endpoints)
+// RECOMMENDATION:
+//   1. Use bounded channel (e.g., tokio::sync::mpsc::channel(100)) between recv and processing
+//   2. Implement slow-consumer detection and disconnect/drop messages if queue full
+//   3. Add per-connection message rate limiting
+// See: diagrams/06_network_api_flow.md - Issues #3.5, #5.5
 async fn handle_websocket(mut socket: WebSocket, _state: Arc<ApiState>) {
     use axum::extract::ws::Message;
 
+    // ISSUE: This loop has no bounds on the receive queue
     while let Some(msg) = socket.recv().await {
         if let Ok(msg) = msg {
             match msg {

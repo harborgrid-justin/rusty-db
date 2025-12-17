@@ -1,6 +1,12 @@
 // Flow Control Module
 //
 // Network flow control, rate limiting, circuit breaking, and connection pooling
+//
+// TODO: CONSOLIDATION NEEDED - RateLimiter Implementation #5 of 6
+// See src/api/rest/types.rs for full consolidation analysis.
+// RECOMMENDATION: Migrate rate limiting logic to unified src/common/rate_limiter.rs
+// Keep protocol-specific flow control features separate.
+// See: diagrams/06_network_api_flow.md - Issue #4.2
 
 use std::collections::HashMap;
 
@@ -218,6 +224,12 @@ pub struct RateLimiterStats {
 // ============================================================================
 // Connection Pool
 // ============================================================================
+
+// TODO: CONSOLIDATION NEEDED - ConnectionPool Implementation #3 of 4
+// This ConnectionPool duplicates connection pooling logic from src/pool/connection_pool.rs.
+// RECOMMENDATION: Either delegate to main pool or implement ConnectionPool<T> trait.
+// See src/pool/connection_pool.rs for full consolidation analysis.
+// See: diagrams/06_network_api_flow.md - Issue #4.3
 
 pub struct ConnectionPool {
     max_connections: usize,
