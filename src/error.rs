@@ -156,8 +156,8 @@ pub enum DbError {
     #[error("Memory error: {0}")]
     Memory(String),
 
-    #[error("Corruption error: {0}")]
-    CorruptionError(String),
+    #[error("Data corruption: {0}")]
+    Corruption(String),
 
     #[error("Conflict: {0}")]
     Conflict(String),
@@ -228,7 +228,7 @@ impl Clone for DbError {
             DbError::Compression(s) => DbError::Compression(s.clone()),
             DbError::Recovery(s) => DbError::Recovery(s.clone()),
             DbError::Memory(s) => DbError::Memory(s.clone()),
-            DbError::CorruptionError(s) => DbError::CorruptionError(s.clone()),
+            DbError::Corruption(s) => DbError::Corruption(s.clone()),
             DbError::Conflict(s) => DbError::Conflict(s.clone()),
             DbError::ConstraintViolation(s) => DbError::ConstraintViolation(s.clone()),
             DbError::ParseError(s) => DbError::ParseError(s.clone()),

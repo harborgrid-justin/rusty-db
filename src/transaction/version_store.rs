@@ -1,26 +1,76 @@
-// MVCC Version Store implementation.
+// MVCC Version Store Implementation (Legacy)
 //
-// TODO(ARCHITECTURE): DUPLICATE IMPLEMENTATION DETECTED
-// ====================================================
-// This module (version_store.rs) provides a simpler MVCC implementation
-// that DUPLICATES functionality in mvcc.rs (MVCCManager).
+// ⚠️ DEPRECATION NOTICE - ARCHITECTURAL DEBT
+// ==========================================
+// This module provides a simplified MVCC version store that has been superseded by
+// a more advanced implementation in `mvcc.rs`.
 //
-// RECOMMENDATION: Remove this module and migrate all users to mvcc.rs
+// # Current Status: DEPRECATED (but still in use)
 //
-// DIFFERENCES:
-// - version_store.rs: Simple Vec<Version> per key, basic GC
-// - mvcc.rs: Advanced VersionChain with VecDeque, HybridClock, SnapshotIsolation
+// This module remains in the codebase because:
+// - It is currently re-exported in `transaction/mod.rs` (line 140)
+// - Existing code may depend on this specific `Version` type definition
+// - Snapshot isolation features in mvcc.rs are not yet fully integrated
+// - Migration requires testing to ensure behavioral compatibility
 //
-// CODE DUPLICATION: ~60% overlap in version visibility and GC logic
-// RISK: Inconsistent behavior if both are used in different parts of codebase
-// ACTION REQUIRED: Consolidate to mvcc.rs and update all references
+// # Migration Path
 //
-// See diagrams/03_transaction_memory_flow.md for full analysis
-// ====================================================
+// To migrate from `version_store.rs` to `mvcc.rs`:
 //
-// This module provides the version storage mechanism for Multi-Version
-// Concurrency Control (MVCC), enabling non-blocking reads and consistent
-// snapshots.
+// 1. **Update imports**: Change from `transaction::version_store` to `transaction::mvcc`
+// 2. **Update types**: Map `VersionStore` to `MVCCManager<K, V>`
+// 3. **Migrate to HybridTimestamp**: Replace `SystemTime` with `HybridTimestamp`
+// 4. **Enable write-skew detection**: Configure `SnapshotIsolationManager` for SERIALIZABLE isolation
+// 5. **Update mod.rs re-exports**: Change line 140 in transaction/mod.rs
+// 6. **Remove this file**: Once all dependencies are migrated
+//
+// # Feature Comparison
+//
+// | Feature | version_store.rs (this file) | mvcc.rs (new) |
+// |---------|------------------------------|---------------|
+// | Storage | ❌ Simple Vec per key | ✅ VecDeque with version chain |
+// | Timestamps | ⚠️ SystemTime only | ✅ HybridTimestamp (distributed) |
+// | Clock | ❌ None | ✅ Hybrid Logical Clock |
+// | Write-Skew Detection | ❌ Not supported | ✅ Full implementation |
+// | Snapshot Isolation | ⚠️ Basic | ✅ Complete with SSI |
+// | Memory Management | ⚠️ Basic GC | ✅ Global limits + pressure callbacks |
+// | Concurrency | ❌ ~60% code overlap | ✅ Optimized, no duplication |
+//
+// # Why mvcc.rs is Superior
+//
+// 1. **Hybrid Logical Clocks**: Distributed-safe timestamp ordering with causality tracking
+// 2. **Write-Skew Detection**: Prevents non-serializable anomalies in SERIALIZABLE isolation
+// 3. **Snapshot Isolation Manager**: Complete implementation with read/write set tracking
+// 4. **Global Memory Limits**: Prevents unbounded growth across all version chains
+// 5. **Memory Pressure Integration**: Automatic GC triggered by memory pressure events
+// 6. **Better Concurrency**: VecDeque-based version chains with optimized access patterns
+//
+// # Critical Missing Feature: Write-Skew Detection
+//
+// ⚠️ **IMPORTANT**: This legacy version store does NOT implement write-skew detection.
+// For SERIALIZABLE isolation level to work correctly, you MUST use the
+// `SnapshotIsolationManager` from `mvcc.rs`.
+//
+// Without write-skew detection, the following anomaly can occur:
+// ```text
+// T1: READ(x=100, y=100) -> UPDATE y SET y=y-50 WHERE x+y >= 100
+// T2: READ(x=100, y=100) -> UPDATE x SET x=x-50 WHERE x+y >= 100
+// Result: x=50, y=50 (violates constraint x+y >= 100)
+// ```
+//
+// The `mvcc.rs` implementation prevents this with proper read-set tracking and
+// validation at commit time.
+//
+// # See Also
+//
+// - `transaction/mvcc.rs` - The superior MVCC implementation with write-skew detection
+// - `diagrams/03_transaction_memory_flow.md` - Architecture analysis
+// - Issue #TBD - Migration tracking issue
+//
+// ==========================================
+//
+// This module provides basic version storage for Multi-Version Concurrency Control (MVCC),
+// enabling non-blocking reads and consistent snapshots.
 //
 // # Key Concepts
 //

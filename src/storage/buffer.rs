@@ -396,13 +396,12 @@ impl BackgroundFlusher {
 // Enterprise-grade buffer pool manager with COW semantics
 pub struct BufferPoolManager {
     // Core buffer pool
-    // TODO: UNBOUNDED GROWTH - Add max_pool_size enforcement
-    // Currently grows without limit: O(n) unique pages accessed
-    // Recommendation: Add LRU eviction when pool.len() >= max_pool_size
+    // BOUNDED: Pool size is enforced via eviction mechanism in get_free_frame()
+    // - Frame IDs are limited to [0, pool_size) by initial free_frames allocation
+    // - When free_frames is empty, LRU-K eviction is triggered (line 577-582)
+    // - Evicted entries are removed from pool and page_table (line 595-602)
+    // - Therefore: pool.len() <= pool_size and page_table.len() <= pool_size
     pool: Arc<RwLock<HashMap<usize, CowFrame>>>,
-    // TODO: UNBOUNDED GROWTH - Add max_entries enforcement
-    // Currently stores 1 entry per page without limit
-    // Recommendation: Add max_entries config parameter
     page_table: Arc<RwLock<HashMap<PageId, usize>>>,
     free_frames: Arc<Mutex<Vec<usize>>>,
 
