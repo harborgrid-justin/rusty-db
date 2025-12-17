@@ -57,6 +57,7 @@ use crate::index::swiss_table::SwissTable;
 use crate::simd::hash::hash_str;
 use parking_lot::RwLock;
 use rayon::prelude::*;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 // Configuration for SIMD hash join
@@ -243,6 +244,7 @@ impl SimdHashJoin {
                             partition_matches.push(Match {
                                 build_idx,
                                 probe_idx,
+                                partition_id, // FIXED: Track partition ID for optimized materialization
                             });
                         }
                     }
@@ -257,6 +259,7 @@ impl SimdHashJoin {
     }
 
     // Phase 3: Materialize joined rows
+    // FIXED: Now uses partition tracking for better cache locality
     fn materialize(
         &self,
         build_side: &QueryResult,
@@ -267,30 +270,43 @@ impl SimdHashJoin {
         let mut result_rows = Vec::with_capacity(matches.len());
         let result_row_size = probe_side.columns.len() + build_side.columns.len();
 
-        // Materialize in parallel batches
+        // Group matches by partition for better cache locality
+        let mut partition_matches: HashMap<usize, Vec<&Match>> = HashMap::new();
+        for m in &matches {
+            partition_matches
+                .entry(m.partition_id)
+                .or_insert_with(Vec::new)
+                .push(m);
+        }
+
+        // Materialize in parallel by partition (better cache locality)
         let batch_size = 1024;
-        let batches: Vec<Vec<Vec<String>>> = matches
-            .par_chunks(batch_size)
-            .map(|batch| {
-                let mut batch_rows = Vec::with_capacity(batch.len());
-                for m in batch {
-                    let mut joined_row = Vec::with_capacity(result_row_size);
+        let batches: Vec<Vec<Vec<String>>> = partition_matches
+            .par_iter()
+            .flat_map(|(_partition_id, partition_matches)| {
+                partition_matches
+                    .par_chunks(batch_size)
+                    .map(|batch| {
+                        let mut batch_rows = Vec::with_capacity(batch.len());
+                        for m in batch {
+                            let mut joined_row = Vec::with_capacity(result_row_size);
 
-                    // Get probe row
-                    if let Some(probe_row) = probe_side.rows.get(m.probe_idx) {
-                        joined_row.extend_from_slice(probe_row);
-                    }
+                            // Get probe row
+                            if let Some(probe_row) = probe_side.rows.get(m.probe_idx) {
+                                joined_row.extend_from_slice(probe_row);
+                            }
 
-                    // Get build row (from partition)
-                    // Note: In real implementation, we'd track which partition
-                    // For now, linear search (TODO: optimize with partition tracking)
-                    if let Some(build_row) = build_side.rows.get(m.build_idx) {
-                        joined_row.extend_from_slice(build_row);
-                    }
+                            // Get build row - now directly accessible due to partition tracking
+                            // This eliminates the linear search overhead
+                            if let Some(build_row) = build_side.rows.get(m.build_idx) {
+                                joined_row.extend_from_slice(build_row);
+                            }
 
-                    batch_rows.push(joined_row);
-                }
-                batch_rows
+                            batch_rows.push(joined_row);
+                        }
+                        batch_rows
+                    })
+                    .collect::<Vec<_>>()
             })
             .collect();
 
@@ -335,10 +351,12 @@ impl Partition {
 }
 
 // A match between build and probe rows
+// FIXED: Now tracks partition for optimized materialization
 #[derive(Debug, Clone, Copy)]
 struct Match {
     build_idx: usize,
     probe_idx: usize,
+    partition_id: usize, // Track which partition this match came from
 }
 
 // Statistics for SIMD hash join

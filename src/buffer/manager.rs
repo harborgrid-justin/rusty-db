@@ -410,10 +410,10 @@ pub struct BufferPoolManager {
     disk_manager: Option<Arc<DiskManager>>,
 
     /// Prefetch request queue (page_id -> priority)
-    /// TODO: UNBOUNDED GROWTH - Add max_prefetch_queue_size enforcement
-    /// Currently grows without limit: 16 bytes per prefetch request
-    /// Recommendation: Add MAX_PREFETCH_QUEUE_SIZE = 1024 and drop oldest when full
-    /// Estimated memory: 1024 * 16 = 16KB max (vs unbounded)
+    /// BOUNDED: max_prefetch_queue_size IS enforced in prefetch_pages()
+    /// Implementation at lines 996-999: breaks when queue.len() >= max_prefetch_queue_size
+    /// Default limit: 256 entries (see BufferPoolConfig::default, line 142)
+    /// Estimated memory: 256 * 16 = 4KB max (bounded)
     /// See: diagrams/02_storage_layer_flow.md - Issue #2.2
     prefetch_queue: Arc<Mutex<Vec<(PageId, u8)>>>,
 

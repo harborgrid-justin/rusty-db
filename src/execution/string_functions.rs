@@ -325,10 +325,12 @@ impl StringFunctionExecutor {
             "C" | "c" => Ok(format!("${}", val)), // Currency
             "D" | "d" => Ok(val),                 // Decimal
             "N" | "n" => {
-                // Number with commas
+                // Number with commas (thousands separator)
                 if let Ok(num) = val.parse::<i64>() {
-                    // TODO: Implement proper thousands separator formatting
-                    Ok(format!("{}", num))
+                    // FIXED: Implement proper thousands separator formatting
+                    Ok(Self::format_number_with_thousands_separator(num))
+                } else if let Ok(num) = val.parse::<f64>() {
+                    Ok(Self::format_float_with_thousands_separator(num))
                 } else {
                     Ok(val)
                 }
@@ -709,6 +711,67 @@ impl StringFunctionExecutor {
     fn exec_upper(&self, expr: &StringExpr, context: &HashMap<String, String>) -> Result<String> {
         let s = self.eval_expr(expr, context)?;
         Ok(s.to_uppercase())
+    }
+
+    /// Format integer with thousands separator (commas)
+    /// Example: 1234567 => "1,234,567"
+    fn format_number_with_thousands_separator(num: i64) -> String {
+        let is_negative = num < 0;
+        let abs_num = num.abs();
+        let num_str = abs_num.to_string();
+
+        let mut result = String::new();
+        let len = num_str.len();
+
+        for (i, ch) in num_str.chars().enumerate() {
+            result.push(ch);
+            let remaining = len - i - 1;
+            if remaining > 0 && remaining % 3 == 0 {
+                result.push(',');
+            }
+        }
+
+        if is_negative {
+            format!("-{}", result)
+        } else {
+            result
+        }
+    }
+
+    /// Format float with thousands separator (commas)
+    /// Example: 1234567.89 => "1,234,567.89"
+    fn format_float_with_thousands_separator(num: f64) -> String {
+        let is_negative = num < 0.0;
+        let abs_num = num.abs();
+
+        // Split into integer and fractional parts
+        let integer_part = abs_num.trunc() as i64;
+        let fractional_part = abs_num.fract();
+
+        // Format integer part with commas
+        let integer_str = Self::format_number_with_thousands_separator(integer_part);
+
+        // Format fractional part
+        if fractional_part > 0.0 {
+            let frac_formatted = format!("{:.6}", fractional_part);
+            let frac_str = frac_formatted
+                .trim_start_matches("0.")
+                .trim_end_matches('0');
+
+            if is_negative && integer_part == 0 {
+                format!("-{}.{}", integer_str.trim_start_matches('-'), frac_str)
+            } else if frac_str.is_empty() {
+                integer_str
+            } else {
+                format!("{}.{}", integer_str.trim_start_matches('-'), frac_str)
+            }
+        } else {
+            if is_negative && integer_part == 0 {
+                format!("-{}", integer_str)
+            } else {
+                integer_str
+            }
+        }
     }
 }
 

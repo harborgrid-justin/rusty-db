@@ -556,22 +556,51 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
         self.total_version_count.load(Ordering::SeqCst)
     }
 
-    // TODO(INTEGRATION): Memory Pressure Callbacks
-    // ============================================
-    // This method should be called by MemoryPressureManager when memory pressure is detected
-    // to trigger aggressive garbage collection and prevent out-of-memory conditions.
-    //
-    // Usage:
-    //   let mvcc = Arc::new(MVCCManager::new(config));
-    //   pressure_manager.register_callback(
-    //       MemoryPressureLevel::Warning,
-    //       Box::new(move |_, _| {
-    //           Box::pin(mvcc.on_memory_pressure())
-    //       })
-    //   );
-    //
-    // See diagrams/03_transaction_memory_flow.md section "Integration Gaps"
-    /// Handle memory pressure event by running aggressive GC
+    /// Handle memory pressure event by running aggressive garbage collection.
+    ///
+    /// This method is designed to be called by the MemoryPressureManager when memory
+    /// pressure is detected, triggering immediate garbage collection to free up memory
+    /// and prevent out-of-memory conditions.
+    ///
+    /// # Memory Pressure Integration
+    ///
+    /// To integrate with the memory pressure management system, register this method
+    /// as a callback with the MemoryPressureManager:
+    ///
+    /// ```rust,ignore
+    /// use crate::memory::pressure::{MemoryPressureManager, MemoryPressureLevel};
+    /// use std::sync::Arc;
+    ///
+    /// let mvcc = Arc::new(MVCCManager::new(config));
+    /// let mvcc_clone = Arc::clone(&mvcc);
+    ///
+    /// pressure_manager.register_callback(
+    ///     MemoryPressureLevel::Warning,
+    ///     Box::new(move |_, _| {
+    ///         let mvcc_ref = Arc::clone(&mvcc_clone);
+    ///         Box::pin(async move {
+    ///             mvcc_ref.on_memory_pressure()
+    ///                 .map(|freed| freed as u64)
+    ///                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send + Sync>)
+    ///         })
+    ///     })
+    /// ).await?;
+    /// ```
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of versions collected (freed) during garbage collection.
+    ///
+    /// # Behavior
+    ///
+    /// - Forces immediate garbage collection regardless of the minimum snapshot timestamp
+    /// - In high memory pressure scenarios, aggressively cleans up old versions
+    /// - May cause some long-running read transactions to fail if their snapshot versions are collected
+    ///
+    /// # See Also
+    ///
+    /// - `MemoryPressureManager` in `src/memory/pressure.rs`
+    /// - Data flow diagrams in `diagrams/03_transaction_memory_flow.md`
     pub fn on_memory_pressure(&self) -> Result<usize, DbError> {
         // Force garbage collection regardless of min_snapshot
         // In high memory pressure, we aggressively clean up even if
@@ -959,5 +988,105 @@ mod tests {
 
         // Should detect write-write conflict
         assert!(si.check_write_conflicts(1).is_err() || si.check_write_conflicts(2).is_err());
+    }
+
+    #[test]
+    fn test_write_skew_detection() {
+        // Test the classic write skew anomaly scenario
+        // T1 reads x and y, writes to y
+        // T2 reads x and y, writes to x
+        // Both should not be able to commit if write skew detection is enabled
+
+        let config = SnapshotConfig {
+            serializable: true,
+            detect_write_skew: true,
+            ..Default::default()
+        };
+        let si = SnapshotIsolationManager::new(config);
+
+        // Transaction 1: Read x and y, write to y
+        let _ts1 = si.begin_transaction(1, false);
+        si.record_read(1, "x".to_string()).unwrap();
+        si.record_read(1, "y".to_string()).unwrap();
+        si.record_write(1, "y".to_string()).unwrap();
+
+        // Transaction 2: Read x and y, write to x
+        let _ts2 = si.begin_transaction(2, false);
+        si.record_read(2, "x".to_string()).unwrap();
+        si.record_read(2, "y".to_string()).unwrap();
+        si.record_write(2, "x".to_string()).unwrap();
+
+        // Commit T1 first - should succeed
+        let result1 = si.commit_transaction(1);
+        assert!(result1.is_ok(), "T1 should commit successfully");
+
+        // Try to commit T2 - should fail due to write skew detection
+        // T2 read "x" and "y", but T1 wrote to "y" after T2's snapshot
+        let result2 = si.commit_transaction(2);
+        assert!(
+            result2.is_err(),
+            "T2 should fail to commit due to write-skew detection"
+        );
+
+        // Verify the error message mentions write-skew
+        if let Err(e) = result2 {
+            let error_msg = format!("{:?}", e);
+            assert!(
+                error_msg.to_lowercase().contains("write-skew")
+                    || error_msg.to_lowercase().contains("write skew"),
+                "Error should mention write-skew: {}",
+                error_msg
+            );
+        }
+    }
+
+    #[test]
+    fn test_write_skew_detection_disabled() {
+        // When write skew detection is disabled, both transactions should commit
+        let config = SnapshotConfig {
+            serializable: false,
+            detect_write_skew: false,
+            ..Default::default()
+        };
+        let si = SnapshotIsolationManager::new(config);
+
+        // Transaction 1: Read x and y, write to y
+        let _ts1 = si.begin_transaction(1, false);
+        si.record_read(1, "x".to_string()).unwrap();
+        si.record_read(1, "y".to_string()).unwrap();
+        si.record_write(1, "y".to_string()).unwrap();
+
+        // Transaction 2: Read x and y, write to x (different key)
+        let _ts2 = si.begin_transaction(2, false);
+        si.record_read(2, "x".to_string()).unwrap();
+        si.record_read(2, "y".to_string()).unwrap();
+        si.record_write(2, "x".to_string()).unwrap();
+
+        // Both should commit when detection is disabled
+        let result1 = si.commit_transaction(1);
+        assert!(result1.is_ok(), "T1 should commit when detection is disabled");
+
+        let result2 = si.commit_transaction(2);
+        assert!(
+            result2.is_ok(),
+            "T2 should commit when detection is disabled (allows write skew)"
+        );
+    }
+
+    #[test]
+    fn test_blind_writes_allowed() {
+        // Blind writes (writes without reads) should always be allowed
+        let config = SnapshotConfig {
+            detect_write_skew: true,
+            ..Default::default()
+        };
+        let si = SnapshotIsolationManager::new(config);
+
+        // Transaction that only writes (no reads)
+        let _ts1 = si.begin_transaction(1, false);
+        si.record_write(1, "x".to_string()).unwrap();
+
+        let result = si.commit_transaction(1);
+        assert!(result.is_ok(), "Blind writes should be allowed");
     }
 }

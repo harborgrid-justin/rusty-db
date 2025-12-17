@@ -47,9 +47,6 @@ use std::time::{Duration, SystemTime};
 // Collection Size Limits - Prevent unbounded memory allocation
 // ============================================================================
 
-// TODO: Enforce these limits in collection operations to prevent DoS attacks
-// These limits prevent unbounded memory growth from malicious or buggy code
-
 /// Maximum number of columns per table (prevents schema bloat)
 pub const MAX_COLUMNS_PER_TABLE: usize = 1024;
 
@@ -73,6 +70,58 @@ pub const MAX_VALUE_NESTING_DEPTH: usize = 32;
 
 /// Maximum size of error message strings (prevent memory exhaustion)
 pub const MAX_ERROR_MESSAGE_LENGTH: usize = 4096;
+
+// ============================================================================
+// Collection Size Validation - Enforce limits to prevent DoS attacks
+// ============================================================================
+
+/// Validate that a collection does not exceed size limits
+pub fn validate_collection_size(
+    collection_name: &str,
+    actual_size: usize,
+    max_size: usize,
+) -> Result<()> {
+    use crate::error::DbError;
+
+    if actual_size > max_size {
+        return Err(DbError::LimitExceeded(format!(
+            "{} limit exceeded: {} items (max: {})",
+            collection_name, actual_size, max_size
+        )));
+    }
+    Ok(())
+}
+
+/// Validate that error message length is within bounds
+pub fn validate_error_message(message: &str) -> String {
+    if message.len() > MAX_ERROR_MESSAGE_LENGTH {
+        let truncated = &message[..MAX_ERROR_MESSAGE_LENGTH.saturating_sub(20)];
+        format!("{}... [truncated]", truncated)
+    } else {
+        message.to_string()
+    }
+}
+
+/// Validate Value nesting depth to prevent stack overflow
+pub fn validate_value_nesting(value: &Value, current_depth: usize) -> Result<()> {
+    use crate::error::DbError;
+
+    if current_depth > MAX_VALUE_NESTING_DEPTH {
+        return Err(DbError::LimitExceeded(format!(
+            "Value nesting depth exceeded: {} levels (max: {})",
+            current_depth, MAX_VALUE_NESTING_DEPTH
+        )));
+    }
+
+    // Recursively check nested arrays
+    if let Value::Array(arr) = value {
+        for item in arr {
+            validate_value_nesting(item, current_depth + 1)?;
+        }
+    }
+
+    Ok(())
+}
 
 // ============================================================================
 // Type Aliases - Shared Identifiers
@@ -297,7 +346,12 @@ impl Default for Tuple {
 }
 
 impl Tuple {
-    /// Create a new tuple
+    /// Create a new tuple with validation
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - Number of values exceeds MAX_TUPLE_VALUES
+    /// - Any value has nesting depth exceeding MAX_VALUE_NESTING_DEPTH
     pub fn new(values: Vec<Value>, row_id: RowId) -> Self {
         Self {
             values,
@@ -305,6 +359,32 @@ impl Tuple {
             xmin: None,
             xmax: None,
         }
+    }
+
+    /// Create a new tuple with validation (checked version)
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - Number of values exceeds MAX_TUPLE_VALUES
+    /// - Any value has nesting depth exceeding MAX_VALUE_NESTING_DEPTH
+    pub fn new_checked(values: Vec<Value>, row_id: RowId) -> Result<Self> {
+        // Validate tuple size
+        validate_collection_size("tuple values", values.len(), MAX_TUPLE_VALUES)?;
+
+        // Validate nesting depth of each value
+        for (i, value) in values.iter().enumerate() {
+            validate_value_nesting(value, 0).map_err(|e| {
+                use crate::error::DbError;
+                DbError::Validation(format!("Value at index {}: {}", i, e))
+            })?;
+        }
+
+        Ok(Self {
+            values,
+            row_id,
+            xmin: None,
+            xmax: None,
+        })
     }
 
     /// Get value at column index
@@ -343,7 +423,7 @@ pub struct Schema {
 }
 
 impl Schema {
-    /// Create a new schema
+    /// Create a new schema (unchecked - for compatibility)
     pub fn new(table_name: String, columns: Vec<ColumnDef>) -> Self {
         Self {
             table_name,
@@ -352,6 +432,47 @@ impl Schema {
             foreign_keys: Vec::new(),
             unique_constraints: Vec::new(),
         }
+    }
+
+    /// Create a new schema with validation
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - Number of columns exceeds MAX_COLUMNS_PER_TABLE
+    /// - Number of foreign keys exceeds MAX_FOREIGN_KEYS_PER_TABLE
+    /// - Number of unique constraints exceeds MAX_UNIQUE_CONSTRAINTS_PER_TABLE
+    pub fn new_checked(table_name: String, columns: Vec<ColumnDef>) -> Result<Self> {
+        validate_collection_size("columns", columns.len(), MAX_COLUMNS_PER_TABLE)?;
+
+        Ok(Self {
+            table_name,
+            columns,
+            primary_key: None,
+            foreign_keys: Vec::new(),
+            unique_constraints: Vec::new(),
+        })
+    }
+
+    /// Add a foreign key constraint with validation
+    pub fn add_foreign_key(&mut self, fk: ForeignKeyConstraint) -> Result<()> {
+        validate_collection_size(
+            "foreign keys",
+            self.foreign_keys.len() + 1,
+            MAX_FOREIGN_KEYS_PER_TABLE,
+        )?;
+        self.foreign_keys.push(fk);
+        Ok(())
+    }
+
+    /// Add a unique constraint with validation
+    pub fn add_unique_constraint(&mut self, constraint: Vec<ColumnId>) -> Result<()> {
+        validate_collection_size(
+            "unique constraints",
+            self.unique_constraints.len() + 1,
+            MAX_UNIQUE_CONSTRAINTS_PER_TABLE,
+        )?;
+        self.unique_constraints.push(constraint);
+        Ok(())
     }
 
     /// Create an empty schema
@@ -524,6 +645,30 @@ pub struct Snapshot {
 }
 
 impl Snapshot {
+    /// Create a new snapshot with validation
+    ///
+    /// # Errors
+    /// Returns an error if the number of active transactions exceeds MAX_ACTIVE_TRANSACTIONS
+    pub fn new(
+        snapshot_txn_id: TransactionId,
+        active_txns: Vec<TransactionId>,
+        min_active_txn: TransactionId,
+        max_committed_txn: TransactionId,
+    ) -> Result<Self> {
+        validate_collection_size(
+            "active transactions",
+            active_txns.len(),
+            MAX_ACTIVE_TRANSACTIONS,
+        )?;
+
+        Ok(Self {
+            snapshot_txn_id,
+            active_txns,
+            min_active_txn,
+            max_committed_txn,
+        })
+    }
+
     /// Check if a transaction is visible in this snapshot
     pub fn is_visible(&self, txn_id: TransactionId) -> bool {
         // Transaction is visible if:
@@ -736,6 +881,20 @@ impl ComponentStatistics {
             avg_latency_ms: 0.0,
             custom_metrics: HashMap::new(),
         }
+    }
+
+    /// Add a custom metric with validation
+    ///
+    /// # Errors
+    /// Returns an error if the number of custom metrics exceeds MAX_CUSTOM_METRICS
+    pub fn add_custom_metric(&mut self, name: String, value: MetricValue) -> Result<()> {
+        validate_collection_size(
+            "custom metrics",
+            self.custom_metrics.len() + 1,
+            MAX_CUSTOM_METRICS,
+        )?;
+        self.custom_metrics.insert(name, value);
+        Ok(())
     }
 }
 

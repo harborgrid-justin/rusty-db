@@ -280,44 +280,91 @@ pub fn hash_str(s: &str) -> u64 {
 /// Process 8 strings in parallel when possible.
 ///
 /// ## Complexity
-/// - Time: O(n/8) for n strings with AVX2
+/// - Time: O(n) for n strings (currently serial, not parallel)
 /// - Space: O(n) for output array
 ///
-/// ## Performance Opportunity
+/// ## Performance Enhancement Opportunity
 ///
-/// TODO: Implement true SIMD parallel batch hashing
+/// **PERFORMANCE TODO**: Implement true SIMD parallel batch hashing
 ///
-/// **Current State**: This function processes strings serially despite the comment
-/// claiming parallel processing. The loop at line 299-301 hashes one string at a time.
+/// ### Current Implementation Status
 ///
-/// **Performance Impact**: No actual SIMD parallelism - throughput same as sequential
+/// **Issue**: This function processes strings serially despite the documentation
+/// claiming parallel processing. The loop at line 335-337 hashes one string at a time
+/// using sequential calls to `hash_str()`.
 ///
-/// **Proposed Improvement**:
+/// **Performance Impact**:
+/// - No actual SIMD parallelism achieved
+/// - Throughput same as sequential processing (~10 GB/s per core)
+/// - Missing 8x potential speedup from AVX2 vectorization
+///
+/// ### Proposed Enhancement Design
+///
+/// Implement true parallel SIMD hashing using AVX2 to process 8 strings simultaneously:
+///
 /// ```rust,ignore
 /// #[target_feature(enable = "avx2")]
-/// unsafe fn hash_8_strings_avx2(strings: [&str; 8]) -> [u64; 8] {
-///     // Load 8 string lengths into AVX2 register
-///     let mut hashes = [0u64; 8];
+/// unsafe fn hash_8_strings_avx2_parallel(strings: [&str; 8]) -> [u64; 8] {
+///     // Initialize 8 hash accumulators in parallel
+///     let mut acc = _mm256_set1_epi64x(PRIME64_5);
 ///
-///     // Process each string's chunks in parallel
-///     for chunk_idx in 0..max_chunks {
-///         let data0 = load_or_zero(strings[0], chunk_idx);
-///         // ... data1-7
+///     // Find maximum string length
+///     let max_len = strings.iter().map(|s| s.len()).max().unwrap_or(0);
+///     let chunks = (max_len + 7) / 8;
 ///
-///         // Mix 8 hashes in parallel using AVX2
-///         let mixed0 = mix_avx2(hashes[0], data0);
-///         // ... mixed1-7
+///     // Process all strings' chunks in parallel
+///     for chunk_idx in 0..chunks {
+///         // Load 8 bytes from each of the 8 strings (64 bytes total)
+///         let mut data = [0u64; 8];
+///         for (i, s) in strings.iter().enumerate() {
+///             data[i] = load_8_bytes_or_zero(s, chunk_idx * 8);
+///         }
 ///
-///         hashes = [mixed0, mixed1, ..., mixed7];
+///         // Load into AVX2 register and mix all 8 hashes in parallel
+///         let data_vec = _mm256_loadu_si256(data.as_ptr() as *const __m256i);
+///         acc = xxhash3_round_avx2(acc, data_vec);
 ///     }
 ///
-///     hashes
+///     // Extract 8 hash values
+///     let mut result = [0u64; 8];
+///     _mm256_storeu_si256(result.as_mut_ptr() as *mut __m256i, acc);
+///
+///     // Avalanche each hash
+///     for h in &mut result {
+///         *h = avalanche(*h);
+///     }
+///
+///     result
 /// }
 /// ```
 ///
-/// **Expected Gain**: 8x throughput improvement (10 GB/s → 80 GB/s for 8-string batches)
+/// ### Implementation Considerations
 ///
-/// **Related**: See diagrams/05_index_simd_flow.md section 2.3 for detailed analysis
+/// 1. **Memory Layout**: Requires careful memory access patterns to avoid cache misses
+/// 2. **String Length Variance**: Handle strings of different lengths efficiently
+/// 3. **Tail Processing**: Special handling for string endings that don't align to 8 bytes
+/// 4. **AVX2 Operations**: Use `_mm256_*` intrinsics for true parallel processing
+/// 5. **Fallback Path**: Maintain scalar implementation for non-AVX2 CPUs
+///
+/// ### Expected Performance Gains
+///
+/// - **Throughput**: 10 GB/s → 80 GB/s (8x improvement for 8-string batches)
+/// - **Latency**: Reduced by ~85% for batch operations
+/// - **CPU Utilization**: Better SIMD unit utilization
+/// - **Cache Efficiency**: Improved due to sequential memory access patterns
+///
+/// ### Related Documentation
+///
+/// - See `diagrams/05_index_simd_flow.md` section 2.3 for detailed architecture analysis
+/// - See `xxhash3_avx2_impl` for single-string SIMD hashing reference
+/// - Benchmark data available in `benchmarks/simd_hash_results.txt`
+///
+/// ### Priority and Effort
+///
+/// - **Priority**: MEDIUM (performance enhancement, not correctness issue)
+/// - **Effort**: 2-3 days for implementation + testing
+/// - **Risk**: LOW (fallback to current implementation if SIMD not available)
+/// - **Impact**: HIGH for index building and join operations with many small keys
 pub fn hash_str_batch(strings: &[&str]) -> Vec<u64> {
     let mut hashes = Vec::with_capacity(strings.len());
 

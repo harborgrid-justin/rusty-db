@@ -322,6 +322,8 @@ pub struct SlabAllocator {
     created_at: SystemTime,
     // Allocator unique identifier
     allocator_id: Uuid,
+    // Slab storage: per-size-class list of slabs
+    slabs: Arc<RwLock<Vec<Mutex<Vec<Arc<Slab>>>>>>,
 }
 
 // Slab allocator statistics
@@ -708,6 +710,15 @@ impl MagazineDepot {
 impl SlabAllocator {
     // Creates a new slab allocator with the given configuration
     pub async fn new(config: SlabConfig) -> Result<Self, SlabError> {
+        // Pre-calculate number of size classes
+        let num_size_classes = config.num_size_classes;
+
+        // Initialize slab storage with empty vectors for each size class
+        let mut slab_storage = Vec::with_capacity(num_size_classes);
+        for _ in 0..num_size_classes {
+            slab_storage.push(Mutex::new(Vec::new()));
+        }
+
         let mut allocator = Self {
             config: config.clone(),
             size_classes: Vec::new(),
@@ -718,6 +729,7 @@ impl SlabAllocator {
             is_initialized: AtomicBool::new(false),
             created_at: SystemTime::now(),
             allocator_id: Uuid::new_v4(),
+            slabs: Arc::new(RwLock::new(slab_storage)),
         };
 
         allocator.initialize_size_classes()?;
@@ -882,9 +894,76 @@ impl SlabAllocator {
         &self,
         size_class: &SizeClass,
     ) -> Result<NonNull<u8>, MemoryError> {
-        // This would contain the core slab allocation logic
-        // For now, we'll use a simple implementation
-        todo!("Implement slab allocation logic")
+        let size_class_id = size_class.class_id;
+
+        // Get the slab list for this size class
+        let slabs_lock = self.slabs.read();
+        let slab_list = &slabs_lock[size_class_id];
+        let mut slab_vec = slab_list.lock();
+
+        // Try to allocate from existing slabs
+        for slab in slab_vec.iter() {
+            if !slab.is_full() && slab.is_active.load(Ordering::Relaxed) {
+                if let Some(ptr) = slab.allocate_object() {
+                    // Update statistics
+                    size_class.free_objects.fetch_sub(1, Ordering::Relaxed);
+                    self.update_allocation_stats(size_class, size_class.object_size).await;
+                    return Ok(ptr);
+                }
+            }
+        }
+
+        // No slab with free space, create a new one
+        drop(slab_vec); // Release lock before creating new slab
+        drop(slabs_lock);
+
+        // Calculate cache color for the new slab
+        let color_offset = if self.config.enable_coloring {
+            let slab_count = size_class.slab_count.load(Ordering::Relaxed);
+            (slab_count % self.config.color_count) * 64 // 64-byte cache line offset
+        } else {
+            0
+        };
+
+        // Create new slab
+        let new_slab = Slab::new(
+            size_class_id,
+            size_class.object_size,
+            self.config.slab_size,
+            color_offset,
+        ).map_err(|e| MemoryError::OutOfMemory {
+            reason: format!("Failed to create slab: {}", e),
+        })?;
+
+        // Allocate from the new slab
+        let ptr = new_slab.allocate_object().ok_or_else(|| {
+            MemoryError::OutOfMemory {
+                reason: "New slab has no free objects".to_string(),
+            }
+        })?;
+
+        // Update size class statistics
+        size_class.slab_count.fetch_add(1, Ordering::Relaxed);
+        size_class.free_objects.fetch_add(
+            size_class.objects_per_slab.saturating_sub(1), // -1 for the allocated object
+            Ordering::Relaxed,
+        );
+
+        // Add the new slab to the list
+        let slabs_lock = self.slabs.read();
+        let slab_list = &slabs_lock[size_class_id];
+        let mut slab_vec = slab_list.lock();
+        slab_vec.push(new_slab);
+
+        // Update allocator-level statistics
+        let mut stats = self.stats.write().await;
+        stats.total_slabs += 1;
+
+        // Update allocation statistics
+        drop(stats);
+        self.update_allocation_stats(size_class, size_class.object_size).await;
+
+        Ok(ptr)
     }
 
     // Deallocates directly to slab
@@ -893,8 +972,44 @@ impl SlabAllocator {
         ptr: NonNull<u8>,
         size_class: &SizeClass,
     ) -> Result<(), MemoryError> {
-        // This would contain the core slab deallocation logic
-        todo!("Implement slab deallocation logic")
+        let size_class_id = size_class.class_id;
+        let ptr_addr = ptr.as_ptr() as usize;
+
+        // Get the slab list for this size class
+        let slabs_lock = self.slabs.read();
+        let slab_list = &slabs_lock[size_class_id];
+        let slab_vec = slab_list.lock();
+
+        // Find the slab that owns this pointer
+        for slab in slab_vec.iter() {
+            let slab_start = slab.memory.as_ptr() as usize;
+            let slab_end = slab_start + slab.size;
+
+            // Check if pointer falls within this slab's memory range
+            if ptr_addr >= slab_start && ptr_addr < slab_end {
+                // Return the object to the slab's free list
+                slab.deallocate_object(ptr);
+
+                // Update size class statistics
+                size_class.free_objects.fetch_add(1, Ordering::Relaxed);
+
+                // Update deallocation statistics
+                drop(slab_vec);
+                drop(slabs_lock);
+                self.update_deallocation_stats(size_class, size_class.object_size).await;
+
+                return Ok(());
+            }
+        }
+
+        // Pointer not found in any slab - this is an error
+        Err(MemoryError::CorruptionDetected {
+            address: ptr_addr,
+            reason: format!(
+                "Pointer {:#x} does not belong to any slab in size class {}",
+                ptr_addr, size_class_id
+            ),
+        })
     }
 
     // Updates allocation statistics

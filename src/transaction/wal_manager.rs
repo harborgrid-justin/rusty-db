@@ -1,25 +1,56 @@
-// Write-Ahead Log (WAL) management.
+// Write-Ahead Log (WAL) Management (Legacy Implementation)
 //
-// TODO(ARCHITECTURE): DUPLICATE IMPLEMENTATION DETECTED
-// ====================================================
-// This module (wal_manager.rs) provides a simpler WAL implementation
-// that DUPLICATES functionality in wal.rs (WALManager with group commit).
+// ⚠️ DEPRECATION NOTICE - ARCHITECTURAL DEBT
+// ==========================================
+// This module provides a simplified WAL implementation that has been superseded by
+// a more advanced implementation in `wal.rs`.
 //
-// RECOMMENDATION: Remove this module and migrate all users to wal.rs
+// # Current Status: DEPRECATED (but still in use)
 //
-// DIFFERENCES:
-// - wal_manager.rs: Simple buffered WAL with basic sync
-// - wal.rs: Advanced ARIES-style WAL with group commit, vectored I/O, CRC32C
+// This module remains in the codebase because:
+// - It is currently re-exported in `transaction/mod.rs` (line 137)
+// - Existing code may depend on this specific `WALEntry` type definition
+// - Migration requires coordination across multiple components
 //
-// CODE DUPLICATION: Both implement WAL buffering, flushing, and recovery
-// RISK: Different WALEntry types, inconsistent durability guarantees
-// ACTION REQUIRED: Consolidate to wal.rs (superior implementation) and update all references
+// # Migration Path
 //
-// See diagrams/03_transaction_memory_flow.md for full analysis
-// ====================================================
+// To migrate from `wal_manager.rs` to `wal.rs`:
 //
-// This module provides the WAL infrastructure for ensuring durability
-// and enabling crash recovery using the ARIES protocol.
+// 1. **Update imports**: Change from `transaction::wal_manager` to `transaction::wal`
+// 2. **Update WALEntry types**: Map old WALEntry variants to new ones in wal.rs
+// 3. **Update mod.rs re-exports**: Change line 137 in transaction/mod.rs
+// 4. **Test recovery**: Ensure existing WAL files can be read by new implementation
+// 5. **Remove this file**: Once all dependencies are migrated
+//
+// # Feature Comparison
+//
+// | Feature | wal_manager.rs (this file) | wal.rs (new) |
+// |---------|---------------------------|--------------|
+// | Buffering | ✅ Basic VecDeque | ✅ Advanced group commit |
+// | Checksums | ❌ None | ✅ CRC32C (hardware accelerated) |
+// | I/O | ❌ Simple writes | ✅ Vectored I/O |
+// | Protocol | ❌ Simple JSON | ✅ ARIES-style physiological |
+// | Recovery | ✅ Basic replay | ✅ Full ARIES recovery |
+// | Performance | ⚠️ Lower | ✅ Higher (group commit) |
+//
+// # Why wal.rs is Superior
+//
+// 1. **Group Commit**: Batches multiple transaction commits for better throughput
+// 2. **Hardware Checksums**: Uses SSE4.2 CRC32C for data integrity
+// 3. **Vectored I/O**: Reduces system calls with scatter-gather I/O
+// 4. **ARIES Protocol**: Industry-standard recovery algorithm
+// 5. **Better Durability**: Stronger guarantees, better error handling
+//
+// # See Also
+//
+// - `transaction/wal.rs` - The superior WAL implementation
+// - `diagrams/03_transaction_memory_flow.md` - Architecture analysis
+// - Issue #TBD - Migration tracking issue
+//
+// ==========================================
+//
+// This module provides basic WAL infrastructure for ensuring durability
+// and enabling crash recovery.
 //
 // # Key Concepts
 //

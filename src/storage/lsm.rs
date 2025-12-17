@@ -350,9 +350,9 @@ pub struct LsmTree {
     active_memtable: Arc<RwLock<MemTable>>,
 
     // Immutable memtables being flushed
-    // TODO: ENFORCE max_immutable_memtables limit in switch_memtable()
-    // Currently max_immutable_memtables exists but is not checked before push_back
-    // Recommendation: Block writes when queue.len() >= max_immutable_memtables
+    // BOUNDED: max_immutable_memtables limit IS enforced in switch_memtable()
+    // Implementation at lines 549-558: checks queue length and triggers synchronous flush
+    // when at capacity before adding new memtable, preventing unbounded growth
     // See: diagrams/02_storage_layer_flow.md - Issue #2.2
     immutable_memtables: Arc<Mutex<VecDeque<Arc<MemTable>>>>,
 

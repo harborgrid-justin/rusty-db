@@ -711,7 +711,7 @@ impl WALManager {
 
             if entry.lsn >= start_lsn {
                 if !entry.verify_checksum() {
-                    return Err(DbError::CorruptionError(format!(
+                    return Err(DbError::Corruption(format!(
                         "Checksum mismatch at LSN {}",
                         entry.lsn
                     )));
