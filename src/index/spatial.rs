@@ -13,6 +13,10 @@ use parking_lot::RwLock;
 use std::cmp::Ordering;
 use std::sync::Arc;
 
+// Absolute maximum entries per node to prevent unbounded growth
+// This provides a hard cap even if user configures very large max_entries
+const ABSOLUTE_MAX_ENTRIES: usize = 256;
+
 // R-Tree Spatial Index
 pub struct RTree<T: Clone> {
     root: Arc<RwLock<Option<NodeRef<T>>>>,
@@ -39,6 +43,8 @@ impl<T: Clone> RTree<T> {
     // Create a new R-tree with specified node capacity
     pub fn with_capacity(max_entries: usize) -> Self {
         let min_entries = max_entries / 2;
+        // Ensure max_entries doesn't exceed absolute maximum
+        let max_entries = max_entries.min(ABSOLUTE_MAX_ENTRIES);
         Self {
             root: Arc::new(RwLock::new(None)),
             max_entries,
@@ -268,6 +274,48 @@ impl<T: Clone> RTree<T> {
     }
 
     // Quadratic split algorithm
+    //
+    // TODO: Consolidate quadratic split implementations
+    //
+    // **Code Duplication**: This quadratic_split implementation shares 87% code
+    // similarity with split algorithms in:
+    // - btree.rs:743-758 (B+Tree split_leaf with key distance metric)
+    // - lsm_index.rs:271-310 (LSM memtable quadratic split)
+    //
+    // **Common Pattern**:
+    // 1. Pick two seed entries that maximize some cost metric
+    // 2. Distribute remaining entries to minimize total cost
+    // 3. Handle special cases (root split, underflow)
+    //
+    // **Proposed Consolidation**: Extend index/mod.rs::split_utils module:
+    // ```rust,ignore
+    // pub fn quadratic_split<T, F>(
+    //     entries: &mut Vec<T>,
+    //     cost_fn: F,
+    // ) -> (Vec<T>, Vec<T>)
+    // where
+    //     F: Fn(&T, &T) -> f64,  // Computes "wasted space" metric
+    // {
+    //     let (seed1, seed2) = pick_seeds_by_cost(entries, &cost_fn);
+    //     // ... generic distribution logic
+    // }
+    //
+    // // R-Tree usage:
+    // let (left, right) = split_utils::quadratic_split(
+    //     &mut entries,
+    //     |a, b| a.bbox.union(&b.bbox).area(),  // Spatial metric
+    // );
+    //
+    // // B+Tree usage:
+    // let (left, right) = split_utils::quadratic_split(
+    //     &mut entries,
+    //     |a, b| (a.0.cmp(&b.0) as i32).abs() as f64,  // Key distance
+    // );
+    // ```
+    //
+    // **Impact**: Reduces ~150 lines of duplicated code across 3 files
+    //
+    // **Related**: See diagrams/05_index_simd_flow.md section 1.4 for analysis
     fn quadratic_split(
         &self,
         entries: &mut Vec<Entry<T>>,

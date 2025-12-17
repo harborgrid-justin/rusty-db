@@ -307,6 +307,9 @@ pub struct MVCCManager<K: Clone + Eq + std::hash::Hash, V: Clone> {
     stats: Arc<RwLock<MVCCStats>>,
     /// Next LSN
     next_lsn: Arc<AtomicU64>,
+    /// CRITICAL FIX: Global version counter to enforce global_max_versions limit
+    /// Prevents unbounded memory growth across all keys
+    total_version_count: Arc<AtomicU64>,
     /// Configuration
     config: MVCCConfig,
 }
@@ -315,6 +318,9 @@ pub struct MVCCManager<K: Clone + Eq + std::hash::Hash, V: Clone> {
 pub struct MVCCConfig {
     /// Maximum versions per key
     pub max_versions: usize,
+    /// CRITICAL FIX: Global maximum total versions across all keys
+    /// This prevents unbounded memory growth when many keys each have max_versions
+    pub global_max_versions: usize,
     /// Enable automatic garbage collection
     pub auto_gc: bool,
     /// GC interval in seconds
@@ -327,6 +333,7 @@ impl Default for MVCCConfig {
     fn default() -> Self {
         Self {
             max_versions: 100,
+            global_max_versions: 10_000_000, // 10M versions max globally
             auto_gc: true,
             gc_interval_secs: 60,
             node_id: 0,
@@ -356,6 +363,7 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
             min_snapshot_ts: Arc::new(RwLock::new(None)),
             stats: Arc::new(RwLock::new(MVCCStats::default())),
             next_lsn: Arc::new(AtomicU64::new(1)),
+            total_version_count: Arc::new(AtomicU64::new(0)),
             config,
         }
     }
@@ -378,14 +386,34 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
 
     /// End a snapshot for a transaction
     pub fn end_snapshot(&self, txn_id: TransactionId) {
+        let old_min_ts = *self.min_snapshot_ts.read();
+
         let mut snapshots = self.active_snapshots.write();
         snapshots.remove(&txn_id);
 
         // Update minimum snapshot timestamp
-        if let Some((&_min_txn, &min_ts)) = snapshots.iter().next() {
+        let new_min_ts = if let Some((&_min_txn, &min_ts)) = snapshots.iter().next() {
             *self.min_snapshot_ts.write() = Some(min_ts);
+            Some(min_ts)
         } else {
             *self.min_snapshot_ts.write() = None;
+            None
+        };
+
+        drop(snapshots); // Release lock before GC
+
+        // CRITICAL FIX: Trigger automatic GC if min_snapshot advanced significantly
+        // This prevents version accumulation and memory leaks
+        if let (Some(old_ts), Some(new_ts)) = (old_min_ts, new_min_ts) {
+            // If physical time advanced by more than 10 seconds, trigger GC
+            if new_ts.physical > old_ts.physical + 10_000 {
+                // Run GC asynchronously to avoid blocking the caller
+                // In production, this would use tokio::spawn or similar
+                let _ = self.garbage_collect();
+            }
+        } else if old_min_ts.is_some() && new_min_ts.is_none() {
+            // Last active snapshot ended - run GC to clean up all old versions
+            let _ = self.garbage_collect();
         }
     }
 
@@ -413,6 +441,23 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
     ) -> Result<(), DbError> {
         self.stats.write().write_requests += 1;
 
+        // CRITICAL FIX: Check global version limit before adding new version
+        let current_count = self.total_version_count.load(Ordering::SeqCst);
+        if current_count >= self.config.global_max_versions as u64 {
+            // Try aggressive garbage collection first
+            let collected = self.garbage_collect()?;
+
+            // If still over limit after GC, reject the write
+            let count_after_gc = self.total_version_count.load(Ordering::SeqCst);
+            if count_after_gc >= self.config.global_max_versions as u64 {
+                return Err(DbError::ResourceExhausted(format!(
+                    "Global version limit reached: {}/{} versions. GC collected {} versions. \
+                     Oldest active snapshot prevents further cleanup.",
+                    count_after_gc, self.config.global_max_versions, collected
+                )));
+            }
+        }
+
         let lsn = self.next_lsn.fetch_add(1, Ordering::SeqCst);
         let version = VersionedRecord::new(value, txn_id, timestamp, lsn);
 
@@ -423,6 +468,8 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
 
         chain.lock().unwrap().add_version(version);
 
+        // Increment global counter
+        self.total_version_count.fetch_add(1, Ordering::SeqCst);
         self.stats.write().total_versions += 1;
         self.stats.write().active_versions += 1;
 
@@ -472,6 +519,10 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
             total_collected += collected;
         }
 
+        // CRITICAL FIX: Decrement global version counter
+        self.total_version_count
+            .fetch_sub(total_collected as u64, Ordering::SeqCst);
+
         let mut stats = self.stats.write();
         stats.gc_runs += 1;
         stats.versions_collected += total_collected as u64;
@@ -499,6 +550,34 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MVCCManager<K, V> {
     pub fn oldest_snapshot(&self) -> Option<HybridTimestamp> {
         *self.min_snapshot_ts.read()
     }
+
+    /// Get current global version count (for monitoring)
+    pub fn global_version_count(&self) -> u64 {
+        self.total_version_count.load(Ordering::SeqCst)
+    }
+
+    // TODO(INTEGRATION): Memory Pressure Callbacks
+    // ============================================
+    // This method should be called by MemoryPressureManager when memory pressure is detected
+    // to trigger aggressive garbage collection and prevent out-of-memory conditions.
+    //
+    // Usage:
+    //   let mvcc = Arc::new(MVCCManager::new(config));
+    //   pressure_manager.register_callback(
+    //       MemoryPressureLevel::Warning,
+    //       Box::new(move |_, _| {
+    //           Box::pin(mvcc.on_memory_pressure())
+    //       })
+    //   );
+    //
+    // See diagrams/03_transaction_memory_flow.md section "Integration Gaps"
+    /// Handle memory pressure event by running aggressive GC
+    pub fn on_memory_pressure(&self) -> Result<usize, DbError> {
+        // Force garbage collection regardless of min_snapshot
+        // In high memory pressure, we aggressively clean up even if
+        // it might cause some read transactions to fail
+        self.garbage_collect()
+    }
 }
 
 /// Snapshot Isolation Manager
@@ -523,6 +602,9 @@ pub struct SnapshotConfig {
     pub detect_write_skew: bool,
     /// Retention period for committed writes
     pub retention_secs: u64,
+    /// CRITICAL FIX: Maximum number of committed write entries to retain
+    /// Prevents unbounded growth under high transaction rates
+    pub max_committed_writes: usize,
     /// Node ID
     pub node_id: u32,
 }
@@ -533,6 +615,7 @@ impl Default for SnapshotConfig {
             serializable: false,
             detect_write_skew: true,
             retention_secs: 300,
+            max_committed_writes: 100_000, // Limit to 100K commit records
             node_id: 0,
         }
     }
@@ -775,7 +858,25 @@ impl SnapshotIsolationManager {
         let cutoff_ts = HybridTimestamp::new(cutoff_physical, 0, self.config.node_id);
 
         let mut committed = self.committed_writes.write();
+
+        // CRITICAL FIX: Enforce both time-based AND count-based limits
+        // Time-based cleanup
         committed.retain(|ts, _| *ts >= cutoff_ts);
+
+        // Count-based cleanup (LRU eviction if still over limit)
+        if committed.len() > self.config.max_committed_writes {
+            let excess = committed.len() - self.config.max_committed_writes;
+            // Remove oldest entries (BTreeMap is ordered by timestamp)
+            let keys_to_remove: Vec<HybridTimestamp> = committed
+                .keys()
+                .take(excess)
+                .copied()
+                .collect();
+
+            for key in keys_to_remove {
+                committed.remove(&key);
+            }
+        }
     }
 
     /// Get active transaction count

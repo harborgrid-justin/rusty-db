@@ -5,8 +5,21 @@ use crate::network::protocol::{Request, Response};
 use crate::parser::SqlParser;
 use crate::transaction::TransactionManager;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
+
+// ============================================================================
+// Constants - Bounds for Open-Ended Data Structures
+// ============================================================================
+
+/// Maximum concurrent connections to prevent resource exhaustion
+/// See: diagrams/06_network_api_flow.md - Issue #3.4
+pub const MAX_CONCURRENT_CONNECTIONS: usize = 10_000;
+
+/// Maximum request size (1MB) - prevents memory exhaustion from large requests
+/// See: diagrams/06_network_api_flow.md - Issue #3.3
+pub const MAX_REQUEST_SIZE: usize = 1024 * 1024;
 
 // Database server
 pub struct Server {
@@ -14,6 +27,8 @@ pub struct Server {
     txn_manager: Arc<TransactionManager>,
     executor: Arc<Executor>,
     parser: Arc<SqlParser>,
+    /// Current number of active connections - bounded to MAX_CONCURRENT_CONNECTIONS
+    active_connections: Arc<AtomicUsize>,
 }
 
 impl Server {
@@ -28,6 +43,7 @@ impl Server {
             txn_manager,
             executor,
             parser,
+            active_connections: Arc::new(AtomicUsize::new(0)),
         }
     }
 
@@ -44,7 +60,24 @@ impl Server {
                 .await
                 .map_err(|e| DbError::Network(e.to_string()))?;
 
-            tracing::info!("New connection from {}", addr);
+            // Check connection limit before accepting
+            let current_conns = self.active_connections.load(Ordering::Relaxed);
+            if current_conns >= MAX_CONCURRENT_CONNECTIONS {
+                tracing::warn!(
+                    "Connection limit reached ({}/{}), rejecting connection from {}",
+                    current_conns,
+                    MAX_CONCURRENT_CONNECTIONS,
+                    addr
+                );
+                // Socket will be dropped and connection closed
+                continue;
+            }
+
+            tracing::info!("New connection from {} ({}/{} active)",
+                addr, current_conns + 1, MAX_CONCURRENT_CONNECTIONS);
+
+            // Increment connection counter
+            self.active_connections.fetch_add(1, Ordering::Relaxed);
 
             let handler = ConnectionHandler {
                 catalog: self.catalog.clone(),
@@ -53,10 +86,13 @@ impl Server {
                 parser: self.parser.clone(),
             };
 
+            let active_connections = self.active_connections.clone();
             tokio::spawn(async move {
                 if let Err(e) = handler.handle(socket).await {
                     tracing::error!("Error handling connection: {}", e);
                 }
+                // Decrement connection counter when done
+                active_connections.fetch_sub(1, Ordering::Relaxed);
             });
         }
     }
@@ -78,7 +114,9 @@ struct ConnectionHandler {
 
 impl ConnectionHandler {
     async fn handle(&self, mut socket: TcpStream) -> Result<(), DbError> {
-        const MAX_REQUEST_SIZE: usize = 1024 * 1024; // 1MB limit
+        // TODO: Use shared buffer pool instead of allocating 1MB per connection
+        // See: diagrams/06_network_api_flow.md - Issue #3.3
+        // Should delegate to src/memory/buffer_pool/ for better memory management
         let mut buffer = vec![0u8; MAX_REQUEST_SIZE];
 
         loop {

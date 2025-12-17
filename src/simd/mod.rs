@@ -58,6 +58,12 @@ use std::arch::x86::*;
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
+use crate::error::Result;
+
+/// SIMD utility macros for code reuse
+#[macro_use]
+pub mod macros;
+
 /// SIMD filter operations
 pub mod filter;
 
@@ -239,17 +245,31 @@ impl SelectionVector {
     }
 
     /// Add an index to the selection vector
+    /// Returns an error if capacity would be exceeded
     #[inline(always)]
-    pub fn add(&mut self, index: usize) {
+    pub fn add(&mut self, index: usize) -> Result<()> {
+        if self.indices.len() >= self.indices.capacity() {
+            return Err(crate::error::DbError::ResourceExhausted(
+                "Selection vector capacity exceeded. Consider allocating larger capacity.".into()
+            ));
+        }
         self.indices.push(index);
+        Ok(())
     }
 
     /// Add multiple indices
+    /// Returns an error if capacity would be exceeded
     #[inline(always)]
-    pub fn add_range(&mut self, start: usize, count: usize) {
+    pub fn add_range(&mut self, start: usize, count: usize) -> Result<()> {
+        if self.indices.len() + count > self.indices.capacity() {
+            return Err(crate::error::DbError::ResourceExhausted(
+                "Selection vector capacity would be exceeded by range. Consider allocating larger capacity.".into()
+            ));
+        }
         for i in 0..count {
             self.indices.push(start + i);
         }
+        Ok(())
     }
 
     /// Clear the selection vector

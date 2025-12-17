@@ -1,6 +1,12 @@
 // # Buffer Pool for I/O Operations
 //
 // Pre-allocated, aligned buffer pool for Direct I/O operations.
+//
+// TODO: CONSOLIDATION NEEDED - BufferPool Implementation #3 of 4
+// This is one of 4 separate BufferPool implementations in the codebase.
+// See src/network/advanced_protocol/buffer_management.rs for full analysis.
+// RECOMMENDATION: Merge with src/memory/buffer_pool/ for unified general-purpose buffering.
+// See: diagrams/06_network_api_flow.md - Issue #4.1
 
 use crate::error::{DbError, Result};
 use crate::io::{PAGE_SIZE, SECTOR_SIZE};

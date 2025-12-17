@@ -22,6 +22,13 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+// TODO(consolidation): Merge with security_vault/audit.rs - duplicate audit systems
+// See diagrams/07_security_enterprise_flow.md Issue #1
+
+// SAFETY: Maximum audit records to prevent OOM (Issue C-01)
+const MAX_AUDIT_RECORDS_ABSOLUTE: usize = 1_000_000; // 1M records max
+const DEFAULT_MAX_MEMORY_RECORDS: usize = 10_000;
+
 // Audit record identifier
 pub type AuditId = u64;
 
@@ -198,12 +205,21 @@ pub struct AuditLogConfig {
 impl Default for AuditLogConfig {
     fn default() -> Self {
         Self {
-            max_memory_records: 10000,
+            max_memory_records: DEFAULT_MAX_MEMORY_RECORDS,
             flush_interval_seconds: 60,
             tamper_protection: true,
             archive_after_days: 90,
             compress_archives: true,
             streaming_enabled: false,
+        }
+    }
+}
+
+impl AuditLogConfig {
+    /// Validates and clamps max_memory_records to prevent OOM
+    pub fn validate(&mut self) {
+        if self.max_memory_records > MAX_AUDIT_RECORDS_ABSOLUTE {
+            self.max_memory_records = MAX_AUDIT_RECORDS_ABSOLUTE;
         }
     }
 }
@@ -587,7 +603,8 @@ impl AuditManager {
     }
 
     // Update configuration
-    pub fn update_config(&self, config: AuditLogConfig) {
+    pub fn update_config(&self, mut config: AuditLogConfig) {
+        config.validate(); // Enforce limits to prevent OOM
         *self.config.write() = config;
     }
 

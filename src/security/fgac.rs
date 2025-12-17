@@ -3,6 +3,13 @@
 // Provides row-level security policies, column-level masking, virtual private
 // database patterns, and predicate injection for queries.
 //
+// TODO(consolidation): Overlaps with VPD (Issue #3)
+// This module and security_vault/vpd.rs both implement row-level security
+// with similar predicate evaluation and policy management.
+// See diagrams/07_security_enterprise_flow.md Section 1.3
+// Recommendation: Clarify boundary - FGAC for fine-grained audit + access control,
+// VPD specifically for row filtering. Or consolidate if functionality is truly duplicate.
+//
 // ## Features
 //
 // - Row-level security (RLS) policies
@@ -21,11 +28,13 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 
-// Table identifier
-pub type TableId = String;
+// FGAC-specific table identifier (String-based for policy matching)
+// Note: This is distinct from crate::common::TableId (u32) used for storage
+pub type FgacTableId = String;
 
-// Column identifier
-pub type ColumnId = String;
+// FGAC-specific column identifier (String-based for policy matching)
+// Note: This is distinct from crate::common::ColumnId (u16) used for storage
+pub type FgacColumnId = String;
 
 // User/Role identifier
 pub type PrincipalId = String;
@@ -55,7 +64,7 @@ pub struct RowLevelPolicy {
     // Policy name
     pub name: String,
     // Table this policy applies to
-    pub table_id: TableId,
+    pub table_id: FgacTableId,
     // Policy type
     pub policy_type: PolicyType,
     // SQL predicate expression
@@ -91,9 +100,9 @@ pub struct ColumnPolicy {
     // Policy name
     pub name: String,
     // Table ID
-    pub table_id: TableId,
+    pub table_id: FgacTableId,
     // Column ID
-    pub column_id: ColumnId,
+    pub column_id: FgacColumnId,
     // Access level
     pub access_level: ColumnAccessLevel,
     // Principals this policy applies to
@@ -148,7 +157,7 @@ pub struct VpdContext {
     // Context name
     pub name: String,
     // Table this context applies to
-    pub table_id: TableId,
+    pub table_id: FgacTableId,
     // Context attributes
     pub attributes: HashMap<String, String>,
     // Security predicate
@@ -176,9 +185,9 @@ pub enum DataClassification {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ColumnClassification {
     // Table ID
-    pub table_id: TableId,
+    pub table_id: FgacTableId,
     // Column ID
-    pub column_id: ColumnId,
+    pub column_id: FgacColumnId,
     // Classification level
     pub classification: DataClassification,
     // Tags for additional metadata
@@ -197,13 +206,13 @@ pub struct SecurityPredicate {
 // Fine-grained access control manager
 pub struct FgacManager {
     // Row-level policies by table
-    row_policies: Arc<RwLock<HashMap<TableId, Vec<RowLevelPolicy>>>>,
+    row_policies: Arc<RwLock<HashMap<FgacTableId, Vec<RowLevelPolicy>>>>,
     // Column-level policies
-    column_policies: Arc<RwLock<HashMap<TableId, HashMap<ColumnId, Vec<ColumnPolicy>>>>>,
+    column_policies: Arc<RwLock<HashMap<FgacTableId, HashMap<FgacColumnId, Vec<ColumnPolicy>>>>>,
     // VPD contexts
-    vpd_contexts: Arc<RwLock<HashMap<TableId, Vec<VpdContext>>>>,
+    vpd_contexts: Arc<RwLock<HashMap<FgacTableId, Vec<VpdContext>>>>,
     // Column classifications
-    column_classifications: Arc<RwLock<HashMap<TableId, HashMap<ColumnId, ColumnClassification>>>>,
+    column_classifications: Arc<RwLock<HashMap<FgacTableId, HashMap<FgacColumnId, ColumnClassification>>>>,
     // Policy cache for performance
     policy_cache: Arc<RwLock<HashMap<String, Vec<SecurityPredicate>>>>,
 }
@@ -247,7 +256,7 @@ impl FgacManager {
     }
 
     // Remove a row-level security policy
-    pub fn remove_row_policy(&self, table_id: &TableId, policy_id: &str) -> Result<()> {
+    pub fn remove_row_policy(&self, table_id: &FgacTableId, policy_id: &str) -> Result<()> {
         let mut policies = self.row_policies.write();
 
         if let Some(table_policies) = policies.get_mut(table_id) {
@@ -271,7 +280,7 @@ impl FgacManager {
     }
 
     // Get row-level policies for a table
-    pub fn get_row_policies(&self, table_id: &TableId) -> Vec<RowLevelPolicy> {
+    pub fn get_row_policies(&self, table_id: &FgacTableId) -> Vec<RowLevelPolicy> {
         self.row_policies
             .read()
             .get(table_id)
@@ -308,8 +317,8 @@ impl FgacManager {
     // Remove a column-level policy
     pub fn remove_column_policy(
         &self,
-        table_id: &TableId,
-        column_id: &ColumnId,
+        table_id: &FgacTableId,
+        column_id: &FgacColumnId,
         policy_id: &str,
     ) -> Result<()> {
         let mut policies = self.column_policies.write();
@@ -336,8 +345,8 @@ impl FgacManager {
     // Get column policies for a specific column
     pub fn get_column_policies(
         &self,
-        table_id: &TableId,
-        column_id: &ColumnId,
+        table_id: &FgacTableId,
+        column_id: &FgacColumnId,
     ) -> Vec<ColumnPolicy> {
         self.column_policies
             .read()
@@ -350,8 +359,8 @@ impl FgacManager {
     // Get effective column access for a principal
     pub fn get_column_access(
         &self,
-        table_id: &TableId,
-        column_id: &ColumnId,
+        table_id: &FgacTableId,
+        column_id: &FgacColumnId,
         principal_id: &PrincipalId,
         context: &SecurityContext,
     ) -> ColumnAccessLevel {
@@ -463,7 +472,7 @@ impl FgacManager {
     }
 
     // Remove a VPD context
-    pub fn remove_vpd_context(&self, table_id: &TableId, context_id: &str) -> Result<()> {
+    pub fn remove_vpd_context(&self, table_id: &FgacTableId, context_id: &str) -> Result<()> {
         let mut contexts = self.vpd_contexts.write();
 
         if let Some(table_contexts) = contexts.get_mut(table_id) {
@@ -490,7 +499,7 @@ impl FgacManager {
     }
 
     // Get VPD contexts for a table
-    pub fn get_vpd_contexts(&self, table_id: &TableId) -> Vec<VpdContext> {
+    pub fn get_vpd_contexts(&self, table_id: &FgacTableId) -> Vec<VpdContext> {
         self.vpd_contexts
             .read()
             .get(table_id)
@@ -501,7 +510,7 @@ impl FgacManager {
     // Generate security predicates for a table based on context
     pub fn generate_security_predicates(
         &self,
-        table_id: &TableId,
+        table_id: &FgacTableId,
         context: &SecurityContext,
     ) -> Vec<SecurityPredicate> {
         let mut predicates = Vec::new();
@@ -568,8 +577,8 @@ impl FgacManager {
     // Set column classification
     pub fn set_column_classification(
         &self,
-        table_id: TableId,
-        column_id: ColumnId,
+        table_id: FgacTableId,
+        column_id: FgacColumnId,
         classification: DataClassification,
         tags: HashSet<String>,
     ) -> Result<()> {
@@ -594,8 +603,8 @@ impl FgacManager {
     // Get column classification
     pub fn get_column_classification(
         &self,
-        table_id: &TableId,
-        column_id: &ColumnId,
+        table_id: &FgacTableId,
+        column_id: &FgacColumnId,
     ) -> Option<ColumnClassification> {
         self.column_classifications
             .read()
@@ -652,7 +661,7 @@ impl FgacManager {
     pub fn inject_predicates(
         &self,
         original_query: &str,
-        table_id: &TableId,
+        table_id: &FgacTableId,
         context: &SecurityContext,
     ) -> Result<String> {
         let predicates = self.generate_security_predicates(table_id, context);

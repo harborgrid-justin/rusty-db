@@ -1,6 +1,12 @@
 // # Rate Limiting and DDoS Mitigation
 //
 // Adaptive rate limiting and DDoS attack detection and mitigation.
+//
+// TODO: CONSOLIDATION NEEDED - RateLimiter Implementation #4 of 6
+// See src/api/rest/types.rs for full consolidation analysis.
+// NOTE: This has advanced adaptive features that should be preserved in unified implementation.
+// RECOMMENDATION: Migrate to unified src/common/rate_limiter.rs with adaptive algorithm support.
+// See: diagrams/06_network_api_flow.md - Issue #4.2
 
 use crate::Result;
 use parking_lot::RwLock;

@@ -1,5 +1,27 @@
 // Query Result Compression
 //
+// ⚠️ **WARNING: DUPLICATE COMPRESSION IMPLEMENTATION** ⚠️
+//
+// **Issue**: This module duplicates functionality from `src/compression/`
+//
+// **TODO - MEDIUM PRIORITY**:
+// 1. Remove duplicate compression algorithms
+// 2. Use `src/compression/` module instead
+// 3. Keep only query-result-specific wrapper logic
+// 4. Delegate to unified compression infrastructure
+//
+// **Recommended**:
+// ```rust
+// use crate::compression::Compressor;
+// pub struct QueryResultCompressor {
+//     inner: Compressor,  // Delegate to main module
+// }
+// ```
+//
+// **Cross-Reference**: See `src/compression/mod.rs` and `src/inmemory/compression.rs`
+// **Impact**: ~300 lines of duplication
+// **Priority**: MEDIUM - consolidate with other compression modules
+//
 // This module provides compression capabilities for query results,
 // reducing memory usage and network transfer times for large result sets.
 //

@@ -16,6 +16,7 @@ pub mod bitmap;
 pub mod btree;
 pub mod fulltext;
 pub mod hash_index;
+pub mod hash_helpers;
 pub mod lsm_index;
 pub mod partial;
 pub mod simd_bloom;
@@ -84,7 +85,9 @@ pub trait NodeSplitting {
     /// Returns a tuple of:
     /// - The split key/separator that divides the two groups
     /// - The new node containing the right half of entries
-    fn split(&mut self, capacity: usize) -> Result<(Self::SplitKey, Self)>;
+    fn split(&mut self, capacity: usize) -> Result<(Self::SplitKey, Self)>
+    where
+        Self: Sized;
 
     /// Determine if a node needs splitting based on capacity
     fn needs_split(&self, capacity: usize) -> bool;

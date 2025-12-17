@@ -8,6 +8,26 @@
 // - Cardinality estimation with histograms
 // - Selectivity estimation
 // - Multi-column statistics
+//
+// ============================================================================
+// DUPLICATE CODE WARNING (diagrams/04_query_processing_flow.md)
+// ============================================================================
+//
+// This module duplicates ~750 lines from execution/optimizer/cost_model.rs:
+// - TableStatistics, ColumnStatistics, IndexStatistics (similar structs)
+// - Histogram implementations (EquiWidth, EquiDepth, Hybrid)
+// - Selectivity defaults (0.005 vs 0.1 - INCONSISTENT!)
+// - CardinalityEstimator with ML models
+//
+// TODO: Consolidate into src/common/statistics.rs
+// - Extract shared statistics types to common module
+// - Unify selectivity defaults (currently inconsistent)
+// - Share histogram implementations
+// - Single source of truth for cardinality estimation
+//
+// Impact: Eliminates 750+ lines of duplication, ensures consistency
+// Effort: 2-3 days
+// ============================================================================
 
 use crate::common::{IndexId, TableId, Value};
 use crate::error::{DbError, Result};

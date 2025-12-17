@@ -1,6 +1,12 @@
 // Cluster Communication Module
 //
 // Inter-node messaging, connection pooling, and gossip protocol
+//
+// TODO: CONSOLIDATION NEEDED - ConnectionPool Implementation #2 of 4
+// This NodeConnectionPool duplicates connection pooling logic from src/pool/connection_pool.rs.
+// RECOMMENDATION: Either delegate to main pool or implement ConnectionPool<T> trait.
+// See src/pool/connection_pool.rs for full consolidation analysis.
+// See: diagrams/06_network_api_flow.md - Issue #4.3
 
 use std::collections::HashMap;
 use std::net::SocketAddr;

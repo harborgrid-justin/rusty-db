@@ -52,8 +52,9 @@ type HmacSha1 = Hmac<Sha1>;
 // User identifier
 pub type UserId = String;
 
-// Session identifier
-pub type SessionId = String;
+// Authentication session identifier (String-based for security tokens)
+// Note: This is distinct from crate::common::SessionId (u64) used for network connections
+pub type AuthSessionId = String;
 
 // Password policy configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -191,7 +192,7 @@ pub enum MfaType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthSession {
     // Session ID
-    pub session_id: SessionId,
+    pub session_id: AuthSessionId,
     // User ID
     pub user_id: UserId,
     // Username
@@ -321,7 +322,7 @@ pub struct AuthenticationManager {
     // User accounts
     users: Arc<RwLock<HashMap<UserId, UserAccount>>>,
     // Active sessions
-    sessions: Arc<RwLock<HashMap<SessionId, AuthSession>>>,
+    sessions: Arc<RwLock<HashMap<AuthSessionId, AuthSession>>>,
     // Password policy
     password_policy: Arc<RwLock<PasswordPolicy>>,
     // LDAP configuration
@@ -520,7 +521,7 @@ impl AuthenticationManager {
     }
 
     // Logout and invalidate session
-    pub fn logout(&self, session_id: &SessionId) -> Result<()> {
+    pub fn logout(&self, session_id: &AuthSessionId) -> Result<()> {
         let mut sessions = self.sessions.write();
         sessions
             .remove(session_id)
@@ -729,7 +730,7 @@ impl AuthenticationManager {
     // Invalidate all sessions for a user
     pub fn invalidate_user_sessions(&self, user_id: &UserId) -> Result<usize> {
         let mut sessions = self.sessions.write();
-        let session_ids: Vec<SessionId> = sessions
+        let session_ids: Vec<AuthSessionId> = sessions
             .values()
             .filter(|s| &s.user_id == user_id)
             .map(|s| s.session_id.clone())
@@ -1001,7 +1002,7 @@ impl AuthenticationManager {
     // Get access to sessions (for internal security module use)
     /// Reserved for auth API
     #[allow(dead_code)]
-    pub(crate) fn sessions(&self) -> &Arc<RwLock<HashMap<SessionId, AuthSession>>> {
+    pub(crate) fn sessions(&self) -> &Arc<RwLock<HashMap<AuthSessionId, AuthSession>>> {
         &self.sessions
     }
 }

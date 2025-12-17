@@ -10,6 +10,11 @@ use std::time::Duration;
 use std::time::Instant;
 use std::time::SystemTime;
 
+// SAFETY: Maximum time series points to prevent OOM (Issue C-06)
+// At 1-second granularity, 86400 = 24 hours of history
+const MAX_TIME_SERIES_POINTS: usize = 86_400; // 24 hours at 1Hz
+const DEFAULT_DASHBOARD_HISTORY: usize = 3_600; // 1 hour default
+
 // Real-time metric data point
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MetricDataPoint {
@@ -42,11 +47,14 @@ pub struct TimeSeriesMetric {
 
 impl TimeSeriesMetric {
     pub fn new(name: impl Into<String>, unit: impl Into<String>, max_points: usize) -> Self {
+        // SAFETY: Clamp to prevent OOM (Issue C-06)
+        let safe_max_points = max_points.min(MAX_TIME_SERIES_POINTS);
+
         Self {
             name: name.into(),
             unit: unit.into(),
-            data_points: VecDeque::with_capacity(max_points),
-            max_points,
+            data_points: VecDeque::with_capacity(safe_max_points),
+            max_points: safe_max_points,
         }
     }
 
@@ -310,15 +318,18 @@ pub struct DashboardDataAggregator {
 
 impl DashboardDataAggregator {
     pub fn new(max_history: usize, max_top_queries: usize) -> Self {
+        // SAFETY: Clamp to prevent OOM (Issue C-06)
+        let safe_max_history = max_history.min(MAX_TIME_SERIES_POINTS);
+
         Self {
             time_series: Arc::new(RwLock::new(HashMap::new())),
             top_queries_by_time: Arc::new(RwLock::new(Vec::new())),
             top_queries_by_executions: Arc::new(RwLock::new(Vec::new())),
             connection_stats: Arc::new(RwLock::new(ConnectionPoolStats::new(100))),
             replication_lags: Arc::new(RwLock::new(HashMap::new())),
-            resource_history: Arc::new(RwLock::new(VecDeque::with_capacity(max_history))),
-            performance_history: Arc::new(RwLock::new(VecDeque::with_capacity(max_history))),
-            max_history,
+            resource_history: Arc::new(RwLock::new(VecDeque::with_capacity(safe_max_history))),
+            performance_history: Arc::new(RwLock::new(VecDeque::with_capacity(safe_max_history))),
+            max_history: safe_max_history,
             max_top_queries,
         }
     }

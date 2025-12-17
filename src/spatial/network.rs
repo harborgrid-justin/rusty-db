@@ -13,6 +13,27 @@ use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::collections::{BinaryHeap, HashMap};
 
+// ============================================================================
+// Capacity Limits - Prevent Unbounded Memory Growth
+// ============================================================================
+
+// TODO(ARCHITECTURE): Implement bounded network storage to prevent OOM
+// Maximum number of nodes in a road network
+// Current implementation uses unbounded HashMap - see Network struct
+// Real-world example: OpenStreetMap has ~7M nodes for major cities
+// Recommended: Use BoundedHashMap or partition-based storage
+pub const MAX_NETWORK_NODES: usize = 10_000_000; // 10 million nodes
+
+// TODO(ARCHITECTURE): Implement bounded edge storage to prevent OOM
+// Maximum number of edges in a road network
+// Current implementation uses unbounded HashMap - see Network struct
+// Typical road networks have 3-5x edges per node (intersections)
+pub const MAX_NETWORK_EDGES: usize = 50_000_000; // 50 million edges
+
+// Maximum edges per node (typical intersection: < 10 connections)
+// Prevents adversarial graphs with excessive connectivity
+pub const MAX_EDGES_PER_NODE: usize = 100;
+
 // Network node
 #[derive(Debug, Clone)]
 pub struct Node {
@@ -74,9 +95,21 @@ impl Edge {
 }
 
 // Network graph
+//
+// TODO: Add capacity limits - unbounded HashMaps for large road networks
+// Real-world networks can have millions of nodes (e.g., OSM road networks)
+// Recommended: BoundedHashMap or partition-based storage
 pub struct Network {
+    // WARNING: Unbounded - can cause OOM on large networks
+    // TODO: Replace with BoundedHashMap<u64, Node> (default capacity: 1M nodes)
     pub nodes: HashMap<u64, Node>,
+
+    // WARNING: Unbounded - road networks can have 5M+ edges
+    // TODO: Replace with BoundedHashMap<u64, Edge> (default capacity: 5M edges)
     pub edges: HashMap<u64, Edge>,
+
+    // WARNING: Unbounded adjacency lists
+    // TODO: Consider limit on edges per node (typical: < 10 for intersections)
     adjacency: HashMap<u64, Vec<u64>>, // node_id -> edge_ids
 }
 

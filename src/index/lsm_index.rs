@@ -23,6 +23,10 @@ use std::collections::BTreeMap;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
+// Maximum SSTables per level to prevent unbounded growth
+// If compaction falls behind, writes will be rejected to prevent OOM
+const MAX_SSTABLES_PER_LEVEL: usize = 64;
+
 // LSM Tree Index
 pub struct LSMTreeIndex<K: Ord + Clone + Hash, V: Clone> {
     // In-memory table for recent writes
@@ -207,7 +211,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
             let sstable = SSTable::new(entries, self.config.bloom_filter_size)?;
 
             let mut levels = self.levels.write();
-            levels[0].add_sstable(sstable);
+            levels[0].add_sstable(sstable)?;
 
             // Check if compaction is needed
             if levels[0].needs_compaction() {
@@ -245,7 +249,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
 
         // Add merged tables to next level
         for table in merged {
-            levels[level + 1].add_sstable(table);
+            levels[level + 1].add_sstable(table)?;
         }
 
         Ok(())
@@ -262,7 +266,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
             let merged = self.merge_sstables(tables, Vec::new())?;
 
             for table in merged {
-                levels[level].add_sstable(table);
+                levels[level].add_sstable(table)?;
             }
         }
 
@@ -281,7 +285,7 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
         if levels[level].total_size() > levels[level].max_size() {
             let tables = levels[level].take_all_tables();
             for table in tables {
-                levels[level + 1].add_sstable(table);
+                levels[level + 1].add_sstable(table)?;
             }
         }
 
@@ -528,8 +532,17 @@ impl<K: Ord + Clone + Hash, V: Clone> Level<K, V> {
         }
     }
 
-    fn add_sstable(&mut self, sstable: SSTable<K, V>) {
+    fn add_sstable(&mut self, sstable: SSTable<K, V>) -> Result<()> {
+        if self.sstables.len() >= MAX_SSTABLES_PER_LEVEL {
+            return Err(DbError::ResourceExhausted(
+                format!(
+                    "Level {} exceeded max SSTables ({}). Compaction is falling behind.",
+                    self.level, MAX_SSTABLES_PER_LEVEL
+                )
+            ));
+        }
         self.sstables.push(sstable);
+        Ok(())
     }
 
     fn get(&self, key: &K) -> Result<Option<V>> {

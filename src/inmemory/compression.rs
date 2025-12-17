@@ -1,5 +1,35 @@
 // Advanced Compression Algorithms for Columnar Storage
 //
+// ⚠️ **WARNING: DUPLICATE COMPRESSION IMPLEMENTATION** ⚠️
+//
+// **Issue**: This module duplicates functionality from `src/compression/`
+//
+// **Duplication Analysis**:
+// - Dictionary encoding: Duplicated in src/compression/algorithms/dictionary_compression.rs
+// - RLE: Duplicated in src/compression/algorithms/rle_compression.rs
+// - Delta encoding: Duplicated in src/compression/algorithms/delta_compression.rs
+// - Bit-packing: Similar to src/compression/algorithms/
+//
+// **TODO - MEDIUM PRIORITY**:
+// 1. Remove this module's compression implementations
+// 2. Import and use `src/compression/` instead
+// 3. Keep only columnar-specific logic (column type detection, stats-based selection)
+// 4. Delegate actual compression to unified compression module
+//
+// **Recommended Refactoring**:
+// ```rust
+// use crate::compression::{Compressor, CompressionAlgorithm};
+//
+// pub struct ColumnCompressor {
+//     compressor: Compressor,  // Use main compression module
+//     column_stats: ColumnStats,
+// }
+// ```
+//
+// **Cross-Reference**: See `src/compression/mod.rs` for main compression module
+// **Impact**: ~500 lines of duplication, inconsistent compression behavior
+// **Priority**: MEDIUM - consolidate during next refactoring cycle
+//
 // Implements multiple compression techniques optimized for columnar data:
 // - Dictionary encoding
 // - Run-length encoding (RLE)

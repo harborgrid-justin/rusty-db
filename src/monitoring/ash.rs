@@ -10,6 +10,12 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::SystemTime;
 
+// SAFETY: Maximum ASH samples to prevent OOM (Issue C-02)
+// At 1 sample/second, 86400 = 24 hours of history
+// With 500 bytes/sample and 100 sessions: ~4.3GB/day max
+const MAX_ASH_SAMPLES: usize = 86_400; // 24 hours at 1Hz
+const DEFAULT_ASH_SAMPLES: usize = 100_000;
+
 // Session state at the time of sampling
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SessionState {
@@ -274,9 +280,12 @@ pub struct ActiveSessionHistory {
 
 impl ActiveSessionHistory {
     pub fn new(max_samples: usize, sample_interval: Duration) -> Self {
+        // SAFETY: Clamp max_samples to prevent OOM (Issue C-02)
+        let safe_max_samples = max_samples.min(MAX_ASH_SAMPLES);
+
         Self {
-            samples: Arc::new(RwLock::new(VecDeque::with_capacity(max_samples))),
-            max_samples,
+            samples: Arc::new(RwLock::new(VecDeque::with_capacity(safe_max_samples))),
+            max_samples: safe_max_samples,
             sample_interval,
             last_sample_id: Arc::new(RwLock::new(0)),
             sql_statistics: Arc::new(RwLock::new(HashMap::new())),
@@ -469,7 +478,7 @@ impl ActiveSessionHistory {
 
 impl Default for ActiveSessionHistory {
     fn default() -> Self {
-        Self::new(100000, Duration::from_secs(1))
+        Self::new(DEFAULT_ASH_SAMPLES, Duration::from_secs(1))
     }
 }
 

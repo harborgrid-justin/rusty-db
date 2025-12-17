@@ -234,7 +234,7 @@ impl SecurityVaultManager {
     pub fn with_config(config: VaultConfig) -> Result<Self> {
         // Create data directory if it doesn't exist
         std::fs::create_dir_all(&config.data_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create vault directory: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to create vault directory: {}", e)))?;
 
         // Initialize key store first
         let key_store = KeyStore::new(config.data_dir.join("keystore"))?;

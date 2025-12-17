@@ -393,16 +393,16 @@ impl InstanceMetadata {
 
         // Read required files
         let layout_version = fs::read_to_string(&paths.layout_version)
-            .map_err(|e| DbError::IoError(format!("Failed to read layout-version: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to read layout-version: {}", e)))?;
 
         let instance_id = fs::read_to_string(&paths.instance_id)
-            .map_err(|e| DbError::IoError(format!("Failed to read instance-id: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to read instance-id: {}", e)))?;
 
         let created_at = fs::read_to_string(&paths.created_at)
-            .map_err(|e| DbError::IoError(format!("Failed to read created-at: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to read created-at: {}", e)))?;
 
         let data_format_str = fs::read_to_string(&paths.data_format)
-            .map_err(|e| DbError::IoError(format!("Failed to read data-format-version: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to read data-format-version: {}", e)))?;
 
         let data_format: u32 = data_format_str.trim().parse().map_err(|_| {
             DbError::InvalidInput(format!("Invalid data format version: {}", data_format_str))
@@ -455,7 +455,7 @@ impl InstanceMetadata {
     pub fn save(&self, meta_dir: &Path) -> Result<()> {
         // Ensure directory exists
         fs::create_dir_all(meta_dir)
-            .map_err(|e| DbError::IoError(format!("Failed to create meta directory: {}", e)))?;
+            .map_err(|e| DbError::Storage(format!("Failed to create meta directory: {}", e)))?;
 
         let paths = MetaPaths::from_meta_dir(meta_dir);
 
@@ -480,13 +480,13 @@ impl InstanceMetadata {
 
         if let Some(ref ef) = self.engine_features {
             let json = serde_json::to_string_pretty(ef)
-                .map_err(|e| DbError::IoError(format!("Failed to serialize engine features: {}", e)))?;
+                .map_err(|e| DbError::Serialization(format!("Failed to serialize engine features: {}", e)))?;
             write_file_atomic(&paths.engine_features, &json)?;
         }
 
         if let Some(ref ch) = self.compat_hints {
             let json = serde_json::to_string_pretty(ch)
-                .map_err(|e| DbError::IoError(format!("Failed to serialize compat hints: {}", e)))?;
+                .map_err(|e| DbError::Serialization(format!("Failed to serialize compat hints: {}", e)))?;
             write_file_atomic(&paths.compat_json, &json)?;
         }
 
@@ -616,7 +616,7 @@ impl MetaPaths {
 /// * `content` - Content to write
 fn write_file_atomic(path: &Path, content: &str) -> Result<()> {
     let parent = path.parent().ok_or_else(|| {
-        DbError::IoError(format!("Invalid path: {:?}", path))
+        DbError::Storage(format!("Invalid path: {:?}", path))
     })?;
 
     // Create temp file in same directory
@@ -628,18 +628,18 @@ fn write_file_atomic(path: &Path, content: &str) -> Result<()> {
 
     // Write to temp file
     let mut file = fs::File::create(&temp_path)
-        .map_err(|e| DbError::IoError(format!("Failed to create temp file: {}", e)))?;
+        .map_err(|e| DbError::Storage(format!("Failed to create temp file: {}", e)))?;
 
     file.write_all(content.as_bytes())
-        .map_err(|e| DbError::IoError(format!("Failed to write temp file: {}", e)))?;
+        .map_err(|e| DbError::Storage(format!("Failed to write temp file: {}", e)))?;
 
     // Fsync
     file.sync_all()
-        .map_err(|e| DbError::IoError(format!("Failed to sync temp file: {}", e)))?;
+        .map_err(|e| DbError::Storage(format!("Failed to sync temp file: {}", e)))?;
 
     // Rename atomically
     fs::rename(&temp_path, path)
-        .map_err(|e| DbError::IoError(format!("Failed to rename temp file: {}", e)))?;
+        .map_err(|e| DbError::Storage(format!("Failed to rename temp file: {}", e)))?;
 
     Ok(())
 }

@@ -1,5 +1,25 @@
 // # In-Database Machine Learning Engine
 //
+// ⚠️ **CRITICAL: DUAL ML IMPLEMENTATION DETECTED** ⚠️
+//
+// **Issue**: There are TWO separate ML implementations:
+// - `src/ml/` (this module) - Core ML with SQL integration, quantization, SIMD
+// - `src/ml_engine/` - Extended ML with AutoML, model store, time series
+//
+// **TODO - HIGH PRIORITY**:
+// These modules MUST be merged into a single unified ML module.
+// See detailed merge plan in `src/ml_engine/mod.rs` header comments.
+//
+// **Action Items**:
+// 1. Consolidate duplicate types (Dataset, Hyperparameters, Algorithm)
+// 2. Merge training and inference infrastructure
+// 3. Preserve unique features from both modules
+// 4. Use this module (src/ml/) as the merge target
+// 5. Remove src/ml_engine/ after merge
+//
+// **Impact**: 2x maintenance burden, API confusion, ~3000 lines duplication
+// **Priority**: BLOCKER for v1.0 release
+//
 // This module provides comprehensive machine learning capabilities directly within RustyDB,
 // enabling model training, inference, and management without data export.
 //

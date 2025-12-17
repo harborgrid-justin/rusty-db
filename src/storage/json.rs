@@ -447,6 +447,10 @@ pub struct JsonIndex {
     column_name: String,
     // Path -> (value -> document IDs)
     path_indexes: HashMap<String, HashMap<String, Vec<u64>>>,
+    // BOUNDED: Limits to prevent unbounded growth
+    max_paths: usize,
+    max_values_per_path: usize,
+    max_documents_per_value: usize,
 }
 
 impl JsonIndex {
@@ -455,11 +459,22 @@ impl JsonIndex {
             table_name,
             column_name,
             path_indexes: HashMap::new(),
+            // BOUNDED: Set reasonable limits
+            max_paths: 100,
+            max_values_per_path: 10000,
+            max_documents_per_value: 1000,
         }
     }
 
     // Create index on a specific JSON path
     pub fn index_path(&mut self, path: String) {
+        // BOUNDED: Enforce max paths limit
+        if self.path_indexes.len() >= self.max_paths {
+            // Remove oldest path to make room (LRU-like)
+            if let Some(oldest_path) = self.path_indexes.keys().next().cloned() {
+                self.path_indexes.remove(&oldest_path);
+            }
+        }
         self.path_indexes.insert(path, HashMap::new());
     }
 
@@ -468,7 +483,24 @@ impl JsonIndex {
         for (path, index) in &mut self.path_indexes {
             if let Ok(extracted) = JsonPath::extract(json, path) {
                 let value_str = extracted.to_string();
-                index.entry(value_str).or_insert_with(Vec::new).push(doc_id);
+
+                // BOUNDED: Enforce max values per path
+                if index.len() >= self.max_values_per_path && !index.contains_key(&value_str) {
+                    // Remove oldest value to make room
+                    if let Some(oldest_value) = index.keys().next().cloned() {
+                        index.remove(&oldest_value);
+                    }
+                }
+
+                let doc_list = index.entry(value_str).or_insert_with(Vec::new);
+
+                // BOUNDED: Enforce max documents per value
+                if doc_list.len() >= self.max_documents_per_value {
+                    // Remove oldest document to make room
+                    doc_list.remove(0);
+                }
+
+                doc_list.push(doc_id);
             }
         }
         Ok(())

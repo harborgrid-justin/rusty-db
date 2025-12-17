@@ -126,7 +126,7 @@ impl StaticListDiscovery {
         // Read file contents
         let contents = fs::read_to_string(&file_path)
             .await
-            .map_err(|e| DbError::Io(e))?;
+            .map_err(|e| DbError::Io(std::sync::Arc::new(e)))?;
 
         let mut nodes = Vec::new();
 

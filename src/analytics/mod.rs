@@ -1,5 +1,58 @@
 // Analytics Module - Enterprise Query Analytics and Optimization
 //
+// ⚠️ **WARNING: MODULE BLOAT - 27 FILES WITH OVERLAP** ⚠️
+//
+// **Issue**: Analytics module has grown to 27 files with significant overlap
+//
+// **Duplication Identified**:
+// 1. **3 Cache Implementations**: query_cache.rs, query_cache_impl.rs, caching.rs
+// 2. **3 View Files**: views.rs, materialized_views.rs, view_management.rs
+// 3. **2 Window Files**: window.rs, window_functions.rs
+// 4. **2 Time Series**: timeseries.rs, timeseries_analyzer.rs (+ ml_engine/timeseries.rs)
+// 5. **2 Compression**: compression.rs (+ inmemory/compression.rs)
+// 6. **2 OLAP Files**: olap.rs, cube.rs
+//
+// **TODO - MEDIUM PRIORITY - Module Consolidation**:
+// 1. Merge cache implementations into single query_cache.rs
+// 2. Merge view files into single views/ submodule
+// 3. Merge window files into single window_functions.rs
+// 4. Merge time series into single timeseries/ submodule (with ml_engine)
+// 5. Remove compression.rs (use src/compression/ instead)
+// 6. Merge OLAP files (olap.rs + cube.rs)
+//
+// **Recommended Target Structure** (12 files instead of 27):
+// ```
+// src/analytics/
+//   ├── mod.rs              (this file)
+//   ├── manager.rs          (central coordinator)
+//   ├── query_cache.rs      (merged: query_cache + query_cache_impl + caching)
+//   ├── statistics.rs       (column stats, histograms)
+//   ├── cost_model.rs       (cost estimation)
+//   ├── query_rewriter.rs   (transformations)
+//   ├── olap.rs             (merged: olap + cube)
+//   ├── window_functions.rs (merged: window + window_functions)
+//   ├── views/              (merged: views + materialized_views + view_management)
+//   │   ├── mod.rs
+//   │   ├── materialized.rs
+//   │   └── refresh.rs
+//   ├── timeseries/         (merged: timeseries + timeseries_analyzer + ml_engine/timeseries)
+//   │   ├── mod.rs
+//   │   ├── analysis.rs
+//   │   └── forecasting.rs
+//   ├── data_profiler.rs    (profiling + quality)
+//   └── workload.rs         (query_statistics + sampling)
+// ```
+//
+// **Unbounded Data Structures to Fix**:
+// - Query cache: Unbounded LRU (query_cache.rs) - use BoundedHashMap
+// - Statistics: Unbounded column stats (statistics.rs) - add limits
+// - OLAP cube: Unbounded dimensions (olap.rs) - add capacity limits
+// - Workload history: Unbounded query history (query_statistics.rs) - add retention policy
+//
+// **Impact**: 27 files → 12 files, ~2000 lines of duplication eliminated
+// **Priority**: MEDIUM - consolidate in next major refactoring
+// **Cross-Reference**: See diagrams/08_specialized_engines_flow.md section 10
+//
 // This module provides comprehensive analytics capabilities for the database,
 // including query caching, cost-based optimization, OLAP operations,
 // data profiling, and workload analysis.

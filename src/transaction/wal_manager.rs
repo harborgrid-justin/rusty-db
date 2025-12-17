@@ -1,5 +1,23 @@
 // Write-Ahead Log (WAL) management.
 //
+// TODO(ARCHITECTURE): DUPLICATE IMPLEMENTATION DETECTED
+// ====================================================
+// This module (wal_manager.rs) provides a simpler WAL implementation
+// that DUPLICATES functionality in wal.rs (WALManager with group commit).
+//
+// RECOMMENDATION: Remove this module and migrate all users to wal.rs
+//
+// DIFFERENCES:
+// - wal_manager.rs: Simple buffered WAL with basic sync
+// - wal.rs: Advanced ARIES-style WAL with group commit, vectored I/O, CRC32C
+//
+// CODE DUPLICATION: Both implement WAL buffering, flushing, and recovery
+// RISK: Different WALEntry types, inconsistent durability guarantees
+// ACTION REQUIRED: Consolidate to wal.rs (superior implementation) and update all references
+//
+// See diagrams/03_transaction_memory_flow.md for full analysis
+// ====================================================
+//
 // This module provides the WAL infrastructure for ensuring durability
 // and enabling crash recovery using the ARIES protocol.
 //

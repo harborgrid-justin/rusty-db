@@ -1,5 +1,23 @@
 // MVCC Version Store implementation.
 //
+// TODO(ARCHITECTURE): DUPLICATE IMPLEMENTATION DETECTED
+// ====================================================
+// This module (version_store.rs) provides a simpler MVCC implementation
+// that DUPLICATES functionality in mvcc.rs (MVCCManager).
+//
+// RECOMMENDATION: Remove this module and migrate all users to mvcc.rs
+//
+// DIFFERENCES:
+// - version_store.rs: Simple Vec<Version> per key, basic GC
+// - mvcc.rs: Advanced VersionChain with VecDeque, HybridClock, SnapshotIsolation
+//
+// CODE DUPLICATION: ~60% overlap in version visibility and GC logic
+// RISK: Inconsistent behavior if both are used in different parts of codebase
+// ACTION REQUIRED: Consolidate to mvcc.rs and update all references
+//
+// See diagrams/03_transaction_memory_flow.md for full analysis
+// ====================================================
+//
 // This module provides the version storage mechanism for Multi-Version
 // Concurrency Control (MVCC), enabling non-blocking reads and consistent
 // snapshots.

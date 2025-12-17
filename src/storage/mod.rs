@@ -1,4 +1,5 @@
 pub mod buffer;
+pub mod checksum;
 pub mod columnar;
 pub mod disk;
 pub mod json;
@@ -8,6 +9,7 @@ pub mod partitioning;
 pub mod tiered;
 
 pub use buffer::{BufferPoolManager, BufferPoolStats};
+pub use checksum::hardware_crc32c;
 pub use columnar::{ColumnDef, ColumnType, ColumnValue, ColumnarTable};
 pub use disk::{DirectIoConfig, DiskManager, IoPriority};
 pub use json::{JsonData, JsonOperators, JsonPath};

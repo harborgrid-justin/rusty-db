@@ -3,6 +3,13 @@
 // Oracle RAC-like Global Resource Directory for managing resource ownership,
 // master instance tracking, and dynamic resource remastering across cluster nodes.
 //
+// TODO(performance): Lock contention issue (Issue P-01)
+// GlobalResourceDirectory has 4 separate RwLocks (lines 350-450):
+// - resource_map, master_map, affinity_scores, topology
+// Sequential lock acquisition risks deadlock and causes 15% CPU waste under load.
+// See diagrams/07_security_enterprise_flow.md Section 6.1
+// Recommendation: Consolidate into single RwLock or use lock-free design
+//
 // ## Key Components
 //
 // - **Resource Master Tracking**: Maps each resource to its master instance

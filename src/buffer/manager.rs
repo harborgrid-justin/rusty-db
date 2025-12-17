@@ -7,6 +7,12 @@
 // - Windows IOCP integration ready
 // - Zero allocations in pin/unpin hot path
 //
+// NOTE: BufferPool Implementation #1 of 4 - Page-based buffer pool (4KB pages)
+// This is the MAIN database page caching buffer pool and should be KEPT separate.
+// The other 3 buffer pool implementations should delegate to src/memory/buffer_pool/
+// for general-purpose buffering needs.
+// See: diagrams/06_network_api_flow.md - Issue #4.1
+//
 // ## Architecture
 //
 // ```text
@@ -92,6 +98,9 @@ pub struct BufferPoolConfig {
     /// Number of prefetch threads
     pub prefetch_threads: usize,
 
+    /// Maximum prefetch queue size (BOUNDED to prevent unbounded growth)
+    pub max_prefetch_queue_size: usize,
+
     /// Data directory for disk I/O
     pub data_directory: String,
 
@@ -130,6 +139,7 @@ impl Default for BufferPoolConfig {
             enable_stats: true,
             enable_prefetch: false,
             prefetch_threads: 2,
+            max_prefetch_queue_size: 256, // BOUNDED: Limit prefetch queue to prevent memory exhaustion
             data_directory: "./data".to_string(),
             page_size: PAGE_SIZE,
         }
@@ -354,6 +364,23 @@ pub struct BufferPoolStats {
 // Main Buffer Pool Manager
 // ============================================================================
 
+/// TODO: CRITICAL - TRIPLE BUFFER POOL DUPLICATION!
+/// This is BufferPoolManager implementation #2 of 3 with identical names.
+///
+/// Three separate BufferPoolManager implementations exist:
+///   1. src/storage/buffer.rs - COW semantics, NUMA, LRU-K eviction
+///   2. src/buffer/manager.rs (THIS FILE) - Lock-free, per-core pools, IOCP, prefetch
+///   3. src/memory/buffer_pool/manager.rs - Multi-tier, ARC, 2Q, checkpoint
+///
+/// RECOMMENDATION: Make THIS the canonical BufferPoolManager
+///   - This has the best performance (lock-free, per-core pools)
+///   - Migrate enterprise features from src/memory/buffer_pool/ here
+///   - Deprecate src/storage/buffer.rs (redundant with this)
+///   - Rename src/memory/buffer_pool/ to avoid naming conflicts
+///   - Estimated effort: 3-5 days
+///
+/// See: diagrams/02_storage_layer_flow.md - Issue #2.1
+///
 /// High-performance buffer pool manager.
 ///
 /// Manages a pool of buffer frames that cache disk pages in memory.
@@ -383,6 +410,11 @@ pub struct BufferPoolManager {
     disk_manager: Option<Arc<DiskManager>>,
 
     /// Prefetch request queue (page_id -> priority)
+    /// TODO: UNBOUNDED GROWTH - Add max_prefetch_queue_size enforcement
+    /// Currently grows without limit: 16 bytes per prefetch request
+    /// Recommendation: Add MAX_PREFETCH_QUEUE_SIZE = 1024 and drop oldest when full
+    /// Estimated memory: 1024 * 16 = 16KB max (vs unbounded)
+    /// See: diagrams/02_storage_layer_flow.md - Issue #2.2
     prefetch_queue: Arc<Mutex<Vec<(PageId, u8)>>>,
 
     /// Prefetch worker thread handles
@@ -960,6 +992,12 @@ impl BufferPoolManager {
 
         // Add pages to prefetch queue (with priority based on position)
         for (idx, &page_id) in page_ids.iter().enumerate() {
+            // BOUNDED: Enforce max prefetch queue size
+            if queue.len() >= self.config.max_prefetch_queue_size {
+                // Queue is full, skip remaining pages
+                break;
+            }
+
             // Skip if already in buffer pool
             if self.page_table.lookup(page_id).is_some() {
                 self.prefetch_hits.fetch_add(1, Ordering::Relaxed);

@@ -3,6 +3,11 @@
 // Provides unified infrastructure for distributed tracing, error handling and recovery,
 // circuit breakers, rate limiting, and request context propagation across all subsystems.
 //
+// TODO: CONSOLIDATION NEEDED - RateLimiter Implementation #6 of 6
+// See src/api/rest/types.rs for full consolidation analysis.
+// RECOMMENDATION: Migrate to unified src/common/rate_limiter.rs
+// See: diagrams/06_network_api_flow.md - Issue #4.2
+//
 // ## Features
 //
 // - **Distributed Tracing**: Correlation IDs and span tracking across service boundaries

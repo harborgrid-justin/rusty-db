@@ -43,6 +43,18 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 
 // ============================================================================
+// Constants - Bounds for Open-Ended Data Structures
+// ============================================================================
+
+/// Maximum number of routes to prevent unbounded memory growth from dynamic registration
+/// See: diagrams/06_network_api_flow.md - Issue #5.4
+pub const MAX_ROUTES: usize = 10_000;
+
+/// Maximum number of backend services to prevent unbounded memory growth
+/// See: diagrams/06_network_api_flow.md - Issue #5.6
+pub const MAX_SERVICES: usize = 1_000;
+
+// ============================================================================
 // API Gateway Core - Request Routing and Protocol Translation
 // ============================================================================
 
@@ -375,9 +387,10 @@ pub struct ApiGateway {
 
 // Service registry
 pub struct ServiceRegistry {
-    // Registered services
+    /// Registered services - BOUNDED to MAX_SERVICES
+    /// NOTE: Callers must check size before inserting
     pub(crate) services: HashMap<String, BackendService>,
-    // Service health status
+    /// Service health status - BOUNDED to MAX_SERVICES
     #[allow(dead_code)]
     pub(crate) health_status: HashMap<String, bool>,
 }
@@ -388,6 +401,26 @@ impl Default for ServiceRegistry {
             services: HashMap::new(),
             health_status: HashMap::new(),
         }
+    }
+}
+
+impl ServiceRegistry {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Register a service with bounds checking
+    pub fn register_service(&mut self, name: String, service: BackendService) -> Result<(), crate::error::DbError> {
+        if self.services.len() >= MAX_SERVICES {
+            return Err(crate::error::DbError::Internal(format!(
+                "Service registry full: {} services (max: {})",
+                self.services.len(),
+                MAX_SERVICES
+            )));
+        }
+        self.services.insert(name.clone(), service);
+        self.health_status.insert(name, true);
+        Ok(())
     }
 }
 

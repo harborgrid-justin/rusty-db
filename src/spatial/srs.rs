@@ -13,6 +13,17 @@ use std::collections::HashMap;
 use std::f64::consts::PI;
 use std::sync::{Arc, RwLock};
 
+// ============================================================================
+// Capacity Limits - Prevent Unbounded Memory Growth
+// ============================================================================
+
+// TODO(ARCHITECTURE): Implement bounded SRS registry to prevent OOM
+// Maximum number of Spatial Reference Systems that can be registered
+// Current implementation uses unbounded HashMap - see SrsRegistry struct
+// EPSG database has ~6000 coordinate systems, but custom systems can be added
+// Recommended: Use BoundedHashMap with eviction policy
+pub const MAX_SRS_REGISTRATIONS: usize = 10_000;
+
 // Spatial Reference System identifier
 pub type SridType = i32;
 
@@ -106,7 +117,13 @@ impl Ellipsoid {
 }
 
 // SRS Registry for managing spatial reference systems
+//
+// TODO: Add capacity limit - unbounded HashMap can grow indefinitely
+// Use BoundedHashMap with reasonable limit (e.g., 10,000 SRS definitions)
+// Most applications use < 100 SRS, but specialized GIS may need more
 pub struct SrsRegistry {
+    // WARNING: Unbounded - can cause memory exhaustion with many SRS
+    // TODO: Replace with BoundedHashMap<SridType, SpatialReferenceSystem>
     systems: Arc<RwLock<HashMap<SridType, SpatialReferenceSystem>>>,
 }
 

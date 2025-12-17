@@ -377,10 +377,32 @@ impl BackgroundFlusher {
     }
 }
 
+// TODO: CRITICAL - TRIPLE BUFFER POOL DUPLICATION!
+// This is BufferPoolManager implementation #1 of 3 with identical names.
+//
+// Three separate BufferPoolManager implementations exist:
+//   1. src/storage/buffer.rs (THIS FILE) - COW semantics, NUMA, LRU-K eviction
+//   2. src/buffer/manager.rs - Lock-free, per-core pools, IOCP, prefetch
+//   3. src/memory/buffer_pool/manager.rs - Multi-tier, ARC, 2Q, checkpoint
+//
+// RECOMMENDATION: Consolidate into ONE unified BufferPoolManager
+//   - Choose src/buffer/manager.rs as the canonical implementation (best performance)
+//   - Migrate enterprise features from src/memory/buffer_pool/ to canonical version
+//   - Remove or deprecate the other two implementations
+//   - Estimated effort: 3-5 days
+//
+// See: diagrams/02_storage_layer_flow.md - Issue #2.1
+//
 // Enterprise-grade buffer pool manager with COW semantics
 pub struct BufferPoolManager {
     // Core buffer pool
+    // TODO: UNBOUNDED GROWTH - Add max_pool_size enforcement
+    // Currently grows without limit: O(n) unique pages accessed
+    // Recommendation: Add LRU eviction when pool.len() >= max_pool_size
     pool: Arc<RwLock<HashMap<usize, CowFrame>>>,
+    // TODO: UNBOUNDED GROWTH - Add max_entries enforcement
+    // Currently stores 1 entry per page without limit
+    // Recommendation: Add max_entries config parameter
     page_table: Arc<RwLock<HashMap<PageId, usize>>>,
     free_frames: Arc<Mutex<Vec<usize>>>,
 
@@ -559,13 +581,26 @@ impl BufferPoolManager {
             .evict()
             .ok_or_else(|| DbError::Storage("No evictable frames".to_string()))?;
 
-        let page_table = self.page_table.read();
-        let frame_id = *page_table
-            .get(&victim_page_id)
-            .ok_or_else(|| DbError::Storage("Invalid victim".to_string()))?;
+        let frame_id = {
+            let page_table = self.page_table.read();
+            *page_table
+                .get(&victim_page_id)
+                .ok_or_else(|| DbError::Storage("Invalid victim".to_string()))?
+        };
 
         // Flush if dirty
         self.flush_page(victim_page_id)?;
+
+        // CRITICAL FIX: Remove evicted page from pool and page_table to prevent unbounded growth
+        {
+            let mut pool = self.pool.write();
+            pool.remove(&frame_id);
+        }
+
+        {
+            let mut page_table = self.page_table.write();
+            page_table.remove(&victim_page_id);
+        }
 
         Ok(frame_id)
     }

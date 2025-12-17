@@ -9,6 +9,11 @@ use std::sync::Arc;
 use std::time::Duration;
 use std::time::SystemTime;
 
+// SAFETY: Maximum alert history to prevent OOM (Issue C-07)
+// Alert storms can generate 1000s/minute, need bounded storage
+const MAX_ALERT_HISTORY: usize = 100_000;
+const DEFAULT_ALERT_HISTORY: usize = 10_000;
+
 // Alert severity levels
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum AlertSeverity {
@@ -363,15 +368,18 @@ pub struct AlertManager {
 
 impl AlertManager {
     pub fn new(max_history: usize, max_metric_history: usize) -> Self {
+        // SAFETY: Clamp to prevent OOM (Issue C-07)
+        let safe_max_history = max_history.min(MAX_ALERT_HISTORY);
+
         Self {
             alerts: Arc::new(RwLock::new(HashMap::new())),
-            alert_history: Arc::new(RwLock::new(VecDeque::with_capacity(max_history))),
+            alert_history: Arc::new(RwLock::new(VecDeque::with_capacity(safe_max_history))),
             threshold_rules: Arc::new(RwLock::new(HashMap::new())),
             anomaly_rules: Arc::new(RwLock::new(HashMap::new())),
             metric_history: Arc::new(RwLock::new(HashMap::new())),
             last_alert_id: Arc::new(RwLock::new(0)),
             last_trigger_time: Arc::new(RwLock::new(HashMap::new())),
-            max_history,
+            max_history: safe_max_history,
             max_metric_history,
         }
     }

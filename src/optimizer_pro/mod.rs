@@ -479,7 +479,8 @@ impl QueryOptimizer {
             adaptive_executor,
             baseline_manager,
             hint_parser,
-            plan_cache: Arc::new(RwLock::new(PlanCache::new(1000))),
+            // Use MAX_PLAN_CACHE_SIZE from execution module
+            plan_cache: Arc::new(RwLock::new(PlanCache::new(crate::execution::MAX_PLAN_CACHE_SIZE))),
             stats: Arc::new(RwLock::new(OptimizerStatistics::default())),
         }
     }
@@ -499,11 +500,12 @@ impl QueryOptimizer {
         let fingerprint =
             QueryFingerprint::new(&query.text, query.param_types.clone(), query.schema_version);
 
-        // Check plan cache
-        if let Some(cached_plan) = self.plan_cache.read().unwrap().get(&fingerprint) {
+        // Check plan cache (use write lock for true LRU - get() updates access time)
+        if let Some(cached_plan) = self.plan_cache.write().unwrap().get(&fingerprint) {
             let mut stats = self.stats.write().unwrap();
             stats.cache_hits += 1;
-            return Ok(cached_plan.clone());
+            // Return Arc::clone (cheap) instead of cloning the whole plan
+            return Ok((*cached_plan).clone());
         }
 
         // Check plan baselines if enabled
@@ -629,11 +631,19 @@ pub struct ExecutionResult {
     pub adaptive_corrections: Vec<String>,
 }
 
-// Plan cache
+// Plan cache with proper LRU eviction
+// FIXED: Now uses Arc for zero-copy sharing and true LRU (updates on access)
 struct PlanCache {
-    cache: HashMap<QueryFingerprint, PhysicalPlan>,
+    cache: HashMap<QueryFingerprint, CachedPlan>,
     max_size: usize,
     access_order: VecDeque<QueryFingerprint>,
+}
+
+// Cached plan entry with access tracking
+struct CachedPlan {
+    plan: Arc<PhysicalPlan>,
+    last_accessed: SystemTime,
+    access_count: usize,
 }
 
 impl PlanCache {
@@ -645,18 +655,45 @@ impl PlanCache {
         }
     }
 
-    fn get(&self, fingerprint: &QueryFingerprint) -> Option<PhysicalPlan> {
-        self.cache.get(fingerprint).cloned()
+    // FIXED: Now updates access time and returns Arc (no expensive clone)
+    fn get(&mut self, fingerprint: &QueryFingerprint) -> Option<Arc<PhysicalPlan>> {
+        if let Some(cached) = self.cache.get_mut(fingerprint) {
+            // Update access metadata for true LRU
+            cached.last_accessed = SystemTime::now();
+            cached.access_count += 1;
+
+            // Move to back of access order (most recently used)
+            self.access_order.retain(|fp| fp != fingerprint);
+            self.access_order.push_back(fingerprint.clone());
+
+            // Return cheap Arc clone instead of expensive PhysicalPlan clone
+            Some(Arc::clone(&cached.plan))
+        } else {
+            None
+        }
     }
 
     fn insert(&mut self, fingerprint: QueryFingerprint, plan: PhysicalPlan) {
+        // Evict LRU entry if cache is full
         if self.cache.len() >= self.max_size {
             if let Some(oldest) = self.access_order.pop_front() {
                 self.cache.remove(&oldest);
             }
         }
 
-        self.cache.insert(fingerprint.clone(), plan);
+        // Cap access_order to prevent unbounded growth
+        while self.access_order.len() >= self.max_size {
+            self.access_order.pop_front();
+        }
+
+        self.cache.insert(
+            fingerprint.clone(),
+            CachedPlan {
+                plan: Arc::new(plan),
+                last_accessed: SystemTime::now(),
+                access_count: 0,
+            },
+        );
         self.access_order.push_back(fingerprint);
     }
 

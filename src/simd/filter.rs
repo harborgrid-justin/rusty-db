@@ -105,15 +105,7 @@ pub unsafe fn filter_i32_eq_avx2(data: &[i32], value: i32, result: &mut [u8]) {
 
     // Handle remainder with scalar code
     let remainder_start = chunks * 8;
-    if remainder_start < len && chunks < result.len() {
-        let mut remainder_mask = 0u8;
-        for j in 0..(len - remainder_start) {
-            if data[remainder_start + j] == value {
-                remainder_mask |= 1 << j;
-            }
-        }
-        result[chunks] = remainder_mask;
-    }
+    simd_remainder!(data, value, ==, remainder_start, len, result, chunks);
 }
 
 /// SIMD filter for i32 less-than - processes 8 i32s at once
@@ -138,15 +130,7 @@ pub unsafe fn filter_i32_lt_avx2(data: &[i32], value: i32, result: &mut [u8]) {
 
     // Handle remainder
     let remainder_start = chunks * 8;
-    if remainder_start < len && chunks < result.len() {
-        let mut remainder_mask = 0u8;
-        for j in 0..(len - remainder_start) {
-            if data[remainder_start + j] < value {
-                remainder_mask |= 1 << j;
-            }
-        }
-        result[chunks] = remainder_mask;
-    }
+    simd_remainder!(data, value, <, remainder_start, len, result, chunks);
 }
 
 /// SIMD filter for i32 greater-than - processes 8 i32s at once
@@ -171,15 +155,7 @@ pub unsafe fn filter_i32_gt_avx2(data: &[i32], value: i32, result: &mut [u8]) {
 
     // Handle remainder
     let remainder_start = chunks * 8;
-    if remainder_start < len && chunks < result.len() {
-        let mut remainder_mask = 0u8;
-        for j in 0..(len - remainder_start) {
-            if data[remainder_start + j] > value {
-                remainder_mask |= 1 << j;
-            }
-        }
-        result[chunks] = remainder_mask;
-    }
+    simd_remainder!(data, value, >, remainder_start, len, result, chunks);
 }
 
 /// SIMD filter for i32 range (BETWEEN) - processes 8 i32s at once

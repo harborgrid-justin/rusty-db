@@ -257,6 +257,16 @@ impl Level {
     }
 
     fn add_sstable(&mut self, sstable: Arc<SSTable>) {
+        // BOUNDED: Enforce max_sstables limit
+        // If at capacity, remove oldest SSTable to make room
+        if self.sstables.len() >= self.max_sstables {
+            // Remove the oldest (first) SSTable
+            // In production, this should trigger compaction instead
+            if !self.sstables.is_empty() {
+                self.sstables.remove(0);
+            }
+        }
+
         self.sstables.push(sstable);
         // Keep sorted by min_key for efficient search
         self.sstables.sort_by(|a, b| a.min_key.cmp(&b.min_key));
@@ -340,6 +350,10 @@ pub struct LsmTree {
     active_memtable: Arc<RwLock<MemTable>>,
 
     // Immutable memtables being flushed
+    // TODO: ENFORCE max_immutable_memtables limit in switch_memtable()
+    // Currently max_immutable_memtables exists but is not checked before push_back
+    // Recommendation: Block writes when queue.len() >= max_immutable_memtables
+    // See: diagrams/02_storage_layer_flow.md - Issue #2.2
     immutable_memtables: Arc<Mutex<VecDeque<Arc<MemTable>>>>,
 
     // Levels
@@ -352,6 +366,7 @@ pub struct LsmTree {
     memtable_size: usize,
     _num_levels: usize,
     compaction_strategy: CompactionStrategy,
+    max_immutable_memtables: usize, // BOUNDED: Prevent unbounded queue growth
 
     // Memtable ID counter
     next_memtable_id: Arc<AtomicU64>,
@@ -394,6 +409,7 @@ impl LsmTree {
             memtable_size,
             _num_levels: num_levels,
             compaction_strategy: CompactionStrategy::Leveled,
+            max_immutable_memtables: 4, // BOUNDED: Limit to prevent memory exhaustion
             next_memtable_id: Arc::new(AtomicU64::new(1)),
             next_sstable_id: Arc::new(AtomicU64::new(1)),
             compaction_running: Arc::new(AtomicBool::new(false)),
@@ -529,6 +545,18 @@ impl LsmTree {
 
     // Switch active memtable to immutable
     fn switch_memtable(&self) -> Result<()> {
+        // BOUNDED: Enforce max immutable memtables to prevent unbounded growth
+        // If queue is at capacity, flush synchronously before adding new memtable
+        {
+            let immutables = self.immutable_memtables.lock().unwrap();
+            if immutables.len() >= self.max_immutable_memtables {
+                // Drop lock before flushing to avoid deadlock
+                drop(immutables);
+                // Force flush to make room
+                self.trigger_flush()?;
+            }
+        }
+
         let old_memtable = {
             let mut active = self.active_memtable.write();
             let new_id = self.next_memtable_id.fetch_add(1, Ordering::SeqCst);

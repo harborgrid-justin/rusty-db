@@ -4,10 +4,16 @@
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::Duration;
 use std::time::Instant;
 use std::time::SystemTime;
+
+// SAFETY: Maximum observations to prevent OOM (Issue C-05)
+// TODO(optimization): Replace with HDR Histogram for better memory efficiency
+// See diagrams/07_security_enterprise_flow.md Section 3.1
+const MAX_SUMMARY_OBSERVATIONS: usize = 10_000; // Ring buffer for quantile calculation
 
 // Metric types supported by the system
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -234,11 +240,12 @@ pub struct Quantile {
 }
 
 // Summary metric - similar to histogram but calculates quantiles
+// Uses a bounded ring buffer to prevent unbounded memory growth
 #[derive(Debug, Clone)]
 pub struct Summary {
     name: String,
     help: String,
-    observations: Arc<RwLock<Vec<f64>>>,
+    observations: Arc<RwLock<VecDeque<f64>>>,
     sum: Arc<RwLock<f64>>,
     count: Arc<RwLock<u64>>,
     labels: HashMap<String, String>,
@@ -251,7 +258,7 @@ impl Summary {
         Self {
             name: name.into(),
             help: help.into(),
-            observations: Arc::new(RwLock::new(Vec::new())),
+            observations: Arc::new(RwLock::new(VecDeque::with_capacity(MAX_SUMMARY_OBSERVATIONS))),
             sum: Arc::new(RwLock::new(0.0)),
             count: Arc::new(RwLock::new(0)),
             labels: HashMap::new(),
@@ -268,7 +275,13 @@ impl Summary {
     pub fn observe(&self, value: f64) {
         *self.sum.write() += value;
         *self.count.write() += 1;
-        self.observations.write().push(value);
+
+        // SAFETY: Use ring buffer to prevent OOM (Issue C-05)
+        let mut obs = self.observations.write();
+        if obs.len() >= MAX_SUMMARY_OBSERVATIONS {
+            obs.pop_front();
+        }
+        obs.push_back(value);
     }
 
     pub fn get_sum(&self) -> f64 {
@@ -280,14 +293,15 @@ impl Summary {
     }
 
     pub fn get_quantile(&self, q: f64) -> Option<f64> {
-        let mut obs = self.observations.read().clone();
+        let obs = self.observations.read();
         if obs.is_empty() {
             return None;
         }
 
-        obs.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let index = (q * (obs.len() - 1) as f64).round() as usize;
-        Some(obs[index])
+        let mut sorted: Vec<f64> = obs.iter().copied().collect();
+        sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let index = (q * (sorted.len() - 1) as f64).round() as usize;
+        Some(sorted[index])
     }
 
     pub fn name(&self) -> &str {

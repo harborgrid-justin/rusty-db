@@ -1,5 +1,30 @@
 // Time-Series Analytics Engine
 //
+// ⚠️ **WARNING: TRIPLE TIME SERIES IMPLEMENTATION** ⚠️
+//
+// **Issue**: There are THREE separate time series implementations:
+// 1. `src/analytics/timeseries.rs` (this file) - Basic time series analytics
+// 2. `src/analytics/timeseries_analyzer.rs` - Time series analysis
+// 3. `src/ml_engine/timeseries.rs` - ML-based forecasting (ARIMA, Holt-Winters)
+//
+// **TODO - MEDIUM PRIORITY**:
+// 1. Merge all three into single unified `src/analytics/timeseries/` module
+// 2. Organize by functionality:
+//    - timeseries/core.rs - Data structures (TimeSeriesPoint, TimeSeries)
+//    - timeseries/preprocessing.rs - Gap filling, interpolation, bucketing
+//    - timeseries/analysis.rs - Moving averages, trend detection
+//    - timeseries/forecasting.rs - ARIMA, Holt-Winters, exponential smoothing
+//    - timeseries/anomaly.rs - Anomaly detection
+// 3. Remove duplicate implementations
+// 4. Consolidate moving average calculations (duplicated across all 3)
+// 5. Consolidate seasonality detection (duplicated in 2 modules)
+//
+// **Cross-Reference**:
+// - See `src/analytics/timeseries_analyzer.rs`
+// - See `src/ml_engine/timeseries.rs`
+// **Impact**: ~800 lines of duplication, fragmented functionality
+// **Priority**: MEDIUM - consolidate in next refactoring cycle
+//
 // This module provides specialized time-series analysis capabilities:
 // - Gap filling and missing data interpolation
 // - Time bucketing and downsampling
