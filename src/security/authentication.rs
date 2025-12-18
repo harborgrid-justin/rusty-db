@@ -189,9 +189,17 @@ pub enum MfaType {
 }
 
 // Authentication session
+//
+// SECURITY TODO (Issue S-03): Session tokens stored unencrypted
+// - Session IDs and session tokens should be encrypted when persisted to disk
+// - Consider using JWE (JSON Web Encryption) for session tokens
+// - Implement secure session storage with encryption at rest
+// - Add session token rotation on sensitive operations
+// - Use HMAC-SHA256 for session integrity validation
+// Reference: See security/encryption_engine.rs for encryption patterns
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuthSession {
-    // Session ID
+    // Session ID (UUID v4 - should be encrypted when stored)
     pub session_id: AuthSessionId,
     // User ID
     pub user_id: UserId,
@@ -205,13 +213,13 @@ pub struct AuthSession {
     pub last_activity: i64,
     // Session expiration timestamp
     pub expires_at: i64,
-    // Client IP address
+    // Client IP address (for security context)
     pub client_ip: Option<String>,
-    // User agent
+    // User agent (for security context)
     pub user_agent: Option<String>,
     // MFA verified in this session
     pub mfa_verified: bool,
-    // Session metadata
+    // Session metadata (sensitive data should be encrypted)
     pub metadata: HashMap<String, String>,
 }
 

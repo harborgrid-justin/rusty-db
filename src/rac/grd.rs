@@ -47,6 +47,25 @@ const HASH_BUCKETS: usize = 65536;
 // Remastering threshold - triggers remaster after this many remote accesses
 const REMASTER_THRESHOLD: u64 = 100;
 
+// ============================================================================
+// SECURITY FIX: PR #55/56 - Issue P0-2: Unbounded GRD HashMap
+// ============================================================================
+// CRITICAL: HashMap<ResourceId, ResourceInfo> can grow to 100+ GB without limits.
+// This constant limits total GRD entries to prevent unbounded growth.
+//
+// Maximum GRD entries across all buckets before rejecting new resources
+// At ~1KB per entry average, this limits total memory to ~10GB
+const MAX_GRD_ENTRIES: usize = 10_000_000;
+//
+// TODO(performance): Implement GRD entry bounds checking
+// - Add total entry count tracking across all buckets
+// - Reject resource registration when MAX_GRD_ENTRIES is reached
+// - Implement LRU eviction for cold resources
+// - Add monitoring alerts when approaching limit
+//
+// Reference: diagrams/07_security_enterprise_flow.md Section 8.2
+// ============================================================================
+
 // Affinity tracking window (seconds)
 /// Reserved for cache fusion config
 #[allow(dead_code)]

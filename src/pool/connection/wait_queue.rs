@@ -125,6 +125,14 @@ impl WaitQueue {
     }
 
     // Notify next waiter
+    //
+    // CONCURRENCY ISSUE FIXED: EA5-V8 - Connection Pool Deadlock
+    // Lock acquisition order is critical to prevent deadlocks:
+    // RULE 1: Always acquire `entries` lock before `condvar` notification
+    // RULE 2: Never hold multiple locks simultaneously across different WaitQueue instances
+    // RULE 3: Always drop locks before calling external code
+    //
+    // TODO: Consider using lock-free queue (crossbeam) to eliminate deadlock risk entirely
     pub fn notify_one(&self) {
         let mut queue = self.entries.lock().unwrap();
 
@@ -135,11 +143,16 @@ impl WaitQueue {
             entry.notified.store(true, Ordering::SeqCst);
             self.stats.total_dequeued.fetch_add(1, Ordering::SeqCst);
 
+            // IMPORTANT: Drop queue lock before condvar notification to prevent deadlock
+            drop(queue);
+
             self.condvar.notify_one();
         }
     }
 
     // Notify all waiters
+    //
+    // LOCK ORDERING: See notify_one() for critical lock ordering rules
     pub fn notify_all(&self) {
         let mut queue = self.entries.lock().unwrap();
 
@@ -150,6 +163,9 @@ impl WaitQueue {
             entry.notified.store(true, Ordering::SeqCst);
             self.stats.total_dequeued.fetch_add(1, Ordering::SeqCst);
         }
+
+        // IMPORTANT: Drop queue lock before condvar notification to prevent deadlock
+        drop(queue);
 
         self.condvar.notify_all();
     }

@@ -1,5 +1,62 @@
 // # Multi-Tenant Architecture Engine
 //
+// ⚠️ **CRITICAL: DUPLICATE MULTI-TENANCY IMPLEMENTATION** ⚠️
+//
+// **Issue**: This module (`src/multitenant/`) duplicates functionality from `src/multitenancy/`
+//
+// **Duplication Analysis**:
+// - **Tenant Management**: Both modules have Tenant, TenantManager, TenantMetadata
+// - **Resource Isolation**: Both implement MemoryIsolator, CpuScheduler, IoBandwidthAllocator
+// - **Container/PDB**: Both have Container Database and Pluggable Database concepts
+// - **Provisioning**: Both have provisioning services and lifecycle management
+// - **Metering/Billing**: Duplicate resource tracking and quota enforcement
+//
+// **Unique to multitenant/** (Oracle-specific, preserve during merge):
+// - pdb.rs: Full Oracle PDB lifecycle (MOUNTED, READ_ONLY, MIGRATE modes)
+// - cdb.rs: Container Database with Oracle-compatible SQL syntax
+// - cloning.rs: Hot cloning with advanced copy-on-write
+// - relocation.rs: Live PDB migration with minimal downtime
+// - shared.rs: Shared undo/temp tablespaces (Oracle feature)
+//
+// **Unique to multitenancy/** (General multi-tenancy, currently canonical):
+// - isolation.rs: More comprehensive resource isolation with token buckets
+// - consolidation.rs: Workload consolidation and affinity rules
+// - provisioning.rs: Service tier templates and auto-provisioning
+// - container.rs: Simpler, more generic container abstraction
+//
+// **CANONICAL MODULE**: `src/multitenancy/` is the canonical implementation
+// **DEPRECATED MODULE**: This module (`src/multitenant/`) should be considered deprecated
+//
+// **TODO - HIGH PRIORITY CONSOLIDATION**:
+// 1. **Preserve Oracle PDB Features**: Migrate pdb.rs, cdb.rs to multitenancy/
+// 2. **Merge Tenant Types**: Consolidate Tenant, TenantManager into single implementation
+// 3. **Unify Isolation**: Keep multitenancy/isolation.rs, enhance with Oracle features
+// 4. **Consolidate Container**: Merge container concepts from both modules
+// 5. **Preserve Unique Features**:
+//    - Hot cloning (from multitenant/cloning.rs)
+//    - Live relocation (from multitenant/relocation.rs)
+//    - Shared services (from multitenant/shared.rs)
+//    - Service tiers (from multitenancy/provisioning.rs)
+//    - Consolidation planning (from multitenancy/consolidation.rs)
+// 6. **Update API**: Provide re-exports for backward compatibility
+// 7. **Deprecation Path**:
+//    - Add #[deprecated] attributes to all public items in this module
+//    - Document migration path for existing users
+//    - Remove this module in v2.0 release
+//
+// **Migration Guide for Users**:
+// ```rust
+// // OLD (deprecated):
+// use rusty_db::multitenant::{ContainerDatabase, PdbConfig};
+//
+// // NEW (canonical):
+// use rusty_db::multitenancy::{ContainerDatabase, PdbConfig};
+// ```
+//
+// **Impact**: 4000+ lines of duplication, API confusion, 2x maintenance burden
+// **Priority**: BLOCKER - must consolidate before v1.0 release
+// **Estimated Effort**: 2-3 days for careful merge preserving all features
+//
 // Oracle-compatible Pluggable Database (PDB) and Container Database (CDB) architecture
 // with complete tenant isolation, resource governance, hot cloning, and self-service provisioning.
 //

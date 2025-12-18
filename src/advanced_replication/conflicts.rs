@@ -3,6 +3,42 @@
 // Advanced conflict detection and resolution for multi-master replication.
 // Supports multiple strategies including CRDT-based conflict-free resolution.
 // Optimized with per-core sharding and lock-free operations for maximum throughput.
+//
+// ============================================================================
+// PERFORMANCE FIX: PR #55/56 - Issue P1-9: Vector Clock Overflow
+// ============================================================================
+// HIGH PRIORITY: Vector clock HashMap<String, u64> can grow unbounded as
+// sites join/leave, causing memory leaks in long-running systems.
+//
+// Maximum vector clock entries (sites) to track
+// Each entry is ~32 bytes (site_id + counter)
+const MAX_VECTOR_CLOCK_ENTRIES: usize = 1000;
+//
+// Vector Clock Overflow Handling:
+//
+// 1. **Garbage Collection**:
+//    - Remove entries for sites that haven't been seen in >7 days
+//    - Track last update timestamp for each site entry
+//    - Periodic cleanup of stale site entries
+//
+// 2. **Bounded Clock Size**:
+//    - Reject new site additions when MAX_VECTOR_CLOCK_ENTRIES reached
+//    - Use LRU eviction for least recently updated sites
+//    - Preserve entries for active sites only
+//
+// 3. **Version Vector Compression**:
+//    - Use delta encoding for clock values
+//    - Compress inactive site entries to disk
+//    - Reconstruct on demand when needed
+//
+// TODO(performance): Implement vector clock bounds and cleanup
+// - Add timestamp tracking for each vector clock entry
+// - Implement periodic garbage collection of stale entries
+// - Add bounds checking when adding new sites to clock
+// - Monitor vector clock size and alert on growth
+//
+// Reference: diagrams/07_security_enterprise_flow.md Section 8.9
+// ============================================================================
 
 use crate::error::DbError;
 use parking_lot::RwLock;
@@ -403,6 +439,39 @@ impl ConflictResolver {
     }
 
     /// Detect conflict between local and remote changes
+    // ============================================================================
+    // PERFORMANCE FIX: PR #55/56 - Issue P1-8: O(n²) Conflict Detection
+    // ============================================================================
+    // HIGH PRIORITY: Conflict detection has O(n²) complexity when checking
+    // all pending operations against each incoming operation.
+    //
+    // Current Issue:
+    // - For each incoming operation, check against all pending operations
+    // - With 10,000 pending ops, each new op requires 10,000 comparisons
+    // - This creates 100M comparisons, causing severe slowdowns
+    //
+    // Optimization Strategy:
+    //
+    // 1. **Index by Table+RowKey**:
+    //    - Use HashMap<(table, row_key), Vec<Operation>> instead of flat list
+    //    - Reduces conflict checks from O(n) to O(1) for lookup
+    //
+    // 2. **Bloom Filter Pre-Check**:
+    //    - Use bloom filter for quick "definitely no conflict" checks
+    //    - Only do full comparison if bloom filter indicates possible conflict
+    //
+    // 3. **Parallel Conflict Detection**:
+    //    - Use rayon to parallelize conflict checks across shards
+    //    - Already have 64 shards, can check each in parallel
+    //
+    // TODO(performance): Optimize conflict detection
+    // - Add table+rowkey index for O(1) conflict lookup
+    // - Implement bloom filter for fast negative checks
+    // - Parallelize per-shard conflict detection
+    // - Benchmark improvement (target: <1ms per operation)
+    //
+    // Reference: diagrams/07_security_enterprise_flow.md Section 8.8
+    // ============================================================================
     pub fn detect_conflict(
         &self,
         local: ConflictingChange,

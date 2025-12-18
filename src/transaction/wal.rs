@@ -35,6 +35,10 @@ pub type LSN = u64;
 /// Page ID type
 pub type PageId = u64;
 
+/// CRITICAL FIX EA2-V4: Maximum entries in group commit buffer
+/// Prevents unbounded memory growth under high transaction rates
+const MAX_GROUP_COMMIT_ENTRIES: usize = 10_000;
+
 /// Hardware-accelerated CRC32C checksum (SSE4.2 on x86_64)
 #[inline]
 fn hardware_crc32c(data: &[u8]) -> u32 {
@@ -248,6 +252,12 @@ impl WALEntry {
 }
 
 /// Group commit buffer for batching log writes
+///
+/// # CRITICAL FIX EA2-V4: Entry Count Limit
+///
+/// This buffer now enforces a maximum entry count (MAX_GROUP_COMMIT_ENTRIES = 10,000)
+/// in addition to the existing size limit. This prevents unbounded memory growth
+/// when individual entries are small but arrival rate is high.
 struct GroupCommitBuffer {
     entries: Vec<WALEntry>,
     waiters: Vec<oneshot::Sender<Result<LSN>>>,
@@ -265,25 +275,55 @@ impl GroupCommitBuffer {
         }
     }
 
-    fn add(&mut self, entry: WALEntry, waiter: oneshot::Sender<Result<LSN>>) {
+    /// Add an entry to the buffer.
+    ///
+    /// # CRITICAL FIX EA2-V4: Entry Count Enforcement
+    ///
+    /// Returns an error if the buffer has reached MAX_GROUP_COMMIT_ENTRIES.
+    /// Callers must flush the buffer before adding more entries.
+    fn add(&mut self, entry: WALEntry, waiter: oneshot::Sender<Result<LSN>>) -> Result<()> {
+        // CRITICAL FIX EA2-V4: Enforce entry count limit
+        if self.entries.len() >= MAX_GROUP_COMMIT_ENTRIES {
+            return Err(DbError::ResourceExhausted(format!(
+                "Group commit buffer full: {}/{} entries. Buffer must be flushed.",
+                self.entries.len(),
+                MAX_GROUP_COMMIT_ENTRIES
+            )));
+        }
+
         self.size_bytes += entry.size as usize;
         if self.oldest_entry_time.is_none() {
             self.oldest_entry_time = Some(Instant::now());
         }
         self.entries.push(entry);
         self.waiters.push(waiter);
+
+        Ok(())
     }
 
     fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
 
+    /// Check if the buffer should be flushed.
+    ///
+    /// # CRITICAL FIX EA2-V4: Entry Count Check
+    ///
+    /// Flushes if any of these conditions are met:
+    /// 1. Entry count >= MAX_GROUP_COMMIT_ENTRIES (NEW)
+    /// 2. Size in bytes >= max_size
+    /// 3. Oldest entry age >= max_delay
     fn should_flush(&self, max_size: usize, max_delay: Duration) -> bool {
         if self.is_empty() {
             return false;
         }
 
-        // Flush if buffer is full
+        // CRITICAL FIX EA2-V4: Flush if entry count limit reached
+        if self.entries.len() >= MAX_GROUP_COMMIT_ENTRIES {
+            return true;
+        }
+
+        // Flush if buffer size is full
         if self.size_bytes >= max_size {
             return true;
         }
@@ -489,7 +529,28 @@ impl WALManager {
         // Group commit handling
         if self.config.enable_group_commit {
             let (tx, rx) = oneshot::channel();
-            self.commit_buffer.lock().add(entry, tx);
+
+            // CRITICAL FIX EA2-V4: Handle buffer overflow
+            // If add() returns error due to buffer being full, force flush first
+            loop {
+                match self.commit_buffer.lock().add(entry.clone(), tx) {
+                    Ok(()) => break,
+                    Err(DbError::ResourceExhausted(_)) => {
+                        // Buffer full, force flush
+                        self.flush_buffer().await?;
+                        // Retry with new channel
+                        let (new_tx, new_rx) = oneshot::channel();
+                        // Try again - should succeed after flush
+                        self.commit_buffer.lock().add(entry.clone(), new_tx)?;
+                        return new_rx
+                            .await
+                            .map_err(|_| {
+                                DbError::Transaction("Commit waiter dropped".to_string())
+                            })?;
+                    }
+                    Err(e) => return Err(e),
+                }
+            }
 
             // Check if we should flush
             self.maybe_flush_buffer().await?;

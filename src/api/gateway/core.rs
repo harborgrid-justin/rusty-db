@@ -488,14 +488,8 @@ impl ApiGateway {
     }
 }
 
-impl ServiceRegistry {
-    fn new() -> Self {
-        Self {
-            services: HashMap::new(),
-            health_status: HashMap::new(),
-        }
-    }
-}
+// NOTE: ServiceRegistry::new() is implemented in types.rs to avoid duplication
+// The duplicate impl block here has been removed to fix E0592
 
 impl Clone for GatewayMetrics {
     fn clone(&self) -> Self {

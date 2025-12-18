@@ -7,6 +7,49 @@ use crate::error::Result;
 use serde_json::Value;
 use std::collections::VecDeque;
 
+// ============================================================================
+// Security Limits - JSONPath Injection and DoS Prevention
+// ============================================================================
+
+/// **SECURITY**: Maximum recursion depth for recursive descent (..) operator
+///
+/// **Vulnerability**: Deeply nested JSONPath expressions can cause stack overflow
+/// **Attack Examples**:
+/// - `$..a..b..c..d..e..f..g..h..i..j` (10 levels of recursive descent)
+/// - Crafted JSON with 100+ levels of nesting combined with `..` operator
+///
+/// **Mitigation**: Limit recursive descent depth to 10 levels
+/// - Typical use: 1-3 levels (e.g., `$..address..city`)
+/// - Edge cases: 5-7 levels for deeply nested documents
+/// - Malicious: >10 levels → rejected
+///
+/// **Impact**: Prevents stack overflow and excessive CPU usage
+/// **TODO**: Enforce this limit in evaluate_recursive_descent() method
+pub const MAX_RECURSION_DEPTH: usize = 10;
+
+/// **SECURITY**: Maximum regex pattern size for RegexMatch (=~) operator
+///
+/// **Vulnerability**: Complex regex patterns can cause catastrophic backtracking (ReDoS)
+/// **Attack Examples**:
+/// - `(a+)+$` against "aaaaaaaaaaaaaaaaaaaaaa!" (exponential backtracking)
+/// - `(a|a)*$` or `(a*)*$` patterns
+/// - Very long regex patterns with many alternations
+///
+/// **Mitigation**: Limit regex pattern size to 10,000,000 characters
+/// - Reasonable patterns: 10-1000 chars
+/// - Complex but valid: 1,000-10,000 chars
+/// - Malicious: >10MB → rejected before compilation
+///
+/// **Additional Protection Needed**:
+/// - **TODO**: Add regex compilation timeout (100ms recommended)
+/// - **TODO**: Add regex execution timeout (1s recommended)
+/// - **TODO**: Use regex crate with backtracking limits
+/// - Consider: Ban known-dangerous patterns like `(a+)+`, `(a*)*`, etc.
+///
+/// **Impact**: Prevents ReDoS attacks via filter expressions
+/// **Location**: Used with ComparisonOp::RegexMatch (line ~289-291)
+pub const MAX_REGEX_SIZE: usize = 10_000_000; // 10MB
+
 // JSONPath expression
 #[derive(Debug, Clone, PartialEq)]
 pub enum JsonPath {

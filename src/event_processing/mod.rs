@@ -73,6 +73,47 @@ pub const MAX_STREAM_PARTITIONS: usize = 1_000;
 // Nested EventValue::Object and EventValue::Array can grow unbounded
 pub const MAX_EVENT_PAYLOAD_SIZE_BYTES: usize = 1_048_576; // 1 MB
 
+/// **RESOURCE LIMIT**: Maximum number of events per batch for batch processing
+///
+/// **Issue**: Unbounded event batches can cause memory exhaustion
+/// **Attack**: Attacker sends very large batches forcing all events into memory
+///
+/// **Mitigation**: Limit batch size to 10,000 events
+/// - Small batches: 10-100 events (real-time processing)
+/// - Medium batches: 100-1,000 events (micro-batching)
+/// - Large batches: 1,000-10,000 events (batch analytics)
+/// - Excessive: >10,000 → split into multiple batches
+///
+/// **Implementation**: Enforce in batch operators and window functions
+/// **TODO**: Add batch size validation in operators/aggregate_operators.rs
+/// **Note**: This is distinct from MAX_EVENTS_PER_PARTITION (per-partition buffer)
+pub const MAX_EVENT_BATCH_SIZE: usize = 10_000;
+
+/// **RESOURCE LIMIT**: Maximum pattern complexity for CEP pattern matching
+///
+/// **Issue**: Complex patterns with many operators can cause exponential state growth
+/// **Attack**: Crafted patterns like `(A|B|C|D|E)* ; (F|G|H|I|J)*` create millions of states
+///
+/// **Mitigation**: Limit pattern complexity score to 1,000
+/// **Complexity Scoring**:
+/// - Simple pattern (A ; B): complexity = 2
+/// - Alternation (A|B): complexity = operands × 2
+/// - Kleene star (A*): complexity = inner × 10
+/// - Sequence: complexity = sum of parts
+/// - Example: `(A|B)* ; C ; (D|E)*` = (2×2×10) + 1 + (2×2×10) = 81
+///
+/// **Limits**:
+/// - Simple patterns: 1-10 (basic sequences)
+/// - Medium patterns: 10-100 (alternations, optional)
+/// - Complex patterns: 100-1,000 (nested, loops)
+/// - Excessive: >1,000 → rejected
+///
+/// **Implementation**: Calculate complexity during pattern compilation
+/// **TODO**: Add complexity calculation to cep/pattern_matching.rs
+/// **TODO**: Reject patterns exceeding limit in Pattern::compile()
+/// **Cross-Reference**: MAX_NFA_STATES in cep/nfa_matcher.rs (runtime state limit)
+pub const MAX_PATTERN_COMPLEXITY: usize = 1_000;
+
 pub mod analytics;
 pub mod cep;
 pub mod connectors;

@@ -10,6 +10,39 @@ use crate::error::Result;
 use std::collections::{HashSet, VecDeque};
 use std::sync::Arc;
 
+// ============================================================================
+// Security Limits - NFA State Explosion Prevention
+// ============================================================================
+
+/// **SECURITY**: Maximum number of NFA states to prevent state explosion attacks
+///
+/// **Vulnerability**: Complex patterns can cause exponential NFA state growth
+/// **Attack**: Attacker crafts patterns like `(A|B|C|D|E)*` which can create
+/// millions of states, causing memory exhaustion and DoS.
+///
+/// **Mitigation**: Limit total NFA states to 10,000
+/// - Simple patterns: 10-100 states
+/// - Complex patterns: 1,000-5,000 states
+/// - Malicious patterns: Would exceed 10,000 → rejected
+///
+/// **Impact**: Prevents DoS via NFA state explosion
+pub const MAX_NFA_STATES: usize = 10_000;
+
+/// **SECURITY**: Maximum repetition bound to prevent infinite expansion
+///
+/// **Vulnerability**: Patterns with large repetitions like `A{1000}` can create
+/// thousands of states during compilation, causing memory/CPU DoS.
+///
+/// **Attack**: Pattern `A{1000000}` would create 1M states
+///
+/// **Mitigation**: Limit repetition bounds to 100
+/// - Reasonable use cases: `A{1,10}` or `B{5,50}`
+/// - Malicious patterns: `C{100000}` → rejected
+///
+/// **Impact**: Prevents DoS via large repetition bounds
+/// **TODO**: Enforce this limit in compile_spec() method (line ~180-240)
+pub const MAX_REPEAT_BOUND: usize = 100;
+
 /// NFA (Non-deterministic Finite Automaton) for efficient pattern matching
 pub struct NFA {
     /// States in the NFA

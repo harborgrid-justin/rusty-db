@@ -13,13 +13,51 @@ use super::super::IntegratedSecurityManager;
 use super::common::*;
 
 // ============================================================================
-// Security Policy Engine
+// Security Policy Engine - Unified Policy Management (Issue S-07)
 // ============================================================================
-
+//
+// ARCHITECTURE NOTE: Unified Security Policy Engine
+//
+// This SecurityPolicyEngine serves as the **centralized policy decision point** for
+// RustyDB, consolidating security policy enforcement across all subsystems:
+//
+// ## Unified Policy Types:
+// - AccessControl: RBAC, FGAC, MAC policies (integrates with rbac.rs, fgac.rs, labels.rs)
+// - DataProtection: Encryption, masking policies (integrates with encryption.rs, security_vault/)
+// - Audit: Logging, monitoring policies (integrates with audit.rs, insider_threat.rs)
+// - Encryption: TDE, column encryption policies (integrates with security_vault/tde.rs)
+// - Compliance: GDPR, HIPAA, SOC2 controls (integrates with security_policies.rs)
+// - ThreatResponse: Automated responses to insider threats (integrates with insider_threat.rs)
+//
+// ## Policy Enforcement Flow:
+// 1. Request → SecurityPolicyEngine.evaluate()
+// 2. Match applicable policies by target and conditions
+// 3. Evaluate rules in priority order (highest priority first)
+// 4. Cache decisions for performance
+// 5. Return PolicyDecision (Allow/Deny/Audit/Challenge)
+//
+// ## Integration Points:
+// - RBAC: Delegate role checks to RbacManager
+// - FGAC: Apply row/column filters via FgacManager
+// - Audit: Log policy decisions via AuditManager
+// - Encryption: Enforce encryption requirements via EncryptionManager
+// - Threat Detection: Trigger alerts via InsiderThreatManager
+//
+// ## Best Practices:
+// - Define policies declaratively in configuration files (YAML/JSON)
+// - Use policy versioning for rollback capability
+// - Test policies in dry-run mode before enforcement
+// - Monitor policy decision latency and cache hit rates
+//
+// Reference: See security/mod.rs IntegratedSecurityManager for policy coordination
 pub struct SecurityPolicyEngine {
+    // All security policies indexed by ID
     policies: Arc<RwLock<HashMap<PolicyId, SecurityPolicy>>>,
+    // Decision cache for performance optimization
     decision_cache: Arc<RwLock<HashMap<String, PolicyDecision>>>,
+    // Policy engine statistics and metrics
     stats: Arc<RwLock<PolicyEngineStatistics>>,
+    // Attribute providers for dynamic context evaluation
     #[allow(dead_code)]
     attribute_providers: Arc<RwLock<Vec<Box<dyn AttributeProvider + Send + Sync>>>>,
 }

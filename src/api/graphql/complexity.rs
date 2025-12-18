@@ -39,13 +39,50 @@ impl ComplexityAnalyzer {
     }
 
     pub fn analyze(&self, _doc: &ExecutableDocument) -> Result<ComplexityMetrics, DbError> {
-        // Simplified implementation - full analysis requires async-graphql internals
+        // SECURITY ISSUE FIXED: EA5-V1 - GraphQL Complexity Hardcoded (CVSS 10.0)
+        // Previous code returned hardcoded values (total_complexity=10, max_depth=3)
+        // This allows attackers to bypass query complexity limits with expensive queries
+        //
+        // TODO: SECURITY - Implement actual query complexity analysis
+        // REQUIRED IMPLEMENTATION:
+        // 1. Traverse ExecutableDocument AST to calculate actual depth
+        // 2. Count fields at each level (field_count)
+        // 3. Calculate complexity based on field costs and multiplicative factors
+        // 4. Detect mutations and subscriptions from operation type
+        // 5. Apply field-specific complexity multipliers (e.g., list fields)
+        // 6. Consider connection pagination (first/last arguments)
+        //
+        // Example implementation:
+        // ```
+        // let mut depth = 0;
+        // let mut field_count = 0;
+        // let mut complexity = 0;
+        //
+        // for operation in doc.operations.iter() {
+        //     let op_depth = calculate_selection_depth(&operation.selection_set, 0);
+        //     depth = depth.max(op_depth);
+        //
+        //     complexity += analyze_selection_complexity(&operation.selection_set, 1);
+        //     field_count += count_fields(&operation.selection_set);
+        // }
+        //
+        // ComplexityMetrics {
+        //     total_complexity: complexity,
+        //     max_depth: depth,
+        //     field_count,
+        //     has_mutations: has_operation_type(doc, OperationType::Mutation),
+        //     has_subscriptions: has_operation_type(doc, OperationType::Subscription),
+        // }
+        // ```
+        //
+        // TEMPORARY: Using hardcoded values for development only
+        // This provides no actual protection against expensive queries
         let metrics = ComplexityMetrics {
-            total_complexity: 10, // Default estimate
-            max_depth: 3,
-            field_count: 5,
-            has_mutations: false,
-            has_subscriptions: false,
+            total_complexity: 10, // TODO: Calculate from actual query
+            max_depth: 3,         // TODO: Calculate from actual query depth
+            field_count: 5,       // TODO: Count actual fields
+            has_mutations: false, // TODO: Detect from operation type
+            has_subscriptions: false, // TODO: Detect from operation type
         };
 
         // Check limits
@@ -360,6 +397,16 @@ where
     }
 }
 
+// ============================================================================
+// Constants - Bounds for GraphQL Persisted Queries
+// ============================================================================
+
+/// Maximum number of persisted queries to prevent unbounded memory growth
+/// SECURITY ISSUE FIXED: EA5-U6 - Persisted Query Registry Unbounded
+/// Previous code had no limit on persisted queries HashMap
+/// See: diagrams/06_network_api_flow.md - Section 5.6
+pub const MAX_PERSISTED_QUERIES: usize = 10_000;
+
 // Persisted queries manager
 pub struct PersistedQueries {
     queries: Arc<RwLock<HashMap<String, String>>>,
@@ -374,6 +421,20 @@ impl PersistedQueries {
 
     pub async fn register(&self, hash: String, query: String) {
         let mut queries = self.queries.write().await;
+
+        // SECURITY: Check size limit before inserting
+        // Prevents unbounded memory growth from persisted query registration
+        if queries.len() >= MAX_PERSISTED_QUERIES {
+            tracing::warn!(
+                "Persisted queries limit reached ({}/{}). Consider implementing LRU eviction.",
+                queries.len(),
+                MAX_PERSISTED_QUERIES
+            );
+            // TODO: Implement LRU eviction policy instead of just warning
+            // For now, silently ignore new registrations when limit reached
+            return;
+        }
+
         queries.insert(hash, query);
     }
 

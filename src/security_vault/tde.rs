@@ -19,6 +19,17 @@
 // See diagrams/07_security_enterprise_flow.md Section 4.1
 // Recommendation: Create unified EncryptionService trait, TDE should delegate to it
 //
+// ## Key Rotation Requirements (Issue S-06)
+//
+// **SECURITY REQUIREMENT**: Implement automatic MEK (Master Encryption Key) rotation
+// - Schedule regular MEK rotation (recommended: 90 days for compliance)
+// - Implement DEK re-encryption on MEK rotation without downtime
+// - Track key versions and support multiple active MEKs during rotation period
+// - Integrate with HSM for MEK generation and storage
+// - Add rotation job scheduling using cron-like mechanism
+// - Audit all key rotation events
+// Reference: See security/encryption.rs KeyRotationJob for rotation patterns
+//
 // ## Encryption Flow
 //
 // ```text
@@ -183,7 +194,14 @@ struct TablespaceEncryption {
     name: String,
     // TDE configuration
     config: TdeConfig,
-    // Data encryption key (in memory, encrypted at rest)
+    // Data encryption key (DEK)
+    //
+    // SECURITY TODO (Issue S-02): DEK keys stored unencrypted in memory
+    // - DEKs should be encrypted with MEK (Master Encryption Key) at rest
+    // - Consider using `zeroize` crate to wipe DEK from memory on drop
+    // - Implement secure key storage with memory protection (mlock)
+    // - Add key derivation from MEK instead of storing raw DEK
+    // Reference: Use security/encryption_engine.rs SecureKeyMaterial pattern
     dek: Vec<u8>,
 }
 
@@ -196,7 +214,14 @@ struct ColumnEncryption {
     column_name: String,
     // TDE configuration
     config: TdeConfig,
-    // Data encryption key
+    // Data encryption key (DEK)
+    //
+    // SECURITY TODO (Issue S-02): DEK keys stored unencrypted in memory
+    // - DEKs should be encrypted with MEK (Master Encryption Key) at rest
+    // - Consider using `zeroize` crate to wipe DEK from memory on drop
+    // - Implement secure key storage with memory protection (mlock)
+    // - Add key derivation from MEK instead of storing raw DEK
+    // Reference: Use security/encryption_engine.rs SecureKeyMaterial pattern
     dek: Vec<u8>,
 }
 

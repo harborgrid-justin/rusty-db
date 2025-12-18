@@ -636,11 +636,13 @@ impl BackupCatalog {
         // SAFETY: Enforce hard limits to prevent OOM (Issue C-08)
         if sets.len() > MAX_BACKUP_SETS {
             // Remove oldest backup sets beyond the limit
-            let mut sorted_sets: Vec<_> = sets.iter().collect();
-            sorted_sets.sort_by_key(|(_, s)| s.start_time);
+            // Collect keys to remove first to avoid borrow conflict
+            let mut sorted_keys: Vec<_> = sets.iter().map(|(k, s)| (k.clone(), s.start_time)).collect();
+            sorted_keys.sort_by_key(|(_, time)| *time);
             let to_remove = sets.len() - MAX_BACKUP_SETS;
-            for (set_id, _) in sorted_sets.iter().take(to_remove) {
-                sets.remove(*set_id);
+            let keys_to_remove: Vec<_> = sorted_keys.into_iter().take(to_remove).map(|(k, _)| k).collect();
+            for set_id in keys_to_remove {
+                sets.remove(&set_id);
             }
         }
         drop(sets);

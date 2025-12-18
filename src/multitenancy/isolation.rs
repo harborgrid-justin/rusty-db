@@ -72,6 +72,46 @@ impl MemoryIsolator {
     }
 
     // Allocate memory for a tenant
+    //
+    // ⚠️ **SECURITY VULNERABILITY: TOCTOU Race Condition in Quota Checking** ⚠️
+    //
+    // **Issue**: Time-of-Check-Time-of-Use (TOCTOU) race between quota check and allocation
+    // **Location**: Lines 98-115 (quota check) vs lines 115-123 (allocation update)
+    //
+    // **Vulnerability**: While write locks prevent concurrent modifications to the SAME tenant,
+    // multiple concurrent allocate() calls for DIFFERENT tenants can pass quota checks
+    // before any allocation is actually recorded.
+    //
+    // **Attack Scenario**:
+    // 1. Tenant A has quota: 1GB, allocated: 900MB
+    // 2. Concurrent requests: 10 threads each request 200MB
+    // 3. All 10 threads pass quota check: 900MB + 200MB < 1GB ✓
+    // 4. All 10 allocations succeed sequentially
+    // 5. Final state: allocated = 2900MB > 1GB quota ❌
+    //
+    // **Root Cause**: Check-then-act pattern is NOT atomic per tenant
+    //
+    // **CURRENT PROTECTION**:
+    // - RwLock ensures atomicity of the ENTIRE allocate() method
+    // - Once one thread acquires write lock, others wait
+    // - Each allocation sees updated state from previous allocation
+    // - **THIS IS CORRECT** - the write lock DOES provide atomicity
+    //
+    // **WHY THIS IS ACTUALLY SAFE**:
+    // - Line 80: `self.tenant_allocations.write().await` acquires EXCLUSIVE write lock
+    // - No other thread can read OR write tenant_allocations until lock is released
+    // - All quota checks and updates are atomic within the lock scope
+    // - Lock is not released until end of method (line 130)
+    //
+    // **RECOMMENDATION**: Code is correct, but add assertion to document atomicity:
+    // ```rust
+    // // SAFETY: tenant_allocations write lock ensures atomic check-and-allocate
+    // debug_assert!(tenant_alloc.allocated_bytes <= tenant_alloc.quota_bytes,
+    //               "Quota invariant violated - this should never happen");
+    // ```
+    //
+    // **NOTE**: This documentation clarifies that the implementation is secure.
+    // The write lock provides the necessary atomicity for quota enforcement.
     pub async fn allocate(
         &self,
         tenant_id: &str,
@@ -95,6 +135,8 @@ impl MemoryIsolator {
                     last_allocation: SystemTime::now(),
                 });
 
+        // SAFETY: tenant_allocations write lock ensures atomic quota check and allocation
+        // No race condition possible - lock held from check to allocation completion
         // Check tenant quota
         if tenant_alloc.allocated_bytes + size_bytes > tenant_alloc.quota_bytes {
             tenant_alloc.oom_count += 1;
@@ -211,13 +253,65 @@ pub struct IoBandwidthAllocator {
     tenant_buckets: Arc<RwLock<HashMap<String, TokenBucket>>>,
 }
 
+/// Token Bucket for rate limiting
+///
+/// ⚠️ **SECURITY VULNERABILITY: Race Condition in Token Bucket** ⚠️
+///
+/// **Issue**: TokenBucket methods (refill, consume, available) are NOT thread-safe
+/// **Location**: Lines 277-300 (refill, consume, available methods)
+///
+/// **Vulnerability**: Multiple threads can concurrently call refill() and consume() on
+/// the same TokenBucket instance, leading to race conditions on `tokens` field.
+///
+/// **Attack Scenario**:
+/// 1. Thread 1: calls consume(1000) → refill() → checks tokens=2000 → paused
+/// 2. Thread 2: calls consume(1500) → refill() → checks tokens=2000 → paused
+/// 3. Thread 1: resumes → consumes 1000 → tokens=1000
+/// 4. Thread 2: resumes → consumes 1500 → tokens=-500 (UNDERFLOW!) or wraps to huge number
+/// 5. Result: 2500 bytes consumed with only 2000 tokens available → rate limit bypass
+///
+/// **Root Cause**: `refill()` and `consume()` modify `self.tokens` without synchronization
+///
+/// **CURRENT PROTECTION**: Partial
+/// - IoBandwidthAllocator stores TokenBucket in Arc<RwLock<HashMap<...>>>
+/// - RwLock protects the HashMap, but individual TokenBucket mutations are NOT locked
+/// - Once you get a mutable reference via write().await, modifications to TokenBucket
+///   fields (tokens, last_refill) are unsynchronized if multiple code paths access it
+///
+/// **TODO - HIGH PRIORITY FIX**:
+/// **Option 1**: Wrap TokenBucket fields in Mutex (RECOMMENDED)
+/// ```rust
+/// pub struct TokenBucket {
+///     pub tenant_id: String,
+///     pub capacity: u64,
+///     inner: Arc<Mutex<TokenBucketState>>, // Wrap mutable state
+/// }
+/// struct TokenBucketState {
+///     tokens: u64,
+///     last_refill: Instant,
+/// }
+/// ```
+///
+/// **Option 2**: Use atomic operations
+/// ```rust
+/// pub tokens: AtomicU64,  // Use atomic for thread-safe mutations
+/// pub last_refill: Arc<Mutex<Instant>>,  // Mutex for non-atomic Instant
+/// ```
+///
+/// **Option 3**: Ensure TokenBucket is never accessed concurrently
+/// - Keep TokenBucket mutations under IoBandwidthAllocator's RwLock
+/// - Never clone TokenBucket
+/// - Document that TokenBucket is NOT thread-safe on its own
+///
+/// **Impact**: Cross-tenant bandwidth limit bypass → QoS violations, DoS
+/// **Priority**: HIGH - can cause resource starvation for well-behaved tenants
 #[derive(Debug, Clone)]
 pub struct TokenBucket {
     pub tenant_id: String,
     pub capacity: u64,            // Maximum tokens (bytes)
-    pub tokens: u64,              // Current tokens
+    pub tokens: u64,              // Current tokens (⚠️ RACE CONDITION - not thread-safe)
     pub refill_rate_per_sec: u64, // Tokens added per second
-    pub last_refill: Instant,
+    pub last_refill: Instant,     // Last refill time (⚠️ RACE CONDITION - not thread-safe)
 }
 
 impl TokenBucket {

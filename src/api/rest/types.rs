@@ -30,9 +30,18 @@ use crate::networking::NetworkManager;
 pub const MAX_ACTIVE_QUERIES: usize = 100_000;
 
 /// Maximum number of tracked active sessions to prevent unbounded memory growth
+/// SECURITY ISSUE FIXED: EA5-U5 - Unbounded Session Tracking
+/// Previous code had unbounded HashMap for active_sessions
 /// TODO: Implement TTL-based cleanup or LRU eviction for stale sessions
 /// See: diagrams/06_network_api_flow.md - Issue #5.3
 pub const MAX_ACTIVE_SESSIONS: usize = 50_000;
+
+/// Maximum number of statements in a batch request
+/// SECURITY ISSUE FIXED: EA5-U7 - Batch Request No Limit
+/// Previous code had no limit on BatchRequest.statements vector
+/// Prevents DoS attacks via extremely large batch requests
+/// See: diagrams/06_network_api_flow.md - Section 5
+pub const MAX_BATCH_STATEMENTS: usize = 1_000;
 
 // Newtype for API configuration to ensure domain-specific handling
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -135,8 +144,10 @@ pub struct ApiState {
 
 impl ApiState {
     /// Add a query to active tracking with bounds checking
-    pub fn add_active_query(&self, query: QueryExecution) -> Result<(), DbError> {
-        let mut queries = self.active_queries.write();
+    ///
+    /// SECURITY FIX: EA5-U5 - Bounded active queries to prevent memory exhaustion
+    pub async fn add_active_query(&self, query: QueryExecution) -> Result<(), DbError> {
+        let mut queries = self.active_queries.write().await;
         if queries.len() >= MAX_ACTIVE_QUERIES {
             return Err(DbError::Internal(format!(
                 "Active queries limit reached: {} (max: {}). Old queries not cleaned up.",
@@ -149,8 +160,10 @@ impl ApiState {
     }
 
     /// Add a session to active tracking with bounds checking
-    pub fn add_active_session(&self, session: SessionInfo) -> Result<(), DbError> {
-        let mut sessions = self.active_sessions.write();
+    ///
+    /// SECURITY FIX: EA5-U5 - Bounded active sessions to prevent memory exhaustion
+    pub async fn add_active_session(&self, session: SessionInfo) -> Result<(), DbError> {
+        let mut sessions = self.active_sessions.write().await;
         if sessions.len() >= MAX_ACTIVE_SESSIONS {
             return Err(DbError::Internal(format!(
                 "Active sessions limit reached: {} (max: {}). Old sessions not cleaned up.",
@@ -351,14 +364,37 @@ pub struct ColumnMetadata {
 // Batch request for multiple statements
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct BatchRequest {
-    // List of SQL statements to execute
+    /// List of SQL statements to execute
+    /// NOTE: Should be validated against MAX_BATCH_STATEMENTS limit
+    /// to prevent DoS attacks via unbounded batch requests
     pub statements: Vec<String>,
-    // Execute in transaction
+    /// Execute in transaction
     pub transactional: bool,
-    // Stop on error
+    /// Stop on error
     pub stop_on_error: bool,
-    // Transaction isolation level
+    /// Transaction isolation level
     pub isolation: Option<String>,
+}
+
+impl BatchRequest {
+    /// Validate batch request against security limits
+    pub fn validate(&self) -> Result<(), String> {
+        // SECURITY: Validate batch size against MAX_BATCH_STATEMENTS
+        if self.statements.len() > MAX_BATCH_STATEMENTS {
+            return Err(format!(
+                "Batch too large: {} statements (max: {})",
+                self.statements.len(),
+                MAX_BATCH_STATEMENTS
+            ));
+        }
+
+        // TODO: Add validation for:
+        // 1. Individual SQL statement length (should use MAX_SQL_LENGTH)
+        // 2. Total batch size in bytes
+        // 3. Statement type restrictions (e.g., disallow DDL in batch)
+
+        Ok(())
+    }
 }
 
 // Batch response with detailed results

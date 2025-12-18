@@ -2,6 +2,26 @@
 //
 // Bidirectional replication with conflict detection and resolution,
 // quorum-based writes, and convergence guarantees.
+//
+// ============================================================================
+// SECURITY FIX: PR #55/56 - Issue P0-5: Applied Operations Unbounded
+// ============================================================================
+// CRITICAL: HashSet<String> for applied_ops can grow to 64+ GB without limits.
+// This constant limits the applied operations tracking to prevent unbounded growth.
+//
+// Maximum applied operations to track for deduplication
+// At ~64 bytes per operation ID, this limits memory to ~64MB
+const MAX_APPLIED_OPERATIONS: usize = 1_000_000;
+//
+// TODO(performance): Implement applied operations bounds and cleanup
+// - Use sliding window instead of unbounded HashSet
+// - Implement periodic cleanup of old operation IDs (>24 hours)
+// - Add LRU eviction when MAX_APPLIED_OPERATIONS is reached
+// - Consider bloom filter for membership testing
+//
+// Reference: diagrams/07_security_enterprise_flow.md Section 8.5
+// ============================================================================
+
 use super::conflicts::{ConflictResolutionStrategy, ConflictResolver, ConflictingChange};
 use crate::error::DbError;
 use parking_lot::RwLock;

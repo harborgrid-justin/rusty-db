@@ -506,6 +506,77 @@ impl LouvainAlgorithm {
         })
     }
 
+    /// Calculate graph modularity for community detection (Louvain algorithm)
+    ///
+    /// ⚠️ **PERFORMANCE ISSUE: O(V²) Dense Matrix Algorithm** ⚠️
+    ///
+    /// **Issue**: Naive nested loop over all vertex pairs
+    /// **Complexity**: O(V²) where V = number of vertices
+    /// **Performance**: For 100K vertices → 10 billion iterations (unacceptable)
+    ///
+    /// **Current Implementation** (lines 521-547):
+    /// ```rust
+    /// for vertex1 in graph.vertices() {          // O(V)
+    ///     for vertex2 in graph.vertices() {      // O(V)
+    ///         // Check edge existence and compute modularity
+    ///     }
+    /// }
+    /// ```
+    /// **Time for large graphs**:
+    /// - 10K vertices: 100M iterations (~1 second)
+    /// - 100K vertices: 10B iterations (~100 seconds)
+    /// - 1M vertices: 1T iterations (~10,000 seconds / 2.7 hours)
+    ///
+    /// **OPTIMIZATION - Sparse Matrix Approach** (RECOMMENDED):
+    ///
+    /// **Key Insight**: Most graphs are sparse (E << V²)
+    /// - Social networks: avg degree ~150, not ~100K
+    /// - Knowledge graphs: avg degree ~10-50
+    /// - Only iterate over EXISTING edges, not all V² pairs
+    ///
+    /// **Optimized Algorithm**:
+    /// ```rust
+    /// // Option 1: Edge-based iteration (O(E) instead of O(V²))
+    /// for edge in graph.edges() {                    // O(E)
+    ///     let v1 = edge.source();
+    ///     let v2 = edge.target();
+    ///     let community1 = communities[&v1];
+    ///     let community2 = communities[&v2];
+    ///
+    ///     if community1 == community2 {
+    ///         let degree1 = graph.degree(v1);
+    ///         let degree2 = graph.degree(v2);
+    ///         let expected = (degree1 * degree2) as f64 / m;
+    ///         modularity += 1.0 - expected;  // edge_weight = 1 for existing edges
+    ///     } else {
+    ///         // Different communities, subtract expected only
+    ///         let degree1 = graph.degree(v1);
+    ///         let degree2 = graph.degree(v2);
+    ///         modularity -= (degree1 * degree2) as f64 / m;
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// **Complexity Comparison**:
+    /// - Current: O(V²) = 10B ops for 100K vertices
+    /// - Optimized: O(E) = 1M ops for 100K vertices with avg degree 10
+    /// - **Speedup**: 10,000x faster for sparse graphs!
+    ///
+    /// **Additional Optimizations**:
+    /// 1. **Precompute degree** for all vertices (current: computed V² times)
+    /// 2. **Cache community memberships** in array instead of HashMap lookup
+    /// 3. **Parallelize** edge iteration with rayon: `par_iter()`
+    /// 4. **Incremental modularity** updates instead of full recalculation
+    ///
+    /// **TODO - HIGH PRIORITY**:
+    /// - [ ] Replace nested vertex loops with edge iteration
+    /// - [ ] Precompute vertex degrees (one-time O(V) cost)
+    /// - [ ] Use Vec instead of HashMap for community lookup (O(1) array access)
+    /// - [ ] Add parallelization for large graphs (>10K vertices)
+    /// - [ ] Benchmark: Expect 100-10,000x speedup on real-world sparse graphs
+    ///
+    /// **Impact**: Current implementation is unusable for graphs >10K vertices
+    /// **Priority**: HIGH - blocks large-scale graph analytics workloads
     fn calculate_modularity(
         graph: &PropertyGraph,
         communities: &HashMap<VertexId, usize>,
@@ -518,6 +589,7 @@ impl LouvainAlgorithm {
         let mut modularity = 0.0;
         let m = 2.0 * total_edges; // Total degree
 
+        // ⚠️ PERFORMANCE: O(V²) nested loop - should be O(E) edge iteration
         for vertex1 in graph.vertices() {
             let community1 = communities.get(&vertex1.id).unwrap();
             let degree1 = vertex1.in_degree() + vertex1.out_degree();

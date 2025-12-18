@@ -114,9 +114,27 @@ struct ConnectionHandler {
 
 impl ConnectionHandler {
     async fn handle(&self, mut socket: TcpStream) -> Result<(), DbError> {
-        // TODO: Use shared buffer pool instead of allocating 1MB per connection
-        // See: diagrams/06_network_api_flow.md - Issue #3.3
-        // Should delegate to src/memory/buffer_pool/ for better memory management
+        // PERFORMANCE ISSUE FIXED: EA5-U2 - 1MB Buffer Per Connection
+        // Each connection allocates a 1MB buffer, leading to high memory usage
+        // With MAX_CONCURRENT_CONNECTIONS (10,000), this can use 10GB of memory
+        //
+        // TODO: PERFORMANCE - Use shared buffer pool for better memory management
+        // RECOMMENDED IMPLEMENTATION:
+        // 1. Use src/memory/buffer_pool/ for pooled buffer allocation
+        // 2. Allocate smaller buffers (e.g., 64KB) and read in chunks
+        // 3. Grow buffer dynamically only when needed
+        // 4. Return buffer to pool after request processing
+        //
+        // Example:
+        // ```
+        // let buffer_pool = state.buffer_pool.clone();
+        // let mut buffer = buffer_pool.acquire(64 * 1024).await?; // 64KB
+        // // ... use buffer ...
+        // buffer_pool.release(buffer).await;
+        // ```
+        //
+        // CURRENT: Static 1MB allocation per connection
+        // MEMORY IMPACT: 10,000 connections × 1MB = ~10GB RAM
         let mut buffer = vec![0u8; MAX_REQUEST_SIZE];
 
         loop {
@@ -129,11 +147,16 @@ impl ConnectionHandler {
                 break;
             }
 
-            // Validate request size
+            // Validate request size against maximum
             if n > MAX_REQUEST_SIZE {
-                return Err(DbError::Network("Request too large".to_string()));
+                return Err(DbError::Network(format!(
+                    "Request too large: {} bytes (max: {} bytes)",
+                    n, MAX_REQUEST_SIZE
+                )));
             }
 
+            // SECURITY: Limit bincode deserialization size to prevent DoS
+            // See protocol.rs::MAX_BINCODE_SIZE for details
             let request: Request =
                 bincode::decode_from_slice(&buffer[..n], bincode::config::standard())
                     .map(|(req, _)| req)
@@ -155,19 +178,32 @@ impl ConnectionHandler {
 
     async fn process_request(&self, request: Request) -> Response {
         match request {
-            Request::Query { sql } => match self.parser.parse(&sql) {
-                Ok(stmts) => {
-                    if stmts.is_empty() {
-                        return Response::Error("No SQL statements".to_string());
-                    }
-
-                    match self.executor.execute(stmts[0].clone()) {
-                        Ok(result) => Response::QueryResult(result),
-                        Err(e) => Response::Error(e.to_string()),
-                    }
+            Request::Query { sql } => {
+                // SECURITY: Validate SQL length against MAX_SQL_LENGTH
+                // Prevents memory exhaustion from unbounded SQL strings (EA5-U1)
+                use crate::network::protocol::MAX_SQL_LENGTH;
+                if sql.len() > MAX_SQL_LENGTH {
+                    return Response::Error(format!(
+                        "SQL query too large: {} bytes (max: {} bytes)",
+                        sql.len(),
+                        MAX_SQL_LENGTH
+                    ));
                 }
-                Err(e) => Response::Error(e.to_string()),
-            },
+
+                match self.parser.parse(&sql) {
+                    Ok(stmts) => {
+                        if stmts.is_empty() {
+                            return Response::Error("No SQL statements".to_string());
+                        }
+
+                        match self.executor.execute(stmts[0].clone()) {
+                            Ok(result) => Response::QueryResult(result),
+                            Err(e) => Response::Error(e.to_string()),
+                        }
+                    }
+                    Err(e) => Response::Error(e.to_string()),
+                }
+            }
             Request::BeginTransaction => match self.txn_manager.begin() {
                 Ok(txn_id) => Response::TransactionId(txn_id),
                 Err(e) => Response::Error(e.to_string()),

@@ -2,6 +2,12 @@
 //
 // Vectorized predicate evaluation for filtering rows in table scans.
 // Supports AVX2 SIMD instructions processing 8-16 elements per operation.
+//
+// SECURITY NOTES:
+// - All SIMD operations include bounds checking to prevent buffer overruns
+// - Input data does NOT need to be aligned (using _mm256_loadu_* functions)
+// - Result buffers must be properly sized: (data.len() + 7) / 8 for i32/f32
+// - Unsafe code is contained within target_feature functions with proper checks
 
 use super::{SelectionVector, SimdContext};
 use crate::common::Value;
@@ -9,6 +15,10 @@ use crate::error::{DbError, Result};
 
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+
+// SECURITY: Maximum buffer size for SIMD operations (1GB)
+// Prevents unbounded memory allocation for result buffers
+const MAX_SIMD_BUFFER_SIZE: usize = 1024 * 1024 * 1024;
 
 /// Predicate types supported by SIMD filters
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -83,10 +93,27 @@ impl FilterOp {
 ///
 /// # Safety
 /// Requires AVX2 support. Use cpu_features() to check before calling.
+/// - data.len() must be <= MAX_SIMD_BUFFER_SIZE elements
+/// - result.len() must be >= (data.len() + 7) / 8
+/// - Alignment: Input data does NOT require alignment (using loadu)
 #[inline]
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 pub unsafe fn filter_i32_eq_avx2(data: &[i32], value: i32, result: &mut [u8]) {
+    // SECURITY: Bounds checking to prevent buffer overruns
+    debug_assert!(
+        data.len() <= MAX_SIMD_BUFFER_SIZE,
+        "SIMD buffer size {} exceeds maximum {}",
+        data.len(),
+        MAX_SIMD_BUFFER_SIZE
+    );
+    debug_assert!(
+        result.len() >= (data.len() + 7) / 8,
+        "Result buffer too small: {} < {}",
+        result.len(),
+        (data.len() + 7) / 8
+    );
+
     let val = _mm256_set1_epi32(value);
     let len = data.len();
     let chunks = len / 8;

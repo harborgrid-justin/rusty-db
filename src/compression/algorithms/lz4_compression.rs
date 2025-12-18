@@ -12,6 +12,67 @@ const MIN_MATCH_LENGTH: usize = 4;
 const MAX_MATCH_LENGTH: usize = 255;
 const HASH_TABLE_SIZE: usize = 1 << 16;
 
+// ============================================================================
+// Security Limits - Compression Bomb Prevention
+// ============================================================================
+
+/// **SECURITY**: Maximum decompression ratio to prevent compression bomb attacks
+///
+/// **Vulnerability**: Malicious compressed data can expand to many GBs
+/// **Attack Example**: "Zip bomb" - 42KB compressed → 4.5PB decompressed
+/// **Classic**: 42.zip (42 kilobytes → 4.5 petabytes = 10^12 expansion)
+///
+/// **Mitigation**: Limit decompression ratio to 1000:1
+/// - Typical text: 2:1 to 10:1 compression ratio
+/// - Highly repetitive data: 100:1 to 500:1
+/// - Malicious compression bombs: >10,000:1 → rejected
+///
+/// **Implementation**:
+/// ```rust
+/// // In decompress() method (line ~152):
+/// if output.len() > input.len() * MAX_DECOMPRESSION_RATIO {
+///     return Err(CompressionError::DecompressionBomb {
+///         compressed_size: input.len(),
+///         decompressed_size: output.len(),
+///         max_ratio: MAX_DECOMPRESSION_RATIO,
+///     });
+/// }
+/// ```
+///
+/// **Impact**: Prevents DoS via memory exhaustion from compression bombs
+/// **TODO**: Enforce this check in decompress() method (line ~152-220)
+pub const MAX_DECOMPRESSION_RATIO: usize = 1000;
+
+/// **SECURITY**: Maximum decompressed size in bytes (100MB)
+///
+/// **Vulnerability**: Even with ratio limits, large compressed files can exhaust memory
+/// **Attack Example**: 1MB compressed × 1000 ratio = 1GB decompressed (per request)
+///
+/// **Mitigation**: Absolute limit of 100MB decompressed output
+/// - Small blocks: 4KB-64KB
+/// - Medium blocks: 1MB-10MB
+/// - Large blocks: 10MB-50MB
+/// - Excessive: >100MB → rejected
+///
+/// **Combined Protection**:
+/// - Check #1: Ratio check (prevents bombs)
+/// - Check #2: Absolute size check (prevents large legitimate files from causing OOM)
+///
+/// **Implementation**:
+/// ```rust
+/// // In decompress() method, before decompression:
+/// if output.len() > MAX_DECOMPRESSED_SIZE {
+///     return Err(CompressionError::OutputTooLarge {
+///         requested: output.len(),
+///         maximum: MAX_DECOMPRESSED_SIZE,
+///     });
+/// }
+/// ```
+///
+/// **Impact**: Prevents OOM from both malicious bombs and legitimate large files
+/// **TODO**: Enforce this check in decompress() method (line ~152-220)
+pub const MAX_DECOMPRESSED_SIZE: usize = 100_000_000; // 100 MB
+
 pub struct LZ4Compressor {
     level: CompressionLevel,
     stats: Arc<Mutex<CompressionStats>>,

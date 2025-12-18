@@ -437,10 +437,7 @@ impl HierarchicalLockManager {
                     self.stats.write().deadlocks_detected += 1;
                     // Clean up wait-for graph
                     self.wait_for_graph.write().remove_transaction(txn_id);
-                    return Err(DbError::Deadlock(format!(
-                        "Deadlock detected involving transactions: {:?}",
-                        cycle
-                    )));
+                    return Err(DbError::Deadlock);
                 }
             }
 

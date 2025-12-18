@@ -6,6 +6,11 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use crate::error::DbError;
 use crate::execution::{planner::PlanNode, QueryResult};
 
+// Maximum iterations for recursive CTEs to prevent infinite loops
+// SECURITY: Prevents infinite recursion DoS attacks
+// Example: WITH RECURSIVE r AS (SELECT 1 UNION ALL SELECT n+1 FROM r) SELECT * FROM r
+const MAX_CTE_ITERATIONS: usize = 1000;
+
 // CTE Definition
 #[derive(Debug, Clone)]
 pub struct CteDefinition {
@@ -91,7 +96,7 @@ pub struct RecursiveCteEvaluator {
 impl RecursiveCteEvaluator {
     pub fn new() -> Self {
         Self {
-            max_iterations: 100,
+            max_iterations: MAX_CTE_ITERATIONS,
         }
     }
 

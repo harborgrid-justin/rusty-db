@@ -31,6 +31,15 @@ const COALESCE_MAX_BATCH: usize = 64;
 /// Maximum io_uring queue depth (default: 256 operations)
 const IO_URING_QUEUE_DEPTH: usize = 256;
 
+/// Maximum IoScheduler queue size per operation type (default: 512 operations)
+/// BOUNDED to prevent unbounded growth under heavy load
+/// - read_queue: up to 512 pending read operations
+/// - write_queue: up to 512 pending write operations
+/// - sync_queue: up to 512 pending sync operations
+/// Total max memory: 512 ops * 3 queues * ~128 bytes/op = ~196KB
+/// See: diagrams/02_storage_layer_flow.md - Issue #2.5
+const MAX_IO_SCHEDULER_QUEUE_SIZE: usize = 512;
+
 /// Sequential access detection window size
 const ACCESS_PATTERN_WINDOW: usize = 10;
 
@@ -89,24 +98,47 @@ impl IoOperation {
 }
 
 // I/O scheduler with deadline-aware prioritization
+//
+// BOUNDED QUEUES: All queues are bounded to prevent unbounded memory growth
+// - Each queue limited to MAX_IO_SCHEDULER_QUEUE_SIZE (512) operations
+// - Schedule operations are rejected if queue is full (back-pressure)
+// - Total memory bounded: 3 queues * 512 ops * ~128 bytes = ~196KB max
+// See: diagrams/02_storage_layer_flow.md - Issue #2.5
 struct IoScheduler {
+    /// BOUNDED: Max size = MAX_IO_SCHEDULER_QUEUE_SIZE (512 operations)
+    /// Estimated memory: 512 * ~128 bytes/op = ~64KB
     read_queue: VecDeque<IoOperation>,
+
+    /// BOUNDED: Max size = MAX_IO_SCHEDULER_QUEUE_SIZE (512 operations)
+    /// Estimated memory: 512 * ~128 bytes/op = ~64KB
     write_queue: VecDeque<IoOperation>,
+
+    /// BOUNDED: Max size = MAX_IO_SCHEDULER_QUEUE_SIZE (512 operations)
+    /// Estimated memory: 512 * ~128 bytes/op = ~64KB
     sync_queue: VecDeque<IoOperation>,
+
+    /// BOUNDED: Max size = 3 * MAX_IO_SCHEDULER_QUEUE_SIZE (deduplication across queues)
+    /// Estimated memory: 1536 entries * ~40 bytes/entry = ~61KB
     pending_ops: HashMap<PageId, IoOperation>,
 }
 
 impl IoScheduler {
     fn new() -> Self {
         Self {
-            read_queue: VecDeque::new(),
-            write_queue: VecDeque::new(),
-            sync_queue: VecDeque::new(),
-            pending_ops: HashMap::new(),
+            read_queue: VecDeque::with_capacity(MAX_IO_SCHEDULER_QUEUE_SIZE),
+            write_queue: VecDeque::with_capacity(MAX_IO_SCHEDULER_QUEUE_SIZE),
+            sync_queue: VecDeque::with_capacity(MAX_IO_SCHEDULER_QUEUE_SIZE),
+            pending_ops: HashMap::with_capacity(MAX_IO_SCHEDULER_QUEUE_SIZE * 3),
         }
     }
 
-    fn schedule(&mut self, op: IoOperation) {
+    /// Schedule an I/O operation
+    ///
+    /// Returns Ok(()) if operation was queued successfully.
+    /// Returns Err if queue is full (back-pressure signal).
+    ///
+    /// BOUNDED: Enforces MAX_IO_SCHEDULER_QUEUE_SIZE limit per queue type
+    fn schedule(&mut self, op: IoOperation) -> Result<()> {
         let page_id = op.page_id;
 
         // Coalesce duplicate operations
@@ -115,7 +147,21 @@ impl IoScheduler {
                 // Replace with higher priority operation
                 self.pending_ops.insert(page_id, op.clone());
             }
-            return;
+            return Ok(());
+        }
+
+        // Check queue capacity based on operation type
+        let queue_full = match op.op_type {
+            IoOpType::Read => self.read_queue.len() >= MAX_IO_SCHEDULER_QUEUE_SIZE,
+            IoOpType::Write => self.write_queue.len() >= MAX_IO_SCHEDULER_QUEUE_SIZE,
+            IoOpType::Sync => self.sync_queue.len() >= MAX_IO_SCHEDULER_QUEUE_SIZE,
+        };
+
+        if queue_full {
+            return Err(crate::error::DbError::Storage(format!(
+                "I/O scheduler queue full for {:?} operations (max: {})",
+                op.op_type, MAX_IO_SCHEDULER_QUEUE_SIZE
+            )));
         }
 
         self.pending_ops.insert(page_id, op.clone());
@@ -125,6 +171,8 @@ impl IoScheduler {
             IoOpType::Write => self.write_queue.push_back(op),
             IoOpType::Sync => self.sync_queue.push_back(op),
         }
+
+        Ok(())
     }
 
     fn next_operation(&mut self) -> Option<IoOperation> {
@@ -795,14 +843,20 @@ impl DiskManager {
     // Async read operation (simulated - would use io_uring in production)
     pub fn read_page_async(&self, page_id: PageId, priority: IoPriority) -> Result<()> {
         let op = IoOperation::new(IoOpType::Read, page_id, priority);
-        self.scheduler.lock().unwrap().schedule(op);
+        self.scheduler
+            .lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?
+            .schedule(op)?;
         Ok(())
     }
 
     // Async write operation (simulated - would use io_uring in production)
     pub fn write_page_async(&self, page: &Page, priority: IoPriority) -> Result<()> {
         let op = IoOperation::new(IoOpType::Write, page.id, priority);
-        self.scheduler.lock().unwrap().schedule(op);
+        self.scheduler
+            .lock()
+            .map_err(|e| DbError::Storage(format!("Mutex poisoned: {}", e)))?
+            .schedule(op)?;
 
         // Buffer the write
         // TODO: MEMORY COPY #4 - page.data.clone() copies 4KB per async write
@@ -1156,9 +1210,9 @@ mod tests {
         let op2 = IoOperation::new(IoOpType::Write, 2, IoPriority::High);
         let op3 = IoOperation::new(IoOpType::Sync, 3, IoPriority::Critical);
 
-        scheduler.schedule(op1);
-        scheduler.schedule(op2);
-        scheduler.schedule(op3);
+        scheduler.schedule(op1).unwrap();
+        scheduler.schedule(op2).unwrap();
+        scheduler.schedule(op3).unwrap();
 
         assert_eq!(scheduler.pending_count(), 3);
 
