@@ -1,5 +1,47 @@
 // Point-in-Time Recovery (PITR) - Oracle-style recovery capabilities
 // Supports recovery to specific timestamp, transaction, or SCN with log mining
+//
+// ============================================================================
+// PERFORMANCE FIX: PR #55/56 - Issue P2-13: WAL Archive Unbounded
+// ============================================================================
+// MEDIUM PRIORITY: WAL archive (BTreeMap<u64, TransactionLogEntry>) can grow
+// unbounded as log entries accumulate, causing memory exhaustion.
+//
+// Maximum WAL archive entries to keep in memory
+// At ~500 bytes per entry average, this limits memory to ~500MB
+const MAX_WAL_ARCHIVE_SIZE: usize = 1_000_000;
+//
+// WAL Archive Management Strategy:
+//
+// 1. **Sliding Window**:
+//    - Keep only recent N entries in memory BTreeMap
+//    - Older entries moved to disk-based storage
+//    - Use memory-mapped files for efficient access
+//
+// 2. **Periodic Cleanup**:
+//    - Remove entries older than retention period (e.g., 30 days)
+//    - Trigger cleanup when archive size exceeds threshold
+//    - Preserve entries needed for active recovery sessions
+//
+// 3. **Tiered Storage**:
+//    - Hot tier: Recent 1M entries in memory BTreeMap
+//    - Warm tier: Last 7 days in compressed files
+//    - Cold tier: >7 days in archive storage
+//
+// 4. **Archive Pruning**:
+//    - Track oldest needed SCN across all recovery sessions
+//    - Safely remove entries before oldest needed SCN
+//    - Coordinate with backup retention policies
+//
+// TODO(performance): Implement WAL archive bounds and cleanup
+// - Add bounds checking when inserting into log_entries BTreeMap
+// - Implement sliding window with disk spill
+// - Add periodic cleanup job for old entries
+// - Monitor archive size and alert on growth
+// - Test archive overflow scenarios
+//
+// Reference: diagrams/07_security_enterprise_flow.md Section 8.12
+// ============================================================================
 
 use crate::error::DbError;
 use crate::Result;

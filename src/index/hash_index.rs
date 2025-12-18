@@ -26,6 +26,29 @@ use std::sync::Arc;
 // 2^16 = 65,536 directory entries maximum (~1MB with Arc<RwLock> overhead)
 const MAX_GLOBAL_DEPTH: usize = 16;
 
+// SECURITY: Hash table resize threshold (load factor)
+// When load factor exceeds this value, the hash table should resize
+// TODO: Implement dynamic resizing for ExtendibleHashIndex to prevent:
+// 1. Performance degradation from long bucket chains
+// 2. Hash collision attacks (algorithmic complexity DoS)
+// Current implementation splits buckets but should also monitor overall load factor
+const HASH_RESIZE_THRESHOLD: f64 = 0.75;
+
+// SECURITY: Maximum entries per hash bucket
+// Prevents hash flooding DoS attacks where attacker crafts keys to collide
+// VULNERABILITY: Without this limit, an attacker can:
+// 1. Send keys that hash to same bucket (hash collision attack)
+// 2. Degrade performance from O(1) to O(n) due to linear search in bucket
+// 3. Cause denial of service by making queries extremely slow
+// MITIGATION: Reject insertions when bucket exceeds MAX_BUCKET_SIZE
+// TODO: Implement SipHash or randomized hashing to prevent hash collision attacks
+const MAX_BUCKET_SIZE: usize = 1000;
+
+// SECURITY: Maximum number of index statistics entries to store
+// Prevents unbounded memory growth from collecting hash index statistics
+// Applies to per-bucket, per-directory, and historical statistics
+const MAX_INDEX_STATISTICS_ENTRIES: usize = 10000;
+
 // Extendible Hash Index
 //
 // Grows dynamically by doubling directory size and splitting buckets
@@ -81,6 +104,16 @@ impl<K: Hash + Eq + Clone + 'static, V: Clone> ExtendibleHashIndex<K, V> {
             drop(directory);
 
             let mut bucket_lock = bucket.write();
+
+            // SECURITY: Check for hash flooding DoS attack
+            if bucket_lock.entries.len() >= MAX_BUCKET_SIZE {
+                return Err(DbError::ResourceExhausted(
+                    format!(
+                        "Bucket size limit ({}) exceeded. Possible hash flooding attack detected.",
+                        MAX_BUCKET_SIZE
+                    )
+                ));
+            }
 
             // Try to insert
             if bucket_lock.entries.len() < self.bucket_capacity {

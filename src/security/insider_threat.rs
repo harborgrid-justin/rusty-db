@@ -1075,14 +1075,29 @@ impl QuerySanitizer {
 }
 
 // Forensic Logger with Immutable Audit Trail
+//
+// SECURITY TODO (Issue S-05): Forensic log rotation and archival
+// - Maximum in-memory records: MAX_FORENSIC_RECORDS (100,000)
+// - Implement automatic log rotation when limit is reached:
+//   1. Archive oldest records to immutable storage (append-only files)
+//   2. Compress archived logs using gzip or zstd
+//   3. Sign archived logs with cryptographic signature for tamper detection
+//   4. Maintain hash chain across rotations for integrity
+// - Add configurable rotation policies:
+//   - Size-based: Rotate when exceeding N records
+//   - Time-based: Rotate daily/weekly/monthly
+//   - Retention: Keep archives for compliance period (e.g., 7 years)
+// - Implement background archival job to prevent memory exhaustion
+// - Store archives in secure, write-once storage (e.g., S3 with object lock)
+// Reference: MAX_FORENSIC_RECORDS constant defined at top of file
 pub struct ForensicLogger {
-    // Forensic records
+    // Forensic records (in-memory circular buffer)
     records: Arc<RwLock<VecDeque<ForensicRecord>>>,
-    // Record ID counter
+    // Record ID counter (monotonically increasing)
     id_counter: Arc<RwLock<u64>>,
-    // Previous hash for chaining
+    // Previous hash for chaining (blockchain-like integrity)
     previous_hash: Arc<RwLock<String>>,
-    // Maximum records in memory
+    // Maximum records in memory before rotation required
     max_records: usize,
 }
 

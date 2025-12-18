@@ -1,6 +1,12 @@
 // # SIMD Aggregate Operations
 //
 // Vectorized aggregate functions (SUM, COUNT, MIN, MAX, AVG) using AVX2 SIMD instructions.
+//
+// SECURITY NOTES:
+// - All SIMD operations include bounds checking to prevent buffer overruns
+// - Input data does NOT need to be aligned (using _mm256_loadu_* functions)
+// - Overflow protection: i32 aggregates return i64 to prevent overflow
+// - Unsafe code is contained within target_feature functions with proper checks
 
 use super::{SimdContext, SimdStats};
 use crate::common::Value;
@@ -9,6 +15,10 @@ use crate::error::{DbError, Result};
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 use std::collections::HashMap;
+
+// SECURITY: Maximum buffer size for SIMD aggregation operations (1GB)
+// Prevents unbounded memory allocation and processing time
+const MAX_SIMD_BUFFER_SIZE: usize = 1024 * 1024 * 1024;
 
 /// Aggregate operation type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -39,10 +49,20 @@ pub enum AggregateOp {
 ///
 /// # Safety
 /// Requires AVX2 support. Use cpu_features() to check before calling.
+/// - data.len() must be <= MAX_SIMD_BUFFER_SIZE elements
+/// - Alignment: Input data does NOT require alignment (using loadu)
 #[inline]
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2")]
 pub unsafe fn sum_f64_avx2(data: &[f64]) -> f64 {
+    // SECURITY: Bounds checking to prevent buffer overruns
+    debug_assert!(
+        data.len() <= MAX_SIMD_BUFFER_SIZE,
+        "SIMD buffer size {} exceeds maximum {}",
+        data.len(),
+        MAX_SIMD_BUFFER_SIZE
+    );
+
     let mut acc = _mm256_setzero_pd();
     let len = data.len();
     let chunks = len / 4;

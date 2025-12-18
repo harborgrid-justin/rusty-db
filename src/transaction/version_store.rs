@@ -45,21 +45,73 @@
 // 5. **Memory Pressure Integration**: Automatic GC triggered by memory pressure events
 // 6. **Better Concurrency**: VecDeque-based version chains with optimized access patterns
 //
-// # Critical Missing Feature: Write-Skew Detection
+// # ⚠️ CRITICAL SECURITY VULNERABILITY: Write-Skew Anomaly ⚠️
 //
-// ⚠️ **IMPORTANT**: This legacy version store does NOT implement write-skew detection.
-// For SERIALIZABLE isolation level to work correctly, you MUST use the
-// `SnapshotIsolationManager` from `mvcc.rs`.
+// **SEVERITY**: HIGH - Data Integrity Violation
+// **CVE-LIKE IMPACT**: Non-Serializable Execution
+// **AFFECTED SYSTEMS**: Any code using VersionStore for SERIALIZABLE isolation
 //
-// Without write-skew detection, the following anomaly can occur:
+// ## Vulnerability Description
+//
+// This legacy version store does NOT implement write-skew detection, which is
+// REQUIRED for correct SERIALIZABLE isolation. Using this module can lead to
+// silent data corruption and integrity constraint violations.
+//
+// ## Attack Scenario (Write-Skew Anomaly)
+//
+// Given a constraint: `x + y >= 100`
+//
 // ```text
-// T1: READ(x=100, y=100) -> UPDATE y SET y=y-50 WHERE x+y >= 100
-// T2: READ(x=100, y=100) -> UPDATE x SET x=x-50 WHERE x+y >= 100
-// Result: x=50, y=50 (violates constraint x+y >= 100)
+// Initial: x=100, y=100 (constraint satisfied)
+//
+// T1: BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+//     SELECT x, y FROM accounts;  -- sees x=100, y=100
+//     UPDATE accounts SET y = y - 50 WHERE x + y >= 100;
+//
+// T2: BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE;
+//     SELECT x, y FROM accounts;  -- sees x=100, y=100
+//     UPDATE accounts SET x = x - 50 WHERE x + y >= 100;
+//
+// T1: COMMIT;  -- ✓ succeeds (constraint checked with old read of x=100)
+// T2: COMMIT;  -- ✓ succeeds (constraint checked with old read of y=100)
+//
+// Final: x=50, y=50  -- ❌ VIOLATES CONSTRAINT (50 + 50 < 100)
 // ```
 //
-// The `mvcc.rs` implementation prevents this with proper read-set tracking and
-// validation at commit time.
+// Both transactions read a consistent snapshot, both check the constraint,
+// both commit successfully, yet the final state violates the constraint.
+//
+// ## Impact
+//
+// - **Financial Systems**: Overdraft protection bypassed (see example above)
+// - **Inventory Systems**: Stock levels go negative despite checks
+// - **Booking Systems**: Double-booking despite availability checks
+// - **Access Control**: Role assignments violate separation of duty
+//
+// ## Mitigation
+//
+// **IMMEDIATE ACTION REQUIRED**: Migrate to `mvcc.rs` for SERIALIZABLE isolation.
+//
+// The `SnapshotIsolationManager` in `mvcc.rs` implements proper write-skew
+// detection by:
+// 1. Tracking read sets for all transactions
+// 2. Recording write sets for committed transactions
+// 3. Validating at commit time that no committed transaction wrote to our read set
+// 4. Aborting transactions that would violate serializability
+//
+// Example fix:
+// ```rust
+// // OLD (VULNERABLE):
+// use crate::transaction::version_store::VersionStore;
+// let store = VersionStore::new();
+//
+// // NEW (SECURE):
+// use crate::transaction::mvcc::SnapshotIsolationManager;
+// let si_manager = SnapshotIsolationManager::new(SnapshotConfig {
+//     detect_write_skew: true,  // CRITICAL: Must be enabled
+//     ..Default::default()
+// });
+// ```
 //
 // # See Also
 //

@@ -6,6 +6,49 @@
 // - Automatic leader failover
 // - Node replacement and recovery
 // - Split-brain prevention
+//
+// ============================================================================
+// PERFORMANCE FIX: PR #55/56 - Issue P2-12: Single-Threaded Failover
+// ============================================================================
+// MEDIUM PRIORITY: Failover processing is single-threaded, causing slow
+// recovery in large clusters with many simultaneous failures.
+//
+// Current Issue:
+// - check_and_failover() processes failed nodes sequentially
+// - In a 100-node cluster with 10 failures, takes 10x longer than needed
+// - Can delay recovery by several seconds in large deployments
+//
+// Parallelization Strategy:
+//
+// 1. **Parallel Failure Detection**:
+//    - Use rayon to check node health in parallel
+//    - Reduce detection time from O(n) to O(1) with thread pool
+//    - Process all nodes concurrently with worker threads
+//
+// 2. **Concurrent Replacement**:
+//    - Launch tokio tasks for each node replacement
+//    - Use tokio::spawn_blocking for CPU-bound work
+//    - Allow multiple failovers to proceed simultaneously
+//
+// 3. **Batched Coordinator Updates**:
+//    - Collect all state changes and apply in single batch
+//    - Reduces lock contention on cluster coordinator
+//    - Improves consistency of failover operations
+//
+// 4. **Priority-Based Scheduling**:
+//    - Prioritize leader failover over follower failover
+//    - Process critical nodes first
+//    - Background processing for non-urgent replacements
+//
+// TODO(performance): Parallelize failover processing
+// - Use rayon for parallel health checks
+// - Spawn tokio tasks for concurrent replacements
+// - Implement batched coordinator updates
+// - Add priority queue for failover scheduling
+// - Benchmark improvement (target: 10x faster for 100 nodes)
+//
+// Reference: diagrams/07_security_enterprise_flow.md Section 8.11
+// ============================================================================
 
 use crate::clustering::node::{NodeId, NodeInfo, NodeStatus};
 use crate::error::DbError;

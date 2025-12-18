@@ -440,6 +440,16 @@ impl RbacManager {
     }
 
     // Activate a role in a session
+    //
+    // SECURITY TODO (Issue S-04): Automatic privilege revocation on role demotion
+    // - When a role is modified to remove permissions or demoted in hierarchy:
+    //   1. All active sessions using this role should have those privileges revoked
+    //   2. Invalidate permission caches for affected users
+    //   3. Consider forcing re-authentication for sensitive role changes
+    //   4. Audit all privilege removals for compliance
+    // - Implement background job to cleanup stale role activations
+    // - Add notification mechanism for users when their active roles are modified
+    // Reference: Session validation should check role modification timestamps
     pub fn activate_role(&self, session_id: &str, role_id: &RoleId) -> Result<()> {
         let mut sessions = self.sessions.write();
         let session = sessions

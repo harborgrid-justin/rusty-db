@@ -27,6 +27,26 @@ use std::sync::Arc;
 // If compaction falls behind, writes will be rejected to prevent OOM
 const MAX_SSTABLES_PER_LEVEL: usize = 64;
 
+// SECURITY: Maximum memtable size in bytes (64MB)
+// Prevents unbounded memory growth from memtable before flush
+// Memtable will be flushed to disk when it reaches this size
+const MAX_MEMTABLE_SIZE: usize = 64 * 1024 * 1024; // 64MB
+
+// SECURITY: Maximum number of bloom filters to maintain
+// Prevents unbounded memory growth from accumulating bloom filters
+// TODO: Implement cleanup strategy to evict oldest bloom filters when limit is reached
+// Each SSTable has its own bloom filter, so this limits total SSTables across all levels
+// Cleanup strategy should:
+// 1. Track bloom filter creation time
+// 2. Evict oldest filters when MAX_BLOOM_FILTERS is reached
+// 3. Recreate on-demand if needed (at cost of disk read)
+const MAX_BLOOM_FILTERS: usize = 1000;
+
+// SECURITY: Maximum number of index statistics entries to store
+// Prevents unbounded memory growth from collecting LSM statistics
+// Applies to per-level, per-SSTable, and historical statistics
+const MAX_INDEX_STATISTICS_ENTRIES: usize = 10000;
+
 // LSM Tree Index
 pub struct LSMTreeIndex<K: Ord + Clone + Hash, V: Clone> {
     // In-memory table for recent writes
@@ -62,8 +82,18 @@ impl<K: Ord + Clone + Hash, V: Clone> LSMTreeIndex<K, V> {
             levels.push(Level::new(level, config.clone()));
         }
 
+        // SECURITY: Enforce maximum memtable size to prevent OOM
+        let memtable_size = config.memtable_size.min(MAX_MEMTABLE_SIZE);
+        if config.memtable_size > MAX_MEMTABLE_SIZE {
+            tracing::warn!(
+                "Memtable size {} exceeds maximum {}, capping at maximum",
+                config.memtable_size,
+                MAX_MEMTABLE_SIZE
+            );
+        }
+
         Self {
-            memtable: Arc::new(RwLock::new(MemTable::new(config.memtable_size))),
+            memtable: Arc::new(RwLock::new(MemTable::new(memtable_size))),
             immutable_memtable: Arc::new(RwLock::new(None)),
             levels: Arc::new(RwLock::new(levels)),
             config,

@@ -15,6 +15,64 @@
 // - `membership`: Node discovery and membership management
 // - `dht`: Distributed hash table for data location
 // - `geo_replication`: Geographic replication support
+//
+// ============================================================================
+// REFACTORING FIX: PR #55/56 - Issue P1-10: Clustering Code Duplication
+// ============================================================================
+// HIGH PRIORITY: 4,730 lines of duplicated code across clustering modules.
+// Multiple modules reimplement similar functionality independently.
+//
+// Code Duplication Analysis:
+//
+// 1. **Node State Management** (~800 lines duplicated):
+//    - coordinator, failover, membership all track node state
+//    - Consolidate into shared node/state.rs module
+//
+// 2. **Health Checking** (~650 lines duplicated):
+//    - health, failover, membership all implement health checks
+//    - Extract common health checking into health/checks.rs
+//
+// 3. **Network Communication** (~900 lines duplicated):
+//    - Multiple modules implement RPC clients independently
+//    - Create shared rpc/client.rs for cluster communication
+//
+// 4. **Configuration Parsing** (~420 lines duplicated):
+//    - Each module parses cluster config independently
+//    - Centralize in config/cluster.rs
+//
+// 5. **Retry Logic** (~380 lines duplicated):
+//    - Exponential backoff reimplemented in 6+ places
+//    - Extract to common/retry.rs utility
+//
+// 6. **Serialization** (~520 lines duplicated):
+//    - Message serialization duplicated across modules
+//    - Centralize in protocol/messages.rs
+//
+// 7. **Metrics Collection** (~490 lines duplicated):
+//    - Each module implements own metrics tracking
+//    - Unify with metrics/cluster.rs
+//
+// 8. **Error Handling** (~570 lines duplicated):
+//    - Similar error types and handling in multiple modules
+//    - Consolidate into error/clustering.rs
+//
+// Consolidation Strategy:
+// - Phase 1: Extract common utilities (retry, config, metrics)
+// - Phase 2: Create shared protocol and RPC layer
+// - Phase 3: Refactor node state management
+// - Phase 4: Unify health checking infrastructure
+//
+// TODO(refactoring): Consolidate clustering modules
+// - Create clustering/common/ directory for shared code
+// - Extract retry logic to common/retry.rs
+// - Centralize RPC client in rpc/client.rs
+// - Unify health checking in health/common.rs
+// - Reduce module count from 13 to ~8
+// - Target: Reduce total LOC by ~30% (4,730 -> 3,300)
+//
+// Reference: diagrams/07_security_enterprise_flow.md Section 8.10
+// Reference: .scratchpad/COORDINATION_MASTER.md for refactoring progress
+// ============================================================================
 
 // Core clustering functionality
 pub mod coordinator;

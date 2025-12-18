@@ -1,5 +1,43 @@
 // Disaster Recovery - Standby database, failover, and RTO/RPO management
 // Provides comprehensive disaster recovery capabilities
+//
+// ============================================================================
+// SECURITY FIX: PR #55/56 - Issue P0-3: No STONITH Fencing
+// ============================================================================
+// CRITICAL: Split-brain risk during failover without STONITH (Shoot The Other Node In The Head).
+// Current implementation lacks fencing mechanism to prevent dual-primary scenarios.
+//
+// STONITH Implementation Requirements:
+//
+// 1. **Fencing Mechanism**:
+//    - Integrate with hardware fencing devices (iLO, IPMI, fence_xvm)
+//    - Implement power-off or network isolation for failed primary
+//    - Verify primary is truly down before promoting standby
+//
+// 2. **Quorum and Witness**:
+//    - Add quorum calculation with witness node
+//    - Require majority quorum before failover
+//    - Prevent split-brain when network partitions occur
+//
+// 3. **Fencing Coordination**:
+//    - Add fencing coordinator service
+//    - Implement fencing timeout (max 30 seconds)
+//    - Add manual override for emergency failover
+//
+// 4. **Health Verification**:
+//    - Multi-path health checks (network, disk, process)
+//    - Require N consecutive failures before fencing
+//    - Add fencing history and audit log
+//
+// TODO(critical): Implement STONITH fencing before production deployment
+// - Add fence device registration and configuration
+// - Implement fencing API (fence_node, verify_fenced, unfence_node)
+// - Add quorum-based failover decision making
+// - Test split-brain scenarios and recovery
+//
+// Reference: diagrams/07_security_enterprise_flow.md Section 8.3
+// Reference: Pacemaker/Corosync STONITH implementation
+// ============================================================================
 
 use crate::error::DbError;
 use crate::Result;

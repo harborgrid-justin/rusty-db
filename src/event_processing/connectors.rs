@@ -426,10 +426,10 @@ impl FileSinkConnector {
             .append(true)
             .open(&self.file_path)
             .map_err(|e| {
-                crate::error::DbError::Io(std::io::Error::new(
+                crate::error::DbError::Io(std::sync::Arc::new(std::io::Error::new(
                     std::io::ErrorKind::Other,
                     format!("Failed to open file: {}", e),
-                ))
+                )))
             })?;
 
         self.writer = Some(Arc::new(Mutex::new(BufWriter::new(file))));

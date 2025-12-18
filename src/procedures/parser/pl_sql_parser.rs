@@ -1,6 +1,68 @@
 // PL/SQL Parser Implementation
 //
 // This module provides the main parser for PL/SQL blocks, statements, and expressions.
+//
+// ⚠️ **CRITICAL SECURITY WARNING: SQL INJECTION VULNERABILITY** ⚠️
+//
+// **Issue**: Dynamic SQL construction in PL/SQL procedures can lead to SQL injection
+// **Affected**: parse_select_into_statement() (line ~420-459), parse_insert_statement(),
+//               parse_update_statement(), parse_delete_statement(), and all EXECUTE IMMEDIATE
+//
+// **VULNERABILITY EXAMPLE**:
+// ```sql
+// DECLARE
+//   v_table_name VARCHAR2(100) := user_input;  -- User-controlled input
+//   v_result NUMBER;
+// BEGIN
+//   EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM ' || v_table_name || ' WHERE id = 1'
+//     INTO v_result;
+// END;
+// ```
+// **Attack**: If user_input = "users; DROP TABLE users; --"
+// **Result**: SQL injection → data breach, table deletion
+//
+// **MITIGATION REQUIREMENTS**:
+//
+// 1. **ALWAYS USE PARAMETERIZED QUERIES** (Prepared Statements):
+//    ```sql
+//    EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM users WHERE id = :1'
+//      INTO v_result USING user_id;  -- Parameterized - SAFE
+//    ```
+//
+// 2. **NEVER CONCATENATE USER INPUT** into SQL:
+//    ❌ BAD:  'SELECT * FROM ' || user_table || ' WHERE ...'
+//    ✅ GOOD: Use whitelisting: IF user_table IN ('users', 'orders') THEN...
+//
+// 3. **VALIDATE AND SANITIZE** all dynamic identifiers:
+//    - Table names: Whitelist against sys.all_tables
+//    - Column names: Whitelist against sys.all_tab_columns
+//    - Use DBMS_ASSERT.SIMPLE_SQL_NAME() for identifier validation
+//
+// 4. **QUOTE IDENTIFIERS** properly:
+//    ```sql
+//    EXECUTE IMMEDIATE 'SELECT * FROM ' || DBMS_ASSERT.ENQUOTE_NAME(table_name);
+//    ```
+//
+// 5. **PRINCIPLE OF LEAST PRIVILEGE**:
+//    - Grant minimal permissions to procedure execution roles
+//    - Use AUTHID CURRENT_USER instead of DEFINER for sensitive operations
+//
+// **TODO - ENFORCEMENT NEEDED**:
+// - [ ] Add runtime validation in EXECUTE IMMEDIATE handler
+// - [ ] Implement DBMS_ASSERT equivalent functions
+// - [ ] Add static analysis warnings for string concatenation in SQL context
+// - [ ] Require parameterized queries for all dynamic SQL (enforce in executor)
+//
+// **References**:
+// - OWASP SQL Injection: https://owasp.org/www-community/attacks/SQL_Injection
+// - Oracle PL/SQL Security: Use DBMS_ASSERT package
+// - NIST: Parameterized queries are the primary defense
+//
+// **Impact**: SQL injection can lead to:
+// - Unauthorized data access (confidentiality breach)
+// - Data modification/deletion (integrity breach)
+// - Privilege escalation (authentication bypass)
+// - Denial of service (availability breach)
 
 use super::ast_nodes::*;
 use super::lexer::Token;

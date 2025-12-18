@@ -89,7 +89,7 @@ impl ClusterLoadBalancer {
                     })
                     .copied()
             }
-            RoutingStrategy::WeightedRandom | RoutingStrategy::Random => {
+            RoutingStrategy::WeightedRandom => {
                 // Simple random selection (could be enhanced with weights)
                 use std::collections::hash_map::RandomState;
                 use std::hash::{BuildHasher, Hash, Hasher};

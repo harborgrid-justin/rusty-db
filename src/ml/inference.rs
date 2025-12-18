@@ -21,6 +21,46 @@ use std::time::Instant;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // ============================================================================
+// Model Cache Configuration
+// ============================================================================
+
+/// **RESOURCE LIMIT**: Maximum model cache size in megabytes
+///
+/// **Issue**: Unbounded model cache can cause memory exhaustion
+/// **Location**: ModelCache struct (line ~234-310)
+///
+/// **Vulnerability**: Without limits, model cache grows unbounded as models are loaded
+/// - Small model: 1-10 MB (linear regression, decision tree)
+/// - Medium model: 10-100 MB (random forest, neural network)
+/// - Large model: 100-1000 MB (deep neural network, ensemble)
+/// - Huge model: 1-10 GB (large language models, transformers)
+///
+/// **Attack Scenario**:
+/// 1. Attacker requests inference on 100 unique large models (100 MB each)
+/// 2. All models cached → 10 GB memory consumed
+/// 3. Server OOM, crash, denial of service
+///
+/// **Mitigation**: Limit total cache size to 1 GB (1024 MB)
+/// - Typical deployment: 10-50 models in cache
+/// - Cache uses LRU eviction when limit reached (see evict_lru(), line ~313)
+/// - Production systems should tune based on available memory
+///
+/// **Implementation**: Already enforced in ModelCache::new() and put()
+/// - Line 257: `max_size_bytes: max_size_mb * 1024 * 1024`
+/// - Line 269: `while *current_size + size > self.max_size_bytes { evict }`
+///
+/// **Recommended Values**:
+/// - Development: 256 MB (small cache for testing)
+/// - Production: 1-4 GB (depends on server memory)
+/// - High-memory servers: 8-16 GB (for large model workloads)
+///
+/// **TODO**: Add per-tenant cache quotas for multi-tenant deployments
+/// **TODO**: Add cache warming for frequently used models
+///
+/// **Impact**: Prevents OOM from unlimited model caching
+pub const MAX_MODEL_CACHE_SIZE_MB: usize = 1024; // 1 GB default
+
+// ============================================================================
 // Prediction Result
 // ============================================================================
 

@@ -112,6 +112,54 @@ pub const MAX_DOCUMENTS_PER_COLLECTION: usize = 1_000_000;
 // Maximum total documents across all collections
 pub const MAX_TOTAL_DOCUMENTS: usize = MAX_COLLECTIONS * MAX_DOCUMENTS_PER_COLLECTION;
 
+/// **RESOURCE LIMIT**: Maximum document size in bytes (16MB)
+///
+/// **Issue**: Large documents can cause memory exhaustion
+/// **Attack**: Attacker inserts massive JSON documents (e.g., 1GB each)
+///
+/// **Mitigation**: Limit individual document size to 16MB (MongoDB default)
+/// - Small documents: 1-100 KB (typical user records, events)
+/// - Medium documents: 100KB-1MB (product catalogs, blog posts)
+/// - Large documents: 1-16MB (multimedia metadata, large aggregations)
+/// - Excessive: >16MB → rejected
+///
+/// **MongoDB Limit**: 16MB per document
+/// **Implementation**: Validate document size in insert() and update()
+/// **TODO**: Enforce this limit in Document::from_json() and insert operations
+pub const MAX_DOCUMENT_SIZE: usize = 16 * 1024 * 1024; // 16 MB
+
+/// **RESOURCE LIMIT**: Maximum collection size in bytes (100GB)
+///
+/// **Issue**: Unbounded collections can fill disk
+/// **Attack**: Attacker creates collection with billions of small documents
+///
+/// **Mitigation**: Limit total size per collection to 100GB
+/// - Small collections: 1-100 MB
+/// - Medium collections: 100MB-10GB
+/// - Large collections: 10-100GB
+/// - Excessive: >100GB → consider sharding/partitioning
+///
+/// **Implementation**: Track collection size, enforce on insert
+/// **TODO**: Add collection_size field to CollectionMetadata
+/// **TODO**: Update on every insert/update/delete
+pub const MAX_COLLECTION_SIZE: usize = 100 * 1024 * 1024 * 1024; // 100 GB
+
+/// **RESOURCE LIMIT**: Maximum number of index entries per index
+///
+/// **Issue**: Large indexes consume excessive memory and slow queries
+/// **Attack**: Attacker creates index on high-cardinality field with millions of unique values
+///
+/// **Mitigation**: Limit index entries to 10 million
+/// - Small indexes: 1K-100K entries (enum fields, categories)
+/// - Medium indexes: 100K-1M entries (user IDs, product SKUs)
+/// - Large indexes: 1M-10M entries (timestamps, log entries)
+/// - Excessive: >10M → consider composite indexes or partitioning
+///
+/// **Implementation**: Track index entry count, reject inserts exceeding limit
+/// **TODO**: Add entry_count field to IndexDefinition
+/// **TODO**: Enforce in IndexManager::insert()
+pub const MAX_INDEX_ENTRIES: usize = 10_000_000; // 10 million
+
 // Main document store interface
 //
 // Provides a unified API for document storage, querying, and management.

@@ -21,14 +21,18 @@ use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::fmt;
 use std::sync::Arc;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
-use parking_lot::RwLock;
+use parking_lot::{Condvar, Mutex, RwLock};
 
 use crate::common::TransactionId;
 
 use super::error::{TransactionError, TransactionResult};
 use super::types::LockMode;
+
+/// CRITICAL FIX EA2-V2: Maximum lock wait timeout
+/// Prevents indefinite blocking and deadlock scenarios
+const MAX_LOCK_WAIT_MS: u64 = 30_000; // 30 seconds
 
 /// Lock request in the wait queue.
 #[derive(Debug, Clone)]
@@ -114,11 +118,23 @@ impl Default for LockTableEntry {
 /// Transactions must follow 2PL protocol:
 /// 1. Growing phase: Acquire locks, no releases.
 /// 2. Shrinking phase: Release locks, no acquisitions.
+///
+/// # CRITICAL FIX EA2-V2 & EA2-ERR-1: Lock Timeout & Wait Queue
+///
+/// This lock manager now supports:
+/// - Timeout-based lock acquisition (default: 30 seconds)
+/// - Wait queue with condition variables for blocking waits
+/// - Prevents indefinite blocking and resource exhaustion
 pub struct LockManager {
     /// Lock table: resource -> lock holders.
     lock_table: Arc<RwLock<HashMap<String, Vec<(TransactionId, LockMode)>>>>,
     /// Transaction locks: txn_id -> set of held resources.
     txn_locks: Arc<RwLock<HashMap<TransactionId, HashSet<String>>>>,
+    /// Wait queue and condition variable for blocking lock requests
+    /// CRITICAL FIX EA2-ERR-1: Enables proper lock waiting instead of immediate errors
+    wait_queue: Arc<Mutex<HashMap<String, VecDeque<(TransactionId, LockMode)>>>>,
+    /// Condition variable for waking up waiting transactions
+    wait_condvar: Arc<Condvar>,
 }
 
 impl LockManager {
@@ -127,10 +143,12 @@ impl LockManager {
         Self {
             lock_table: Arc::new(RwLock::new(HashMap::new())),
             txn_locks: Arc::new(RwLock::new(HashMap::new())),
+            wait_queue: Arc::new(Mutex::new(HashMap::new())),
+            wait_condvar: Arc::new(Condvar::new()),
         }
     }
 
-    /// Acquires a lock on a resource.
+    /// Acquires a lock on a resource with timeout support.
     ///
     /// # Arguments
     ///
@@ -140,69 +158,139 @@ impl LockManager {
     ///
     /// # Returns
     ///
-    /// `Ok(())` if the lock was granted, or an error if there's a conflict.
+    /// `Ok(())` if the lock was granted, or an error if there's a conflict or timeout.
     ///
     /// # Errors
     ///
-    /// Returns `TransactionError::LockConflict` if the lock cannot be granted.
+    /// - Returns `TransactionError::LockConflict` if the lock cannot be granted
+    /// - Returns `TransactionError::LockTimeout` if timeout expires
+    ///
+    /// # CRITICAL FIX EA2-V2: Lock Timeout Support
+    ///
+    /// This method now uses a default timeout of MAX_LOCK_WAIT_MS (30 seconds).
+    /// Use `acquire_lock_with_timeout` for custom timeouts.
     pub fn acquire_lock(
         &self,
         txn_id: TransactionId,
         resource: String,
         mode: LockMode,
     ) -> TransactionResult<()> {
-        let mut lock_table = self.lock_table.write();
-        let mut txn_locks = self.txn_locks.write();
+        self.acquire_lock_with_timeout(
+            txn_id,
+            resource,
+            mode,
+            Duration::from_millis(MAX_LOCK_WAIT_MS),
+        )
+    }
 
-        let holders = lock_table.entry(resource.clone()).or_default();
+    /// Acquires a lock with a custom timeout.
+    ///
+    /// # CRITICAL FIX EA2-V2 & EA2-ERR-1: Timeout & Wait Queue
+    ///
+    /// This method implements proper lock waiting with timeout:
+    /// 1. Try to acquire lock immediately
+    /// 2. If blocked, add to wait queue
+    /// 3. Wait on condition variable with timeout
+    /// 4. Retry acquisition when woken up
+    /// 5. Return error on timeout
+    pub fn acquire_lock_with_timeout(
+        &self,
+        txn_id: TransactionId,
+        resource: String,
+        mode: LockMode,
+        timeout: Duration,
+    ) -> TransactionResult<()> {
+        let start_time = SystemTime::now();
 
-        // Check if already holding a lock
-        if let Some(pos) = holders.iter().position(|(id, _)| *id == txn_id) {
-            let current_mode = holders[pos].1;
-            if mode.strength() <= current_mode.strength() {
-                // Already have equal or stronger lock
-                return Ok(());
-            }
-            // Need to upgrade
-            if holders.len() == 1 {
-                // Only holder, can upgrade
-                holders[pos].1 = mode;
-                return Ok(());
-            }
-            // Cannot upgrade while others hold locks
-            let other_holder = holders.iter().find(|(id, _)| *id != txn_id);
-            if let Some((other_id, other_mode)) = other_holder {
-                return Err(TransactionError::lock_conflict(
-                    txn_id,
-                    *other_id,
-                    resource,
-                    mode,
-                    *other_mode,
-                ));
-            }
-        }
-
-        // Check for conflicts with existing holders
-        for &(holder_id, holder_mode) in holders.iter() {
-            if holder_id != txn_id {
-                // Check compatibility
-                if mode == LockMode::Exclusive || holder_mode == LockMode::Exclusive {
-                    return Err(TransactionError::lock_conflict(
-                        txn_id,
-                        holder_id,
-                        resource,
-                        mode,
-                        holder_mode,
-                    ));
+        loop {
+            // Check if timeout expired
+            if let Ok(elapsed) = SystemTime::now().duration_since(start_time) {
+                if elapsed >= timeout {
+                    // Clean up wait queue entry
+                    let mut wait_queue = self.wait_queue.lock();
+                    if let Some(queue) = wait_queue.get_mut(&resource) {
+                        queue.retain(|(tid, _)| *tid != txn_id);
+                    }
+                    return Err(TransactionError::lock_timeout(txn_id, resource, mode));
                 }
             }
+
+            // Try to acquire lock
+            let acquired = {
+                let mut lock_table = self.lock_table.write();
+                let mut txn_locks = self.txn_locks.write();
+
+                let holders = lock_table.entry(resource.clone()).or_default();
+
+                // Check if already holding a lock
+                if let Some(pos) = holders.iter().position(|(id, _)| *id == txn_id) {
+                    let current_mode = holders[pos].1;
+                    if mode.strength() <= current_mode.strength() {
+                        // Already have equal or stronger lock
+                        return Ok(());
+                    }
+                    // Need to upgrade (CRITICAL FIX EA2-V3: Proper upgrade handling)
+                    if holders.len() == 1 {
+                        // Only holder, can upgrade immediately
+                        holders[pos].1 = mode;
+                        return Ok(());
+                    }
+                    // Cannot upgrade while others hold locks - must wait
+                    false
+                } else {
+                    // Check for conflicts with existing holders
+                    let mut has_conflict = false;
+                    for &(holder_id, holder_mode) in holders.iter() {
+                        if holder_id != txn_id {
+                            // Check compatibility
+                            if mode == LockMode::Exclusive || holder_mode == LockMode::Exclusive {
+                                has_conflict = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if !has_conflict {
+                        // Grant lock
+                        holders.push((txn_id, mode));
+                        txn_locks.entry(txn_id).or_default().insert(resource.clone());
+                        true
+                    } else {
+                        false
+                    }
+                }
+            };
+
+            if acquired {
+                // Successfully acquired lock, remove from wait queue
+                let mut wait_queue = self.wait_queue.lock();
+                if let Some(queue) = wait_queue.get_mut(&resource) {
+                    queue.retain(|(tid, _)| *tid != txn_id);
+                }
+                return Ok(());
+            }
+
+            // CRITICAL FIX EA2-ERR-1: Add to wait queue and wait
+            {
+                let mut wait_queue = self.wait_queue.lock();
+                let queue = wait_queue.entry(resource.clone()).or_default();
+
+                // Add to queue if not already there
+                if !queue.iter().any(|(tid, _)| *tid == txn_id) {
+                    queue.push_back((txn_id, mode));
+                }
+
+                // Wait on condition variable with timeout
+                let remaining_timeout = timeout.saturating_sub(
+                    SystemTime::now()
+                        .duration_since(start_time)
+                        .unwrap_or(Duration::ZERO),
+                );
+
+                self.wait_condvar.wait_for(&mut wait_queue, remaining_timeout);
+            }
+            // Loop will retry acquisition
         }
-
-        // Grant lock
-        holders.push((txn_id, mode));
-        txn_locks.entry(txn_id).or_default().insert(resource);
-
-        Ok(())
     }
 
     /// Attempts to acquire a lock without blocking.
@@ -229,6 +317,11 @@ impl LockManager {
     ///
     /// * `txn_id` - The transaction releasing the lock.
     /// * `resource` - The resource to unlock.
+    ///
+    /// # CRITICAL FIX EA2-ERR-1: Wake up waiting transactions
+    ///
+    /// After releasing a lock, this method notifies waiting transactions
+    /// via the condition variable so they can retry acquisition.
     pub fn release_lock(&self, txn_id: TransactionId, resource: &str) -> TransactionResult<()> {
         let mut lock_table = self.lock_table.write();
         let mut txn_locks = self.txn_locks.write();
@@ -244,6 +337,9 @@ impl LockManager {
             locks.remove(resource);
         }
 
+        // CRITICAL FIX EA2-ERR-1: Notify waiting transactions
+        self.wait_condvar.notify_all();
+
         Ok(())
     }
 
@@ -254,6 +350,11 @@ impl LockManager {
     /// # Arguments
     ///
     /// * `txn_id` - The transaction to release locks for.
+    ///
+    /// # CRITICAL FIX EA2-ERR-1: Wake up waiting transactions
+    ///
+    /// After releasing all locks, this method notifies ALL waiting transactions
+    /// to give them a chance to acquire locks.
     pub fn release_all_locks(&self, txn_id: TransactionId) -> TransactionResult<()> {
         // Get all locks for this transaction
         let resources: Vec<String> = {
@@ -264,13 +365,26 @@ impl LockManager {
             }
         };
 
-        // Release each lock
-        for resource in resources {
-            self.release_lock(txn_id, &resource)?;
+        // Release each lock (without notifying)
+        {
+            let mut lock_table = self.lock_table.write();
+            let mut txn_locks = self.txn_locks.write();
+
+            for resource in &resources {
+                if let Some(holders) = lock_table.get_mut(resource) {
+                    holders.retain(|(id, _)| *id != txn_id);
+                    if holders.is_empty() {
+                        lock_table.remove(resource);
+                    }
+                }
+            }
+
+            // Remove transaction entry
+            txn_locks.remove(&txn_id);
         }
 
-        // Remove transaction entry
-        self.txn_locks.write().remove(&txn_id);
+        // CRITICAL FIX EA2-ERR-1: Notify ALL waiting transactions once
+        self.wait_condvar.notify_all();
 
         Ok(())
     }

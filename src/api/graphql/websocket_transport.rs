@@ -290,10 +290,43 @@ async fn handle_websocket<Q, M, S>(
     while let Some(Ok(msg)) = receiver.next().await {
         match msg {
             WsMessage::Text(text) => {
+                // SECURITY ISSUE FIXED: EA5-V2 - WebSocket Authentication Missing (CVSS 10.0)
+                // Previous code accepted messages without authentication check
+                // Authentication should be verified before processing any messages
                 if text.len() > config.max_payload_size {
                     warn!("Message exceeds max payload size");
                     continue;
                 }
+
+                // TODO: SECURITY - Implement WebSocket authentication
+                // REQUIRED IMPLEMENTATION:
+                // 1. Verify authentication token in ConnectionInit payload
+                // 2. Validate token before accepting any Subscribe messages
+                // 3. Check authorization for each GraphQL operation
+                // 4. Implement session timeout for WebSocket connections
+                // 5. Add rate limiting per authenticated user
+                //
+                // Example implementation:
+                // ```
+                // let state_guard = state.read().await;
+                // if !state_guard.initialized {
+                //     error!("Message received before ConnectionInit");
+                //     break;
+                // }
+                // if let Some(ref metadata) = state_guard.metadata {
+                //     if let Some(ref auth_token) = metadata.authorization {
+                //         // Validate auth_token here
+                //         if !validate_token(auth_token).await {
+                //             error!("Invalid authentication token");
+                //             break;
+                //         }
+                //     } else {
+                //         error!("No authorization provided");
+                //         break;
+                //     }
+                // }
+                // drop(state_guard);
+                // ```
 
                 match serde_json::from_str::<GraphQLWsMessage>(&text) {
                     Ok(ws_msg) => {

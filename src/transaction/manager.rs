@@ -150,37 +150,52 @@ impl TransactionManager {
     ///
     /// Returns `TransactionError::TransactionNotFound` if the transaction
     /// doesn't exist.
+    ///
+    /// # CRITICAL FIX EA2-RACE-1: Atomic Commit State Transition
+    ///
+    /// This method now holds the active_txns write lock for the entire commit
+    /// operation to prevent race conditions where another thread observes an
+    /// intermediate state (Committing) without locks being released.
+    ///
+    /// The fix prevents the race:
+    /// - Thread A: Sets state to Committing, releases lock
+    /// - Thread B: Observes Committing state, reads data
+    /// - Thread A: Releases locks, sets Committed, removes txn
+    /// - Thread B: Sees inconsistent state
+    ///
+    /// Now the state transition is atomic from the perspective of other threads.
     pub fn commit(&self, txn_id: TransactionId) -> TransactionResult<()> {
-        // Update transaction state
-        {
-            let mut active_txns = self.active_txns.write();
+        // CRITICAL FIX EA2-RACE-1: Hold lock during entire commit operation
+        // This ensures atomic state transition visible to other threads
+        let mut active_txns = self.active_txns.write();
 
-            let txn = active_txns
-                .get_mut(&txn_id)
-                .ok_or_else(|| TransactionError::not_found(txn_id))?;
+        // Validate transaction exists and is in valid state
+        let txn = active_txns
+            .get_mut(&txn_id)
+            .ok_or_else(|| TransactionError::not_found(txn_id))?;
 
-            if txn.state == TransactionState::Committed {
-                return Err(TransactionError::AlreadyCommitted(txn_id));
-            }
-            if txn.state == TransactionState::Aborted {
-                return Err(TransactionError::AlreadyAborted(txn_id));
-            }
-
-            txn.state = TransactionState::Committing;
+        if txn.state == TransactionState::Committed {
+            return Err(TransactionError::AlreadyCommitted(txn_id));
+        }
+        if txn.state == TransactionState::Aborted {
+            return Err(TransactionError::AlreadyAborted(txn_id));
         }
 
-        // Release all locks
+        // Set to Committing state
+        txn.state = TransactionState::Committing;
+
+        // Release all locks (still holding active_txns write lock)
+        // This is safe because we're not calling any methods that need active_txns
         self.lock_manager.release_all_locks(txn_id)?;
 
-        // Finalize commit
-        {
-            let mut active_txns = self.active_txns.write();
-            if let Some(txn) = active_txns.get_mut(&txn_id) {
-                txn.state = TransactionState::Committed;
-            }
-            active_txns.remove(&txn_id);
+        // Set final state and remove from active set
+        // Still holding lock - this is atomic
+        if let Some(txn) = active_txns.get_mut(&txn_id) {
+            txn.state = TransactionState::Committed;
         }
+        active_txns.remove(&txn_id);
 
+        // Lock is released here (RAII)
         Ok(())
     }
 
@@ -197,37 +212,40 @@ impl TransactionManager {
     ///
     /// Returns `TransactionError::TransactionNotFound` if the transaction
     /// doesn't exist.
+    ///
+    /// # CRITICAL FIX EA2-RACE-1: Atomic Abort State Transition
+    ///
+    /// Similar to commit(), this method now holds the active_txns write lock
+    /// for the entire abort operation to ensure atomic state transition.
     pub fn abort(&self, txn_id: TransactionId) -> TransactionResult<()> {
-        // Update transaction state
-        {
-            let mut active_txns = self.active_txns.write();
+        // CRITICAL FIX EA2-RACE-1: Hold lock during entire abort operation
+        let mut active_txns = self.active_txns.write();
 
-            let txn = active_txns
-                .get_mut(&txn_id)
-                .ok_or_else(|| TransactionError::not_found(txn_id))?;
+        // Validate transaction exists and is in valid state
+        let txn = active_txns
+            .get_mut(&txn_id)
+            .ok_or_else(|| TransactionError::not_found(txn_id))?;
 
-            if txn.state == TransactionState::Committed {
-                return Err(TransactionError::AlreadyCommitted(txn_id));
-            }
-            if txn.state == TransactionState::Aborted {
-                return Err(TransactionError::AlreadyAborted(txn_id));
-            }
-
-            txn.state = TransactionState::Aborting;
+        if txn.state == TransactionState::Committed {
+            return Err(TransactionError::AlreadyCommitted(txn_id));
+        }
+        if txn.state == TransactionState::Aborted {
+            return Err(TransactionError::AlreadyAborted(txn_id));
         }
 
-        // Release all locks
+        // Set to Aborting state
+        txn.state = TransactionState::Aborting;
+
+        // Release all locks (still holding active_txns write lock)
         self.lock_manager.release_all_locks(txn_id)?;
 
-        // Finalize abort
-        {
-            let mut active_txns = self.active_txns.write();
-            if let Some(txn) = active_txns.get_mut(&txn_id) {
-                txn.state = TransactionState::Aborted;
-            }
-            active_txns.remove(&txn_id);
+        // Set final state and remove from active set
+        if let Some(txn) = active_txns.get_mut(&txn_id) {
+            txn.state = TransactionState::Aborted;
         }
+        active_txns.remove(&txn_id);
 
+        // Lock is released here (RAII)
         Ok(())
     }
 

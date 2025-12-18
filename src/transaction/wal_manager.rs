@@ -427,16 +427,37 @@ impl WALManager {
     ///
     /// * `before_lsn` - Entries with LSN < this value will be removed.
     ///
-    /// # Note
+    /// # CRITICAL FIX EA2-RACE-3: Prevent Concurrent Write Race
     ///
-    /// This is a placeholder implementation. In production, this would
-    /// create a new log file and copy only entries >= before_lsn.
+    /// This method now holds exclusive locks during the entire truncate operation
+    /// to prevent concurrent writes from being lost during the read-filter-rewrite cycle.
+    ///
+    /// The fix ensures atomicity by:
+    /// 1. Acquiring buffer lock (prevents new entries from being added)
+    /// 2. Flushing pending entries
+    /// 3. Incrementing LSN counter past the rewrite range
+    /// 4. Reading, filtering, and rewriting the WAL file
+    /// 5. Releasing locks only after file replacement is complete
+    ///
+    /// This prevents the race where:
+    /// - Thread A: truncate() reads entries
+    /// - Thread B: append() adds new entry and flushes
+    /// - Thread A: rewrites file, losing Thread B's entry
     pub fn truncate(&self, before_lsn: LogSequenceNumber) -> TransactionResult<()> {
-        // Flush any pending entries first
-        self.flush()?;
+        // CRITICAL FIX EA2-RACE-3: Hold buffer lock for entire operation
+        // This prevents concurrent append() from adding entries during truncate
+        let mut log_buffer = self.log_buffer.lock();
+
+        // Flush any pending entries (still holding the lock)
+        self.flush_internal(&mut log_buffer)?;
+
+        // Hold LSN lock to prevent concurrent LSN allocation
+        // This ensures no new entries are created during truncate
+        let mut current_lsn_guard = self.current_lsn.lock();
 
         // Read all existing entries
-        let all_entries = self.read_all()?;
+        // SAFETY: We hold both locks, so no concurrent modifications
+        let all_entries = self.read_all_internal()?;
 
         // Filter entries to keep (those with LSN >= before_lsn)
         let entries_to_keep: Vec<WALEntry> = all_entries
@@ -487,10 +508,63 @@ impl WALManager {
                 .map_err(TransactionError::WalWriteError)?;
         }
 
-        // Replace original log with compacted log
+        // Replace original log with compacted log (atomic operation on POSIX)
         std::fs::rename(&temp_path, &self.log_path).map_err(TransactionError::WalWriteError)?;
 
+        // Reset LSN to account for truncation
+        // Find maximum LSN in kept entries and ensure we don't reuse LSNs
+        let max_kept_lsn = entries_to_keep
+            .iter()
+            .filter_map(|e| e.lsn())
+            .max()
+            .unwrap_or(before_lsn);
+
+        // Ensure LSN counter is past all kept entries
+        if *current_lsn_guard <= max_kept_lsn {
+            *current_lsn_guard = max_kept_lsn + 1;
+        }
+
+        // Locks are released here (RAII), allowing new appends
+        drop(current_lsn_guard);
+        drop(log_buffer);
+
         Ok(())
+    }
+
+    /// Internal read_all without acquiring locks (caller must hold locks).
+    ///
+    /// # CRITICAL FIX EA2-RACE-3: Lock-free internal read
+    ///
+    /// This method is used by truncate() which already holds all necessary locks.
+    fn read_all_internal(&self) -> TransactionResult<Vec<WALEntry>> {
+        let mut entries = Vec::new();
+
+        if !self.log_path.exists() {
+            return Ok(entries);
+        }
+
+        let mut file = File::open(&self.log_path).map_err(TransactionError::WalReadError)?;
+        let mut length_buf = [0u8; 4];
+
+        loop {
+            // Read length prefix.
+            match file.read_exact(&mut length_buf) {
+                Ok(_) => {}
+                Err(ref e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+                Err(e) => return Err(TransactionError::WalReadError(e)),
+            }
+
+            let length = u32::from_le_bytes(length_buf) as usize;
+            let mut entry_buf = vec![0u8; length];
+
+            file.read_exact(&mut entry_buf)
+                .map_err(TransactionError::WalReadError)?;
+
+            let entry: WALEntry = serde_json::from_slice(&entry_buf)?;
+            entries.push(entry);
+        }
+
+        Ok(entries)
     }
 
     /// Returns the current LSN.

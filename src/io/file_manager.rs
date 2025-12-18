@@ -268,7 +268,7 @@ impl DirectIoFile {
                 opts.custom_flags(libc::O_DIRECT);
             }
 
-            opts.open(path).map_err(|e| DbError::Io(e))?
+            opts.open(path).map_err(|e| DbError::Io(Arc::new(e)))?
         };
 
         #[cfg(windows)]
@@ -286,7 +286,7 @@ impl DirectIoFile {
                 opts.custom_flags(0x80000000);
             }
 
-            opts.open(path).map_err(|e| DbError::Io(e))?
+            opts.open(path).map_err(|e| DbError::Io(Arc::new(e)))?
         };
 
         #[cfg(not(any(unix, windows)))]
@@ -296,10 +296,10 @@ impl DirectIoFile {
                 .write(true)
                 .create(true)
                 .open(path)
-                .map_err(|e| DbError::Io(e))?
+                .map_err(|e| DbError::Io(Arc::new(e)))?
         };
 
-        let metadata = file.metadata().map_err(|e| DbError::Io(e))?;
+        let metadata = file.metadata().map_err(|e| DbError::Io(Arc::new(e)))?;
 
         let size = metadata.len();
 
@@ -341,7 +341,7 @@ impl DirectIoFile {
 
     /// Set file size
     pub fn set_size(&self, new_size: u64) -> Result<()> {
-        self.file.set_len(new_size).map_err(|e| DbError::Io(e))?;
+        self.file.set_len(new_size).map_err(|e| DbError::Io(Arc::new(e)))?;
         self.size.store(new_size, Ordering::Release);
         Ok(())
     }
@@ -372,10 +372,10 @@ impl DirectIoFile {
                 }
 
                 #[cfg(not(unix))]
-                self.file.sync_data().map_err(|e| DbError::Io(e))?;
+                self.file.sync_data().map_err(|e| DbError::Io(Arc::new(e)))?;
             }
             FlushMode::Full => {
-                self.file.sync_all().map_err(|e| DbError::Io(e))?;
+                self.file.sync_all().map_err(|e| DbError::Io(Arc::new(e)))?;
             }
             FlushMode::Async => {
                 // For async, we don't wait

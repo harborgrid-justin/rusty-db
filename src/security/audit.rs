@@ -102,43 +102,81 @@ pub enum AuditSeverity {
 }
 
 // Audit record
+//
+// STANDARDIZATION NOTE (Issue S-08): Audit Log Format Requirements
+//
+// **Audit Log Format Standards**:
+// This AuditRecord structure defines the canonical audit log format for RustyDB.
+// All audit events across the system MUST use this format for consistency.
+//
+// ## Required Fields (MUST be populated):
+// - id: Monotonically increasing unique identifier
+// - timestamp: Microseconds since Unix epoch (for high-resolution timing)
+// - username: User who performed the action (use "SYSTEM" for system actions)
+// - action: Standardized action from AuditAction enum
+// - success: Boolean indicating operation success
+// - severity: Event severity (Info/Warning/Error/Critical)
+//
+// ## Recommended Fields (SHOULD be populated when available):
+// - session_id: For correlating actions within a session
+// - object_name, object_type: For object-level auditing
+// - sql_text: For statement-level auditing
+// - client_ip, client_application: For security context
+// - rows_affected, execution_time_ms: For performance analysis
+//
+// ## Security Requirements:
+// - integrity_hash: MUST be populated for tamper-evident logging
+//   Use SHA-256(id || timestamp || username || action || previous_hash)
+// - Format MUST be consistent across: audit.rs, security_vault/audit.rs, insider_threat.rs
+//
+// ## Output Formats:
+// - JSON: For SIEM integration (Splunk, ELK Stack)
+// - CEF (Common Event Format): For enterprise security tools
+// - Syslog: RFC 5424 compliant for centralized logging
+//
+// ## Compliance Mappings:
+// - SOC2: Maps to Logging and Monitoring controls
+// - GDPR: Supports Article 30 (Records of Processing Activities)
+// - HIPAA: Satisfies 164.312(b) Audit Controls requirement
+//
+// Reference: See security_vault/audit.rs for duplicate audit system to be merged
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditRecord {
-    // Unique audit record ID
+    // Unique audit record ID (monotonically increasing)
     pub id: AuditId,
-    // Timestamp (microseconds since epoch)
+    // Timestamp (microseconds since epoch for high-resolution timing)
     pub timestamp: i64,
-    // User who performed the action
+    // User who performed the action (REQUIRED)
     pub username: String,
-    // Session ID
+    // Session ID (for session correlation)
     pub session_id: Option<String>,
-    // Action performed
+    // Action performed (standardized enum)
     pub action: AuditAction,
     // Object affected (table, view, etc.)
     pub object_name: Option<String>,
-    // Object type
+    // Object type (standardized enum)
     pub object_type: Option<ObjectType>,
-    // Schema/database
+    // Schema/database context
     pub schema_name: Option<String>,
-    // SQL statement executed
+    // SQL statement executed (sanitized for sensitive data)
     pub sql_text: Option<String>,
-    // Action success status
+    // Action success status (REQUIRED)
     pub success: bool,
     // Error message if failed
     pub error_message: Option<String>,
-    // Client IP address
+    // Client IP address (for security context)
     pub client_ip: Option<String>,
-    // Client application
+    // Client application (for forensics)
     pub client_application: Option<String>,
-    // Severity level
+    // Severity level (REQUIRED for alerting)
     pub severity: AuditSeverity,
-    // Additional context
+    // Additional context (extensible key-value pairs)
     pub context: HashMap<String, String>,
-    // Number of rows affected
+    // Number of rows affected (for impact assessment)
     pub rows_affected: Option<u64>,
-    // Execution time in milliseconds
+    // Execution time in milliseconds (for performance monitoring)
     pub execution_time_ms: Option<u64>,
-    // Tamper protection hash
+    // Tamper protection hash (REQUIRED for integrity)
     pub integrity_hash: Option<String>,
 }
 

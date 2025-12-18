@@ -43,6 +43,19 @@ const MIN_KEYS: usize = DEFAULT_ORDER / 2 - 1;
 #[allow(dead_code)]
 const SIMD_WIDTH: usize = 8; // AVX2 can compare 8 i32s or 4 i64s at once
 
+// SECURITY: Maximum number of B-Tree nodes to cache in memory
+// Prevents unbounded memory growth from node caching
+// TODO: Implement LRU cache with this limit to evict least-recently-used nodes
+// when cache exceeds MAX_BTREE_CACHE_NODES. Without this, a malicious workload
+// creating many nodes can cause OOM.
+const MAX_BTREE_CACHE_NODES: usize = 1000;
+
+// SECURITY: Maximum number of index statistics entries to store
+// Prevents unbounded memory growth from collecting statistics
+// Applies to per-node, per-level, and historical statistics collection
+// When limit is reached, oldest entries should be evicted (FIFO/LRU)
+const MAX_INDEX_STATISTICS_ENTRIES: usize = 10000;
+
 // B+ Tree Index with Adaptive Optimization
 pub struct BPlusTree<K: Ord + Clone + Debug, V: Clone + Debug> {
     root: Arc<RwLock<Option<NodeRef<K, V>>>>,

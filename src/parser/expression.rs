@@ -12,6 +12,10 @@ use crate::error::DbError;
 use crate::Result;
 use std::collections::HashMap;
 
+// Maximum number of backtracks in LIKE pattern matching to prevent ReDoS attacks
+// Patterns causing excessive backtracking will be rejected
+const MAX_BACKTRACK_COUNT: usize = 10_000;
+
 /// Represents a SQL expression that can be evaluated
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
@@ -564,21 +568,43 @@ impl ExpressionEvaluator {
     }
 
     /// Match a string against a LIKE pattern
+    ///
+    /// SECURITY: Protected against ReDoS attacks via backtrack limiting
     fn match_like_pattern(&self, text: &str, pattern: &str) -> bool {
         let text_chars: Vec<char> = text.chars().collect();
         let pattern_chars: Vec<char> = pattern.chars().collect();
 
-        self.like_match_recursive(&text_chars, &pattern_chars, 0, 0)
+        // Use backtrack counter to prevent ReDoS attacks
+        let mut backtrack_count = 0;
+        self.like_match_recursive(&text_chars, &pattern_chars, 0, 0, &mut backtrack_count)
     }
 
-    /// Recursive LIKE pattern matching
+    /// Recursive LIKE pattern matching with backtrack limiting
+    ///
+    /// SECURITY FIX (EA3-V1):
+    /// Added backtrack_count parameter to prevent ReDoS attacks.
+    /// When backtrack_count exceeds MAX_BACKTRACK_COUNT, matching is aborted.
+    ///
+    /// This prevents catastrophic backtracking on patterns like:
+    /// - "aaaaaaaaaaaaaaaaaaaaaaaaaaab" LIKE "a%a%a%a%a%a%a%a%a%a%a%b"
+    /// - Other exponential-time regex patterns
     fn like_match_recursive(
         &self,
         text: &[char],
         pattern: &[char],
         t_idx: usize,
         p_idx: usize,
+        backtrack_count: &mut usize,
     ) -> bool {
+        // Security: Prevent ReDoS by limiting backtracks
+        *backtrack_count += 1;
+        if *backtrack_count > MAX_BACKTRACK_COUNT {
+            eprintln!(
+                "WARNING: LIKE pattern matching exceeded {} backtracks. Aborting for security.",
+                MAX_BACKTRACK_COUNT
+            );
+            return false;
+        }
         if p_idx >= pattern.len() {
             return t_idx >= text.len();
         }
@@ -586,10 +612,10 @@ impl ExpressionEvaluator {
         match pattern[p_idx] {
             '%' => {
                 // Match zero or more characters
-                if self.like_match_recursive(text, pattern, t_idx, p_idx + 1) {
+                if self.like_match_recursive(text, pattern, t_idx, p_idx + 1, backtrack_count) {
                     return true;
                 }
-                if t_idx < text.len() && self.like_match_recursive(text, pattern, t_idx + 1, p_idx)
+                if t_idx < text.len() && self.like_match_recursive(text, pattern, t_idx + 1, p_idx, backtrack_count)
                 {
                     return true;
                 }
@@ -598,7 +624,7 @@ impl ExpressionEvaluator {
             '_' => {
                 // Match exactly one character
                 if t_idx < text.len() {
-                    self.like_match_recursive(text, pattern, t_idx + 1, p_idx + 1)
+                    self.like_match_recursive(text, pattern, t_idx + 1, p_idx + 1, backtrack_count)
                 } else {
                     false
                 }
@@ -606,7 +632,7 @@ impl ExpressionEvaluator {
             c => {
                 // Match exact character
                 if t_idx < text.len() && text[t_idx].eq_ignore_ascii_case(&c) {
-                    self.like_match_recursive(text, pattern, t_idx + 1, p_idx + 1)
+                    self.like_match_recursive(text, pattern, t_idx + 1, p_idx + 1, backtrack_count)
                 } else {
                     false
                 }
