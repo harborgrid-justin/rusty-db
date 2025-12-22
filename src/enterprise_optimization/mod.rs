@@ -32,6 +32,62 @@ pub mod session_multiplexer;
 pub mod security_enhancements;
 pub mod metrics;
 
+// Buffer Pool optimizations (Agent 3)
+pub mod arc_enhanced;
+pub mod prefetch_enhanced;
+pub mod dirty_page_flusher;
+
+#[cfg(test)]
+pub mod buffer_pool_benchmarks;
+
+// Concurrency optimizations (Agent 6)
+pub mod optimized_skiplist;
+pub mod optimized_work_stealing;
+pub mod optimized_epoch;
+
+#[cfg(test)]
+pub mod concurrency_benchmarks;
+
+// Query Optimizer optimizations (Agent 4)
+pub mod hardware_cost_calibration;
+pub mod adaptive_execution;
+pub mod plan_stability;
+pub mod query_optimizer_integration;
+
+#[cfg(test)]
+pub mod storage_benchmarks;
+// Storage Layer optimizations (Agent 5)
+pub mod lsm_compaction_optimizer;
+pub mod partition_pruning_optimizer;
+pub mod columnar_compression;
+
+// Memory Management Optimizations (Agent 2)
+pub mod slab_tuner;              // M001: Slab Allocator Tuning for Hot Paths (-20% overhead)
+pub mod pressure_forecaster;     // M002: Memory Pressure Early Warning System (+30% stability)
+pub mod transaction_arena;       // M003: Arena Allocator for Transaction Context (-15% fragmentation)
+pub mod large_object_optimizer;  // M004: Large Object Allocator Optimization (-10% overhead)
+
+#[cfg(test)]
+pub mod memory_integration_tests;
+
+// Transaction Layer optimizations (Agent 1)
+pub mod mvcc_optimized;
+pub mod lock_manager_sharded;
+pub mod wal_optimized;
+pub mod deadlock_detector;
+
+// Replication/RAC optimizations (Agent 7)
+pub mod cache_fusion_optimizer;    // R001: Cache Fusion Message Batching (+40% throughput)
+pub mod grd_optimizer;             // R002: Global Cache Management (+25% scalability)
+pub mod replication_lag_reducer;   // R003: Logical Replication Lag Reduction (-50% lag)
+
+// Connection Pool Optimizations (Agent 10 - P001/P002)
+pub mod connection_health;         // P001: Adaptive health checking with connection warmup
+pub mod connection_affinity;       // P001: Session-to-connection affinity for cache locality
+pub mod connection_draining;       // Graceful connection draining for zero-downtime deployments
+pub mod adaptive_pool_sizing;      // Adaptive pool auto-scaling based on workload
+pub mod connection_limits;         // Per-user/tenant connection limits and resource governance
+
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use std::time::{Duration, Instant};

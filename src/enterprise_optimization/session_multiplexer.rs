@@ -32,6 +32,40 @@ pub type SessionId = u64;
 /// Connection ID type
 pub type ConnectionId = u64;
 
+/// Transaction context for preservation
+#[derive(Debug, Clone)]
+pub struct TransactionContext {
+    /// Transaction ID
+    pub transaction_id: u64,
+
+    /// Transaction start time
+    pub started_at: Instant,
+
+    /// Savepoints
+    pub savepoints: Vec<String>,
+
+    /// Modified tables (for conflict detection)
+    pub modified_tables: Vec<String>,
+
+    /// Read tables (for conflict detection)
+    pub read_tables: Vec<String>,
+}
+
+/// Serialized session state for migration
+#[derive(Debug, Clone)]
+struct SerializedSessionState {
+    session_id: SessionId,
+    tags: HashMap<String, String>,
+    user_id: Option<String>,
+    default_schema: Option<String>,
+    isolation_level: Option<String>,
+    timeout_secs: u64,
+    is_authenticated: bool,
+    prepared_statement_count: usize,
+    cursor_count: usize,
+    has_active_transaction: bool,
+}
+
 /// Session state that persists across connection releases
 #[derive(Debug, Clone)]
 pub struct SessionState {
@@ -70,6 +104,15 @@ pub struct SessionState {
 
     /// Default schema
     pub default_schema: Option<String>,
+
+    /// Transaction context (for preservation across connections)
+    pub transaction_context: Option<TransactionContext>,
+
+    /// Session isolation level
+    pub isolation_level: Option<String>,
+
+    /// Current statement timeout
+    pub statement_timeout: Option<Duration>,
 }
 
 impl SessionState {
@@ -89,6 +132,9 @@ impl SessionState {
             is_authenticated: false,
             user_id: None,
             default_schema: None,
+            transaction_context: None,
+            isolation_level: None,
+            statement_timeout: None,
         }
     }
 
@@ -123,6 +169,58 @@ impl SessionState {
         required_tags.iter().all(|(k, v)| {
             self.tags.get(k).map(|sv| sv == v).unwrap_or(false)
         })
+    }
+
+    /// Serialize session state for migration
+    pub fn serialize(&self) -> Result<Vec<u8>, String> {
+        // In production, this would use bincode or serde_json
+        // For now, we'll create a simplified serialization
+
+        let serialized = SerializedSessionState {
+            session_id: self.session_id,
+            tags: self.tags.clone(),
+            user_id: self.user_id.clone(),
+            default_schema: self.default_schema.clone(),
+            isolation_level: self.isolation_level.clone(),
+            timeout_secs: self.timeout.as_secs(),
+            is_authenticated: self.is_authenticated,
+            prepared_statement_count: self.prepared_statements.len(),
+            cursor_count: self.cursors.len(),
+            has_active_transaction: self.transaction_context.is_some(),
+        };
+
+        // Simulated serialization
+        Ok(format!("{:?}", serialized).into_bytes())
+    }
+
+    /// Deserialize session state from migration
+    pub fn deserialize(_data: &[u8]) -> Result<Self, String> {
+        // In production, this would use bincode or serde_json
+        // For now, return a placeholder
+
+        Err("Deserialization not yet implemented".to_string())
+    }
+
+    /// Prepare session for migration (cleanup before moving to new connection)
+    pub fn prepare_for_migration(&mut self) {
+        // Touch to mark activity
+        self.touch();
+
+        // Close any open cursors that can't be migrated
+        // (In production, some cursors might be migratable)
+        self.cursors.retain(|_, cursor| cursor.is_scrollable);
+    }
+
+    /// Set transaction context
+    pub fn set_transaction_context(&mut self, context: TransactionContext) {
+        self.transaction_context = Some(context);
+        self.transaction_state = TransactionState::Active;
+    }
+
+    /// Clear transaction context
+    pub fn clear_transaction_context(&mut self) {
+        self.transaction_context = None;
+        self.transaction_state = TransactionState::None;
     }
 }
 
@@ -587,6 +685,130 @@ impl SessionMultiplexer {
             0.0
         } else {
             sessions / connections
+        }
+    }
+
+    /// Migrate session to a different connection
+    pub fn migrate_session(&self, session_id: SessionId, target_conn_id: ConnectionId) -> Result<(), MultiplexerError> {
+        // Get current connection
+        let current_conn_id = self.session_connection_map.read()
+            .get(&session_id)
+            .copied();
+
+        if let Some(current) = current_conn_id {
+            if current == target_conn_id {
+                return Ok(()); // Already on target connection
+            }
+
+            // Detach from current connection
+            self.detach_session(session_id)?;
+        }
+
+        // Prepare session for migration
+        if let Some(session) = self.sessions.write().get_mut(&session_id) {
+            session.prepare_for_migration();
+        }
+
+        // Attach to new connection
+        self.finalize_attach(session_id, target_conn_id)?;
+
+        Ok(())
+    }
+
+    /// Migrate all sessions from one connection to another (for connection draining)
+    pub fn drain_connection(&self, source_conn_id: ConnectionId, target_conn_id: ConnectionId) -> Result<usize, MultiplexerError> {
+        // Get all sessions on source connection
+        let sessions_to_migrate: Vec<SessionId> = self.connection_session_map.read()
+            .iter()
+            .filter(|(&conn_id, _)| conn_id == source_conn_id)
+            .flat_map(|(_, session_id)| Some(*session_id))
+            .collect();
+
+        let mut migrated = 0;
+
+        for session_id in sessions_to_migrate {
+            if self.migrate_session(session_id, target_conn_id).is_ok() {
+                migrated += 1;
+            }
+        }
+
+        Ok(migrated)
+    }
+
+    /// Export session state for migration to another node
+    pub fn export_session(&self, session_id: SessionId) -> Result<Vec<u8>, MultiplexerError> {
+        let sessions = self.sessions.read();
+        let session = sessions.get(&session_id)
+            .ok_or(MultiplexerError::SessionNotFound(session_id))?;
+
+        session.serialize()
+            .map_err(|_| MultiplexerError::SessionNotFound(session_id))
+    }
+
+    /// Import session state from another node
+    pub fn import_session(&self, data: &[u8]) -> Result<SessionId, MultiplexerError> {
+        let session = SessionState::deserialize(data)
+            .map_err(|_| MultiplexerError::MaxSessionsReached)?;
+
+        let session_id = session.session_id;
+
+        // Check if we have capacity
+        let sessions = self.sessions.read();
+        if sessions.len() >= self.config.max_sessions {
+            return Err(MultiplexerError::MaxSessionsReached);
+        }
+        drop(sessions);
+
+        // Import the session
+        self.sessions.write().insert(session_id, session);
+        self.stats.sessions_created.fetch_add(1, Ordering::Relaxed);
+
+        Ok(session_id)
+    }
+
+    /// Get prepared statement cache size for a session
+    pub fn get_statement_cache_size(&self, session_id: SessionId) -> usize {
+        self.sessions.read()
+            .get(&session_id)
+            .map(|s| s.prepared_statements.len())
+            .unwrap_or(0)
+    }
+
+    /// Cache a prepared statement for a session
+    pub fn cache_prepared_statement(&self, session_id: SessionId, name: String, sql: String, param_count: usize) -> Result<(), MultiplexerError> {
+        let mut sessions = self.sessions.write();
+        let session = sessions.get_mut(&session_id)
+            .ok_or(MultiplexerError::SessionNotFound(session_id))?;
+
+        // Check cache limit
+        if session.prepared_statements.len() >= self.config.max_prepared_statements {
+            // Remove oldest statement (simple FIFO eviction)
+            if let Some(first_key) = session.prepared_statements.keys().next().cloned() {
+                session.prepared_statements.remove(&first_key);
+            }
+        }
+
+        let handle = PreparedStatementHandle {
+            name: name.clone(),
+            sql,
+            parameter_count: param_count,
+            created_at: Instant::now(),
+            execution_count: 0,
+        };
+
+        session.prepared_statements.insert(name, handle);
+        session.touch();
+
+        Ok(())
+    }
+
+    /// Increment prepared statement execution count
+    pub fn record_statement_execution(&self, session_id: SessionId, name: &str) {
+        if let Some(session) = self.sessions.write().get_mut(&session_id) {
+            if let Some(stmt) = session.prepared_statements.get_mut(name) {
+                stmt.execution_count += 1;
+            }
+            session.touch();
         }
     }
 }

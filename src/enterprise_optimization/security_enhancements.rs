@@ -646,6 +646,517 @@ impl Default for ForensicLogger {
     }
 }
 
+// HSM (Hardware Security Module) Integration Point
+// Provides interface for external HSM devices for secure key storage
+pub trait HsmIntegration: Send + Sync {
+    /// Initialize connection to HSM
+    fn connect(&self, config: &HashMap<String, String>) -> std::result::Result<(), String>;
+
+    /// Generate key in HSM
+    fn generate_key(&self, key_id: &str, key_type: &str) -> std::result::Result<String, String>;
+
+    /// Sign data using HSM
+    fn sign(&self, key_id: &str, data: &[u8]) -> std::result::Result<Vec<u8>, String>;
+
+    /// Verify signature using HSM
+    fn verify(&self, key_id: &str, data: &[u8], signature: &[u8]) -> std::result::Result<bool, String>;
+
+    /// Encrypt data using HSM
+    fn encrypt(&self, key_id: &str, plaintext: &[u8]) -> std::result::Result<Vec<u8>, String>;
+
+    /// Decrypt data using HSM
+    fn decrypt(&self, key_id: &str, ciphertext: &[u8]) -> std::result::Result<Vec<u8>, String>;
+
+    /// Check HSM health
+    fn health_check(&self) -> bool;
+
+    /// Get HSM status
+    fn get_status(&self) -> HsmStatus;
+}
+
+/// HSM status
+#[derive(Debug, Clone)]
+pub struct HsmStatus {
+    pub connected: bool,
+    pub manufacturer: String,
+    pub model: String,
+    pub firmware_version: String,
+    pub keys_stored: usize,
+    pub operations_performed: u64,
+}
+
+/// Mock HSM implementation for development/testing
+pub struct MockHsm {
+    connected: RwLock<bool>,
+    keys: RwLock<HashMap<String, Vec<u8>>>,
+    operations: AtomicU64,
+}
+
+impl MockHsm {
+    pub fn new() -> Self {
+        Self {
+            connected: RwLock::new(false),
+            keys: RwLock::new(HashMap::new()),
+            operations: AtomicU64::new(0),
+        }
+    }
+}
+
+impl Default for MockHsm {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HsmIntegration for MockHsm {
+    fn connect(&self, _config: &HashMap<String, String>) -> std::result::Result<(), String> {
+        *self.connected.write() = true;
+        Ok(())
+    }
+
+    fn generate_key(&self, key_id: &str, _key_type: &str) -> std::result::Result<String, String> {
+        use rand::RngCore;
+        let mut key = vec![0u8; 32];
+        rand::rng().fill_bytes(&mut key);
+        self.keys.write().insert(key_id.to_string(), key);
+        self.operations.fetch_add(1, Ordering::Relaxed);
+        Ok(key_id.to_string())
+    }
+
+    fn sign(&self, key_id: &str, data: &[u8]) -> std::result::Result<Vec<u8>, String> {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let keys = self.keys.read();
+        let key = keys.get(key_id).ok_or("Key not found")?;
+
+        let mut hasher = DefaultHasher::new();
+        key.hash(&mut hasher);
+        data.hash(&mut hasher);
+        let sig = hasher.finish();
+
+        self.operations.fetch_add(1, Ordering::Relaxed);
+        Ok(sig.to_le_bytes().to_vec())
+    }
+
+    fn verify(&self, key_id: &str, data: &[u8], signature: &[u8]) -> std::result::Result<bool, String> {
+        let expected = self.sign(key_id, data)?;
+        Ok(expected == signature)
+    }
+
+    fn encrypt(&self, key_id: &str, plaintext: &[u8]) -> std::result::Result<Vec<u8>, String> {
+        let keys = self.keys.read();
+        let key = keys.get(key_id).ok_or("Key not found")?;
+
+        // Simple XOR for mock
+        let ciphertext: Vec<u8> = plaintext
+            .iter()
+            .enumerate()
+            .map(|(i, &b)| b ^ key[i % key.len()])
+            .collect();
+
+        self.operations.fetch_add(1, Ordering::Relaxed);
+        Ok(ciphertext)
+    }
+
+    fn decrypt(&self, key_id: &str, ciphertext: &[u8]) -> std::result::Result<Vec<u8>, String> {
+        // XOR is symmetric
+        self.encrypt(key_id, ciphertext)
+    }
+
+    fn health_check(&self) -> bool {
+        *self.connected.read()
+    }
+
+    fn get_status(&self) -> HsmStatus {
+        HsmStatus {
+            connected: *self.connected.read(),
+            manufacturer: "Mock HSM Inc.".to_string(),
+            model: "MockHSM-1000".to_string(),
+            firmware_version: "1.0.0".to_string(),
+            keys_stored: self.keys.read().len(),
+            operations_performed: self.operations.load(Ordering::Relaxed),
+        }
+    }
+}
+
+/// Forensic log verification result
+#[derive(Debug, Clone)]
+pub struct ForensicVerificationResult {
+    pub total_entries: u64,
+    pub verified_entries: u64,
+    pub broken_chains: Vec<u64>,
+    pub integrity_valid: bool,
+    pub verification_time_ms: u64,
+}
+
+impl ForensicLogger {
+    /// Verify the entire forensic log chain
+    pub fn verify_chain(&self) -> ForensicVerificationResult {
+        let start = Instant::now();
+        let entries = self.entries.read();
+
+        let total = entries.len() as u64;
+        let mut verified = 0u64;
+        let mut broken_chains = Vec::new();
+
+        if entries.is_empty() {
+            return ForensicVerificationResult {
+                total_entries: 0,
+                verified_entries: 0,
+                broken_chains: Vec::new(),
+                integrity_valid: true,
+                verification_time_ms: start.elapsed().as_millis() as u64,
+            };
+        }
+
+        let mut expected_previous = "GENESIS".to_string();
+        for entry in entries.iter() {
+            if entry.previous_hash == expected_previous {
+                // Verify hash is correctly computed
+                let computed_hash = self.calculate_hash(entry, &entry.previous_hash);
+                if computed_hash == entry.hash {
+                    verified += 1;
+                } else {
+                    broken_chains.push(entry.id);
+                }
+            } else {
+                broken_chains.push(entry.id);
+            }
+            expected_previous = entry.hash.clone();
+        }
+
+        ForensicVerificationResult {
+            total_entries: total,
+            verified_entries: verified,
+            broken_chains,
+            integrity_valid: broken_chains.is_empty(),
+            verification_time_ms: start.elapsed().as_millis() as u64,
+        }
+    }
+
+    /// Export forensic log for external audit
+    pub fn export_for_audit(&self, start_id: u64, end_id: u64) -> Vec<ForensicLogEntry> {
+        self.get_entries(start_id, end_id)
+    }
+
+    /// Get summary statistics
+    pub fn get_summary(&self) -> ForensicLogSummary {
+        let entries = self.entries.read();
+        let mut user_activity: HashMap<UserId, u64> = HashMap::new();
+        let mut action_counts: HashMap<String, u64> = HashMap::new();
+
+        for entry in entries.iter() {
+            *user_activity.entry(entry.user_id.clone()).or_insert(0) += 1;
+            *action_counts.entry(entry.action.clone()).or_insert(0) += 1;
+        }
+
+        ForensicLogSummary {
+            total_entries: self.total_entries.load(Ordering::Relaxed),
+            unique_users: user_activity.len(),
+            unique_actions: action_counts.len(),
+            top_users: user_activity.into_iter().collect(),
+            top_actions: action_counts.into_iter().collect(),
+        }
+    }
+}
+
+/// Forensic log summary
+#[derive(Debug, Clone)]
+pub struct ForensicLogSummary {
+    pub total_entries: u64,
+    pub unique_users: usize,
+    pub unique_actions: usize,
+    pub top_users: Vec<(UserId, u64)>,
+    pub top_actions: Vec<(String, u64)>,
+}
+
+/// Compliance audit report
+#[derive(Debug, Clone)]
+pub struct ComplianceAuditReport {
+    pub report_id: String,
+    pub framework: String,
+    pub generated_at: SystemTime,
+    pub period_start: SystemTime,
+    pub period_end: SystemTime,
+    pub total_controls: usize,
+    pub compliant_controls: usize,
+    pub non_compliant_controls: usize,
+    pub findings: Vec<ComplianceFinding>,
+    pub recommendations: Vec<String>,
+    pub risk_score: f64,
+}
+
+/// Compliance finding
+#[derive(Debug, Clone)]
+pub struct ComplianceFinding {
+    pub control_id: String,
+    pub severity: FindingSeverity,
+    pub description: String,
+    pub evidence: Vec<String>,
+    pub remediation: String,
+}
+
+/// Finding severity
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum FindingSeverity {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+/// Compliance audit engine
+pub struct ComplianceAuditEngine {
+    /// Audit reports
+    reports: RwLock<HashMap<String, ComplianceAuditReport>>,
+
+    /// Forensic logger for evidence
+    forensic_logger: Arc<ForensicLogger>,
+
+    /// Threat detector for security findings
+    threat_detector: Arc<AdaptiveThreatDetector>,
+}
+
+impl ComplianceAuditEngine {
+    pub fn new(
+        forensic_logger: Arc<ForensicLogger>,
+        threat_detector: Arc<AdaptiveThreatDetector>,
+    ) -> Self {
+        Self {
+            reports: RwLock::new(HashMap::new()),
+            forensic_logger,
+            threat_detector,
+        }
+    }
+
+    /// Generate compliance audit report
+    pub fn generate_report(
+        &self,
+        framework: &str,
+        period_start: SystemTime,
+        period_end: SystemTime,
+    ) -> ComplianceAuditReport {
+        let report_id = format!("audit_{}", chrono::Utc::now().timestamp());
+
+        // Get forensic log summary
+        let forensic_summary = self.forensic_logger.get_summary();
+
+        // Verify forensic log integrity
+        let verification = self.forensic_logger.verify_chain();
+
+        // Get threat detector stats
+        let threat_stats = self.threat_detector.stats();
+
+        let mut findings = Vec::new();
+        let mut compliant_controls = 0;
+        let mut non_compliant_controls = 0;
+
+        // Check forensic logging integrity (Control: Audit Trail)
+        if !verification.integrity_valid {
+            findings.push(ComplianceFinding {
+                control_id: "AUDIT-001".to_string(),
+                severity: FindingSeverity::Critical,
+                description: format!(
+                    "Forensic log chain integrity compromised: {} broken chains detected",
+                    verification.broken_chains.len()
+                ),
+                evidence: verification.broken_chains.iter().map(|id| id.to_string()).collect(),
+                remediation: "Investigate log tampering and restore from backup".to_string(),
+            });
+            non_compliant_controls += 1;
+        } else {
+            compliant_controls += 1;
+        }
+
+        // Check threat detection effectiveness (Control: Security Monitoring)
+        let detection_rate = threat_stats.precision;
+        if detection_rate < 0.7 {
+            findings.push(ComplianceFinding {
+                control_id: "MONITOR-001".to_string(),
+                severity: FindingSeverity::High,
+                description: format!(
+                    "Threat detection precision below threshold: {:.2}%",
+                    detection_rate * 100.0
+                ),
+                evidence: vec![format!(
+                    "True positives: {}, False positives: {}",
+                    "N/A", "N/A"
+                )],
+                remediation: "Tune threat detection rules and retrain ML models".to_string(),
+            });
+            non_compliant_controls += 1;
+        } else {
+            compliant_controls += 1;
+        }
+
+        // Check user activity logging (Control: Access Logging)
+        if forensic_summary.total_entries == 0 {
+            findings.push(ComplianceFinding {
+                control_id: "ACCESS-001".to_string(),
+                severity: FindingSeverity::High,
+                description: "No access logs found for audit period".to_string(),
+                evidence: Vec::new(),
+                remediation: "Enable and verify access logging functionality".to_string(),
+            });
+            non_compliant_controls += 1;
+        } else {
+            compliant_controls += 1;
+        }
+
+        let total_controls = compliant_controls + non_compliant_controls;
+        let risk_score = if total_controls > 0 {
+            (non_compliant_controls as f64 / total_controls as f64) * 100.0
+        } else {
+            0.0
+        };
+
+        let mut recommendations = Vec::new();
+        if !verification.integrity_valid {
+            recommendations.push("Implement tamper-evident storage for audit logs".to_string());
+        }
+        if detection_rate < 0.7 {
+            recommendations.push("Review and update threat detection baselines".to_string());
+        }
+
+        let report = ComplianceAuditReport {
+            report_id: report_id.clone(),
+            framework: framework.to_string(),
+            generated_at: SystemTime::now(),
+            period_start,
+            period_end,
+            total_controls,
+            compliant_controls,
+            non_compliant_controls,
+            findings,
+            recommendations,
+            risk_score,
+        };
+
+        self.reports.write().insert(report_id, report.clone());
+        report
+    }
+
+    /// Get compliance report
+    pub fn get_report(&self, report_id: &str) -> Option<ComplianceAuditReport> {
+        self.reports.read().get(report_id).cloned()
+    }
+
+    /// List all reports
+    pub fn list_reports(&self) -> Vec<String> {
+        self.reports.read().keys().cloned().collect()
+    }
+}
+
+impl Default for ComplianceAuditEngine {
+    fn default() -> Self {
+        Self::new(
+            Arc::new(ForensicLogger::new()),
+            Arc::new(AdaptiveThreatDetector::new()),
+        )
+    }
+}
+
+/// Integrated security manager with all enhancements
+pub struct EnhancedSecurityManager {
+    /// Adaptive threat detector
+    pub threat_detector: Arc<AdaptiveThreatDetector>,
+
+    /// Forensic logger
+    pub forensic_logger: Arc<ForensicLogger>,
+
+    /// HSM integration
+    pub hsm: Arc<dyn HsmIntegration>,
+
+    /// Compliance audit engine
+    pub compliance_engine: Arc<ComplianceAuditEngine>,
+}
+
+impl EnhancedSecurityManager {
+    pub fn new() -> Self {
+        let threat_detector = Arc::new(AdaptiveThreatDetector::new());
+        let forensic_logger = Arc::new(ForensicLogger::new());
+        let hsm: Arc<dyn HsmIntegration> = Arc::new(MockHsm::new());
+        let compliance_engine = Arc::new(ComplianceAuditEngine::new(
+            Arc::clone(&forensic_logger),
+            Arc::clone(&threat_detector),
+        ));
+
+        Self {
+            threat_detector,
+            forensic_logger,
+            hsm,
+            compliance_engine,
+        }
+    }
+
+    /// Assess query and log to forensic trail
+    pub fn assess_and_log_query(
+        &self,
+        user_id: &UserId,
+        session_id: SessionId,
+        query: &str,
+        tables: &[String],
+        estimated_rows: u64,
+    ) -> (QueryRiskAssessment, u64) {
+        let assessment = self.threat_detector.assess_query(
+            user_id,
+            query,
+            tables,
+            estimated_rows,
+            SystemTime::now(),
+        );
+
+        let log_entry = ForensicLogEntry {
+            id: 0,
+            timestamp: SystemTime::now(),
+            user_id: user_id.clone(),
+            session_id,
+            action: "QUERY".to_string(),
+            resource: tables.join(", "),
+            result: format!("{:?}", assessment.action),
+            risk_assessment: Some(assessment.clone()),
+            hash: String::new(),
+            previous_hash: String::new(),
+        };
+
+        let log_id = self.forensic_logger.log(log_entry);
+        (assessment, log_id)
+    }
+
+    /// Get comprehensive security status
+    pub fn get_security_status(&self) -> EnhancedSecurityStatus {
+        let threat_stats = self.threat_detector.stats();
+        let forensic_verification = self.forensic_logger.verify_chain();
+        let forensic_summary = self.forensic_logger.get_summary();
+        let hsm_status = self.hsm.get_status();
+
+        EnhancedSecurityStatus {
+            threat_detection: threat_stats,
+            forensic_integrity: forensic_verification.integrity_valid,
+            forensic_entries: forensic_summary.total_entries,
+            hsm_connected: hsm_status.connected,
+            hsm_operations: hsm_status.operations_performed,
+        }
+    }
+}
+
+impl Default for EnhancedSecurityManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// Enhanced security status
+#[derive(Debug, Clone)]
+pub struct EnhancedSecurityStatus {
+    pub threat_detection: ThreatDetectorStats,
+    pub forensic_integrity: bool,
+    pub forensic_entries: u64,
+    pub hsm_connected: bool,
+    pub hsm_operations: u64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
