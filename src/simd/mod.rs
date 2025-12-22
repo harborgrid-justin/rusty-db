@@ -79,6 +79,9 @@ pub mod string;
 /// SIMD-accelerated hash functions (xxHash3, wyhash)
 pub mod hash;
 
+/// Advanced SIMD operations (I002 optimizations)
+pub mod advanced_ops;
+
 pub use aggregate::{AggregateOp, SimdAggregator};
 // Re-export commonly used types
 pub use filter::{FilterOp, PredicateType, SimdFilter};

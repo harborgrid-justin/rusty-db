@@ -13,7 +13,9 @@
 
 pub mod advisor;
 pub mod bitmap;
+pub mod bitmap_compressed;
 pub mod btree;
+pub mod btree_optimized;
 pub mod fulltext;
 pub mod hash_index;
 pub mod hash_helpers;
