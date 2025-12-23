@@ -14,13 +14,10 @@
 //
 // Expected Improvement: +25% runtime adaptation efficiency
 
-use crate::common::{TableId, Value};
-use crate::error::{DbError, Result};
 use crate::optimizer_pro::{PhysicalPlan, PhysicalOperator, ExecutionResult, PlanId, JoinType};
 use crate::optimizer_pro::adaptive::{ExecutionId, RuntimeStatistics};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, AtomicU64, AtomicBool, Ordering};
 use parking_lot::{Mutex, RwLock};
 use std::time::{Duration, Instant};
 

@@ -21,7 +21,6 @@
 // These optimizations are compatible with the existing BPlusTree implementation
 // and can be enabled via configuration flags.
 
-use crate::error::{DbError, Result};
 use std::cmp::Ordering;
 use std::fmt::Debug;
 

@@ -22,8 +22,6 @@
 
 use crate::common::PageId;
 use parking_lot::{Mutex, RwLock};
-use std::collections::{BTreeMap, HashMap, VecDeque};
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 

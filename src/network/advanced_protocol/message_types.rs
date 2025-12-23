@@ -2,8 +2,6 @@
 //
 // Protocol message types, versions, and packet structures
 
-use std::collections::HashMap;
-
 // ============================================================================
 // Protocol Version and Compression
 // ============================================================================

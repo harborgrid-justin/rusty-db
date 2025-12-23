@@ -16,7 +16,6 @@
 use crate::common::TransactionId;
 use crate::error::{DbError, Result};
 use parking_lot::RwLock;
-use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};

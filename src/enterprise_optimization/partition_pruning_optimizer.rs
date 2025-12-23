@@ -14,8 +14,6 @@
 use crate::error::{DbError, Result};
 use crate::storage::partitioning::types::*;
 use parking_lot::RwLock;
-use std::collections::{HashMap, HashSet, BTreeMap};
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Instant, SystemTime};
 

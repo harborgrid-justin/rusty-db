@@ -14,16 +14,12 @@
 //
 // Expected Improvement: Better plan consistency and performance stability
 
-use crate::error::{DbError, Result};
 use crate::optimizer_pro::{PhysicalPlan, PlanId, QueryFingerprint};
 use crate::optimizer_pro::plan_baselines::{
     SqlPlanBaseline, BaselineOrigin, PlanHistory, HistoricalPlan,
 };
-use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
 use parking_lot::RwLock;
-use std::time::{Duration, Instant, SystemTime};
 
 // ============================================================================
 // Enhanced Plan Baseline Manager

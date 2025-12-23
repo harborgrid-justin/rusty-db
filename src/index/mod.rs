@@ -105,8 +105,6 @@ pub trait NodeSplitting {
 
 /// Helper utilities for node splitting operations
 pub mod split_utils {
-    use super::*;
-
     /// Calculate the optimal split point using median strategy
     ///
     /// Used by B+Tree for balanced splits
@@ -247,8 +245,6 @@ pub trait IndexIterator {
 
 /// Helper utilities for index iteration
 pub mod iter_utils {
-    use super::*;
-
     /// Merge multiple sorted iterators into a single sorted stream
     ///
     /// Used by LSM Tree to merge results from multiple levels

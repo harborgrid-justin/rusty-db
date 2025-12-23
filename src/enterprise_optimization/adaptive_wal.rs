@@ -16,11 +16,9 @@
 // | WAL I/O CPU | 25-30% | 5-8% | 3-4x |
 
 use std::collections::VecDeque;
-use std::io::{IoSlice, Write};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use parking_lot::{Mutex, RwLock};
 
 /// Log Sequence Number
 pub type LSN = u64;
