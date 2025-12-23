@@ -11,14 +11,11 @@
 // - Huge page allocation (2MB, 1GB pages)
 // - Lazy decommit for unused regions
 
-use std::collections::{BTreeMap, HashMap};
 use std::ops::Bound;
 use std::ptr::NonNull;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use parking_lot::{Mutex, RwLock};
 
-use crate::error::{DbError, Result};
 use crate::memory::allocator::{LargeObjectAllocator, LargeObjectAllocatorStats};
 
 /// Free region in memory

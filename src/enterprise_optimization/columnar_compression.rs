@@ -17,7 +17,6 @@
 use crate::error::{DbError, Result};
 use crate::compression::{CompressionAlgorithm, CompressionLevel};
 use parking_lot::RwLock;
-use std::collections::{HashMap, BTreeMap};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Instant;

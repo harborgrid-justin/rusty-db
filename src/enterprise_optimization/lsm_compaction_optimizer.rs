@@ -13,11 +13,8 @@
 // - Write amplification tracking and auto-tuning
 
 use crate::error::{DbError, Result};
-use std::collections::{BTreeMap, BinaryHeap, VecDeque};
 use std::cmp::Reverse;
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
 use parking_lot::RwLock;
 
 /// Compaction strategy selector

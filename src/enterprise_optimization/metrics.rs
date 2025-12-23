@@ -14,9 +14,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
 use std::time::{Duration, Instant};
-use parking_lot::{Mutex, RwLock};
 
 /// Metric value types
 #[derive(Debug, Clone)]

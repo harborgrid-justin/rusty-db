@@ -22,7 +22,6 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 use parking_lot::{Mutex, RwLock};
 

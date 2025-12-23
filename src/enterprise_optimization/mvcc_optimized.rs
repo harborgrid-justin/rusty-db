@@ -13,7 +13,6 @@
 
 use crate::transaction::mvcc::{HybridTimestamp, VersionedRecord};
 use crate::transaction::TransactionId;
-use crate::error::{DbError, Result};
 use parking_lot::RwLock;
 use std::collections::BTreeMap;
 use std::sync::Arc;

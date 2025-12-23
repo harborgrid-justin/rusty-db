@@ -8,7 +8,6 @@
 // Keep protocol-specific flow control features separate.
 // See: diagrams/06_network_api_flow.md - Issue #4.2
 
-use std::collections::HashMap;
 
 // ============================================================================
 // Flow Control

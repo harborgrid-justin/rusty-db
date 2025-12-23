@@ -14,7 +14,6 @@
 //
 // Expected Improvement: +20% plan quality on enterprise workloads
 
-use crate::common::{IndexId, TableId, Value};
 use crate::error::{DbError, Result};
 use crate::optimizer_pro::cost_model::{ColumnStatistics, TableStatistics, Histogram, HistogramType, HistogramBucket};
 use crate::optimizer_pro::{CostParameters, PhysicalPlan};

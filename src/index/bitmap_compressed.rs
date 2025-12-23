@@ -21,8 +21,6 @@
 // Compatible with existing CompressedBitmap, provides alternative
 // compression schemes based on data characteristics.
 
-use crate::error::Result;
-
 #[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
@@ -624,7 +622,7 @@ impl RoaringChunk {
             Self::Runs(runs) => Box::new(runs.iter().flat_map(|(start, len)| {
                 let start = *start;
                 let end = start + *len;
-                (start..end)
+                start..end
             })),
         }
     }

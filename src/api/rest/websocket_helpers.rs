@@ -3,7 +3,6 @@
 // Common utilities for WebSocket handlers to reduce duplication
 
 use axum::extract::ws::{Message, WebSocket};
-use futures::{SinkExt, StreamExt};
 use serde_json::json;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
