@@ -14,6 +14,7 @@
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 /// Metric value types
@@ -238,17 +239,17 @@ impl RateMetric {
     }
 
     pub fn rate(&self) -> f64 {
-        let mut start = self.window_start.lock();
+        let mut start = self.window_start.lock().unwrap();
         let elapsed = start.elapsed();
 
         if elapsed >= self.window_duration {
             let events = self.events.swap(0, Ordering::Relaxed);
             let rate = events as f64 / elapsed.as_secs_f64();
-            *self.last_rate.lock() = rate;
+            *self.last_rate.lock().unwrap() = rate;
             *start = Instant::now();
             rate
         } else {
-            *self.last_rate.lock()
+            *self.last_rate.lock().unwrap()
         }
     }
 

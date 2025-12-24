@@ -290,7 +290,7 @@ impl Default for ParallelApplyConfig {
 }
 
 /// Parallel apply statistics
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct ParallelApplyStats {
     pub total_changes: AtomicU64,
     pub parallel_changes: AtomicU64,
@@ -301,6 +301,22 @@ pub struct ParallelApplyStats {
     pub failed_tasks: AtomicU64,
     pub avg_parallelism: AtomicUsize,
     pub worker_utilization: AtomicU64, // Percentage * 100
+}
+
+impl Clone for ParallelApplyStats {
+    fn clone(&self) -> Self {
+        Self {
+            total_changes: AtomicU64::new(self.total_changes.load(Ordering::Relaxed)),
+            parallel_changes: AtomicU64::new(self.parallel_changes.load(Ordering::Relaxed)),
+            serial_changes: AtomicU64::new(self.serial_changes.load(Ordering::Relaxed)),
+            active_workers: AtomicUsize::new(self.active_workers.load(Ordering::Relaxed)),
+            total_tasks: AtomicU64::new(self.total_tasks.load(Ordering::Relaxed)),
+            completed_tasks: AtomicU64::new(self.completed_tasks.load(Ordering::Relaxed)),
+            failed_tasks: AtomicU64::new(self.failed_tasks.load(Ordering::Relaxed)),
+            avg_parallelism: AtomicUsize::new(self.avg_parallelism.load(Ordering::Relaxed)),
+            worker_utilization: AtomicU64::new(self.worker_utilization.load(Ordering::Relaxed)),
+        }
+    }
 }
 
 impl ParallelApplyCoordinator {
@@ -419,7 +435,7 @@ impl ParallelApplyCoordinator {
 
     /// Get statistics
     pub fn get_stats(&self) -> ParallelApplyStats {
-        self.stats.clone()
+        (*self.stats).clone()
     }
 }
 
@@ -479,7 +495,7 @@ pub enum AlertSeverity {
 }
 
 /// Lag monitor statistics
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct LagMonitorStats {
     pub current_lag_ms: AtomicU64,
     pub avg_lag_ms: AtomicU64,
@@ -488,6 +504,20 @@ pub struct LagMonitorStats {
     pub p99_lag_ms: AtomicU64,
     pub lag_variance: AtomicU64,
     pub alerts_fired: AtomicU64,
+}
+
+impl Clone for LagMonitorStats {
+    fn clone(&self) -> Self {
+        Self {
+            current_lag_ms: AtomicU64::new(self.current_lag_ms.load(Ordering::Relaxed)),
+            avg_lag_ms: AtomicU64::new(self.avg_lag_ms.load(Ordering::Relaxed)),
+            max_lag_ms: AtomicU64::new(self.max_lag_ms.load(Ordering::Relaxed)),
+            min_lag_ms: AtomicU64::new(self.min_lag_ms.load(Ordering::Relaxed)),
+            p99_lag_ms: AtomicU64::new(self.p99_lag_ms.load(Ordering::Relaxed)),
+            lag_variance: AtomicU64::new(self.lag_variance.load(Ordering::Relaxed)),
+            alerts_fired: AtomicU64::new(self.alerts_fired.load(Ordering::Relaxed)),
+        }
+    }
 }
 
 impl ReplicationLagMonitor {
@@ -612,7 +642,7 @@ impl ReplicationLagMonitor {
 
     /// Get statistics
     pub fn get_stats(&self) -> LagMonitorStats {
-        self.stats.clone()
+        (*self.stats).clone()
     }
 }
 
@@ -676,7 +706,7 @@ impl Default for LagReducerConfig {
 }
 
 /// Lag reducer statistics
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct LagReducerStats {
     pub changes_processed: AtomicU64,
     pub transactions_applied: AtomicU64,

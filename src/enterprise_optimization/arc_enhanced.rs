@@ -26,6 +26,7 @@ use parking_lot::Mutex;
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::time::Instant;
 
 // ============================================================================
 // Configuration
@@ -143,7 +144,8 @@ impl ScanDetector {
         }
 
         let mut sequential_count = 0;
-        for window in self.history.iter().as_slices().0.windows(2) {
+        let history_vec: Vec<_> = self.history.iter().copied().collect();
+        for window in history_vec.windows(2) {
             let diff = window[1].abs_diff(window[0]);
             if diff <= 2 {
                 sequential_count += 1;

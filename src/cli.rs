@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
         reader
             .read_line(&mut input)
             .await
-            .map_err(|e| DbError::Io(e))?;
+            .map_err(|e| DbError::Io(e.into()))?;
 
         let cmd = input.trim();
 

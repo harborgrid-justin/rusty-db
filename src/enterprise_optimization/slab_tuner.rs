@@ -16,6 +16,7 @@
 // - Adaptive sizing based on allocation patterns
 
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::{Mutex, RwLock};
 

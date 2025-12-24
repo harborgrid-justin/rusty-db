@@ -220,7 +220,7 @@ pub struct WALEntry {
 }
 
 impl WALEntry {
-    fn new(lsn: LSN, prev_lsn: Option<LSN>, record: LogRecord) -> Self {
+    pub fn new(lsn: LSN, prev_lsn: Option<LSN>, record: LogRecord) -> Self {
         let serialized = serde_json::to_vec(&record).unwrap_or_default();
         let size = serialized.len() as u32;
         let checksum = Self::calculate_checksum(&serialized);

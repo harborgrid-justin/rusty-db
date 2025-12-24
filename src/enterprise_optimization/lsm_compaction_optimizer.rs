@@ -14,7 +14,10 @@
 
 use crate::error::{DbError, Result};
 use std::cmp::Reverse;
+use std::collections::{BinaryHeap, BTreeMap};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 use parking_lot::RwLock;
 
 /// Compaction strategy selector
@@ -148,7 +151,7 @@ impl CompactionStats {
 }
 
 /// SSTable metadata for compaction
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct SSTableMetadata {
     pub id: u64,
     pub level: usize,

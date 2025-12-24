@@ -14,6 +14,8 @@
 use crate::error::{DbError, Result};
 use crate::storage::partitioning::types::*;
 use parking_lot::RwLock;
+use std::collections::{BTreeMap, HashMap};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Instant, SystemTime};
 
@@ -57,7 +59,7 @@ impl Default for PruningConfig {
 }
 
 /// Partition statistics for cost estimation
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct PartitionHistogram {
     /// Partition name
     pub partition_name: String,
@@ -115,9 +117,9 @@ impl PartitionHistogram {
     /// Check if value is in range
     pub fn contains_value(&self, value: &str) -> bool {
         match (&self.min_value, &self.max_value) {
-            (Some(min), Some(max)) => value >= min && value <= max,
-            (Some(min), None) => value >= min,
-            (None, Some(max)) => value <= max,
+            (Some(min), Some(max)) => value >= min.as_str() && value <= max.as_str(),
+            (Some(min), None) => value >= min.as_str(),
+            (None, Some(max)) => value <= max.as_str(),
             (None, None) => true,
         }
     }

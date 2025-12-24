@@ -96,6 +96,10 @@ impl From<LockMode> for HierarchicalLockMode {
         match mode {
             LockMode::Shared => HierarchicalLockMode::S,
             LockMode::Exclusive => HierarchicalLockMode::X,
+            LockMode::IntentShared => HierarchicalLockMode::IS,
+            LockMode::IntentExclusive => HierarchicalLockMode::IX,
+            LockMode::SharedIntentExclusive => HierarchicalLockMode::SIX,
+            LockMode::Update => HierarchicalLockMode::X, // Update lock maps to exclusive
         }
     }
 }

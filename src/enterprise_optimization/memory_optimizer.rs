@@ -18,6 +18,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::time::Instant;
 use parking_lot::{Mutex, RwLock};
 
 /// Memory pressure levels

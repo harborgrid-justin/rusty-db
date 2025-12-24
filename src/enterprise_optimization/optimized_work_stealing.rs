@@ -207,6 +207,16 @@ struct WorkerInfo<T> {
     deque: Arc<WorkStealingDeque<T>>,
 }
 
+impl<T> Clone for WorkerInfo<T> {
+    fn clone(&self) -> Self {
+        Self {
+            worker_id: self.worker_id,
+            numa_node: self.numa_node,
+            deque: Arc::clone(&self.deque),
+        }
+    }
+}
+
 impl<T> OptimizedWorker<T> {
     /// Create a new optimized worker
     pub fn new(

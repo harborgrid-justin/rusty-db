@@ -100,7 +100,7 @@ impl MessagePriority {
 // ============================================================================
 
 /// Enhanced cache fusion message with batching support
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct BatchedCacheFusionMessage {
     /// Original message
     pub message: CacheFusionMessage,
@@ -111,12 +111,11 @@ pub struct BatchedCacheFusionMessage {
     /// Timestamp
     pub timestamp: Instant,
     /// Compressed payload (if compression was applied)
-    #[serde(skip)]
     pub compressed_data: Option<Vec<u8>>,
 }
 
 /// Batch of cache fusion messages
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct MessageBatch {
     /// Batch ID
     pub batch_id: u64,
@@ -129,7 +128,6 @@ pub struct MessageBatch {
     /// Total compressed size (if compression applied)
     pub compressed_size: usize,
     /// Batch created timestamp
-    #[serde(skip)]
     pub created_at: Instant,
 }
 
