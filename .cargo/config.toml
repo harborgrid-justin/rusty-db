@@ -1,0 +1,86 @@
+# Cargo configuration for faster compilation times
+# Optimized for reducing LLVM optimization overhead
+
+[build]
+# Enable incremental compilation for faster rebuilds
+incremental = true
+
+# Use multiple codegen units for parallel compilation in dev builds
+# This trades runtime performance for faster compile times
+jobs = 8
+
+# Target-specific configurations for Linux
+[target.x86_64-unknown-linux-gnu]
+# Use mold linker if available (significantly faster than ld/gold)
+# Falls back to lld if mold is not installed
+linker = "clang"
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+    "-C", "split-debuginfo=unpacked",
+    "-C", "debuginfo=1",
+]
+
+# Target-specific configurations for Windows
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+    "-C", "split-debuginfo=packed",
+    "-C", "debuginfo=1",
+]
+
+[target.x86_64-pc-windows-gnu]
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+    "-C", "debuginfo=1",
+]
+
+# Profile overrides for faster dev builds
+[profile.dev]
+# Disable optimizations for faster compilation
+opt-level = 0
+# Enable incremental compilation
+incremental = true
+# Use more codegen units for parallel compilation
+codegen-units = 256
+# Reduce debug info for faster builds
+debug = 1
+# Split debug info to reduce link times
+split-debuginfo = "unpacked"
+
+[profile.dev.package."*"]
+# Optimize dependencies even in dev mode for better runtime performance
+# while keeping our own code unoptimized for fast iteration
+opt-level = 2
+
+# Test profile optimizations
+[profile.test]
+opt-level = 0
+incremental = true
+codegen-units = 256
+debug = 1
+
+# Release profile with balanced settings
+[profile.release]
+# Keep LTO but use thin-lto for faster compile times
+lto = "thin"
+# Use fewer codegen units for better optimization
+codegen-units = 16
+# Enable incremental for release builds too
+incremental = true
+
+# Bench profile inherits from release but with faster iteration
+[profile.bench]
+lto = "thin"
+codegen-units = 16
+incremental = true
+
+[env]
+# Reduce LLVM parallelism to prevent memory pressure
+LLVM_NUM_THREADS = "4"
+
+[alias]
+# Quick check without full build
+c = "check"
+# Fast test run
+t = "test"
+# Build with timing info
+bt = "build --timings"

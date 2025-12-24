@@ -1212,6 +1212,7 @@ impl Drop for BufferPoolManager {
 pub mod windows {
     use super::*;
     use crate::buffer::PageBuffer;
+    use std::collections::HashMap;
     use std::fs::File;
     use std::os::windows::io::{AsRawHandle, RawHandle};
     use std::ptr;

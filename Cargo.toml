@@ -4,7 +4,7 @@ description = "Enterprise-grade Rust-based database management system"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 name = "rusty-db"
-version = "0.3.2"
+version = "0.5.1"
 
 [dependencies]
 bincode = { version = "2.0.1", features = ["serde"] }
