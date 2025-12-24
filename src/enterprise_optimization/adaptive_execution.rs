@@ -14,9 +14,12 @@
 //
 // Expected Improvement: +25% runtime adaptation efficiency
 
+use crate::common::Value;
+use crate::error::Result;
 use crate::optimizer_pro::{PhysicalPlan, PhysicalOperator, ExecutionResult, PlanId, JoinType};
 use crate::optimizer_pro::adaptive::{ExecutionId, RuntimeStatistics};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
 use parking_lot::{Mutex, RwLock};
 use std::time::{Duration, Instant};
@@ -93,7 +96,7 @@ impl AdaptiveExecutionEngine {
         self.memory_grant_manager.record_actual_usage(
             plan.plan_id,
             memory_grant,
-            runtime_stats.actual_memory_used,
+            memory_grant, // TODO: Track actual memory usage
         );
 
         // Update parallel degree feedback
@@ -106,7 +109,7 @@ impl AdaptiveExecutionEngine {
         Ok(ExecutionResult {
             rows: result,
             execution_time: start.elapsed(),
-            adaptive_corrections: runtime_stats.corrections,
+            adaptive_corrections: Vec::new(), // TODO: Track adaptive corrections
         })
     }
 

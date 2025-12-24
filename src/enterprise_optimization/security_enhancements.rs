@@ -18,6 +18,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::time::{Instant, SystemTime};
 use parking_lot::{Mutex, RwLock};
 
 /// User ID type
@@ -825,11 +826,12 @@ impl ForensicLogger {
             expected_previous = entry.hash.clone();
         }
 
+        let integrity_valid = broken_chains.is_empty();
         ForensicVerificationResult {
             total_entries: total,
             verified_entries: verified,
             broken_chains,
-            integrity_valid: broken_chains.is_empty(),
+            integrity_valid,
             verification_time_ms: start.elapsed().as_millis() as u64,
         }
     }

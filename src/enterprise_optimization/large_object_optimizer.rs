@@ -11,11 +11,14 @@
 // - Huge page allocation (2MB, 1GB pages)
 // - Lazy decommit for unused regions
 
+use std::collections::BTreeMap;
 use std::ops::Bound;
 use std::ptr::NonNull;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use parking_lot::{Mutex, RwLock};
 
+use crate::error::Result;
 use crate::memory::allocator::{LargeObjectAllocator, LargeObjectAllocatorStats};
 
 /// Free region in memory
@@ -105,9 +108,10 @@ impl FreeListManager {
         }
 
         // Add the (possibly coalesced) region
+        let region_size = region.size;
         self.by_address.insert(region.address, region.clone());
-        self.by_size.entry(region.size).or_insert_with(Vec::new).push(region);
-        self.total_free += region.size;
+        self.by_size.entry(region_size).or_insert_with(Vec::new).push(region);
+        self.total_free += region_size;
         self.region_count += 1;
     }
 

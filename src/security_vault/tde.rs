@@ -314,7 +314,7 @@ impl KeyCache {
 
         // Evict oldest entry if cache is full
         if cache.len() >= self.max_size {
-            if let Some((oldest_key, _)) = cache.iter()
+            if let Some(oldest_key) = cache.iter()
                 .min_by_key(|(_, v)| v.cached_at)
                 .map(|(k, _)| k.clone())
             {

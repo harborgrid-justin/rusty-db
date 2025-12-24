@@ -127,6 +127,9 @@ impl LockFreeGrdCache {
             entry.access_count += 1;
             entry.last_access = Instant::now();
 
+            // Clone the value to return before potentially promoting
+            let result = entry.value().clone();
+
             // Promote to hot cache if frequently accessed
             if entry.access_count > HOT_RESOURCE_THRESHOLD && entry.cache_level > 0 {
                 let hot_entry = entry.clone();
@@ -134,7 +137,7 @@ impl LockFreeGrdCache {
                 self.promote_to_hot_cache(resource_id.clone(), hot_entry);
             }
 
-            return Some(entry.value().clone());
+            return Some(result);
         }
 
         // Cache miss
@@ -183,7 +186,7 @@ impl LockFreeGrdCache {
 
     /// Get cache statistics
     pub fn get_stats(&self) -> GrdOptimizerStats {
-        self.stats.clone()
+        (*self.stats).clone()
     }
 
     /// Evict cold entries (cache maintenance)
@@ -267,7 +270,7 @@ impl Default for AffinityOptimizerConfig {
 }
 
 /// Affinity optimizer statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct AffinityOptimizerStats {
     pub total_accesses: AtomicU64,
     pub affinity_hits: AtomicU64,
@@ -275,6 +278,19 @@ pub struct AffinityOptimizerStats {
     pub proactive_remasters: AtomicU64,
     pub reactive_remasters: AtomicU64,
     pub placement_accuracy: AtomicU64, // Percentage * 100
+}
+
+impl Clone for AffinityOptimizerStats {
+    fn clone(&self) -> Self {
+        Self {
+            total_accesses: AtomicU64::new(self.total_accesses.load(Ordering::Relaxed)),
+            affinity_hits: AtomicU64::new(self.affinity_hits.load(Ordering::Relaxed)),
+            affinity_misses: AtomicU64::new(self.affinity_misses.load(Ordering::Relaxed)),
+            proactive_remasters: AtomicU64::new(self.proactive_remasters.load(Ordering::Relaxed)),
+            reactive_remasters: AtomicU64::new(self.reactive_remasters.load(Ordering::Relaxed)),
+            placement_accuracy: AtomicU64::new(self.placement_accuracy.load(Ordering::Relaxed)),
+        }
+    }
 }
 
 impl AffinityOptimizer {
@@ -388,7 +404,7 @@ impl AffinityOptimizer {
         let scores = self.affinity_scores.read();
 
         if let Some(node_scores) = scores.get(resource_id) {
-            if let Some((_, current_score)) = node_scores.get(current_master) {
+            if let Some(current_score) = node_scores.get(current_master) {
                 // Find best alternative
                 if let Some((best_node, best_score)) = node_scores
                     .iter()
@@ -421,7 +437,7 @@ impl AffinityOptimizer {
 
     /// Get statistics
     pub fn get_stats(&self) -> AffinityOptimizerStats {
-        self.stats.clone()
+        (*self.stats).clone()
     }
 }
 
@@ -458,13 +474,25 @@ struct TransferRoute {
 }
 
 /// C2C optimizer statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 struct C2COptimizerStats {
     total_transfers: AtomicU64,
     direct_transfers: AtomicU64,
     routed_transfers: AtomicU64,
     avg_hops: AtomicU64,
     transfer_savings: AtomicU64, // Microseconds saved by avoiding master
+}
+
+impl Clone for C2COptimizerStats {
+    fn clone(&self) -> Self {
+        Self {
+            total_transfers: AtomicU64::new(self.total_transfers.load(Ordering::Relaxed)),
+            direct_transfers: AtomicU64::new(self.direct_transfers.load(Ordering::Relaxed)),
+            routed_transfers: AtomicU64::new(self.routed_transfers.load(Ordering::Relaxed)),
+            avg_hops: AtomicU64::new(self.avg_hops.load(Ordering::Relaxed)),
+            transfer_savings: AtomicU64::new(self.transfer_savings.load(Ordering::Relaxed)),
+        }
+    }
 }
 
 impl CacheToToachTransferOptimizer {
@@ -502,7 +530,7 @@ impl CacheToToachTransferOptimizer {
 
     /// Get statistics
     pub fn get_stats(&self) -> C2COptimizerStats {
-        self.stats.clone()
+        (*self.stats).clone()
     }
 }
 
@@ -535,7 +563,7 @@ pub struct GrdOptimizer {
 }
 
 /// GRD optimizer statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Default)]
 pub struct GrdOptimizerStats {
     pub cache_hits: AtomicU64,
     pub hot_cache_hits: AtomicU64,
@@ -547,6 +575,23 @@ pub struct GrdOptimizerStats {
     pub affinity_updates: AtomicU64,
     pub lookup_latency_us: AtomicU64, // Average lookup latency
     pub lock_contention_reduction: AtomicU64, // Percentage * 100
+}
+
+impl Clone for GrdOptimizerStats {
+    fn clone(&self) -> Self {
+        Self {
+            cache_hits: AtomicU64::new(self.cache_hits.load(Ordering::Relaxed)),
+            hot_cache_hits: AtomicU64::new(self.hot_cache_hits.load(Ordering::Relaxed)),
+            cache_misses: AtomicU64::new(self.cache_misses.load(Ordering::Relaxed)),
+            total_entries: AtomicU64::new(self.total_entries.load(Ordering::Relaxed)),
+            promotions: AtomicU64::new(self.promotions.load(Ordering::Relaxed)),
+            evictions: AtomicU64::new(self.evictions.load(Ordering::Relaxed)),
+            invalidations: AtomicU64::new(self.invalidations.load(Ordering::Relaxed)),
+            affinity_updates: AtomicU64::new(self.affinity_updates.load(Ordering::Relaxed)),
+            lookup_latency_us: AtomicU64::new(self.lookup_latency_us.load(Ordering::Relaxed)),
+            lock_contention_reduction: AtomicU64::new(self.lock_contention_reduction.load(Ordering::Relaxed)),
+        }
+    }
 }
 
 impl GrdOptimizer {

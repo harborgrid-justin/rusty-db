@@ -11,6 +11,7 @@
 // 3. Optimized timestamp comparison operations
 // 4. Lock-free read paths where possible
 
+use crate::error::Result;
 use crate::transaction::mvcc::{HybridTimestamp, VersionedRecord};
 use crate::transaction::TransactionId;
 use parking_lot::RwLock;

@@ -506,7 +506,7 @@ impl RuntimeStatsCollector {
 
 /// Execution ID
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct ExecutionId(u64);
+pub struct ExecutionId(pub u64);
 
 /// Execution statistics (during execution)
 #[derive(Debug, Clone)]

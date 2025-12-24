@@ -90,6 +90,7 @@ pub mod connection_limits;         // Per-user/tenant connection limits and reso
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
+use std::time::Instant;
 
 /// Global enterprise optimization configuration
 #[derive(Debug, Clone)]

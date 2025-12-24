@@ -25,7 +25,7 @@ use crate::memory::allocator::{ArenaAllocator, MemoryContext, MemoryContextStats
 use crate::transaction::types::TransactionState;
 
 /// Transaction size profiles for arena optimization
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TransactionSizeProfile {
     /// Tiny transactions (<10KB) - e.g., point queries
     Tiny,
@@ -122,7 +122,14 @@ impl TransactionArena {
         arena_allocator: &ArenaAllocator,
     ) -> Result<Self> {
         let name = format!("txn_{}", txn_id);
-        let context = arena_allocator.create_context(name, profile.memory_limit())?;
+        let std_context = arena_allocator.create_context(name, profile.memory_limit())?;
+
+        // Convert std::sync::Mutex to parking_lot::Mutex
+        let inner = Arc::try_unwrap(std_context)
+            .map_err(|_| crate::error::DbError::Internal("Failed to unwrap context Arc".into()))?
+            .into_inner()
+            .map_err(|e| crate::error::DbError::Internal(format!("Failed to unlock context: {}", e)))?;
+        let context = Arc::new(Mutex::new(inner));
 
         Ok(Self {
             txn_id,

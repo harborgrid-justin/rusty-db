@@ -16,8 +16,9 @@
 // | WAL I/O CPU | 25-30% | 5-8% | 3-4x |
 
 use std::collections::VecDeque;
+use std::io::IoSlice;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 /// Log Sequence Number
@@ -170,7 +171,7 @@ impl AdaptiveGroupCommit {
 
     /// Record a commit latency and adjust batch size
     pub fn record_latency(&self, latency_ms: u64) {
-        let mut latencies = self.recent_latencies.lock();
+        let mut latencies = self.recent_latencies.lock().unwrap();
         if latencies.len() >= self.max_samples {
             latencies.pop_front();
         }
@@ -194,8 +195,8 @@ impl AdaptiveGroupCommit {
     fn adjust_batch_size(&self, current_p99: u64) {
         let error = current_p99 as f64 - self.target_p99_latency_ms as f64;
 
-        let mut integral = self.integral_error.lock();
-        let mut last = self.last_error.lock();
+        let mut integral = self.integral_error.lock().unwrap();
+        let mut last = self.last_error.lock().unwrap();
 
         // Proportional term
         let p_term = error * self.kp;
@@ -267,17 +268,17 @@ impl WalStripe {
 
     /// Add entry to this stripe
     pub fn add_entry(&self, entry: LogEntry) {
-        self.pending.lock().push(entry);
+        self.pending.lock().unwrap().push(entry);
     }
 
     /// Get pending entry count
     pub fn pending_count(&self) -> usize {
-        self.pending.lock().len()
+        self.pending.lock().unwrap().len()
     }
 
     /// Drain pending entries
     pub fn drain_pending(&self) -> Vec<LogEntry> {
-        let mut pending = self.pending.lock();
+        let mut pending = self.pending.lock().unwrap();
         std::mem::take(&mut *pending)
     }
 }
