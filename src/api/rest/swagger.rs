@@ -269,18 +269,9 @@ pub fn create_branded_swagger(
 /// # Returns
 /// Router with Swagger UI and OpenAPI spec endpoints
 pub fn create_api_docs_router() -> Router {
-    use axum::{routing::get, Json};
-
-    // Create OpenAPI spec endpoint
-    let openapi_route = Router::new().route(
-        "/api-docs/openapi.json",
-        get(|| async { Json(ApiDoc::openapi()) }),
-    );
-
-    // Merge with Swagger UI
-    let swagger_ui = configure_default_swagger();
-
-    openapi_route.merge(swagger_ui)
+    // SwaggerUi already includes the OpenAPI spec endpoint at /api-docs/openapi.json
+    // Convert to Router - this should only register routes once
+    Router::new().merge(configure_default_swagger())
 }
 
 #[cfg(test)]

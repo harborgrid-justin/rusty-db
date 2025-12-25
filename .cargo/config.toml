@@ -14,11 +14,18 @@ jobs = 8
 # Use mold linker if available (significantly faster than ld/gold)
 # Falls back to lld if mold is not installed
 linker = "clang"
-rustflags = ["-C", "-C", "-C", "debuginfo=1", "link-arg=-fuse-ld=lld", "split-debuginfo=unpacked"]
+rustflags = [
+    "-C", "link-arg=-fuse-ld=lld",
+    "-C", "split-debuginfo=unpacked",
+    "-C", "debuginfo=1",
+]
 
 # Target-specific configurations for Windows
 [target.x86_64-pc-windows-msvc]
-rustflags = ["-C", "-C", "debuginfo=1", "split-debuginfo=packed"]
+rustflags = [
+    "-C", "split-debuginfo=packed",
+    "-C", "debuginfo=1",
+]
 
 [target.x86_64-pc-windows-gnu]
 ar = "x86_64-w64-mingw32-ar"
