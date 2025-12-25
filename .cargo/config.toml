@@ -14,24 +14,16 @@ jobs = 8
 # Use mold linker if available (significantly faster than ld/gold)
 # Falls back to lld if mold is not installed
 linker = "clang"
-rustflags = [
-    "-C", "link-arg=-fuse-ld=lld",
-    "-C", "split-debuginfo=unpacked",
-    "-C", "debuginfo=1",
-]
+rustflags = ["-C", "-C", "-C", "debuginfo=1", "link-arg=-fuse-ld=lld", "split-debuginfo=unpacked"]
 
 # Target-specific configurations for Windows
 [target.x86_64-pc-windows-msvc]
-rustflags = [
-    "-C", "split-debuginfo=packed",
-    "-C", "debuginfo=1",
-]
+rustflags = ["-C", "-C", "debuginfo=1", "split-debuginfo=packed"]
 
 [target.x86_64-pc-windows-gnu]
-rustflags = [
-    "-C", "link-arg=-fuse-ld=lld",
-    "-C", "debuginfo=1",
-]
+ar = "x86_64-w64-mingw32-ar"
+linker = "x86_64-w64-mingw32-gcc"
+rustflags = ["-C", "debuginfo=1"]
 
 # Profile overrides for faster dev builds
 [profile.dev]
@@ -53,10 +45,10 @@ opt-level = 2
 
 # Test profile optimizations
 [profile.test]
-opt-level = 0
-incremental = true
 codegen-units = 256
 debug = 1
+incremental = true
+opt-level = 0
 
 # Release profile with balanced settings
 [profile.release]
@@ -69,9 +61,9 @@ incremental = true
 
 # Bench profile inherits from release but with faster iteration
 [profile.bench]
-lto = "thin"
 codegen-units = 16
 incremental = true
+lto = "thin"
 
 [env]
 # Reduce LLVM parallelism to prevent memory pressure
