@@ -667,93 +667,178 @@ echo "Pre-installation check complete."
 
 This is the fastest installation method and recommended for most users.
 
-#### Step 1: Download Binaries
+#### Binary Information
 
-**Linux (x86_64)**:
+RustyDB v0.5.1 includes pre-built, optimized binaries:
+
+**Linux (x86_64-unknown-linux-gnu)**:
+- Location: `/home/user/rusty-db/builds/linux/`
+- Server: `rusty-db-server` (38 MB)
+- CLI: `rusty-db-cli` (922 KB)
+- Platform: GNU/Linux 3.2.0+, glibc 2.31+
+- Build: Release with full optimizations, LTO enabled
+
+**Windows (x86_64-pc-windows-gnu)**:
+- Location: `/home/user/rusty-db/builds/windows/`
+- Server: `rusty-db-server.exe` (41 MB)
+- CLI: `rusty-db-cli.exe` (876 KB)
+- Platform: MS Windows (MinGW-w64), Windows 7 SP1+
+- Build: Release with full optimizations, static linking
+
+**Build Configuration**:
+- Rust Version: 1.92.0
+- Build Date: December 25, 2025
+- Optimization Level: 3 (full optimization)
+- LTO: Thin LTO enabled
+- SIMD: Enabled for both platforms
+- Debug Info: Minimal (level 1)
+
+See `/home/user/rusty-db/builds/BUILD_INFO.md` for detailed build information.
+
+#### Step 1: Verify Binary Integrity
+
+**Linux - Check binaries**:
 ```bash
-# Navigate to builds directory (if you have the repository)
-cd /path/to/rusty-db/builds/linux/
+# Navigate to builds directory
+cd /home/user/rusty-db/builds/linux/
 
-# Or download from release artifacts (if available)
-# wget https://github.com/harborgrid-justin/rusty-db/releases/download/v0.5.1/rustydb-v0.5.1-linux-x86_64.tar.gz
-# tar -xzf rustydb-v0.5.1-linux-x86_64.tar.gz
-```
-
-**Windows (x86_64)**:
-```powershell
-# Navigate to builds directory (if you have the repository)
-cd \path\to\rusty-db\builds\windows\
-
-# Or download from release artifacts (if available)
-# Invoke-WebRequest -Uri "https://github.com/harborgrid-justin/rusty-db/releases/download/v0.5.1/rustydb-v0.5.1-windows-x86_64.zip" -OutFile "rustydb-v0.5.1-windows-x86_64.zip"
-# Expand-Archive -Path rustydb-v0.5.1-windows-x86_64.zip -DestinationPath .
-```
-
-#### Step 2: Verify Binary Integrity
-
-**Check file sizes**:
-```bash
-# Linux
+# Check file sizes
 ls -lh rusty-db-server rusty-db-cli
-# Expected: rusty-db-server: ~38 MB, rusty-db-cli: ~922 KB
+# Expected:
+# -rwxr-xr-x ... 38M ... rusty-db-server
+# -rwxr-xr-x ... 922K ... rusty-db-cli
 
-# Windows
-dir rusty-db-server.exe rusty-db-cli.exe
-# Expected: rusty-db-server.exe: ~41 MB, rusty-db-cli.exe: ~876 KB
-```
-
-**Verify binary type** (Linux):
-```bash
+# Verify binary type
 file rusty-db-server
 # Expected: ELF 64-bit LSB executable, x86-64, dynamically linked
 
+# Check dependencies
 ldd rusty-db-server
-# Check dependencies (glibc, etc.)
+# Should show glibc 2.31+ and OpenSSL (if dynamically linked)
+
+# Test execution
+./rusty-db-server --version
+# Expected: RustyDB v0.5.1 - Enterprise Edition
 ```
 
-#### Step 3: Install Binaries
+**Windows - Check binaries**:
+```powershell
+# Navigate to builds directory
+cd \home\user\rusty-db\builds\windows\
+
+# Check file sizes
+dir rusty-db-server.exe rusty-db-cli.exe
+# Expected:
+# rusty-db-server.exe: 41 MB
+# rusty-db-cli.exe: 876 KB
+
+# Test execution
+.\rusty-db-server.exe --version
+# Expected: RustyDB v0.5.1 - Enterprise Edition
+```
+
+#### Step 2: Install Binaries
 
 **Linux**:
 ```bash
-# Make binaries executable
-chmod +x rusty-db-server rusty-db-cli
+# From the builds directory
+cd /home/user/rusty-db/builds/linux/
+
+# Verify binaries are executable
+ls -l rusty-db-server rusty-db-cli
+# Should show 'x' permission (rwxr-xr-x)
 
 # Copy to installation directory
+sudo mkdir -p /opt/rustydb/bin
 sudo cp rusty-db-server /opt/rustydb/bin/
 sudo cp rusty-db-cli /opt/rustydb/bin/
 
-# Verify ownership
+# Set ownership
 sudo chown rustydb:rustydb /opt/rustydb/bin/*
 
-# Create symlinks for convenience (optional)
+# Ensure executable permissions
+sudo chmod 755 /opt/rustydb/bin/rusty-db-server
+sudo chmod 755 /opt/rustydb/bin/rusty-db-cli
+
+# Create symlinks for convenient access (optional)
 sudo ln -s /opt/rustydb/bin/rusty-db-server /usr/local/bin/rusty-db-server
 sudo ln -s /opt/rustydb/bin/rusty-db-cli /usr/local/bin/rusty-db-cli
 
 # Verify installation
 /opt/rustydb/bin/rusty-db-server --version
+rusty-db-server --version  # If symlinks created
 ```
 
 **Windows**:
 ```powershell
-# Copy to installation directory
+# From the builds directory
+cd \home\user\rusty-db\builds\windows\
+
+# Create installation directory
+New-Item -ItemType Directory -Path "C:\Program Files\RustyDB\bin" -Force
+
+# Copy binaries to installation directory
 Copy-Item rusty-db-server.exe "C:\Program Files\RustyDB\bin\"
 Copy-Item rusty-db-cli.exe "C:\Program Files\RustyDB\bin\"
 
 # Add to PATH (system-wide)
-[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\RustyDB\bin", "Machine")
+$path = [Environment]::GetEnvironmentVariable("Path", "Machine")
+$newPath = $path + ";C:\Program Files\RustyDB\bin"
+[Environment]::SetEnvironmentVariable("Path", $newPath, "Machine")
+
+# Refresh current session PATH
+$env:Path = [Environment]::GetEnvironmentVariable("Path", "Machine")
 
 # Verify installation
 & "C:\Program Files\RustyDB\bin\rusty-db-server.exe" --version
+rusty-db-server.exe --version  # After PATH update
 ```
 
 **Expected Output**:
 ```
 RustyDB v0.5.1 - Enterprise Edition
 Build: release
-Platform: x86_64-unknown-linux-gnu
+Platform: x86_64-unknown-linux-gnu (or x86_64-pc-windows-gnu)
 Rust: 1.92.0
 Build Date: 2025-12-25
 ```
+
+**Deployment Automation**:
+
+For production deployments, use the provided deployment scripts:
+
+**Linux (systemd)**:
+```bash
+# Use pre-configured systemd service files
+# See: /home/user/rusty-db/deploy/systemd/README.md
+
+# Single instance deployment
+sudo cp /home/user/rusty-db/deploy/systemd/rustydb-single.service /etc/systemd/system/rustydb.service
+
+# Or multi-instance deployment
+sudo cp /home/user/rusty-db/deploy/systemd/rustydb@.service /etc/systemd/system/
+```
+
+**Windows (service)**:
+```powershell
+# Use provided Windows service scripts
+# Location: \home\user\rusty-db\deploy\windows\
+
+# Install as Windows service
+cd \home\user\rusty-db\deploy\windows\
+.\install-service.bat
+
+# Start service
+.\start-service.bat
+
+# Stop service
+.\stop-service.bat
+
+# Uninstall service
+.\uninstall-service.bat
+```
+
+See deployment scripts README files for detailed instructions.
 
 ### Method 2: Installation from Source
 
@@ -1103,11 +1188,10 @@ RustyDB uses TOML-based configuration. A default configuration template is provi
 
 **Copy configuration template** (Linux):
 ```bash
-# Copy template to configuration directory
-sudo cp /opt/rustydb/conf/rustydb.toml /etc/rustydb/rustydb.toml
+# If configuration template exists in repository
+sudo cp /home/user/rusty-db/conf/rustydb.toml /etc/rustydb/rustydb.toml
 
-# Or if installing from repository
-sudo cp conf/rustydb.toml /etc/rustydb/rustydb.toml
+# Or create from scratch (see configuration section below)
 
 # Set ownership and permissions
 sudo chown rustydb:rustydb /etc/rustydb/rustydb.toml
@@ -1263,6 +1347,17 @@ tree -L 2 /var/lib/rustydb/
 #### 6. Service Management Configuration
 
 **systemd Service (Linux)**:
+
+**Option 1: Use Pre-Configured Service File** (Recommended):
+```bash
+# Copy the provided systemd service file
+sudo cp /home/user/rusty-db/deploy/systemd/rustydb-single.service /etc/systemd/system/rustydb.service
+
+# Review and customize paths if needed
+sudo nano /etc/systemd/system/rustydb.service
+```
+
+**Option 2: Create Custom Service File**:
 
 Create `/etc/systemd/system/rustydb.service`:
 ```ini

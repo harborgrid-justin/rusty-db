@@ -1,9 +1,9 @@
-# RustyDB v0.5.1 - Core Foundation Layer API Documentation
+# RustyDB v0.6.0 - Core Foundation Layer API Documentation
 
-**Document Version:** 1.0
-**Release:** v0.5.1
+**Document Version:** 1.1
+**Release:** v0.6.0
 **Classification:** Enterprise Production Documentation
-**Last Updated:** 2025-12-25
+**Last Updated:** 2025-12-27
 
 ---
 
@@ -1968,13 +1968,13 @@ let snapshot = Snapshot::new(100, vec![...], 98, 97)?;
 
 ### Version Information
 
-**Library Version:** v0.5.1
+**Library Version:** v0.6.0
 **Build Information:**
 ```rust
 use rusty_db::{VERSION, BUILD_INFO, print_info};
 
-println!("{}", VERSION);      // "0.5.1"
-println!("{}", BUILD_INFO);   // "RustyDB v0.5.1 - Enterprise Database Management System"
+println!("{}", VERSION);      // "0.6.0"
+println!("{}", BUILD_INFO);   // "RustyDB v0.6.0 - Enterprise Database Management System"
 print_info();                 // Prints full version info
 ```
 
@@ -2022,11 +2022,12 @@ use rusty_db::{Result, DbError, Value, IsolationLevel};
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2025-12-25 | Initial enterprise documentation for v0.5.1 |
+| 1.1 | 2025-12-27 | Updated for v0.6.0, validated against source code |
 
 ---
 
 **End of Document**
 
-*RustyDB v0.5.1 - Enterprise Production Documentation*
+*RustyDB v0.6.0 - Enterprise Production Documentation*
 *Copyright © 2025 RustyDB Project*
 *Classification: Public*
