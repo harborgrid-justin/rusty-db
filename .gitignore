@@ -25,3 +25,8 @@ target
 
 /target
 nul
+
+# Node.js
+node_modules/
+dist/
+*.log

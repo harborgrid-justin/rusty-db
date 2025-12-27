@@ -14,7 +14,7 @@
  * - Logs and alerts
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 // ============================================================================
 // Type Definitions - Health
@@ -45,7 +45,7 @@ export interface ComponentHealthDetail {
   status: string;
   message: string;
   duration_ms: number;
-  details: Record<string, any>;
+  details: Record<string, unknown>;
 }
 
 export interface FullHealthResponse {
@@ -242,7 +242,7 @@ export interface LogEntry {
   timestamp: number;
   level: string;
   message: string;
-  context: Record<string, any>;
+  context: Record<string, unknown>;
 }
 
 export interface LogResponse {

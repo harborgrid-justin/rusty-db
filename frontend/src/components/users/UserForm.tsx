@@ -1,12 +1,10 @@
 import { Fragment, useEffect } from 'react';
-import { Dialog, Transition, Listbox } from '@headlessui/react';
+import { Dialog, Transition } from '@headlessui/react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   XMarkIcon,
-  CheckIcon,
-  ChevronUpDownIcon,
   InformationCircleIcon,
   ShieldCheckIcon,
 } from '@heroicons/react/24/outline';
@@ -114,8 +112,6 @@ function RoleSelector({
   roles: Role[];
   error?: string;
 }) {
-  const selectedRoles = roles.filter((role) => value.includes(role.id));
-
   const toggleRole = (roleId: UUID) => {
     if (value.includes(roleId)) {
       onChange(value.filter((id) => id !== roleId));
@@ -200,7 +196,6 @@ export function UserForm({
     handleSubmit,
     control,
     reset,
-    watch,
     formState: { errors },
   } = useForm<CreateFormData | UpdateFormData>({
     resolver: zodResolver(isEditMode ? updateUserSchema : createUserSchema),

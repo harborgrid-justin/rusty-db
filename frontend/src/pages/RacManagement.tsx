@@ -3,7 +3,7 @@
  * Enterprise clustering, cache fusion, and GRD management
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ServerIcon,
   CpuChipIcon,
@@ -13,24 +13,18 @@ import {
   BoltIcon,
   SignalIcon,
 } from '@heroicons/react/24/outline';
-import racService, { type ClusterNode, type ClusterStatus } from '../services/racService';
+import racService, { type ClusterStatus } from '../services/racService';
 import { toast } from 'react-hot-toast';
 
 export default function RacManagement() {
   const [clusterStatus, setClusterStatus] = useState<ClusterStatus | null>(null);
-  const [cacheFusionStats, setCacheFusionStats] = useState<any>(null);
-  const [grdResources, setGrdResources] = useState<any[]>([]);
-  const [interconnectStats, setInterconnectStats] = useState<any[]>([]);
+  const [cacheFusionStats, setCacheFusionStats] = useState<unknown>(null);
+  const [grdResources, setGrdResources] = useState<unknown[]>([]);
+  const [interconnectStats, setInterconnectStats] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'cache-fusion' | 'grd' | 'interconnect'>('overview');
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 5000);
-    return () => clearInterval(interval);
-  }, [activeTab]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       if (activeTab === 'overview') {
         const statusRes = await racService.getClusterStatus();
@@ -50,7 +44,13 @@ export default function RacManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    loadData();
+    const interval = setInterval(loadData, 5000);
+    return () => clearInterval(interval);
+  }, [loadData]);
 
   const handleRebalance = async () => {
     try {
@@ -139,7 +139,7 @@ export default function RacManagement() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'overview' | 'cache-fusion' | 'grd' | 'interconnect')}
               className={`
                 flex items-center py-4 px-1 border-b-2 font-medium text-sm
                 ${activeTab === tab.id

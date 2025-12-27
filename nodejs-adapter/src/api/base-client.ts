@@ -49,7 +49,7 @@ export class BaseClient {
   /**
    * Execute POST request
    */
-  protected async post<T>(path: string, data: any): Promise<T> {
+  protected async post<T>(path: string, data: unknown): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       method: 'POST',
       headers: {
@@ -72,7 +72,7 @@ export class BaseClient {
   /**
    * Execute PUT request
    */
-  protected async put<T>(path: string, data: any): Promise<T> {
+  protected async put<T>(path: string, data: unknown): Promise<T> {
     const response = await fetch(`${this.baseUrl}${path}`, {
       method: 'PUT',
       headers: {
@@ -115,7 +115,7 @@ export class BaseClient {
   /**
    * Execute GraphQL request
    */
-  protected async graphql<T>(query: string, variables?: Record<string, any>): Promise<T> {
+  protected async graphql<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
     const response = await fetch(`${this.baseUrl}/graphql`, {
       method: 'POST',
       headers: {

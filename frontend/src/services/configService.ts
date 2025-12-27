@@ -1,4 +1,4 @@
-import { get, post, put, del } from './api';
+import { get, post, put } from './api';
 import type { ApiResponse, DatabaseConfig } from '../types';
 
 // ============================================================================

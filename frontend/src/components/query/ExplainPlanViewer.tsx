@@ -158,7 +158,7 @@ export const ExplainPlanViewer: React.FC<ExplainPlanViewerProps> = ({ plan }) =>
     return allNodes
       .sort((a, b) => b.cost - a.cost)
       .slice(0, 5);
-  }, [plan]);
+  }, [plan.nodes]);
 
   // Calculate total warnings
   const warningCount = useMemo(() => {
@@ -176,7 +176,7 @@ export const ExplainPlanViewer: React.FC<ExplainPlanViewerProps> = ({ plan }) =>
       }, 0);
     };
     return countWarnings(plan.nodes);
-  }, [plan]);
+  }, [plan.nodes]);
 
   return (
     <div className="explain-plan-viewer" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -318,8 +318,5 @@ export const ExplainPlanViewer: React.FC<ExplainPlanViewerProps> = ({ plan }) =>
   );
 };
 
-function useMemo<T>(factory: () => T, deps: React.DependencyList): T {
-  return React.useMemo(factory, deps);
-}
 
 export default ExplainPlanViewer;

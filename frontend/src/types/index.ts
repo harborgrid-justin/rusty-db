@@ -36,7 +36,7 @@ export interface ApiResponse<T> {
 }
 
 export interface ApiError {
-  error: any;
+  error: unknown;
   code: string;
   message: string;
   details?: Record<string, unknown>;

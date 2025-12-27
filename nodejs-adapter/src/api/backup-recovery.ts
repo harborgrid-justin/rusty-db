@@ -13,7 +13,7 @@
  * Base Path: /api/v1
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 // ============================================================================
 // Type Definitions
@@ -120,7 +120,7 @@ export interface FlashbackQueryRequest {
   timestamp?: string; // ISO 8601 format
   scn?: number; // System Change Number
   columns?: string[];
-  filter?: Record<string, any>;
+  filter?: Record<string, unknown>;
   limit?: number;
 }
 
@@ -128,7 +128,7 @@ export interface FlashbackQueryRequest {
  * Flashback Query Response
  */
 export interface FlashbackQueryResponse {
-  rows: Array<Record<string, any>>;
+  rows: Array<Record<string, unknown>>;
   count: number;
   query_scn: number;
   query_timestamp: number;
@@ -161,7 +161,7 @@ export interface FlashbackTableResponse {
  */
 export interface VersionsQueryRequest {
   table: string;
-  primary_key: Record<string, any>;
+  primary_key: Record<string, unknown>;
   start_scn?: number;
   end_scn?: number;
   start_timestamp?: string;
@@ -176,7 +176,7 @@ export interface RowVersion {
   timestamp: number;
   operation: FlashbackOperation;
   transaction_id: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   changed_columns?: string[];
 }
 
@@ -283,7 +283,7 @@ export interface PITRConfig {
 export interface ApiError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // ============================================================================
@@ -509,7 +509,7 @@ export class BackupRecoveryClient {
     timestamp: string | Date,
     options?: {
       columns?: string[];
-      filter?: Record<string, any>;
+      filter?: Record<string, unknown>;
       limit?: number;
     }
   ): Promise<FlashbackQueryResponse> {
@@ -535,7 +535,7 @@ export class BackupRecoveryClient {
     scn: number,
     options?: {
       columns?: string[];
-      filter?: Record<string, any>;
+      filter?: Record<string, unknown>;
       limit?: number;
     }
   ): Promise<FlashbackQueryResponse> {
@@ -637,7 +637,7 @@ export class BackupRecoveryClient {
    */
   async getRowHistory(
     table: string,
-    primaryKey: Record<string, any>,
+    primaryKey: Record<string, unknown>,
     options?: {
       startSCN?: number;
       endSCN?: number;
@@ -833,6 +833,7 @@ export class BackupRecoveryClient {
     const timeout = options?.timeout || 3600000; // 1 hour default
     const startTime = Date.now();
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const backup = await this.getBackup(backupId);
 

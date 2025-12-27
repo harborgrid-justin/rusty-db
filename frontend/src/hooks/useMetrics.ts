@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import {
   metricsService,
   TimeRange,

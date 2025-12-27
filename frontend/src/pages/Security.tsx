@@ -16,7 +16,6 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ArrowPathIcon,
-  ChartBarIcon,
   BellAlertIcon,
   DocumentChartBarIcon,
 } from '@heroicons/react/24/outline';
@@ -29,7 +28,7 @@ import clsx from 'clsx';
 // ============================================================================
 
 export default function Security() {
-  const { overview, alerts, keys, policies, isLoading, error } = useSecurityData();
+  const { overview, alerts, isLoading, error } = useSecurityData();
   const runSecurityScan = useRunSecurityScan();
   const [selectedPeriod, setSelectedPeriod] = useState<'24h' | '7d' | '30d'>('24h');
 

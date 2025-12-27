@@ -102,7 +102,6 @@ export function ConfigDiff({
       <div className="config-diff-list">
         {changes.map((change, index) => {
           const impact = getImpactLevel(change.setting);
-          const hasChanged = change.oldValue !== change.newValue;
 
           return (
             <div key={index} className={`config-diff-item impact-${impact}`}>

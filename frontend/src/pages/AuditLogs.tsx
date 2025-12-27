@@ -7,14 +7,11 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   ClipboardDocumentListIcon,
-  FunnelIcon,
   CalendarIcon,
   ArrowDownTrayIcon,
   MagnifyingGlassIcon,
   ChartBarIcon,
   UserIcon,
-  CommandLineIcon,
-  ExclamationTriangleIcon,
   CheckCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -89,7 +86,7 @@ export default function AuditLogs() {
 
   const setTimeRange = (range: '1h' | '24h' | '7d' | '30d' | 'custom') => {
     const now = new Date();
-    let start = new Date();
+    const start = new Date();
 
     switch (range) {
       case '1h':

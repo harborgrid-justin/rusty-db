@@ -4,7 +4,6 @@ import type {
   Backup,
   BackupSchedule,
   RestoreProgress,
-  BackupStatus,
   UUID,
 } from '../types';
 import type {

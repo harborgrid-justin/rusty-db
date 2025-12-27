@@ -13,7 +13,6 @@ import {
   Cog6ToothIcon,
   ClockIcon,
   CheckCircleIcon,
-  ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Dialog } from '@headlessui/react';
 import { useForm } from 'react-hook-form';
@@ -30,7 +29,6 @@ import {
   useNodes,
 } from '../hooks/useCluster';
 import type { ReplicationConfigUpdate } from '../services/clusterService';
-import clsx from 'clsx';
 
 export default function Replication() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -43,7 +41,7 @@ export default function Replication() {
   // Data hooks
   const { data: replicationStatuses = [], isLoading: statusLoading } = useReplicationStatus();
   const { data: nodes = [] } = useNodes();
-  const { data: config, isLoading: configLoading } = useReplicationConfig();
+  const { data: config } = useReplicationConfig();
   const { data: lagData = [] } = useReplicationLag(
     selectedNodeId || '',
     selectedNodeId ? timeRange : undefined
@@ -335,7 +333,7 @@ function ConfigurationDialog({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  config: any;
+  config: { mode: string; maxWalSenders: number; walKeepSegments: number } | undefined;
   onUpdate: (config: ReplicationConfigUpdate) => void;
   isLoading: boolean;
 }) {

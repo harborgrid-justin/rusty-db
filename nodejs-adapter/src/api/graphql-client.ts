@@ -10,8 +10,6 @@ import {
   DatabaseSchema,
   TableType,
   RowType,
-  TableStatistics,
-  ColumnStatistics,
   QueryResult,
   MutationResult,
   DdlResult,
@@ -47,7 +45,6 @@ import {
   StringFunctionTypeEnum,
   Json,
   ID,
-  BigInt,
 } from '../types/graphql-types';
 
 export interface GraphQLClientConfig {
@@ -67,17 +64,17 @@ export interface GraphQLClientConfig {
 
 export interface GraphQLRequest {
   query: string;
-  variables?: Record<string, any>;
+  variables?: Record<string, unknown>;
   operationName?: string;
 }
 
-export interface GraphQLResponse<T = any> {
+export interface GraphQLResponse<T = unknown> {
   data?: T;
   errors?: Array<{
     message: string;
     locations?: Array<{ line: number; column: number }>;
     path?: Array<string | number>;
-    extensions?: Record<string, any>;
+    extensions?: Record<string, unknown>;
   }>;
 }
 
@@ -88,7 +85,7 @@ export interface GraphQLResponse<T = any> {
  */
 export class RustyDBGraphQLClient {
   private config: Required<GraphQLClientConfig>;
-  private wsClient?: any; // WebSocket client for subscriptions
+  private wsClient?: unknown; // WebSocket client for subscriptions
 
   constructor(config: GraphQLClientConfig) {
     this.config = {
@@ -107,7 +104,7 @@ export class RustyDBGraphQLClient {
 
   private async request<T>(
     query: string,
-    variables?: Record<string, any>,
+    variables?: Record<string, unknown>,
     operationName?: string
   ): Promise<T> {
     const controller = new AbortController();
@@ -523,13 +520,13 @@ export class RustyDBGraphQLClient {
   /**
    * Count rows in a table
    */
-  async count(table: string, where?: WhereClause): Promise<BigInt> {
+  async count(table: string, where?: WhereClause): Promise<string> {
     const query = `
       query Count($table: String!, $where: WhereClause) {
         count(table: $table, where: $where)
       }
     `;
-    const result = await this.request<{ count: BigInt }>(query, { table, where });
+    const result = await this.request<{ count: string }>(query, { table, where });
     return result.count;
   }
 
@@ -1942,7 +1939,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to schema changes (DDL events)
    */
   subscribeSchemaChanges(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -1966,7 +1963,7 @@ export class RustyDBGraphQLClient {
    */
   subscribePartitionEvents(
     tableName?: string,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -1993,7 +1990,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to cluster topology changes
    */
   subscribeClusterTopologyChanges(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2018,7 +2015,7 @@ export class RustyDBGraphQLClient {
    */
   subscribeNodeHealthChanges(
     nodeId?: string,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2046,7 +2043,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to active queries stream
    */
   subscribeActiveQueriesStream(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2072,7 +2069,7 @@ export class RustyDBGraphQLClient {
    */
   subscribeSlowQueriesStream(
     thresholdMs?: number,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2096,7 +2093,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to query plan changes
    */
   subscribeQueryPlanChanges(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2122,7 +2119,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to transaction events
    */
   subscribeTransactionEvents(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2145,7 +2142,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to lock events
    */
   subscribeLockEvents(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2170,7 +2167,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to deadlock detection events
    */
   subscribeDeadlockDetection(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2197,7 +2194,7 @@ export class RustyDBGraphQLClient {
    */
   subscribeAlertStream(
     severity?: string,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2222,7 +2219,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to health status changes
    */
   subscribeHealthStatusChanges(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2252,7 +2249,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to storage status changes
    */
   subscribeStorageStatusChanges(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2279,7 +2276,7 @@ export class RustyDBGraphQLClient {
    */
   subscribeBufferPoolMetrics(
     intervalSeconds?: number,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2307,7 +2304,7 @@ export class RustyDBGraphQLClient {
    */
   subscribeIoStatisticsStream(
     intervalSeconds?: number,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2336,7 +2333,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to session events
    */
   subscribeSessionEvents(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2360,7 +2357,7 @@ export class RustyDBGraphQLClient {
    */
   subscribeConnectionPoolEvents(
     poolId?: string,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2387,7 +2384,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to security events
    */
   subscribeSecurityEvents(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2412,7 +2409,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to audit stream
    */
   subscribeAuditStream(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2438,7 +2435,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to threat alerts
    */
   subscribeThreatAlerts(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2466,7 +2463,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to replication lag updates
    */
   subscribeReplicationLag(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2490,7 +2487,7 @@ export class RustyDBGraphQLClient {
    * Subscribe to WAL events
    */
   subscribeWalEvents(
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2516,7 +2513,7 @@ export class RustyDBGraphQLClient {
    */
   subscribeTrainingEvents(
     modelId?: string,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2542,7 +2539,7 @@ export class RustyDBGraphQLClient {
    */
   subscribePredictionStream(
     modelId?: string,
-    onData?: (data: any) => void,
+    onData?: (data: unknown) => void,
     onError?: (error: Error) => void
   ): () => void {
     const subscription = `
@@ -2567,7 +2564,7 @@ export class RustyDBGraphQLClient {
 
   private subscribe<T>(
     query: string,
-    variables: Record<string, any>,
+    variables: Record<string, unknown>,
     onData?: (data: T) => void,
     onError?: (error: Error) => void
   ): () => void {
@@ -2575,10 +2572,12 @@ export class RustyDBGraphQLClient {
     // In a real implementation, you would use a GraphQL subscription client
     // like graphql-ws or subscriptions-transport-ws
 
-    console.log('Subscription started:', { query, variables });
+    // eslint-disable-next-line no-console
+    console.log('Subscription started:', { query, variables, onData, onError });
 
     // Return unsubscribe function
     return () => {
+      // eslint-disable-next-line no-console
       console.log('Subscription ended');
     };
   }

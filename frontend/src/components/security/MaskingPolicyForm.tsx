@@ -3,7 +3,7 @@
 // Create or edit data masking policies
 // ============================================================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   XMarkIcon,
@@ -25,8 +25,8 @@ import type {
 interface MaskingPolicyFormProps {
   policy?: DataMaskingPolicy | null;
   onClose: () => void;
-  onCreate: (request: CreateMaskingPolicyRequest) => Promise<any>;
-  onUpdate: (policyId: string, request: UpdateMaskingPolicyRequest) => Promise<any>;
+  onCreate: (request: CreateMaskingPolicyRequest) => Promise<void>;
+  onUpdate: (policyId: string, request: UpdateMaskingPolicyRequest) => Promise<void>;
   isSubmitting: boolean;
 }
 

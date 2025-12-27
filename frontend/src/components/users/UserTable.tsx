@@ -1,9 +1,7 @@
-import { Fragment, useState, useMemo } from 'react';
+import { Fragment } from 'react';
 import { Menu, Transition } from '@headlessui/react';
 import {
   EllipsisVerticalIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
   CheckIcon,
   XMarkIcon,
   LockClosedIcon,

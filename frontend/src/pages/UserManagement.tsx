@@ -2,15 +2,12 @@ import { useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import {
   UserPlusIcon,
-  FunnelIcon,
   ArrowPathIcon,
   TrashIcon,
   LockClosedIcon,
-  LockOpenIcon,
   CheckIcon,
   XMarkIcon,
   PowerIcon,
-  ClockIcon,
 } from '@heroicons/react/24/outline';
 import { toast } from 'react-hot-toast';
 import clsx from 'clsx';
@@ -35,7 +32,6 @@ import type {
   UserFilters,
   CreateUserRequest,
   UpdateUserRequest,
-  UserSessionInfo,
 } from '../services/userService';
 import { formatDistanceToNow } from 'date-fns';
 

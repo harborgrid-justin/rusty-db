@@ -12,7 +12,7 @@
  * @module ml-analytics
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 // ============================================================================
 // Machine Learning Types
@@ -222,7 +222,7 @@ export interface CubeQueryRequest {
  * OLAP cube query response
  */
 export interface CubeQueryResponse {
-  results: Record<string, any>[];
+  results: Record<string, unknown>[];
   row_count: number;
   execution_time_ms: number;
 }
@@ -581,7 +581,7 @@ export interface InMemoryConfig {
 export interface ApiError {
   error: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // ============================================================================
@@ -845,7 +845,7 @@ export class MLAnalyticsClient {
    * // Save to file or transfer to another system
    * ```
    */
-  async exportModel(modelId: string): Promise<any> {
+  async exportModel(modelId: string): Promise<unknown> {
     const response = await this.client.get(
       `/api/${this.apiVersion}/ml/models/${modelId}/export`
     );

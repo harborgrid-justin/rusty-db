@@ -12,7 +12,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { ColumnEditor } from './ColumnEditor';
-import type { CreateTableRequest, ColumnDefinition, ForeignKeyDefinition, ConstraintDefinition } from '../../services/schemaService';
+import type { CreateTableRequest, ColumnDefinition, ConstraintDefinition } from '../../services/schemaService';
 import clsx from 'clsx';
 
 interface CreateTableWizardProps {
@@ -40,7 +40,6 @@ export function CreateTableWizard({
     },
   ]);
   const [primaryKey, setPrimaryKey] = useState<string[]>(['id']);
-  const [foreignKeys, setForeignKeys] = useState<ForeignKeyDefinition[]>([]);
   const [constraints, setConstraints] = useState<ConstraintDefinition[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -112,7 +111,6 @@ export function CreateTableWizard({
       schema,
       columns,
       primaryKey: primaryKey.length > 0 ? primaryKey : undefined,
-      foreignKeys: foreignKeys.length > 0 ? foreignKeys : undefined,
       constraints: constraints.length > 0 ? constraints : undefined,
       comment: comment || undefined,
     };

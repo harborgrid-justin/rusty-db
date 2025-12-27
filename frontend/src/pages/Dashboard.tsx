@@ -13,11 +13,9 @@ import {
   ServerIcon,
   ArrowPathIcon,
   Cog6ToothIcon,
-  TableCellsIcon,
   BoltIcon,
 } from '@heroicons/react/24/outline';
 import { ExclamationTriangleIcon, BellAlertIcon } from '@heroicons/react/24/solid';
-import clsx from 'clsx';
 import MetricCard from '../components/dashboard/MetricCard';
 import PerformanceChart, { ChartSeries } from '../components/dashboard/PerformanceChart';
 import HealthIndicator, { CompactHealthBadge } from '../components/dashboard/HealthIndicator';
@@ -48,7 +46,6 @@ export const Dashboard: React.FC = () => {
     database,
     queries,
     health,
-    alerts,
     isLoading,
     isError,
     error,

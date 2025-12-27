@@ -20,12 +20,6 @@ interface PermissionMatrixProps {
   className?: string;
 }
 
-interface MatrixCell {
-  permission: Permission | null;
-  resource: string;
-  action: PermissionAction;
-}
-
 // ============================================================================
 // Helper Functions
 // ============================================================================

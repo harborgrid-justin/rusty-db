@@ -186,7 +186,7 @@ class GatewayService {
   /**
    * Get service health
    */
-  async getServiceHealth(id: string): Promise<ApiResponse<any>> {
+  async getServiceHealth(id: string): Promise<ApiResponse<Record<string, unknown>>> {
     return api.get(`/api/gateway/services/${id}/health`);
   }
 
@@ -200,7 +200,7 @@ class GatewayService {
   /**
    * Get audit log
    */
-  async getAuditLog(params?: { page?: number; page_size?: number; from?: string; to?: string }): Promise<ApiResponse<any>> {
+  async getAuditLog(params?: { page?: number; page_size?: number; from?: string; to?: string }): Promise<ApiResponse<{ entries: Record<string, unknown>[]; total: number }>> {
     return api.get('/api/gateway/audit-log', { params });
   }
 

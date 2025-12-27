@@ -3,7 +3,7 @@
 // Step-by-step wizard for rotating encryption keys
 // ============================================================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   XMarkIcon,
@@ -272,7 +272,7 @@ export function KeyRotationWizard({ keyId, onClose }: KeyRotationWizardProps) {
                       Tables to Re-encrypt
                     </h4>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {encryptedTables.map((table, idx) => (
+                      {encryptedTables.map((table) => (
                         <div
                           key={`${table.schema}.${table.table}`}
                           className="p-3 rounded-lg bg-dark-700/50 flex items-center justify-between"

@@ -3,8 +3,7 @@
 // Simple ERD visualization for table relationships
 // ============================================================================
 
-import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { useRef, useState } from 'react';
 import {
   TableCellsIcon,
   ArrowsRightLeftIcon,

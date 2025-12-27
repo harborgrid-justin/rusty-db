@@ -5,9 +5,6 @@ import {
   PlusIcon,
   ArrowPathIcon,
   XMarkIcon,
-  UsersIcon,
-  KeyIcon,
-  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +22,6 @@ import {
   useRoleUsers,
   usePermissions,
 } from '../hooks/useRoles';
-import type { UUID, Role } from '../types';
 import type { CreateRoleRequest, UpdateRoleRequest, RoleWithStats } from '../services/roleService';
 
 // ============================================================================
@@ -57,7 +53,7 @@ interface RoleFormDialogProps {
   onClose: () => void;
   onSubmit: (data: CreateRoleRequest | UpdateRoleRequest) => void;
   role?: RoleWithStats | null;
-  permissions: any[];
+  permissions: Array<{ id: string; name: string; description?: string }>;
   isLoading?: boolean;
 }
 
@@ -281,7 +277,7 @@ interface RoleUsersDialogProps {
   isOpen: boolean;
   onClose: () => void;
   role: RoleWithStats | null;
-  users: any[];
+  users: Array<{ id: string; username: string; displayName?: string; email?: string }>;
 }
 
 function RoleUsersDialog({ isOpen, onClose, role, users }: RoleUsersDialogProps) {

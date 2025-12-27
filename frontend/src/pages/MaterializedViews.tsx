@@ -11,7 +11,6 @@ import {
   ArrowPathIcon,
   TrashIcon,
   EyeIcon,
-  ClockIcon,
   CircleStackIcon,
   CodeBracketIcon,
 } from '@heroicons/react/24/outline';
@@ -25,7 +24,6 @@ import {
 import type { View } from '../types';
 import type { CreateViewRequest } from '../services/schemaService';
 import { getErrorMessage } from '../services/api';
-import clsx from 'clsx';
 
 export default function MaterializedViews() {
   const [showCreateModal, setShowCreateModal] = useState(false);

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardHeader } from '../components/common/Card';
 import { Button } from '../components/common/Button';
@@ -20,26 +19,6 @@ interface MLModel {
   lastTrained: string;
   features: number;
   version: string;
-}
-
-interface TrainingJob {
-  id: string;
-  modelId: string;
-  status: 'running' | 'completed' | 'failed' | 'pending';
-  progress: number;
-  startTime: string;
-  endTime?: string;
-  accuracy?: number;
-  loss?: number;
-}
-
-interface Prediction {
-  id: string;
-  modelId: string;
-  input: Record<string, any>;
-  output: any;
-  confidence: number;
-  timestamp: string;
 }
 
 // Mock data
@@ -138,6 +117,13 @@ const ALGORITHMS = [
   { value: 'dbscan', label: 'DBSCAN' },
 ];
 
+interface PredictionResult {
+  prediction: string;
+  confidence: number;
+  probabilities: Record<string, number>;
+  explanation: string;
+}
+
 export default function MachineLearning() {
   const [models, setModels] = useState<MLModel[]>(MOCK_MODELS);
   const [selectedModel, setSelectedModel] = useState<MLModel | null>(MOCK_MODELS[0]);
@@ -153,7 +139,7 @@ export default function MachineLearning() {
 
   // Prediction state
   const [predictionInput, setPredictionInput] = useState('{"tenure": 24, "monthly_charges": 65.5}');
-  const [predictionResult, setPredictionResult] = useState<any>(null);
+  const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
   const [isPredicting, setIsPredicting] = useState(false);
 
   // Model comparison
@@ -167,7 +153,7 @@ export default function MachineLearning() {
       const newModel: MLModel = {
         id: `m${Date.now()}`,
         name: newModelName,
-        type: newModelType as any,
+        type: newModelType as MLModel['type'],
         status: 'training',
         accuracy: 0,
         createdAt: new Date().toISOString().split('T')[0],
@@ -565,7 +551,7 @@ export default function MachineLearning() {
                       <p className="text-sm text-gray-400 mb-2">Probabilities:</p>
                       <div className="space-y-2">
                         {Object.entries(predictionResult.probabilities).map(
-                          ([key, value]: [string, any]) => (
+                          ([key, value]) => (
                             <div key={key} className="flex items-center justify-between">
                               <span className="text-white">{key}:</span>
                               <div className="flex items-center space-x-2">

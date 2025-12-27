@@ -1,11 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { roleService, permissionService } from '../services/roleService';
-import type { Role, Permission, UUID, PermissionAction } from '../types';
+import type { UUID, PermissionAction } from '../types';
 import type {
   CreateRoleRequest,
   UpdateRoleRequest,
-  RoleWithStats,
 } from '../services/roleService';
 
 // ============================================================================

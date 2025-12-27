@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Card, CardHeader } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
-import { Select } from '../components/common/Select';
 import { Tabs, TabList, TabPanel, TabPanels } from '../components/common/Tabs';
 import { Table, Column } from '../components/common/Table';
 import { Badge, StatusBadge } from '../components/common/Badge';
@@ -27,8 +26,8 @@ interface ChangeEvent {
   subscriptionId: string;
   table: string;
   operation: 'INSERT' | 'UPDATE' | 'DELETE';
-  data: Record<string, any>;
-  oldData?: Record<string, any>;
+  data: Record<string, unknown>;
+  oldData?: Record<string, unknown>;
   timestamp: string;
   lsn: string;
 }
@@ -155,7 +154,7 @@ const TABLE_OPTIONS = [
 export default function Streaming() {
   const [subscriptions, setSubscriptions] = useState<CDCSubscription[]>(MOCK_SUBSCRIPTIONS);
   const [recentEvents, setRecentEvents] = useState<ChangeEvent[]>(MOCK_RECENT_EVENTS);
-  const [consumerGroups, setConsumerGroups] = useState<ConsumerGroup[]>(MOCK_CONSUMER_GROUPS);
+  const [consumerGroups] = useState<ConsumerGroup[]>(MOCK_CONSUMER_GROUPS);
   const [metrics, setMetrics] = useState<StreamMetrics[]>(MOCK_METRICS);
   const [selectedSubscription, setSelectedSubscription] = useState<CDCSubscription | null>(
     MOCK_SUBSCRIPTIONS[0]
@@ -183,7 +182,7 @@ export default function Streaming() {
         id: `e${Date.now()}`,
         subscriptionId: subscriptions[Math.floor(Math.random() * subscriptions.length)]?.id || 's1',
         table: ['orders', 'users', 'inventory'][Math.floor(Math.random() * 3)],
-        operation: ['INSERT', 'UPDATE', 'DELETE'][Math.floor(Math.random() * 3)] as any,
+        operation: ['INSERT', 'UPDATE', 'DELETE'][Math.floor(Math.random() * 3)] as 'INSERT' | 'UPDATE' | 'DELETE',
         data: { id: Math.floor(Math.random() * 10000), timestamp: new Date().toISOString() },
         timestamp: new Date().toISOString(),
         lsn: `0/${Math.random().toString(16).substr(2, 8).toUpperCase()}`,
@@ -222,7 +221,7 @@ export default function Streaming() {
         id: `s${Date.now()}`,
         name: newSubName,
         tables: selectedTables,
-        operations: selectedOps as any,
+        operations: selectedOps as ('INSERT' | 'UPDATE' | 'DELETE')[],
         status: 'active',
         createdAt: new Date().toISOString().split('T')[0],
         consumerGroup: consumerGroupName || 'default-group',
@@ -313,30 +312,6 @@ export default function Streaming() {
         </div>
       ),
     },
-  ];
-
-  const eventColumns: Column<ChangeEvent>[] = [
-    {
-      key: 'timestamp',
-      header: 'Time',
-      width: '150px',
-      render: (val) => new Date(val).toLocaleTimeString(),
-    },
-    { key: 'table', header: 'Table', width: '120px' },
-    {
-      key: 'operation',
-      header: 'Op',
-      width: '100px',
-      render: (val) => (
-        <Badge
-          variant={val === 'INSERT' ? 'success' : val === 'UPDATE' ? 'warning' : 'danger'}
-          size="sm"
-        >
-          {val}
-        </Badge>
-      ),
-    },
-    { key: 'lsn', header: 'LSN', width: '100px', render: (val) => <code className="text-xs">{val}</code> },
   ];
 
   const consumerColumns: Column<ConsumerGroup>[] = [

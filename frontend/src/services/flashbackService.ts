@@ -15,7 +15,7 @@ export interface FlashbackQueryRequest {
 
 export interface FlashbackQueryResponse {
   query_id: string;
-  result: any[];
+  result: Record<string, unknown>[];
   row_count: number;
   execution_time_ms: number;
   scn_used: number;
@@ -41,7 +41,7 @@ export interface RowVersion {
   scn: number;
   timestamp: string;
   operation: 'INSERT' | 'UPDATE' | 'DELETE';
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   transaction_id: string;
   user: string;
 }
@@ -135,7 +135,7 @@ class FlashbackService {
   /**
    * Flashback transaction
    */
-  async flashbackTransaction(request: TransactionFlashbackRequest): Promise<ApiResponse<{ message: string; operations: any[] }>> {
+  async flashbackTransaction(request: TransactionFlashbackRequest): Promise<ApiResponse<{ message: string; operations: Record<string, unknown>[] }>> {
     return api.post('/api/flashback/transaction', request);
   }
 

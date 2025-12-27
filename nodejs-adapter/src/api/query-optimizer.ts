@@ -18,7 +18,7 @@ export interface QueryRequest {
   /** SQL query to execute */
   sql: string;
   /** Query parameters for parameterized queries */
-  params?: any[];
+  params?: unknown[];
   /** Maximum number of rows to return */
   limit?: number;
   /** Offset for pagination */
@@ -48,7 +48,7 @@ export interface QueryResponse {
   /** Unique query execution ID */
   query_id: string;
   /** Result rows as key-value objects */
-  rows: Record<string, any>[];
+  rows: Record<string, unknown>[];
   /** Column metadata */
   columns: ColumnMetadata[];
   /** Number of rows returned */
@@ -121,7 +121,7 @@ export interface ExplainPlan {
   /** Estimated number of rows */
   rows: number;
   /** Additional operator-specific details */
-  details: Record<string, any>;
+  details: Record<string, unknown>;
   /** Child plan nodes */
   children: ExplainPlan[];
 }
@@ -345,7 +345,7 @@ export interface ApiError {
   /** Error message */
   message: string;
   /** Additional error details */
-  details?: any;
+  details?: unknown;
   /** Error timestamp */
   timestamp: number;
   /** Request ID for tracing */
@@ -356,7 +356,7 @@ export class QueryOptimizerError extends Error {
   constructor(
     public code: string,
     message: string,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'QueryOptimizerError';

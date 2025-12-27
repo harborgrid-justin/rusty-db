@@ -21,11 +21,7 @@ export default function Sessions() {
   } = useBlockingTree(15000);
 
   const handleKillSession = async (sessionId: string, force: boolean) => {
-    try {
-      await killSession(sessionId, force);
-    } catch (err) {
-      throw err;
-    }
+    await killSession(sessionId, force);
   };
 
   const activeCount = sessions.filter((s) => s.state === 'active').length;

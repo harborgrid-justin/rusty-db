@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   getResourceGroups,
   createResourceGroup,
@@ -58,8 +57,6 @@ interface UseResourcesReturn {
 }
 
 export function useResources(): UseResourcesReturn {
-  const navigate = useNavigate();
-
   // Resource Groups State
   const [groups, setGroups] = useState<ResourceGroup[]>([]);
   const [usageData, setUsageData] = useState<ResourceUsage[]>([]);

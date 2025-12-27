@@ -24,7 +24,6 @@ export function Tooltip({
   disabled = false,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
   const timeoutRef = useRef<NodeJS.Timeout>();
   const triggerRef = useRef<HTMLDivElement>(null);
 
@@ -40,11 +39,7 @@ export function Tooltip({
     if (disabled) return;
 
     timeoutRef.current = setTimeout(() => {
-      if (triggerRef.current) {
-        const rect = triggerRef.current.getBoundingClientRect();
-        calculatePosition(rect);
-        setIsVisible(true);
-      }
+      setIsVisible(true);
     }, delay);
   };
 
@@ -53,33 +48,6 @@ export function Tooltip({
       clearTimeout(timeoutRef.current);
     }
     setIsVisible(false);
-  };
-
-  const calculatePosition = (rect: DOMRect) => {
-    const offset = 8;
-    let x = 0;
-    let y = 0;
-
-    switch (placement) {
-      case 'top':
-        x = rect.left + rect.width / 2;
-        y = rect.top - offset;
-        break;
-      case 'bottom':
-        x = rect.left + rect.width / 2;
-        y = rect.bottom + offset;
-        break;
-      case 'left':
-        x = rect.left - offset;
-        y = rect.top + rect.height / 2;
-        break;
-      case 'right':
-        x = rect.right + offset;
-        y = rect.top + rect.height / 2;
-        break;
-    }
-
-    setPosition({ x, y });
   };
 
   const tooltipVariants = {

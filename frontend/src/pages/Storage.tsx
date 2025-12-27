@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import {
   CircleStackIcon,
   ServerIcon,
@@ -11,7 +11,6 @@ import {
   TrashIcon,
   PencilIcon,
 } from '@heroicons/react/24/outline';
-import { Card, CardHeader } from '../components/common/Card';
 import { Table } from '../components/common/Table';
 import { Badge, StatusBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
@@ -501,7 +500,7 @@ export default function Storage() {
               {
                 key: 'actions',
                 header: 'Actions',
-                render: (_, row) => (
+                render: () => (
                   <div className="flex space-x-2">
                     <button className="p-1 text-blue-400 hover:text-blue-300">
                       <PencilIcon className="h-4 w-4" />

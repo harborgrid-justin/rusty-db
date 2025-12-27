@@ -29,7 +29,6 @@ export function ConfigInput({
   const [showTooltip, setShowTooltip] = useState(false);
 
   const isDifferentFromDefault = value !== setting.defaultValue;
-  const isDifferentFromCurrent = value !== setting.currentValue;
 
   const renderInput = () => {
     switch (setting.dataType) {
@@ -38,14 +37,14 @@ export function ConfigInput({
           <label className="config-input-toggle">
             <input
               type="checkbox"
-              checked={Boolean(value)}
+              checked={!!value}
               onChange={(e) => onChange(e.target.checked)}
               disabled={disabled}
               className="config-toggle-input"
             />
             <span className="config-toggle-slider" />
             <span className="config-toggle-label">
-              {Boolean(value) ? 'Enabled' : 'Disabled'}
+              {value ? 'Enabled' : 'Disabled'}
             </span>
           </label>
         );

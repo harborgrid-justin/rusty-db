@@ -320,8 +320,8 @@ export enum GraphQLTransactionOpType {
 export interface GraphQLTransactionOperation {
   operation_type: GraphQLTransactionOpType;
   table: string;
-  data?: Record<string, any>;
-  where_clause?: any;
+  data?: Record<string, unknown>;
+  where_clause?: unknown;
   id?: string;
 }
 
@@ -657,8 +657,7 @@ export class TransactionClient extends BaseClient {
    * @returns Savepoint response
    */
   async createSavepoint(transactionId: number, request: SavepointRequest): Promise<SavepointResponse> {
-    // TODO: Implement when backend adds endpoint
-    throw new Error('Savepoint endpoints not yet implemented in backend');
+    throw new Error(`Savepoint endpoints not yet implemented in backend for transaction ${transactionId} with name ${request.name}`);
     // return this.post<SavepointResponse>(
     //   `/api/v1/transactions/${transactionId}/savepoints`,
     //   request
@@ -677,8 +676,7 @@ export class TransactionClient extends BaseClient {
    * @param savepointName - Savepoint name to rollback to
    */
   async rollbackToSavepoint(transactionId: number, savepointName: string): Promise<void> {
-    // TODO: Implement when backend adds endpoint
-    throw new Error('Savepoint endpoints not yet implemented in backend');
+    throw new Error(`Savepoint rollback not yet implemented in backend for transaction ${transactionId}, savepoint ${savepointName}`);
     // await this.post<void>(
     //   `/api/v1/transactions/${transactionId}/savepoints/${savepointName}/rollback`,
     //   {}
@@ -697,8 +695,7 @@ export class TransactionClient extends BaseClient {
    * @param savepointName - Savepoint name to release
    */
   async releaseSavepoint(transactionId: number, savepointName: string): Promise<void> {
-    // TODO: Implement when backend adds endpoint
-    throw new Error('Savepoint endpoints not yet implemented in backend');
+    throw new Error(`Savepoint release not yet implemented in backend for transaction ${transactionId}, savepoint ${savepointName}`);
     // await this.delete<void>(
     //   `/api/v1/transactions/${transactionId}/savepoints/${savepointName}`
     // );
@@ -716,8 +713,7 @@ export class TransactionClient extends BaseClient {
    * @returns List of savepoints
    */
   async listSavepoints(transactionId: number): Promise<Savepoint[]> {
-    // TODO: Implement when backend adds endpoint
-    throw new Error('Savepoint endpoints not yet implemented in backend');
+    throw new Error(`Savepoint listing not yet implemented in backend for transaction ${transactionId}`);
     // return this.get<Savepoint[]>(`/api/v1/transactions/${transactionId}/savepoints`);
   }
 

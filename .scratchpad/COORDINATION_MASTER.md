@@ -72,6 +72,39 @@
 3. src/security/security_core.rs:484,487 - new_threat_level variable name
 4. src/security/security_core.rs:1734,1741 - UNIX_EPOCH import
 
+## Recent Campaigns
+
+### Linting Audit Campaign - December 27, 2025
+**Status:** In Progress
+**Branch:** `claude/audit-backend-linting-u6N1D`
+**Lead:** Enterprise Agent 12 (Scratchpad Manager)
+**Scope:** Frontend, nodejs-adapter, Rust backend
+
+**Objectives:**
+- Audit all code with ESLint and Clippy
+- Document enterprise coding standards
+- Create remediation plan for 845+ issues
+- Establish zero-tolerance quality gates
+
+**Deliverables:**
+- ✅ LINTING_AUDIT_REPORT.md - Comprehensive audit findings
+- ✅ ENTERPRISE_STANDARDS.md - Coding standards documentation
+- ✅ LINTING_FIXES_LOG.md - Fix tracking template
+- ✅ Updated COORDINATION_MASTER.md
+
+**Key Findings:**
+- 150+ type safety violations (frontend)
+- 200+ unused variables/imports
+- 75+ React hook dependency issues
+- 100+ unnecessary clones (Rust)
+- 50+ complex functions requiring refactoring
+
+**Agent Assignments:**
+- Agent 12: Documentation and standards (Complete)
+- Agents 1-10: Remediation tasks (Pending assignment)
+
+---
+
 ## Refactoring Strategy
 - Files > 1300 LOC split into logical submodules
 - Each submodule < 500 lines ideally
