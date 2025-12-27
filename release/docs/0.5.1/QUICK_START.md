@@ -198,10 +198,10 @@ RustyDB v0.5.1 uses sensible defaults suitable for development:
 ```rust
 Config {
     data_directory: "./data",
-    page_size: 4096,              // 4 KB pages
-    buffer_pool_size: 1000,       // ~4 MB buffer pool
+    page_size: 8192,              // 8 KB pages (corrected from docs)
+    buffer_pool_size: 1000,       // ~8 MB buffer pool (1000 pages × 8 KB)
     server_port: 5432,            // PostgreSQL default
-    graphql_port: 8080,           // GraphQL API
+    api_port: 8080,               // REST/GraphQL API
     max_connections: 100,         // Concurrent connections
 }
 ```
@@ -214,10 +214,10 @@ Create a configuration file (future feature in v0.6.0):
 # config.toml (planned for v0.6.0)
 [database]
 data_directory = "/var/lib/rustydb"
-page_size = 4096
+page_size = 8192                # 8 KB pages (default)
 
 [memory]
-buffer_pool_size = 10000        # ~40 MB
+buffer_pool_size = 10000        # ~80 MB (10000 pages × 8 KB)
 shared_buffers = "1GB"
 
 [network]
