@@ -458,21 +458,21 @@ impl EnhancedPrefetchEngine {
         let depth = self.depth_controller.lock().get_depth();
 
         let pages_to_prefetch: Vec<PageId> = match pattern {
-            AccessPattern::SequentialForward { confidence } => {
+            AccessPattern::SequentialForward { confidence: _ } => {
                 // Prefetch next N pages
                 (1..=depth)
                     .map(|offset| last_page.saturating_add(offset as u64))
                     .collect()
             }
 
-            AccessPattern::SequentialBackward { confidence } => {
+            AccessPattern::SequentialBackward { confidence: _ } => {
                 // Prefetch previous N pages
                 (1..=depth)
                     .filter_map(|offset| last_page.checked_sub(offset as u64))
                     .collect()
             }
 
-            AccessPattern::Strided { stride, confidence } => {
+            AccessPattern::Strided { stride, confidence: _ } => {
                 // Prefetch with stride
                 (1..=depth)
                     .filter_map(|i| {
@@ -486,7 +486,7 @@ impl EnhancedPrefetchEngine {
                     .collect()
             }
 
-            AccessPattern::Temporal { ref pages, confidence } => {
+            AccessPattern::Temporal { ref pages, confidence: _ } => {
                 // Prefetch temporal set
                 pages.clone()
             }

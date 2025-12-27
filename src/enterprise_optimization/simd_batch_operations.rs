@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // SIMD-Accelerated Batch Operations
 //
 // Provides vectorized operations for high-performance data processing.

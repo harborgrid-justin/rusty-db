@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Enterprise WebSocket Handlers
 //
 // Real-time WebSocket streams for enterprise features:

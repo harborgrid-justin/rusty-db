@@ -19,6 +19,7 @@
 //
 // Maximum uncommitted log entries before applying backpressure
 // At ~1KB per entry average, this limits uncommitted log to ~100MB
+#[allow(dead_code)]
 const MAX_UNCOMMITTED_LOG_ENTRIES: usize = 100_000;
 //
 // TODO(performance): Implement uncommitted log bounds

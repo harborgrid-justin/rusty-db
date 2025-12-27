@@ -21,7 +21,7 @@
 // Compatible with existing SIMD module, adds advanced operations
 // for query execution engine.
 
-use super::{ComparisonMask, SelectionVector, SimdContext};
+use super::SelectionVector;
 use crate::error::Result;
 
 #[cfg(target_arch = "x86_64")]

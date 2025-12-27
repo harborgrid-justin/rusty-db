@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // # Global Resource Directory Optimizer (R002)
 //
 // Critical optimization providing +25% RAC scalability improvement through
@@ -21,8 +22,8 @@ use crate::common::NodeId;
 use crate::error::DbError;
 use crate::rac::cache_fusion::{BlockMode, LockValueBlock, ResourceId};
 use crate::rac::grd::{
-    AccessPattern, AccessStatistics, AffinityScore, GlobalResourceDirectory, GrdConfig,
-    RemasterReason, ResourceEntry, ResourceFlags,
+    AffinityScore, GlobalResourceDirectory,
+    RemasterReason,
 };
 use dashmap::DashMap;
 use parking_lot::RwLock;
@@ -42,18 +43,22 @@ type Result<T> = std::result::Result<T, DbError>;
 const HOT_RESOURCE_THRESHOLD: u64 = 1000;
 
 /// Warm resource threshold (accesses per second)
+#[allow(dead_code)]
 const WARM_RESOURCE_THRESHOLD: u64 = 100;
 
 /// Affinity history window (seconds)
+#[allow(dead_code)]
 const AFFINITY_WINDOW_SECS: u64 = 300;
 
 /// Cache-to-cache transfer max hops
+#[allow(dead_code)]
 const MAX_C2C_HOPS: u8 = 3;
 
 /// Proactive remaster threshold
 const PROACTIVE_REMASTER_THRESHOLD: f64 = 0.7;
 
 /// GRD cache levels
+#[allow(dead_code)]
 const GRD_CACHE_LEVELS: usize = 3;
 
 // ============================================================================
@@ -162,7 +167,7 @@ impl LockFreeGrdCache {
     }
 
     /// Update resource affinity
-    pub fn update_affinity(&self, resource_id: ResourceId, node_id: NodeId, score: f64) {
+    pub fn update_affinity(&self, resource_id: ResourceId, node_id: NodeId, _score: f64) {
         // Update affinity map
         self.affinity_map.insert(resource_id, node_id);
 
@@ -456,7 +461,7 @@ pub struct CacheToToachTransferOptimizer {
 
 /// Cache-to-cache transfer route
 #[derive(Debug, Clone)]
-struct TransferRoute {
+pub struct TransferRoute {
     /// Source node
     source: NodeId,
 
@@ -475,7 +480,7 @@ struct TransferRoute {
 
 /// C2C optimizer statistics
 #[derive(Debug, Default)]
-struct C2COptimizerStats {
+pub struct C2COptimizerStats {
     total_transfers: AtomicU64,
     direct_transfers: AtomicU64,
     routed_transfers: AtomicU64,
@@ -653,7 +658,7 @@ impl GrdOptimizer {
 
         // Check for proactive remastering opportunity
         if let Ok(current_master) = self.grd.get_master(resource_id) {
-            if let Some(better_master) = self.affinity.should_remaster_proactively(
+            if let Some(_better_master) = self.affinity.should_remaster_proactively(
                 resource_id,
                 &current_master,
             ) {

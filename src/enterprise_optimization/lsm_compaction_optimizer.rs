@@ -532,7 +532,7 @@ impl LsmCompactionOptimizer {
     }
 
     /// K-way merge of SSTables
-    fn k_way_merge(&self, sstables: &[Arc<SSTableMetadata>]) -> Result<BTreeMap<Vec<u8>, Vec<u8>>> {
+    fn k_way_merge(&self, _sstables: &[Arc<SSTableMetadata>]) -> Result<BTreeMap<Vec<u8>, Vec<u8>>> {
         // In production, this would:
         // 1. Open iterators for each SSTable
         // 2. Use a priority queue for efficient K-way merge

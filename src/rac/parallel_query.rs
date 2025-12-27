@@ -403,6 +403,7 @@ struct WorkerPool {
 
     // Semaphore for worker allocation
     semaphore: Arc<Semaphore>,
+    #[allow(dead_code)]
     max_workers: (),
 }
 

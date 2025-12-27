@@ -15,7 +15,7 @@
 // - SIMD-accelerated decompression
 
 use crate::error::{DbError, Result};
-use crate::compression::{CompressionAlgorithm, CompressionLevel};
+
 use parking_lot::RwLock;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Q003: Plan Baseline Stability Improvements
 //
 // Implements enhanced SQL Plan Management with:
@@ -15,10 +16,7 @@
 // Expected Improvement: Better plan consistency and performance stability
 
 use crate::error::Result;
-use crate::optimizer_pro::{PhysicalPlan, PlanId, QueryFingerprint};
-use crate::optimizer_pro::plan_baselines::{
-    SqlPlanBaseline, BaselineOrigin, PlanHistory, HistoricalPlan,
-};
+use crate::optimizer_pro::{PhysicalPlan, QueryFingerprint};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
@@ -308,7 +306,7 @@ impl EnhancedBaseline {
 
 /// Plan entry in baseline
 #[derive(Debug, Clone)]
-struct BaselinePlanEntry {
+pub struct BaselinePlanEntry {
     plan: PhysicalPlan,
     quality_score: f64,
     first_seen: SystemTime,

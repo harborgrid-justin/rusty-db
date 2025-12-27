@@ -433,7 +433,7 @@ impl HierarchicalLockManager {
                 }
 
                 // Check for deadlock
-                if let Some(cycle) = self.wait_for_graph.read().detect_cycle_from(txn_id) {
+                if let Some(_cycle) = self.wait_for_graph.read().detect_cycle_from(txn_id) {
                     self.stats.write().deadlocks_detected += 1;
                     // Clean up wait-for graph
                     self.wait_for_graph.write().remove_transaction(txn_id);

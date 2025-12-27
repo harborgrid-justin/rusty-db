@@ -217,7 +217,7 @@ impl GraphQuery {
     }
 
     /// Parse WHERE clause
-    fn parse_where_clause(where_str: &str) -> Result<WhereClause> {
+    fn parse_where_clause(_where_str: &str) -> Result<WhereClause> {
         // Simplified: treat entire WHERE as single condition
         // Production would parse complex boolean expressions
 

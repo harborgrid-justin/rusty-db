@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // # Cache Fusion Message Batching Optimizer (R001)
 //
 // Critical optimization providing +40% inter-node throughput improvement
@@ -19,7 +20,7 @@
 
 use crate::common::NodeId;
 use crate::error::DbError;
-use crate::rac::cache_fusion::{CacheFusionMessage, ResourceId, BlockMode, LockValueBlock};
+use crate::rac::cache_fusion::CacheFusionMessage;
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};

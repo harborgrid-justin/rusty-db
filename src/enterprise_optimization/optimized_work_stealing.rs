@@ -29,12 +29,14 @@
 use crate::concurrent::work_stealing::{Steal, WorkStealingDeque};
 use crate::concurrent::Backoff;
 use std::cell::UnsafeCell;
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 /// Adaptive initial buffer size based on workload
+#[allow(dead_code)]
 const ADAPTIVE_MIN_SIZE: usize = 64; // Larger than default 32
+#[allow(dead_code)]
 const ADAPTIVE_MAX_SIZE: usize = 8192;
 
 /// NUMA node information
@@ -194,6 +196,7 @@ pub struct OptimizedWorker<T> {
     stats: WorkerStats,
 
     /// NUMA topology
+    #[allow(dead_code)]
     topology: Arc<NumaTopology>,
 
     /// Last adaptation time
@@ -201,7 +204,7 @@ pub struct OptimizedWorker<T> {
 }
 
 /// Information about a worker for stealing
-struct WorkerInfo<T> {
+pub struct WorkerInfo<T> {
     worker_id: usize,
     numa_node: usize,
     deque: Arc<WorkStealingDeque<T>>,

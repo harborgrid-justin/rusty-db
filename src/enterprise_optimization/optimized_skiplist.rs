@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Copyright (c) 2025 RustyDB Contributors
 //
 // C001: Lock-Free Skip List Optimization

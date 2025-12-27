@@ -307,7 +307,7 @@ impl SlottedPage {
 
         // Get page metadata
         let page_size = self.page.data.len();
-        let page_id = self.page.id;
+        let _page_id = self.page.id;
 
         // Create new page with fresh header (O(1))
         let mut header = PageHeader::new(page_size);

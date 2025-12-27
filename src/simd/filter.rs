@@ -549,7 +549,7 @@ pub unsafe fn filter_f64_gt_avx2(data: &[f64], value: f64, result: &mut [u8]) {
 pub fn filter_i32_eq_scalar(data: &[i32], value: i32, selection: &mut SelectionVector) {
     for (i, &val) in data.iter().enumerate() {
         if val == value {
-            selection.add(i);
+            let _ = selection.add(i);
         }
     }
 }
@@ -558,7 +558,7 @@ pub fn filter_i32_eq_scalar(data: &[i32], value: i32, selection: &mut SelectionV
 pub fn filter_i32_lt_scalar(data: &[i32], value: i32, selection: &mut SelectionVector) {
     for (i, &val) in data.iter().enumerate() {
         if val < value {
-            selection.add(i);
+            let _ = selection.add(i);
         }
     }
 }
@@ -567,7 +567,7 @@ pub fn filter_i32_lt_scalar(data: &[i32], value: i32, selection: &mut SelectionV
 pub fn filter_i32_gt_scalar(data: &[i32], value: i32, selection: &mut SelectionVector) {
     for (i, &val) in data.iter().enumerate() {
         if val > value {
-            selection.add(i);
+            let _ = selection.add(i);
         }
     }
 }
@@ -581,7 +581,7 @@ pub fn filter_i32_between_scalar(
 ) {
     for (i, &val) in data.iter().enumerate() {
         if val >= low && val <= high {
-            selection.add(i);
+            let _ = selection.add(i);
         }
     }
 }
@@ -766,7 +766,7 @@ impl SimdFilter {
                     break;
                 }
                 if (mask & (1 << bit)) != 0 {
-                    selection.add(idx);
+                    let _ = selection.add(idx);
                 }
             }
         }

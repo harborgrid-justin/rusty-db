@@ -12,9 +12,8 @@
 // - Replication metrics (lag, throughput)
 // - Security metrics (threat detections, audit rate)
 
-use std::collections::{HashMap, VecDeque};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 /// Metric value types

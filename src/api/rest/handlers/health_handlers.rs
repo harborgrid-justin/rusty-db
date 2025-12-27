@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Health Probe Handlers
 //
 // Kubernetes-style health probe endpoints for liveness, readiness, and startup checks

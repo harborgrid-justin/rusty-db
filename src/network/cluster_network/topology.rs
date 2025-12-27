@@ -58,6 +58,7 @@ pub struct NodeUpdate {
 
 pub struct ClusterTopologyManager {
     nodes: HashMap<NodeId, NodeInfo>,
+    #[allow(dead_code)]
     local_node_id: NodeId,
 }
 

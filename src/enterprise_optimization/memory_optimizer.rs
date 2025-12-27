@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Memory Optimization Module
 //
 // Enterprise-grade memory management with:

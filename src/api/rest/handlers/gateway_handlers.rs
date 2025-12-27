@@ -331,7 +331,7 @@ pub async fn create_route(
 
     // Register route with gateway
     let gateway = API_GATEWAY.read();
-    gateway.register_route(route);
+    let _ = gateway.register_route(route);
 
     let response = RouteResponse {
         id: route_id,
@@ -534,7 +534,7 @@ pub async fn update_route(
         cache_ttl: request.cache_ttl,
     };
 
-    gateway.register_route(route);
+    let _ = gateway.register_route(route);
 
     let response = RouteResponse {
         id,

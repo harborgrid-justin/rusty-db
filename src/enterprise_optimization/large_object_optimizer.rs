@@ -278,7 +278,7 @@ impl LargeObjectOptimizer {
         // Track huge page usage
         if use_huge_pages {
             let base_cost = size;
-            let huge_page_size = if size >= 1024 * 1024 * 1024 {
+            let _huge_page_size = if size >= 1024 * 1024 * 1024 {
                 1024 * 1024 * 1024 // 1GB
             } else {
                 2 * 1024 * 1024 // 2MB

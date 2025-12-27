@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Transaction Layer Optimization
 //
 // High-performance transaction management with:

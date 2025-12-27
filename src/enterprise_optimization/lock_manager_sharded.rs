@@ -60,20 +60,19 @@ impl HierarchicalLockMode {
             (IS, X) | (X, IS) => false,
             (IS, _) | (_, IS) => true,
 
-            // IX is compatible with IS, IX
-            (IX, IX) | (IX, IS) | (IS, IX) => true,
+            // IX is compatible with IX only (IS already handled above)
+            (IX, IX) => true,
             (IX, _) | (_, IX) => false,
 
-            // S is compatible with IS, S
-            (S, S) | (S, IS) | (IS, S) => true,
+            // S is compatible with S only (IS already handled above)
+            (S, S) => true,
             (S, _) | (_, S) => false,
 
-            // SIX is only compatible with IS
-            (SIX, IS) | (IS, SIX) => true,
+            // SIX is not compatible with anything (IS already handled above)
             (SIX, _) | (_, SIX) => false,
 
             // X is not compatible with anything
-            (X, _) | (_, X) => false,
+            (X, _) => false,
         }
     }
 

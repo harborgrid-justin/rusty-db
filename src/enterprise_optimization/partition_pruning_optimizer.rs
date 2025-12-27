@@ -12,7 +12,6 @@
 // - Multi-dimensional partition pruning (composite partitions)
 
 use crate::error::{DbError, Result};
-use crate::storage::partitioning::types::*;
 use parking_lot::RwLock;
 use std::collections::{BTreeMap, HashMap};
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -441,7 +440,7 @@ impl PartitionPruningOptimizer {
         &self,
         _table: &str,
         all_partitions: &[String],
-        predicates: &[PruningPredicate],
+        _predicates: &[PruningPredicate],
     ) -> Result<PruningResult> {
         // Simplified pruning logic
         let selected: Vec<String> = all_partitions.to_vec();

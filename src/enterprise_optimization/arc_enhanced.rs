@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Enhanced ARC (Adaptive Replacement Cache) Eviction Policy
 //
 // Enterprise-grade ARC implementation with:

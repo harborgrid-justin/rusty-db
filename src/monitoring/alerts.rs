@@ -12,6 +12,7 @@ use std::time::SystemTime;
 // SAFETY: Maximum alert history to prevent OOM (Issue C-07)
 // Alert storms can generate 1000s/minute, need bounded storage
 const MAX_ALERT_HISTORY: usize = 100_000;
+#[allow(dead_code)]
 const DEFAULT_ALERT_HISTORY: usize = 10_000;
 
 // Alert severity levels

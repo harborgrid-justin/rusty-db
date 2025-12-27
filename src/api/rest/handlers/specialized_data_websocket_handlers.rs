@@ -483,7 +483,7 @@ async fn handle_document_changes_websocket(mut socket: WebSocket, _state: Arc<Ap
 
     // Handle incoming configuration and stream changes
     let (mut sender, mut receiver) = socket.split();
-    let mut collection_name = String::new();
+    let collection_name = String::new();
 
     let streaming_task = tokio::spawn(async move {
         let mut ticker = interval(Duration::from_secs(3));
@@ -671,7 +671,7 @@ async fn handle_spatial_query_websocket(mut socket: WebSocket, _state: Arc<ApiSt
         if let Ok(msg) = msg {
             match msg {
                 Message::Text(text) => {
-                    if let Ok(request) = serde_json::from_str::<SpatialQueryRequest>(&text) {
+                    if let Ok(_request) = serde_json::from_str::<SpatialQueryRequest>(&text) {
                         let results = vec![
                             SpatialQueryResult {
                                 result_id: "spatial_1".to_string(),

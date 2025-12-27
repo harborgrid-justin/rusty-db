@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // # RustyDB Core Integration Layer
 //
 // Comprehensive integration and orchestration layer that coordinates all core database subsystems.

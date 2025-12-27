@@ -32,6 +32,7 @@ const MAX_GLOBAL_DEPTH: usize = 16;
 // 1. Performance degradation from long bucket chains
 // 2. Hash collision attacks (algorithmic complexity DoS)
 // Current implementation splits buckets but should also monitor overall load factor
+#[allow(dead_code)]
 const HASH_RESIZE_THRESHOLD: f64 = 0.75;
 
 // SECURITY: Maximum entries per hash bucket
@@ -47,6 +48,7 @@ const MAX_BUCKET_SIZE: usize = 1000;
 // SECURITY: Maximum number of index statistics entries to store
 // Prevents unbounded memory growth from collecting hash index statistics
 // Applies to per-bucket, per-directory, and historical statistics
+#[allow(dead_code)]
 const MAX_INDEX_STATISTICS_ENTRIES: usize = 10000;
 
 // Extendible Hash Index

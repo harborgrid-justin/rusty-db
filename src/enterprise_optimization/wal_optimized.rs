@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // T003: WAL Group Commit Optimization
 //
 // This module implements advanced WAL optimizations including:

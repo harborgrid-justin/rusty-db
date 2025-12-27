@@ -13,6 +13,7 @@ use std::time::SystemTime;
 // SAFETY: Maximum time series points to prevent OOM (Issue C-06)
 // At 1-second granularity, 86400 = 24 hours of history
 const MAX_TIME_SERIES_POINTS: usize = 86_400; // 24 hours at 1Hz
+#[allow(dead_code)]
 const DEFAULT_DASHBOARD_HISTORY: usize = 3_600; // 1 hour default
 
 // Real-time metric data point

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // M001: Slab Allocator Tuning for Hot Paths
 //
 // This module provides enterprise-grade slab allocator tuning optimized for
@@ -432,7 +433,7 @@ impl TunedSlabAllocator {
 
         // Fast path (CPU cache + magazine) avoids ~90% of normal allocation overhead
         // Normal allocation overhead is ~200ns, fast path is ~20ns
-        let overhead_saved_per_hit = 180; // nanoseconds
+        let _overhead_saved_per_hit = 180; // nanoseconds
         let total_fast_hits = (stats.cpu_cache_hit_rate + stats.magazine_hit_rate)
             * stats.base_allocator_stats.total_allocations as f64;
 

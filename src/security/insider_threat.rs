@@ -27,6 +27,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 // SAFETY: Maximum records to prevent OOM (Issues C-03, C-04)
 const MAX_FORENSIC_RECORDS: usize = 100_000; // Forensic logs (Issue C-03)
+#[allow(dead_code)]
 const MAX_THREAT_ASSESSMENTS: usize = 100_000; // Threat assessments (Issue C-04)
 const MAX_EXFILTRATION_ATTEMPTS: usize = 10_000;
 const MAX_ESCALATION_ATTEMPTS: usize = 10_000;

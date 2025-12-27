@@ -55,6 +55,7 @@ const REMASTER_THRESHOLD: u64 = 100;
 //
 // Maximum GRD entries across all buckets before rejecting new resources
 // At ~1KB per entry average, this limits total memory to ~10GB
+#[allow(dead_code)]
 const MAX_GRD_ENTRIES: usize = 10_000_000;
 //
 // TODO(performance): Implement GRD entry bounds checking

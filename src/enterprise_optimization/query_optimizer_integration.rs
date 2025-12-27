@@ -9,8 +9,8 @@
 
 use crate::error::Result;
 use crate::optimizer_pro::{
-    QueryOptimizer, OptimizerConfig, PhysicalPlan, Query, QueryFingerprint,
-    ExecutionResult, CostParameters,
+    QueryOptimizer, OptimizerConfig, Query, QueryFingerprint,
+    CostParameters,
 };
 use super::hardware_cost_calibration::{CalibratedCostModel, CalibrationMetrics};
 use super::adaptive_execution::{AdaptiveExecutionEngine, AdaptiveExecutionStats};
@@ -117,11 +117,11 @@ impl EnterpriseQueryOptimizer {
 
         // Phase 2: Optimize with base optimizer
         let optimization_start = Instant::now();
-        let mut plan = self.base_optimizer.optimize(query)?;
+        let plan = self.base_optimizer.optimize(query)?;
         let optimization_time = optimization_start.elapsed();
 
         // Phase 3: Apply calibrated cost model
-        let calibrated_params = self.cost_model.get_parameters();
+        let _calibrated_params = self.cost_model.get_parameters();
         let calibrated_cost = plan.cost; // In production, would re-calculate with calibrated params
 
         // Phase 4: Execute with adaptive engine

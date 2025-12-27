@@ -241,7 +241,7 @@ impl ColumnScan {
 
         // Initialize with all rows selected
         for i in 0..row_count {
-            selection.add(i);
+            let _ = selection.add(i);
         }
 
         // Clone filters to avoid borrowing self
@@ -380,7 +380,7 @@ impl ColumnScan {
             };
 
             if matches {
-                output_selection.add(idx);
+                let _ = output_selection.add(idx);
             }
         }
 
@@ -426,7 +426,7 @@ impl ColumnScan {
             };
 
             if matches {
-                output_selection.add(idx);
+                let _ = output_selection.add(idx);
             }
         }
 
@@ -465,7 +465,7 @@ impl ColumnScan {
             };
 
             if matches {
-                output_selection.add(idx);
+                let _ = output_selection.add(idx);
             }
         }
 
@@ -504,7 +504,7 @@ impl ColumnScan {
             };
 
             if matches {
-                output_selection.add(idx);
+                let _ = output_selection.add(idx);
             }
         }
 
@@ -542,7 +542,7 @@ impl ColumnScan {
             };
 
             if matches {
-                output_selection.add(idx);
+                let _ = output_selection.add(idx);
             }
         }
 
@@ -578,7 +578,7 @@ impl ColumnScan {
             }
 
             if data[idx] == value {
-                output_selection.add(idx);
+                let _ = output_selection.add(idx);
             }
         }
 
@@ -597,7 +597,7 @@ impl ColumnScan {
             PredicateType::IsNull => {
                 for &idx in input_selection.indices() {
                     if idx < data.len() && data[idx].is_none() {
-                        output_selection.add(idx);
+                        let _ = output_selection.add(idx);
                     }
                 }
                 Ok(())
@@ -605,7 +605,7 @@ impl ColumnScan {
             PredicateType::IsNotNull => {
                 for &idx in input_selection.indices() {
                     if idx < data.len() && data[idx].is_some() {
-                        output_selection.add(idx);
+                        let _ = output_selection.add(idx);
                     }
                 }
                 Ok(())
@@ -640,7 +640,7 @@ impl ColumnScan {
                         };
 
                         if matches {
-                            output_selection.add(idx);
+                            let _ = output_selection.add(idx);
                         }
                     }
                 }

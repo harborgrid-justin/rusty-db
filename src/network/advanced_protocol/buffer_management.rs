@@ -189,6 +189,7 @@ impl Default for CoalescingBuffer {
 
 pub struct LargeObjectStream {
     chunks: Vec<Vec<u8>>,
+    #[allow(dead_code)]
     chunk_size: usize,
 }
 

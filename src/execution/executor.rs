@@ -24,6 +24,7 @@ const MAX_IN_MEMORY_SORT_SIZE: usize = 100_000;
 /// Caches parsed predicates to avoid re-parsing on every row
 #[derive(Debug, Clone)]
 struct CompiledPredicate {
+    #[allow(dead_code)]
     original: String,
     // Parsed expression tree for O(1) evaluation
     expression: CompiledExpression,

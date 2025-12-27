@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Advanced Dirty Page Flushing Strategy
 //
 // Enterprise-grade dirty page flushing with:

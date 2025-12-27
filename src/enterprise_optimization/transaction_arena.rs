@@ -21,7 +21,7 @@ use parking_lot::{Mutex, RwLock};
 
 use crate::common::TransactionId;
 use crate::error::Result;
-use crate::memory::allocator::{ArenaAllocator, MemoryContext, MemoryContextStats};
+use crate::memory::allocator::{ArenaAllocator, MemoryContext};
 use crate::transaction::types::TransactionState;
 
 /// Transaction size profiles for arena optimization

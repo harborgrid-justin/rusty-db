@@ -12,6 +12,7 @@
 //
 // Maximum vector clock entries (sites) to track
 // Each entry is ~32 bytes (site_id + counter)
+#[allow(dead_code)]
 const MAX_VECTOR_CLOCK_ENTRIES: usize = 1000;
 //
 // Vector Clock Overflow Handling:

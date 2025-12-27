@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Copyright (c) 2025 RustyDB Contributors
 //
 // C003: Epoch-Based Reclamation Optimization
@@ -444,7 +445,7 @@ impl Drop for OptimizedEpochGuard {
     }
 }
 
-/// Thread-local garbage collector instance
+// Thread-local garbage collector instance
 thread_local! {
     static THREAD_GC: RefCell<Option<ThreadGarbageCollector>> = const { RefCell::new(None) };
     static THREAD_ID: Cell<usize> = const { Cell::new(0) };

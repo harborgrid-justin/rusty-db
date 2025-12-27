@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Transaction WebSocket Handlers
 //
 // Real-time WebSocket handlers for transaction layer events

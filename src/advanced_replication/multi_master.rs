@@ -11,6 +11,7 @@
 //
 // Maximum applied operations to track for deduplication
 // At ~64 bytes per operation ID, this limits memory to ~64MB
+#[allow(dead_code)]
 const MAX_APPLIED_OPERATIONS: usize = 1_000_000;
 //
 // TODO(performance): Implement applied operations bounds and cleanup

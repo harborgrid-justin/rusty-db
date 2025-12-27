@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Session Multiplexer - DRCP-Style Connection Pooling
 //
 // Implements Oracle-like Database Resident Connection Pooling (DRCP)

@@ -479,7 +479,7 @@ impl SimdStringFilter {
     ) -> Result<()> {
         for (i, text) in data.iter().enumerate() {
             if matcher.matches(text) {
-                selection.add(i);
+                let _ = selection.add(i);
             }
         }
 
@@ -515,7 +515,7 @@ impl SimdStringFilter {
             let matches = unsafe { string_eq_avx2(text.as_bytes(), pattern_bytes) };
 
             if matches {
-                selection.add(i);
+                let _ = selection.add(i);
             }
         }
 
@@ -542,7 +542,7 @@ impl SimdStringFilter {
     ) -> Result<()> {
         for (i, text) in data.iter().enumerate() {
             if text == pattern {
-                selection.add(i);
+                let _ = selection.add(i);
             }
         }
 
@@ -578,7 +578,7 @@ impl SimdStringFilter {
             let matches = unsafe { string_starts_with_avx2(text.as_bytes(), prefix_bytes) };
 
             if matches {
-                selection.add(i);
+                let _ = selection.add(i);
             }
         }
 
@@ -605,7 +605,7 @@ impl SimdStringFilter {
     ) -> Result<()> {
         for (i, text) in data.iter().enumerate() {
             if text.starts_with(prefix) {
-                selection.add(i);
+                let _ = selection.add(i);
             }
         }
 
@@ -641,7 +641,7 @@ impl SimdStringFilter {
             let matches = unsafe { string_contains_avx2(text.as_bytes(), substring_bytes) };
 
             if matches {
-                selection.add(i);
+                let _ = selection.add(i);
             }
         }
 
@@ -668,7 +668,7 @@ impl SimdStringFilter {
     ) -> Result<()> {
         for (i, text) in data.iter().enumerate() {
             if text.contains(substring) {
-                selection.add(i);
+                let _ = selection.add(i);
             }
         }
 

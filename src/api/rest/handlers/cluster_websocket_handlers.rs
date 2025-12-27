@@ -204,7 +204,7 @@ async fn handle_replication_events_websocket(mut socket: WebSocket, _state: Arc<
     }
 
     #[allow(unused_assignments)]
-    let mut config: Option<ReplicationEventsConfig> = None;
+    let mut _config: Option<ReplicationEventsConfig> = None;
     let mut active = false;
 
     // Split socket for concurrent read/write
@@ -282,7 +282,7 @@ async fn handle_replication_events_websocket(mut socket: WebSocket, _state: Arc<
             match msg {
                 Message::Text(text) => {
                     if let Ok(cfg) = serde_json::from_str::<ReplicationEventsConfig>(&text) {
-                        config = Some(cfg);
+                        _config = Some(cfg);
                         let _ = active;
                         active = true;
                     }

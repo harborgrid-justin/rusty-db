@@ -309,7 +309,7 @@ impl WalBuffer {
 // WAL streaming state for replica
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
-struct StreamingState {
+pub(crate) struct StreamingState {
     // Last LSN sent to this replica
     pub last_sent_lsn: LogSequenceNumber,
     // Last confirmed LSN from replica

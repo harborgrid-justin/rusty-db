@@ -3,6 +3,7 @@
 // Enterprise-grade WAL implementation with:
 // - PID-controlled adaptive batch sizing
 // - Log striping across multiple files
+#![allow(dead_code)]
 // - Asynchronous replication shipping
 // - Vectored I/O optimization
 //
@@ -240,6 +241,7 @@ impl Default for AdaptiveGroupCommit {
 /// WAL stripe for parallel I/O
 pub struct WalStripe {
     /// Stripe ID
+    #[allow(dead_code)]
     id: usize,
 
     /// Pending entries for this stripe

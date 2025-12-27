@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Advanced Connection Health Checking with Adaptive Intervals
 //
 // This module implements intelligent connection health checking with:

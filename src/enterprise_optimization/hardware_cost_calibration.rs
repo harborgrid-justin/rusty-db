@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Q001: Hardware-Aware Cost Model Calibration for Enterprise Workloads
 //
 // Implements hardware-aware cost factor calibration that adapts to:
@@ -16,7 +17,7 @@
 
 use crate::common::{TableId, Value};
 use crate::error::{DbError, Result};
-use crate::optimizer_pro::cost_model::{ColumnStatistics, TableStatistics, Histogram, HistogramType, HistogramBucket};
+use crate::optimizer_pro::cost_model::{Histogram, HistogramType, HistogramBucket};
 use crate::optimizer_pro::{CostParameters, PhysicalPlan};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -426,7 +427,7 @@ impl HistogramManager {
             return Ok(Histogram::new(HistogramType::EqualWidth));
         }
 
-        let min_val = &sorted_values[0];
+        let _min_val = &sorted_values[0];
         let max_val = &sorted_values[sorted_values.len() - 1];
 
         let mut buckets = Vec::new();

@@ -48,12 +48,14 @@ const SIMD_WIDTH: usize = 8; // AVX2 can compare 8 i32s or 4 i64s at once
 // TODO: Implement LRU cache with this limit to evict least-recently-used nodes
 // when cache exceeds MAX_BTREE_CACHE_NODES. Without this, a malicious workload
 // creating many nodes can cause OOM.
+#[allow(dead_code)]
 const MAX_BTREE_CACHE_NODES: usize = 1000;
 
 // SECURITY: Maximum number of index statistics entries to store
 // Prevents unbounded memory growth from collecting statistics
 // Applies to per-node, per-level, and historical statistics collection
 // When limit is reached, oldest entries should be evicted (FIFO/LRU)
+#[allow(dead_code)]
 const MAX_INDEX_STATISTICS_ENTRIES: usize = 10000;
 
 // B+ Tree Index with Adaptive Optimization

@@ -14,7 +14,6 @@
 // 4. Lock-free wait-for graph updates where possible
 
 use crate::common::TransactionId;
-use crate::error::{DbError, Result};
 use parking_lot::RwLock;
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicU64, Ordering};

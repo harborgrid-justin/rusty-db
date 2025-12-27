@@ -240,6 +240,7 @@ enum RoaringChunk {
     /// Bitmap container (for dense data)
     Bitmap(Box<[u64; 1024]>), // 1024 words = 64K bits
     /// Run container (for runs)
+    #[allow(dead_code)]
     Runs(Vec<(u16, u16)>), // (start, length) pairs
 }
 

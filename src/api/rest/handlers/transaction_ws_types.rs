@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Transaction WebSocket Event Types
 //
 // Real-time event types for transaction layer WebSocket streaming

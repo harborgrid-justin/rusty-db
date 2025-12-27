@@ -40,11 +40,13 @@ const MAX_MEMTABLE_SIZE: usize = 64 * 1024 * 1024; // 64MB
 // 1. Track bloom filter creation time
 // 2. Evict oldest filters when MAX_BLOOM_FILTERS is reached
 // 3. Recreate on-demand if needed (at cost of disk read)
+#[allow(dead_code)]
 const MAX_BLOOM_FILTERS: usize = 1000;
 
 // SECURITY: Maximum number of index statistics entries to store
 // Prevents unbounded memory growth from collecting LSM statistics
 // Applies to per-level, per-SSTable, and historical statistics
+#[allow(dead_code)]
 const MAX_INDEX_STATISTICS_ENTRIES: usize = 10000;
 
 // LSM Tree Index

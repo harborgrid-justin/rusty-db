@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // # Logical Replication Lag Reducer (R003)
 //
 // High-priority optimization providing -50% replication lag reduction through
@@ -18,11 +19,11 @@
 // - Network bandwidth: -30% (through batching)
 
 use crate::advanced_replication::apply::{
-    ApplyChange, ApplyCheckpoint, ApplyConfig, ApplyEngine, ApplyStats, GroupState,
+    ApplyChange, ApplyConfig, ApplyEngine, GroupState,
     OperationType, TransactionGroup,
 };
 use crate::advanced_replication::logical::{
-    ChangeType, LogicalChange, LogicalReplication, LogicalReplicationStats,
+    ChangeType, LogicalChange, LogicalReplication,
 };
 use crate::error::DbError;
 use parking_lot::RwLock;
@@ -56,9 +57,11 @@ const LAG_ALARM_THRESHOLD_MS: u64 = 2000;
 const LAG_CRITICAL_THRESHOLD_MS: u64 = 5000;
 
 /// Dependency analysis batch size
+#[allow(dead_code)]
 const DEPENDENCY_BATCH_SIZE: usize = 1000;
 
 /// Streaming buffer size (changes)
+#[allow(dead_code)]
 const STREAMING_BUFFER_SIZE: usize = 10000;
 
 /// Adaptive tuning interval (seconds)
@@ -338,7 +341,7 @@ impl ParallelApplyCoordinator {
         let worker_count = self.num_workers.load(Ordering::Relaxed);
         let mut channels = self.worker_channels.write();
 
-        for worker_id in 0..worker_count {
+        for _worker_id in 0..worker_count {
             let (tx, mut rx) = mpsc::unbounded_channel::<WorkerTask>();
             channels.push(tx);
 
@@ -861,7 +864,7 @@ impl ReplicationLagReducer {
     pub fn get_statistics(&self) -> LagReducerStatistics {
         let lag_stats = self.lag_monitor.get_stats();
         let parallel_stats = self.parallel_apply.get_stats();
-        let apply_stats = self.apply_engine.get_stats();
+        let _apply_stats = self.apply_engine.get_stats();
 
         LagReducerStatistics {
             current_lag_ms: lag_stats.current_lag_ms.load(Ordering::Relaxed),

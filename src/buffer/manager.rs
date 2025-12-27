@@ -111,22 +111,22 @@ pub struct BufferPoolConfig {
 impl Default for BufferPoolConfig {
     fn default() -> Self {
         Self {
-            /// Default buffer pool size: 10,000 frames = ~40MB (at 4KB page size)
-            ///
-            /// **Sizing Rationale:**
-            /// - 10,000 frames × 4KB/frame = 40MB base buffer pool
-            /// - Suitable for moderate workloads with good hit rates
-            /// - Increased from 1,000 frames (4MB) to reduce disk I/O pressure
-            /// - For production workloads, consider scaling based on:
-            ///   - Available RAM: Use 25-50% of system memory
-            ///   - Working set size: Should fit active tables + indexes
-            ///   - Concurrency: More concurrent queries → larger pool needed
-            ///
-            /// **Examples:**
-            /// - Small systems (8GB RAM): 10,000 frames (40MB)
-            /// - Medium systems (32GB RAM): 100,000 frames (400MB)
-            /// - Large systems (128GB RAM): 500,000 frames (2GB)
-            /// - Enterprise (512GB RAM): 2,000,000 frames (8GB)
+            // Default buffer pool size: 10,000 frames = ~40MB (at 4KB page size)
+            //
+            // **Sizing Rationale:**
+            // - 10,000 frames × 4KB/frame = 40MB base buffer pool
+            // - Suitable for moderate workloads with good hit rates
+            // - Increased from 1,000 frames (4MB) to reduce disk I/O pressure
+            // - For production workloads, consider scaling based on:
+            //   - Available RAM: Use 25-50% of system memory
+            //   - Working set size: Should fit active tables + indexes
+            //   - Concurrency: More concurrent queries → larger pool needed
+            //
+            // **Examples:**
+            // - Small systems (8GB RAM): 10,000 frames (40MB)
+            // - Medium systems (32GB RAM): 100,000 frames (400MB)
+            // - Large systems (128GB RAM): 500,000 frames (2GB)
+            // - Enterprise (512GB RAM): 2,000,000 frames (8GB)
             num_frames: 10000,
             eviction_policy: EvictionPolicyType::Clock,
             page_table_partitions: 16,

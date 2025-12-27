@@ -549,7 +549,7 @@ impl TdeEngine {
         plaintext: &[u8],
     ) -> Result<EncryptedData> {
         // SE001: Try to get key from cache first
-        let (algorithm, dek, key_version, cache_hit) = if let Some(cached) = self.key_cache.get(tablespace_name) {
+        let (algorithm, dek, key_version, _cache_hit) = if let Some(cached) = self.key_cache.get(tablespace_name) {
             // Cache hit!
             self.metrics.write().cache_hits += 1;
             (cached.algorithm, cached.dek, cached.version, true)

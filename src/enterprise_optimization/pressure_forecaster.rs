@@ -18,7 +18,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use parking_lot::{Mutex, RwLock};
 
-use crate::memory::allocator::{MemoryPressureLevel, MemoryPressureManager, MemoryUsage, PressureCallback};
+use crate::memory::allocator::MemoryPressureManager;
 
 /// Memory usage sample for time-series analysis
 #[derive(Debug, Clone)]
@@ -489,7 +489,7 @@ impl PressureForecaster {
     pub fn stats(&self) -> ForecastStatistics {
         let total_warnings = self.stats.warnings_triggered.load(Ordering::Relaxed);
         let true_pos = self.stats.true_positives.load(Ordering::Relaxed);
-        let false_pos = self.stats.false_positives.load(Ordering::Relaxed);
+        let _false_pos = self.stats.false_positives.load(Ordering::Relaxed);
 
         ForecastStatistics {
             forecasts_generated: self.stats.forecasts_generated.load(Ordering::Relaxed),

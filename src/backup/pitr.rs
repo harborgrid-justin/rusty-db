@@ -9,6 +9,7 @@
 //
 // Maximum WAL archive entries to keep in memory
 // At ~500 bytes per entry average, this limits memory to ~500MB
+#[allow(dead_code)]
 const MAX_WAL_ARCHIVE_SIZE: usize = 1_000_000;
 //
 // WAL Archive Management Strategy:

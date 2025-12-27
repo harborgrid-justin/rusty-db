@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // Q002: Adaptive Query Execution Improvements
 //
 // Implements runtime plan adaptation with:
@@ -16,7 +17,7 @@
 
 use crate::common::Value;
 use crate::error::Result;
-use crate::optimizer_pro::{PhysicalPlan, PhysicalOperator, ExecutionResult, PlanId, JoinType};
+use crate::optimizer_pro::{PhysicalPlan, ExecutionResult, PlanId};
 use crate::optimizer_pro::adaptive::{ExecutionId, RuntimeStatistics};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
@@ -90,7 +91,7 @@ impl AdaptiveExecutionEngine {
         let result = self.execute_with_adaptation(&mut context)?;
 
         // Stop monitoring and collect statistics
-        let runtime_stats = self.execution_monitor.stop_execution(execution_id);
+        let _runtime_stats = self.execution_monitor.stop_execution(execution_id);
 
         // Update memory grant feedback
         self.memory_grant_manager.record_actual_usage(
