@@ -1,7 +1,7 @@
 # RustyDB Architecture Documentation
 
-**Last Updated**: 2025-12-11
-**Version**: 0.1.0
+**Last Updated**: 2025-12-27
+**Version**: 0.5.1
 
 ## Table of Contents
 
