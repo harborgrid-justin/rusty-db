@@ -11,7 +11,6 @@ import {
   ArrowPathIcon,
   TrashIcon,
   PlayIcon,
-  PencilIcon,
 } from '@heroicons/react/24/outline';
 import {
   useProcedures,
@@ -20,7 +19,7 @@ import {
   useExecuteProcedure,
 } from '../hooks/useSchema';
 import type { StoredProcedure } from '../services/schemaService';
-import type { CreateProcedureRequest, ExecuteProcedureRequest } from '../services/schemaService';
+import type { CreateProcedureRequest } from '../services/schemaService';
 import { getErrorMessage } from '../services/api';
 import clsx from 'clsx';
 

@@ -27,6 +27,25 @@ export const SqlEditor: React.FC<SqlEditorProps> = ({
   const { preferences } = useQueryStore();
   const { metadata } = useSchemaMetadata();
 
+  const formatSql = useCallback(() => {
+    if (!editorRef.current) return;
+
+    const currentValue = editorRef.current.getValue();
+    if (!currentValue.trim()) return;
+
+    try {
+      const formatted = format(currentValue, {
+        language: 'sql',
+        uppercase: true,
+        linesBetweenQueries: 2,
+      });
+      editorRef.current.setValue(formatted);
+      onChange(formatted);
+    } catch (error) {
+      console.error('Failed to format SQL:', error);
+    }
+  }, [onChange]);
+
   const handleEditorDidMount: OnMount = useCallback(
     (editor, monaco) => {
       editorRef.current = editor;
@@ -96,7 +115,7 @@ export const SqlEditor: React.FC<SqlEditorProps> = ({
       // Focus editor
       editor.focus();
     },
-    [onExecute, onFormat]
+    [onExecute, onFormat, formatSql]
   );
 
   // Register autocomplete provider
@@ -116,7 +135,13 @@ export const SqlEditor: React.FC<SqlEditorProps> = ({
           endColumn: word.endColumn,
         };
 
-        const suggestions: any[] = [];
+        const suggestions: Array<{
+          label: string;
+          kind: number;
+          insertText: string;
+          range: typeof range;
+          detail?: string;
+        }> = [];
 
         // Add SQL keywords
         const keywords = [
@@ -164,25 +189,6 @@ export const SqlEditor: React.FC<SqlEditorProps> = ({
 
     return () => disposable.dispose();
   }, [metadata]);
-
-  const formatSql = useCallback(() => {
-    if (!editorRef.current) return;
-
-    const currentValue = editorRef.current.getValue();
-    if (!currentValue.trim()) return;
-
-    try {
-      const formatted = format(currentValue, {
-        language: 'sql',
-        uppercase: true,
-        linesBetweenQueries: 2,
-      });
-      editorRef.current.setValue(formatted);
-      onChange(formatted);
-    } catch (error) {
-      console.error('Failed to format SQL:', error);
-    }
-  }, [onChange]);
 
   const handleChange = useCallback(
     (newValue: string | undefined) => {

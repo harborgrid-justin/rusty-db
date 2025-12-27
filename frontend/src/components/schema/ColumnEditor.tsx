@@ -8,8 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlusIcon,
   TrashIcon,
-  XMarkIcon,
-  CheckIcon,
 } from '@heroicons/react/24/outline';
 import type { DataType } from '../../types';
 import type { ColumnDefinition } from '../../services/schemaService';
@@ -18,7 +16,6 @@ import clsx from 'clsx';
 interface ColumnEditorProps {
   columns: ColumnDefinition[];
   onChange: (columns: ColumnDefinition[]) => void;
-  isEditing?: boolean;
 }
 
 const DATA_TYPES: DataType[] = [
@@ -49,7 +46,7 @@ const defaultColumn: ColumnDefinition = {
   nullable: true,
 };
 
-export function ColumnEditor({ columns, onChange, isEditing = false }: ColumnEditorProps) {
+export function ColumnEditor({ columns, onChange }: ColumnEditorProps) {
   const [editingColumns, setEditingColumns] = useState<ColumnDefinition[]>(columns);
   const [errors, setErrors] = useState<Record<number, string>>({});
 

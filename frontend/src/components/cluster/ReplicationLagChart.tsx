@@ -111,7 +111,21 @@ export function ReplicationLagChart({
     }
   }
 
-  function CustomTooltip({ active, payload }: any) {
+  interface TooltipPayload {
+    payload: {
+      timestamp: number;
+      lag: number;
+      bytesPerSecond: number;
+      transactionsPerSecond: number;
+    };
+  }
+
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: TooltipPayload[];
+  }
+
+  function CustomTooltip({ active, payload }: CustomTooltipProps) {
     if (!active || !payload || !payload.length) {
       return null;
     }

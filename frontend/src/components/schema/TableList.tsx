@@ -10,17 +10,14 @@ import {
   TableCellsIcon,
   MagnifyingGlassIcon,
   EyeIcon,
-  PencilIcon,
   TrashIcon,
   ArrowPathIcon,
   ChartBarIcon,
 } from '@heroicons/react/24/outline';
 import type { Table } from '../../types';
-import clsx from 'clsx';
 
 interface TableListProps {
   tables: Table[];
-  onTableSelect?: (table: Table) => void;
   onTableDelete?: (table: Table) => void;
   onTableRefresh?: (table: Table) => void;
   isLoading?: boolean;
@@ -28,7 +25,6 @@ interface TableListProps {
 
 export function TableList({
   tables,
-  onTableSelect,
   onTableDelete,
   onTableRefresh,
   isLoading = false,

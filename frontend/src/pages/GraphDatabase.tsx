@@ -1,19 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { Card, CardHeader } from '../components/common/Card';
 import { Button } from '../components/common/Button';
 import { Input, Textarea } from '../components/common/Input';
 import { Select } from '../components/common/Select';
 import { Tabs, TabList, TabPanel, TabPanels } from '../components/common/Tabs';
-import { Table } from '../components/common/Table';
-import { Badge, StatusBadge } from '../components/common/Badge';
+import { Badge } from '../components/common/Badge';
 
 // Graph data types
 interface GraphNode {
   id: string;
   label: string;
   type: string;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   x?: number;
   y?: number;
   vx?: number;
@@ -25,7 +23,7 @@ interface GraphEdge {
   source: string;
   target: string;
   label: string;
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
 }
 
 interface GraphData {
@@ -67,12 +65,27 @@ const ALGORITHM_OPTIONS = [
 const NODE_TYPES = ['Person', 'Company', 'Skill', 'Location'];
 const EDGE_TYPES = ['WORKS_AT', 'FRIENDS_WITH', 'KNOWS', 'LOCATED_IN', 'MANAGES'];
 
+interface QueryResult {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  executionTime: number;
+}
+
+interface AlgorithmResult {
+  path?: string[];
+  length?: number;
+  edges?: string[];
+  scores?: Array<{ id: string; label: string; score: number }>;
+  communities?: Array<{ id: number; nodes: string[] }>;
+  components?: number;
+  largest?: number;
+}
+
 export default function GraphDatabase() {
   const [graphData, setGraphData] = useState<GraphData>(MOCK_GRAPH_DATA);
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
-  const [selectedEdge, setSelectedEdge] = useState<GraphEdge | null>(null);
   const [query, setQuery] = useState('MATCH (n:Person)-[r:WORKS_AT]->(c:Company) RETURN n, r, c LIMIT 100');
-  const [queryResult, setQueryResult] = useState<any>(null);
+  const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [activeTab, setActiveTab] = useState('graph');
 
@@ -88,7 +101,7 @@ export default function GraphDatabase() {
   // Algorithm execution
   const [selectedAlgorithm, setSelectedAlgorithm] = useState('shortest_path');
   const [algorithmParams, setAlgorithmParams] = useState('{"source": "1", "target": "4"}');
-  const [algorithmResult, setAlgorithmResult] = useState<any>(null);
+  const [algorithmResult, setAlgorithmResult] = useState<AlgorithmResult | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -115,7 +128,6 @@ export default function GraphDatabase() {
     // Simple force simulation
     const simulate = () => {
       // Apply forces
-      const alpha = 0.1;
       const centerForce = 0.01;
       const repulsionForce = 1000;
       const linkForce = 0.02;
@@ -317,7 +329,7 @@ export default function GraphDatabase() {
     setIsExecuting(true);
     // Simulate algorithm execution
     setTimeout(() => {
-      const mockResults: Record<string, any> = {
+      const mockResults: Record<string, AlgorithmResult> = {
         shortest_path: {
           path: ['1', '4'],
           length: 1,

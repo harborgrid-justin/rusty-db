@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Card, CardHeader } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { Input, Textarea } from '../components/common/Input';
+import { Textarea } from '../components/common/Input';
 import { Select } from '../components/common/Select';
 import { Tabs, TabList, TabPanel, TabPanels } from '../components/common/Tabs';
 import { Table, Column } from '../components/common/Table';
@@ -14,7 +13,7 @@ interface SpatialFeature {
   name: string;
   type: 'Point' | 'LineString' | 'Polygon';
   coordinates: number[] | number[][] | number[][][];
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
   layer: string;
 }
 
@@ -93,9 +92,9 @@ const QUERY_TYPES = [
 ];
 
 export default function SpatialQueries() {
-  const [features, setFeatures] = useState<SpatialFeature[]>(MOCK_FEATURES);
+  const [features] = useState<SpatialFeature[]>(MOCK_FEATURES);
   const [layers, setLayers] = useState<SpatialLayer[]>(MOCK_LAYERS);
-  const [indexes, setIndexes] = useState<SpatialIndex[]>(MOCK_INDEXES);
+  const [indexes] = useState<SpatialIndex[]>(MOCK_INDEXES);
   const [selectedFeature, setSelectedFeature] = useState<SpatialFeature | null>(null);
   const [activeTab, setActiveTab] = useState('map');
 

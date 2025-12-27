@@ -41,7 +41,6 @@ export function FailoverWizard({
   const [selectedNodeId, setSelectedNodeId] = useState<UUID | null>(null);
   const [preflightResults, setPreflightResults] = useState<FailoverPreflightCheck | null>(null);
   const [forceFailover, setForceFailover] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
 
@@ -73,18 +72,15 @@ export function FailoverWizard({
   async function handleNodeSelect(nodeId: UUID) {
     setSelectedNodeId(nodeId);
     setStep('preflight');
-    setIsLoading(true);
     setError(null);
 
     try {
       const results = await onPreflightCheck(nodeId);
       setPreflightResults(results);
       setStep('confirm');
-    } catch (err: any) {
-      setError(err.message || 'Failed to run preflight checks');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to run preflight checks');
       setStep('error');
-    } finally {
-      setIsLoading(false);
     }
   }
 
@@ -92,7 +88,6 @@ export function FailoverWizard({
     if (!selectedNodeId) return;
 
     setStep('executing');
-    setIsLoading(true);
     setError(null);
     setProgress(0);
 
@@ -106,12 +101,10 @@ export function FailoverWizard({
       clearInterval(progressInterval);
       setProgress(100);
       setStep('complete');
-    } catch (err: any) {
+    } catch (err) {
       clearInterval(progressInterval);
-      setError(err.message || 'Failover failed');
+      setError(err instanceof Error ? err.message : 'Failover failed');
       setStep('error');
-    } finally {
-      setIsLoading(false);
     }
   }
 

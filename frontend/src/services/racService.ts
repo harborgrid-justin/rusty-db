@@ -98,7 +98,7 @@ class RacService {
   /**
    * Get cluster statistics
    */
-  async getClusterStats(): Promise<ApiResponse<any>> {
+  async getClusterStats(): Promise<ApiResponse<Record<string, unknown>>> {
     return api.get('/api/rac/cluster/stats');
   }
 
@@ -112,7 +112,7 @@ class RacService {
   /**
    * Get cache fusion status
    */
-  async getCacheFusionStatus(): Promise<ApiResponse<any>> {
+  async getCacheFusionStatus(): Promise<ApiResponse<Record<string, unknown>>> {
     return api.get('/api/rac/cache-fusion/status');
   }
 
@@ -126,7 +126,7 @@ class RacService {
   /**
    * Get cache fusion block transfers
    */
-  async getCacheFusionTransfers(): Promise<ApiResponse<any[]>> {
+  async getCacheFusionTransfers(): Promise<ApiResponse<Record<string, unknown>[]>> {
     return api.get('/api/rac/cache-fusion/transfers');
   }
 
@@ -140,7 +140,7 @@ class RacService {
   /**
    * Get GRD topology
    */
-  async getGrdTopology(): Promise<ApiResponse<any>> {
+  async getGrdTopology(): Promise<ApiResponse<Record<string, unknown>>> {
     return api.get('/api/rac/grd/topology');
   }
 
@@ -161,7 +161,7 @@ class RacService {
   /**
    * Get interconnect status
    */
-  async getInterconnectStatus(): Promise<ApiResponse<any>> {
+  async getInterconnectStatus(): Promise<ApiResponse<Record<string, unknown>>> {
     return api.get('/api/rac/interconnect/status');
   }
 

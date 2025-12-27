@@ -23,7 +23,6 @@ import { EncryptionKeyCard } from '../components/security/EncryptionKeyCard';
 import { KeyRotationWizard } from '../components/security/KeyRotationWizard';
 import { LoadingScreen } from '../components/common/LoadingScreen';
 import type { EncryptionAlgorithm, KeyType } from '@/types';
-import clsx from 'clsx';
 
 // ============================================================================
 // Encryption Management Component
@@ -40,7 +39,7 @@ export default function Encryption() {
   const { data: keys, isLoading: keysLoading } = useEncryptionKeys(
     typeFilter !== 'all' ? { keyType: typeFilter } : undefined
   );
-  const { data: encryptedTables, isLoading: tablesLoading } = useEncryptedTables();
+  const { data: encryptedTables } = useEncryptedTables();
   const createKey = useCreateEncryptionKey();
   const deleteKey = useDeleteKey();
 
@@ -252,7 +251,7 @@ export default function Encryption() {
                 </tr>
               </thead>
               <tbody>
-                {encryptedTables.map((table, idx) => (
+                {encryptedTables.map((table) => (
                   <tr key={`${table.schema}.${table.table}`}>
                     <td className="font-mono text-sm">{table.schema}</td>
                     <td className="font-mono text-sm font-medium">{table.table}</td>
@@ -304,9 +303,16 @@ export default function Encryption() {
 // Create Key Modal Component
 // ============================================================================
 
+interface CreateKeyRequest {
+  name: string;
+  algorithm: EncryptionAlgorithm;
+  keyType: KeyType;
+  expiresInDays: number;
+}
+
 interface CreateKeyModalProps {
   onClose: () => void;
-  onCreate: (request: any) => Promise<any>;
+  onCreate: (request: CreateKeyRequest) => Promise<unknown>;
   isCreating: boolean;
 }
 

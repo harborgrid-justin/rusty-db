@@ -715,10 +715,18 @@ export class NetworkPoolClient {
      */
     async getConnections(params?: PaginationParams): Promise<PaginatedResponse<ConnectionInfo>> {
         const queryParams = new URLSearchParams();
-        if (params?.page) queryParams.set('page', params.page.toString());
-        if (params?.page_size) queryParams.set('page_size', params.page_size.toString());
-        if (params?.sort_by) queryParams.set('sort_by', params.sort_by);
-        if (params?.sort_order) queryParams.set('sort_order', params.sort_order);
+        if (params?.page) {
+queryParams.set('page', params.page.toString());
+}
+        if (params?.page_size) {
+queryParams.set('page_size', params.page_size.toString());
+}
+        if (params?.sort_by) {
+queryParams.set('sort_by', params.sort_by);
+}
+        if (params?.sort_order) {
+queryParams.set('sort_order', params.sort_order);
+}
 
         const url = `${this.baseUrl}/api/v1/connections${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
         const response = await fetch(url, {
@@ -770,10 +778,18 @@ export class NetworkPoolClient {
      */
     async getSessions(params?: PaginationParams): Promise<PaginatedResponse<SessionInfo>> {
         const queryParams = new URLSearchParams();
-        if (params?.page) queryParams.set('page', params.page.toString());
-        if (params?.page_size) queryParams.set('page_size', params.page_size.toString());
-        if (params?.sort_by) queryParams.set('sort_by', params.sort_by);
-        if (params?.sort_order) queryParams.set('sort_order', params.sort_order);
+        if (params?.page) {
+queryParams.set('page', params.page.toString());
+}
+        if (params?.page_size) {
+queryParams.set('page_size', params.page_size.toString());
+}
+        if (params?.sort_by) {
+queryParams.set('sort_by', params.sort_by);
+}
+        if (params?.sort_order) {
+queryParams.set('sort_order', params.sort_order);
+}
 
         const url = `${this.baseUrl}/api/v1/sessions${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
         const response = await fetch(url, {

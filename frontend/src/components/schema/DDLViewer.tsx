@@ -10,7 +10,6 @@ import {
   CheckIcon,
   DocumentArrowDownIcon,
 } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
 
 interface DDLViewerProps {
   ddl: string;

@@ -146,10 +146,6 @@ export function RestoreWizard({
     setCompletedSteps((prev) => new Set([...prev, step]));
   };
 
-  const goToStep = (step: WizardStep) => {
-    setCurrentStep(step);
-  };
-
   const handleNext = () => {
     markStepComplete(currentStep);
 

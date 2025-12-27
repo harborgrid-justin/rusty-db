@@ -7,18 +7,14 @@ import {
   ServerIcon,
   GlobeAltIcon,
   ChartBarIcon,
-  ShieldCheckIcon,
-  BoltIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
-import { Card } from '../components/common/Card';
 import { Table } from '../components/common/Table';
 import { Badge, StatusBadge, HealthBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { Input } from '../components/common/Input';
 import { Select } from '../components/common/Select';
-import { Tabs } from '../components/common/Tabs';
 import { networkingService } from '../services/networkingService';
 import type { UUID } from '../types';
 

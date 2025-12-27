@@ -105,7 +105,7 @@ export default function ResourceGroups() {
             { value: 'disabled', label: 'Disabled Only' },
           ]}
           value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value as any)}
+          onChange={(e) => setFilterStatus(e.target.value as 'all' | 'enabled' | 'disabled')}
           leftIcon={<FunnelIcon className="w-4 h-4" />}
         />
         <Button variant="ghost" onClick={refreshGroups}>

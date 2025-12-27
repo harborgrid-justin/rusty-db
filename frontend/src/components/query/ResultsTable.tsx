@@ -22,7 +22,7 @@ interface FilterConfig {
 export const ResultsTable: React.FC<ResultsTableProps> = ({ result }) => {
   const [sortConfig, setSortConfig] = useState<SortConfig>({ columnIndex: null, direction: null });
   const [filters, setFilters] = useState<FilterConfig>({});
-  const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
+  const [selectedCells] = useState<Set<string>>(new Set());
   const { exportResults, isExporting } = useExportResults();
 
   // Column width (can be made dynamic)
@@ -83,14 +83,15 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ result }) => {
   const handleFilter = useCallback((columnIndex: number, value: string) => {
     setFilters(prev => {
       if (!value) {
-        const { [columnIndex]: _, ...rest } = prev;
-        return rest;
+        const newFilters = { ...prev };
+        delete newFilters[columnIndex];
+        return newFilters;
       }
       return { ...prev, [columnIndex]: value };
     });
   }, []);
 
-  const formatCellValue = (value: any): string => {
+  const formatCellValue = (value: unknown): string => {
     if (value === null || value === undefined) {
       return 'NULL';
     }
@@ -103,7 +104,7 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ result }) => {
     return String(value);
   };
 
-  const getCellClassName = (value: any): string => {
+  const getCellClassName = (value: unknown): string => {
     if (value === null || value === undefined) {
       return 'cell-null';
     }
@@ -116,12 +117,12 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ result }) => {
     return 'cell-string';
   };
 
-  const copyCellValue = useCallback((value: any) => {
+  const copyCellValue = useCallback((value: unknown) => {
     const text = formatCellValue(value);
     navigator.clipboard.writeText(text);
   }, []);
 
-  const copyRow = useCallback((row: any[]) => {
+  const copyRow = useCallback((row: unknown[]) => {
     const text = row.map(formatCellValue).join('\t');
     navigator.clipboard.writeText(text);
   }, []);
@@ -147,7 +148,7 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ result }) => {
 
   // Grid cell renderer
   const Cell = useCallback(
-    ({ columnIndex, rowIndex, style }: any) => {
+    ({ columnIndex, rowIndex, style }: { columnIndex: number; rowIndex: number; style: React.CSSProperties }) => {
       const isHeader = rowIndex === 0;
 
       if (isHeader) {

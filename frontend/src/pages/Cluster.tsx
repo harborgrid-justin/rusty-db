@@ -35,7 +35,6 @@ type ViewMode = 'topology' | 'cards' | 'table';
 export default function Cluster() {
   const [viewMode, setViewMode] = useState<ViewMode>('topology');
   const [showAddNodeWizard, setShowAddNodeWizard] = useState(false);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   // Data hooks
   const { data: topology, isLoading: topologyLoading } = useClusterTopology();
@@ -51,9 +50,6 @@ export default function Cluster() {
 
   const isLoading = topologyLoading || nodesLoading || healthLoading;
 
-  // Get leader node
-  const leaderNode = nodes.find((node) => node.role === 'leader');
-
   // Calculate stats
   const stats = {
     totalNodes: nodes.length,
@@ -62,8 +58,8 @@ export default function Cluster() {
     observers: nodes.filter((n) => n.role === 'observer').length,
   };
 
-  function handleNodeClick(node: ClusterNode) {
-    setSelectedNodeId(node.id);
+  function handleNodeClick(_node: ClusterNode) {
+    // Node click handler - could be used to show node details
   }
 
   function handlePromote(nodeId: string) {

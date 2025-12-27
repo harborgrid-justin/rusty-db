@@ -8,8 +8,6 @@ import { EventEmitter } from 'eventemitter3';
 import * as WebSocket from 'ws';
 import {
   RustyDbConfig,
-  DEFAULT_SERVER_CONFIG,
-  DEFAULT_API_CONFIG,
   DEFAULT_BINARY_PATHS,
   getServerConfig,
   getApiConfig,
@@ -492,7 +490,7 @@ export class WebSocketClient extends EventEmitter<ClientEvents> {
       const parsed = JSON.parse(message);
       this.logger.debug('Received message:', parsed);
       // Emit parsed message for subscribers
-      this.emit('message' as any, parsed);
+      this.emit('message', parsed);
     } catch (error) {
       this.logger.error('Failed to parse message:', error);
     }
@@ -666,7 +664,7 @@ export class RustyDbClient extends EventEmitter<ClientEvents> {
     ];
 
     events.forEach((event) => {
-      emitter.on(event, (...args: any[]) => this.emit(event, ...args));
+      emitter.on(event, (...args: unknown[]) => this.emit(event, ...args));
     });
   }
 }

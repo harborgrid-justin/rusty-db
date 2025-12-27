@@ -1,6 +1,5 @@
 import { get, post, buildQueryParams } from './api';
 import type {
-  ApiResponse,
   UUID,
   Timestamp,
   Duration,

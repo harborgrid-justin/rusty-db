@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryStore } from '../stores/queryStore';
 import queryService, { ExecuteQueryRequest, PaginationParams } from '../services/queryService';
-import { QueryResult, QueryHistoryItem, SavedQuery, ExplainPlan } from '../stores/queryStore';
+import { QueryResult, QueryHistoryItem } from '../stores/queryStore';
 
 /**
  * Hook for executing queries
@@ -11,7 +11,7 @@ export function useQueryExecution(tabId: string) {
   const [isExecuting, setIsExecuting] = useState(false);
 
   const executeQuery = useCallback(
-    async (sql: string, params?: Record<string, any>) => {
+    async (sql: string, params?: Record<string, unknown>) => {
       if (!sql.trim()) {
         setTabError(tabId, 'Query cannot be empty');
         return;
@@ -45,8 +45,8 @@ export function useQueryExecution(tabId: string) {
           executionTime,
           rowCount: result.rowCount,
         });
-      } catch (error: any) {
-        const errorMessage = error.message || 'Query execution failed';
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Query execution failed';
         setTabError(tabId, errorMessage);
 
         // Add failed query to history
@@ -68,7 +68,7 @@ export function useQueryExecution(tabId: string) {
       await queryService.cancelQuery(queryId);
       setTabExecuting(tabId, false);
       setTabError(tabId, 'Query cancelled');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to cancel query:', error);
     }
   }, [tabId, setTabExecuting, setTabError]);
@@ -171,8 +171,9 @@ export function useSavedQueries() {
     try {
       const queries = await queryService.getSavedQueries();
       setSavedQueries(queries);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to fetch saved queries';
+      setError(message);
       console.error('Failed to fetch saved queries:', err);
     } finally {
       setIsLoading(false);
@@ -187,8 +188,9 @@ export function useSavedQueries() {
         const query = await queryService.saveQuery({ name, sql, description, tags });
         addSavedQuery(query);
         return query;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to save query';
+        setError(message);
         throw err;
       } finally {
         setIsLoading(false);
@@ -205,8 +207,9 @@ export function useSavedQueries() {
         const query = await queryService.updateSavedQuery(id, updates);
         updateSavedQuery(id, query);
         return query;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to update query';
+        setError(message);
         throw err;
       } finally {
         setIsLoading(false);
@@ -222,8 +225,9 @@ export function useSavedQueries() {
       try {
         await queryService.deleteQuery(id);
         removeSavedQuery(id);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to delete query';
+        setError(message);
         throw err;
       } finally {
         setIsLoading(false);
@@ -268,8 +272,9 @@ export function useExplainPlan() {
         const plan = await queryService.explainQuery(sql.trim());
         setExplainPlan(plan);
         return plan;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to explain query';
+        setError(message);
         setExplainPlan(null);
         throw err;
       } finally {

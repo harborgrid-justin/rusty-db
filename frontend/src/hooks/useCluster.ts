@@ -4,7 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useWebSocket } from '../contexts/WebSocketContext';
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import * as clusterService from '../services/clusterService';
 import type {
@@ -19,6 +19,35 @@ import type {
 // ============================================================================
 // Query Keys
 // ============================================================================
+
+// ============================================================================
+// WebSocket Event Types
+// ============================================================================
+
+interface NodeStatusEvent {
+  nodeId: UUID;
+  status: Partial<ClusterNode>;
+}
+
+interface NodeAddedEvent {
+  id: UUID;
+  name: string;
+}
+
+interface NodeRemovedEvent {
+  id: UUID;
+  name: string;
+}
+
+interface ReplicationStatusEvent {
+  targetNode: UUID;
+  status: Partial<ReplicationStatus>;
+}
+
+interface ReplicationLagEvent {
+  nodeId: UUID;
+  metric: clusterService.ReplicationLagMetric;
+}
 
 export const clusterKeys = {
   all: ['cluster'] as const,
@@ -82,8 +111,8 @@ export function useNodes() {
 
   // Subscribe to real-time node updates
   useEffect(() => {
-    const unsubscribeNodeStatus = subscribe('cluster:node:status', (data: any) => {
-      const { nodeId, status } = data;
+    const unsubscribeNodeStatus = subscribe('cluster:node:status', (data: unknown) => {
+      const { nodeId, status } = data as NodeStatusEvent;
 
       // Update the specific node in the nodes list
       queryClient.setQueryData<ClusterNode[]>(clusterKeys.nodes(), (old) => {
@@ -100,16 +129,18 @@ export function useNodes() {
       );
     });
 
-    const unsubscribeNodeAdded = subscribe('cluster:node:added', (data: any) => {
+    const unsubscribeNodeAdded = subscribe('cluster:node:added', (data: unknown) => {
+      const nodeData = data as NodeAddedEvent;
       queryClient.invalidateQueries({ queryKey: clusterKeys.nodes() });
       queryClient.invalidateQueries({ queryKey: clusterKeys.topology() });
-      toast.success(`Node ${data.name} added to cluster`);
+      toast.success(`Node ${nodeData.name} added to cluster`);
     });
 
-    const unsubscribeNodeRemoved = subscribe('cluster:node:removed', (data: any) => {
+    const unsubscribeNodeRemoved = subscribe('cluster:node:removed', (data: unknown) => {
+      const nodeData = data as NodeRemovedEvent;
       queryClient.invalidateQueries({ queryKey: clusterKeys.nodes() });
       queryClient.invalidateQueries({ queryKey: clusterKeys.topology() });
-      toast.success(`Node ${data.name} removed from cluster`);
+      toast.success(`Node ${nodeData.name} removed from cluster`);
     });
 
     return () => {
@@ -138,11 +169,12 @@ export function useNodeStatus(nodeId: UUID) {
   useEffect(() => {
     if (!nodeId) return;
 
-    const unsubscribe = subscribe('cluster:node:status', (data: any) => {
-      if (data.nodeId === nodeId) {
+    const unsubscribe = subscribe('cluster:node:status', (data: unknown) => {
+      const statusEvent = data as NodeStatusEvent;
+      if (statusEvent.nodeId === nodeId) {
         queryClient.setQueryData<ClusterNode>(
           clusterKeys.node(nodeId),
-          (old) => (old ? { ...old, ...data.status } : old)
+          (old) => (old ? { ...old, ...statusEvent.status } : old)
         );
       }
     });
@@ -180,7 +212,7 @@ export function useAddNode() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.topology() });
       toast.success('Node added successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to add node: ${error.message}`);
     },
   });
@@ -199,7 +231,7 @@ export function useRemoveNode() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.topology() });
       toast.success('Node removed successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to remove node: ${error.message}`);
     },
   });
@@ -215,7 +247,7 @@ export function usePromoteNode() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.topology() });
       toast.success('Node promoted successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to promote node: ${error.message}`);
     },
   });
@@ -231,7 +263,7 @@ export function useDemoteNode() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.topology() });
       toast.success('Node demoted successfully');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to demote node: ${error.message}`);
     },
   });
@@ -283,11 +315,12 @@ export function useReplicationStatusByNode(nodeId: UUID) {
   useEffect(() => {
     if (!nodeId) return;
 
-    const unsubscribe = subscribe('cluster:replication:status', (data: any) => {
-      if (data.targetNode === nodeId) {
+    const unsubscribe = subscribe('cluster:replication:status', (data: unknown) => {
+      const statusEvent = data as ReplicationStatusEvent;
+      if (statusEvent.targetNode === nodeId) {
         queryClient.setQueryData<ReplicationStatus>(
           [...clusterKeys.replicationStatus(), nodeId],
-          data
+          statusEvent as unknown as ReplicationStatus
         );
       }
     });
@@ -317,14 +350,15 @@ export function useReplicationLag(
   useEffect(() => {
     if (!nodeId) return;
 
-    const unsubscribe = subscribe('cluster:replication:lag', (data: any) => {
-      if (data.nodeId === nodeId) {
+    const unsubscribe = subscribe('cluster:replication:lag', (data: unknown) => {
+      const lagEvent = data as ReplicationLagEvent;
+      if (lagEvent.nodeId === nodeId) {
         // Append new lag metric to the existing data
         queryClient.setQueryData<clusterService.ReplicationLagMetric[]>(
           clusterKeys.replicationLag(nodeId, timeRange),
           (old) => {
-            if (!old) return [data.metric];
-            return [...old, data.metric].slice(-100); // Keep last 100 data points
+            if (!old) return [lagEvent.metric];
+            return [...old, lagEvent.metric].slice(-100); // Keep last 100 data points
           }
         );
       }
@@ -353,7 +387,7 @@ export function useUpdateReplicationConfig() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.replicationConfig() });
       toast.success('Replication configuration updated');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to update replication config: ${error.message}`);
     },
   });
@@ -368,7 +402,7 @@ export function usePauseReplication() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.replicationStatus() });
       toast.success('Replication paused');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to pause replication: ${error.message}`);
     },
   });
@@ -383,7 +417,7 @@ export function useResumeReplication() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.replicationStatus() });
       toast.success('Replication resumed');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to resume replication: ${error.message}`);
     },
   });
@@ -398,7 +432,7 @@ export function useResyncNode() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.replicationStatus() });
       toast.success('Node resync started');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to start resync: ${error.message}`);
     },
   });
@@ -475,7 +509,7 @@ export function useUpdateFailoverConfig() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.failoverConfig() });
       toast.success('Failover configuration updated');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to update failover config: ${error.message}`);
     },
   });
@@ -484,7 +518,7 @@ export function useUpdateFailoverConfig() {
 export function usePreflightFailoverCheck() {
   return useMutation({
     mutationFn: clusterService.preflightFailoverCheck,
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Preflight check failed: ${error.message}`);
     },
   });
@@ -501,7 +535,7 @@ export function useTriggerFailover() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.failoverHistory() });
       toast.success('Failover initiated');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to trigger failover: ${error.message}`);
     },
   });
@@ -517,7 +551,7 @@ export function useCancelFailover() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.nodes() });
       toast.success('Failover cancelled');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to cancel failover: ${error.message}`);
     },
   });
@@ -567,7 +601,7 @@ export function useUpdateClusterConfig() {
       queryClient.invalidateQueries({ queryKey: clusterKeys.config() });
       toast.success('Cluster configuration updated');
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to update cluster config: ${error.message}`);
     },
   });
@@ -576,7 +610,7 @@ export function useUpdateClusterConfig() {
 export function useRunClusterDiagnostics() {
   return useMutation({
     mutationFn: clusterService.runClusterDiagnostics,
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to run diagnostics: ${error.message}`);
     },
   });

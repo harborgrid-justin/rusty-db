@@ -10,7 +10,6 @@ import type {
   Column,
   Index,
   View,
-  MaterializedView,
   ForeignKey,
   Constraint,
   PaginatedResponse,
@@ -103,14 +102,14 @@ interface BackendTableInfo {
   row_count: number;
   size_bytes: number;
   columns: BackendColumnMetadata[];
-  indexes: any[];
+  indexes: Record<string, unknown>[];
 }
 
 interface BackendSchemaResponse {
   database_name: string;
   tables: BackendTableInfo[];
-  views: any[];
-  procedures: any[];
+  views: Record<string, unknown>[];
+  procedures: Record<string, unknown>[];
   total_count: number;
 }
 
@@ -123,7 +122,7 @@ export async function getTables(
 ): Promise<ApiResponse<PaginatedResponse<Table>>> {
   // Fetch all tables from backend schema endpoint
   // Backend returns raw SchemaResponse, not wrapped in ApiResponse
-  const rawResponse = await get<any>('/schema');
+  const rawResponse = await get<BackendSchemaResponse>('/schema');
 
   if (!rawResponse || !Array.isArray(rawResponse.tables)) {
     return {
@@ -144,7 +143,7 @@ export async function getTables(
     schema: t.schema,
     columns: t.columns.map(c => ({
       name: c.name,
-      dataType: c.data_type as any,
+      dataType: c.data_type,
       nullable: c.nullable,
       isPrimaryKey: false,
       isForeignKey: false,
@@ -198,14 +197,13 @@ export async function getTables(
  * Get details for a specific table
  */
 export async function getTable(
-  tableName: string,
-  schema: string = 'public'
+  tableName: string
 ): Promise<ApiResponse<Table>> {
   try {
     // Use correct endpoint from server.rs: /api/v1/tables/{name}
     // Backend returns TableInfo struct directly
-    const rawResponse = await get<any>(`/tables/${tableName}`);
-    const info = rawResponse as BackendTableInfo;
+    const rawResponse = await get<BackendTableInfo>(`/tables/${tableName}`);
+    const info = rawResponse;
 
     if (!info || !info.name) {
        throw new Error('Table not found');
@@ -218,7 +216,7 @@ export async function getTable(
         schema: info.schema,
         columns: info.columns.map(c => ({
           name: c.name,
-          dataType: c.data_type as any,
+          dataType: c.data_type,
           nullable: c.nullable,
           isPrimaryKey: false,
           isForeignKey: false,
@@ -235,12 +233,12 @@ export async function getTable(
         updatedAt: new Date().toISOString()
       }
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
       error: {
         code: 'FETCH_ERROR',
-        message: error.message || 'Failed to fetch table',
+        message: error instanceof Error ? error.message : 'Failed to fetch table',
         timestamp: new Date().toISOString()
       }
     };
@@ -268,7 +266,7 @@ export async function createTable(
 
   try {
     // Backend returns 201 Created with empty body
-    await post<any>(`/tables/${definition.name}`, backendRequest);
+    await post<unknown>(`/tables/${definition.name}`, backendRequest);
 
     // Construct success response since backend doesn't return the table
     return {
@@ -278,7 +276,7 @@ export async function createTable(
         schema: definition.schema || 'public',
         columns: definition.columns.map(c => ({
           name: c.name,
-          dataType: c.dataType as any,
+          dataType: c.dataType,
           nullable: c.nullable ?? true,
           isPrimaryKey: false,
           isForeignKey: false,
@@ -295,12 +293,12 @@ export async function createTable(
         updatedAt: new Date().toISOString()
       }
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       success: false,
       error: {
         code: 'CREATE_ERROR',
-        message: error.message || 'Failed to create table',
+        message: error instanceof Error ? error.message : 'Failed to create table',
         timestamp: new Date().toISOString()
       }
     };
@@ -312,8 +310,7 @@ export async function createTable(
  */
 export async function alterTable(
   tableName: string,
-  changes: AlterTableRequest,
-  schema: string = 'public'
+  changes: AlterTableRequest
 ): Promise<ApiResponse<Table>> {
   return put<Table>(`/tables/${tableName}`, changes);
 }
@@ -323,7 +320,6 @@ export async function alterTable(
  */
 export async function dropTable(
   tableName: string,
-  schema: string = 'public',
   cascade: boolean = false
 ): Promise<ApiResponse<void>> {
   return del<void>(`/tables/${tableName}?cascade=${cascade}`);

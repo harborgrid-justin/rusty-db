@@ -106,7 +106,7 @@ export default function RestorePage() {
   const [databases, setDatabases] = useState<string[]>([]);
   const [databasesLoading, setDatabasesLoading] = useState(true);
 
-  const { backups, loading: backupsLoading } = useBackups({ status: 'completed' });
+  const { backups } = useBackups({ status: 'completed' });
   const { history, loading: historyLoading, refetch: refetchHistory } =
     useRestoreHistory(10);
   const { addNotification } = useUIStore();

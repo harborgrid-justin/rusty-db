@@ -111,8 +111,8 @@ export function AddNodeWizard({
       } else {
         setStep('complete');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to add node');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add node');
       setStep('error');
     } finally {
       setIsLoading(false);

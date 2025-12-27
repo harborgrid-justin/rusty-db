@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { userService } from '../services/userService';
 import type {
-  User,
   UUID,
   PaginationParams,
   UserStatus,

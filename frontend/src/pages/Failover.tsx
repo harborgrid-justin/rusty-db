@@ -27,7 +27,6 @@ import {
   usePreflightFailoverCheck,
   useTriggerFailover,
 } from '../hooks/useCluster';
-import type { FailoverEvent } from '../types';
 import clsx from 'clsx';
 
 export default function Failover() {
@@ -346,6 +345,13 @@ export default function Failover() {
   );
 }
 
+interface FailoverConfig {
+  autoFailover: boolean;
+  failoverTimeout: number;
+  healthCheckInterval: number;
+  minHealthyFollowers: number;
+}
+
 // Configuration Dialog Component
 function ConfigurationDialog({
   isOpen,
@@ -356,8 +362,8 @@ function ConfigurationDialog({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  config: any;
-  onUpdate: (config: any) => void;
+  config: FailoverConfig | null | undefined;
+  onUpdate: (config: FailoverConfig) => void;
   isLoading: boolean;
 }) {
   const { register, handleSubmit, reset } = useForm({
@@ -371,7 +377,7 @@ function ConfigurationDialog({
       : {},
   });
 
-  function onSubmit(data: any) {
+  function onSubmit(data: FailoverConfig) {
     // Convert back to milliseconds
     onUpdate({
       autoFailover: data.autoFailover,

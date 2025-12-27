@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { ResourceGroup } from '../../types';
 import { Input } from '../common/Input';
-import { Select } from '../common/Select';
 import { Button } from '../common/Button';
 import { MultiSelect } from '../common/Select';
 
@@ -53,7 +52,7 @@ export function ResourceGroupForm({
 
   const [errors, setErrors] = useState<Partial<Record<keyof ResourceGroupFormData, string>>>({});
 
-  const handleChange = (field: keyof ResourceGroupFormData, value: any) => {
+  const handleChange = (field: keyof ResourceGroupFormData, value: string | number | boolean | string[] | undefined) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {

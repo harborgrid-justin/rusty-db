@@ -16,7 +16,6 @@ export default function SlowQueries() {
     endDate: '',
     search: '',
   });
-  const [showExplainModal, setShowExplainModal] = useState<UUID | null>(null);
 
   const { data, isLoading, error, refresh, exportQueries } = useSlowQueries({
     page,
@@ -34,8 +33,8 @@ export default function SlowQueries() {
     }
   };
 
-  const handleViewExplain = (queryId: UUID) => {
-    setShowExplainModal(queryId);
+  const handleViewExplain = (_queryId: UUID) => {
+    // TODO: Implement explain modal
   };
 
   const avgExecutionTime =
@@ -326,6 +325,8 @@ export default function SlowQueries() {
           <li>Denormalize data or use materialized views for complex aggregations</li>
         </ul>
       </motion.div>
+
+      {/* Explain Modal - TODO: Implement modal for query ID: {showExplainModal} */}
     </div>
   );
 }

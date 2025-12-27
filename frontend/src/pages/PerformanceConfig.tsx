@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useConfig, useConfigRecommendations } from '../hooks/useConfig';
 import { ConfigSection } from '../components/config/ConfigSection';
 import { ConfigInput } from '../components/config/ConfigInput';
@@ -29,7 +29,6 @@ export function PerformanceConfig() {
   const {
     recommendations,
     systemResources,
-    loading: recommendationsLoading,
   } = useConfigRecommendations();
 
   const { pendingChanges: restartChanges } = usePendingRestart();

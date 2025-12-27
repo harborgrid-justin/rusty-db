@@ -23,19 +23,16 @@ import {
   useTableStats,
   useTableDDL,
   useForeignKeys,
-  useConstraints,
   useBrowseTableData,
   useUpdateRow,
   useInsertRow,
   useDeleteRow,
   useDropTable,
 } from '../hooks/useSchema';
-import { ColumnEditor } from '../components/schema/ColumnEditor';
 import { IndexList } from '../components/schema/IndexList';
 import { DataBrowser } from '../components/schema/DataBrowser';
 import { DDLViewer } from '../components/schema/DDLViewer';
 import clsx from 'clsx';
-import type { ColumnDefinition, UpdateRowRequest, InsertRowRequest } from '../services/schemaService';
 import { getErrorMessage } from '../services/api';
 
 type TabType = 'columns' | 'indexes' | 'foreignKeys' | 'data' | 'ddl' | 'stats';
@@ -51,7 +48,6 @@ export default function TableDetails() {
   const { data: stats } = useTableStats(tableName!, 'public');
   const { data: ddlData } = useTableDDL(tableName!, 'public');
   const { data: foreignKeys = [] } = useForeignKeys(tableName!, 'public');
-  const { data: constraints = [] } = useConstraints(tableName!, 'public');
   const { data: browseData } = useBrowseTableData(
     tableName!,
     { page: dataPage, pageSize: dataPageSize },
@@ -290,7 +286,7 @@ export default function TableDetails() {
                     </tr>
                   </thead>
                   <tbody>
-                    {table.columns.map((column, index) => (
+                    {table.columns.map((column) => (
                       <tr key={column.name} className="border-b border-dark-700/50 hover:bg-dark-800/30">
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-2">

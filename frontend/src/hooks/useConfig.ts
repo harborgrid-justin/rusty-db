@@ -302,7 +302,7 @@ export function useConfig(options: UseConfigOptions = {}): UseConfigReturn {
       const setting = getSetting(key);
       return setting?.currentValue;
     },
-    [settings, pendingChanges, getSetting]
+    [pendingChanges, getSetting]
   );
 
   const isDirty = useCallback(
@@ -456,7 +456,7 @@ export function useConfigRecommendations(): UseConfigRecommendationsReturn {
     fetchData();
   }, [fetchData]);
 
-  const applyRecommendation = useCallback((key: string) => {
+  const applyRecommendation = useCallback(() => {
     // This would be used in conjunction with useConfig to apply a recommendation
     // Implementation depends on parent component
   }, []);

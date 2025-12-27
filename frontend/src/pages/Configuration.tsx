@@ -20,7 +20,6 @@ export function Configuration() {
     error,
     pendingChanges,
     hasPendingChanges,
-    requiresRestart,
     updateSetting,
     resetSetting,
     resetCategory,
@@ -82,7 +81,7 @@ export function Configuration() {
     }
   };
 
-  const handleImport = async (config: any) => {
+  const handleImport = async (config: Record<string, unknown>) => {
     const result = await configService.importConfig(config, true);
     if (result.success && result.data) {
       await refresh();

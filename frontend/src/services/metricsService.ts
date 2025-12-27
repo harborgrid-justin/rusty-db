@@ -9,12 +9,10 @@ import type {
   DatabaseMetrics,
   QueryMetrics,
   HealthStatus,
-  ComponentHealth,
   Alert,
   ActiveSession,
   ConnectionPoolStats,
   SlowQuery,
-  ApiResponse,
   Duration,
   Timestamp,
 } from '../types';
@@ -79,6 +77,36 @@ export type ActivityEventType =
   | 'table_created'
   | 'maintenance_started'
   | 'maintenance_completed';
+
+// Backend API response types
+interface BackendMetricValue {
+  value: number;
+}
+
+interface BackendMetricsResponse {
+  metrics: Record<string, BackendMetricValue>;
+}
+
+interface BackendHealthCheck {
+  status: string;
+  message: string;
+  last_check: number;
+}
+
+interface BackendHealthResponse {
+  status: string;
+  uptime_seconds: number;
+  version: string;
+  checks: Record<string, BackendHealthCheck>;
+}
+
+interface ComponentHealth {
+  name: string;
+  status: 'healthy' | 'degraded' | 'unhealthy' | 'critical';
+  message: string;
+  lastCheck: string;
+  responseTime: number;
+}
 
 // ============================================================================
 // WebSocket Connection Management
@@ -220,7 +248,7 @@ export const metricsService = {
    * Fetch current system metrics (CPU, Memory, Disk, Network)
    */
   async fetchSystemMetrics(): Promise<SystemMetrics> {
-    const rawResponse = await get<any>('/metrics');
+    const rawResponse = await get<BackendMetricsResponse>('/metrics');
 
     if (!rawResponse || !rawResponse.metrics) {
       throw new Error('Failed to fetch system metrics');
@@ -276,10 +304,10 @@ export const metricsService = {
    * Fetch database-specific metrics
    */
   async fetchDatabaseMetrics(): Promise<DatabaseMetrics> {
-    const response = await get<any>('/metrics');
+    const response = await get<BackendMetricsResponse>('/metrics');
 
-    if (!response.success || !response.data) {
-      throw new Error(response.error?.message || 'Failed to fetch database metrics');
+    if (!response || !response.metrics) {
+      throw new Error('Failed to fetch database metrics');
     }
 
     return {
@@ -322,7 +350,7 @@ export const metricsService = {
    * Fetch system health status
    */
   async fetchHealthStatus(): Promise<HealthStatus> {
-    const rawResponse = await get<any>('/admin/health');
+    const rawResponse = await get<BackendHealthResponse>('/admin/health');
 
     if (!rawResponse || !rawResponse.status) {
       throw new Error('Failed to fetch health status');
@@ -331,9 +359,9 @@ export const metricsService = {
     const healthData = rawResponse;
 
     // Map backend checks map to frontend ComponentHealth array
-    const components: any[] = [];
+    const components: ComponentHealth[] = [];
     if (healthData.checks) {
-      Object.entries(healthData.checks).forEach(([key, value]: [string, any]) => {
+      Object.entries(healthData.checks).forEach(([key, value]: [string, BackendHealthCheck]) => {
         components.push({
           name: key,
           status: value.status === 'healthy' ? 'healthy' : 'degraded',

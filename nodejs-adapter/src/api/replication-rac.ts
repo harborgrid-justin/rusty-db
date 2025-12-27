@@ -99,9 +99,9 @@ export interface ReplicationConflict {
   /** When the conflict was detected (Unix timestamp) */
   detected_at: number;
   /** Local data version */
-  local_data: any;
+  local_data: unknown;
   /** Remote data version */
-  remote_data: any;
+  remote_data: unknown;
   /** Resolution strategy applied */
   resolution_strategy?: string;
   /** Whether the conflict has been resolved */
@@ -119,7 +119,7 @@ export interface ResolveConflictRequest {
   /** Resolution strategy */
   strategy: 'use_local' | 'use_remote' | 'manual' | 'last_write_wins';
   /** Manual data for 'manual' strategy */
-  manual_data?: any;
+  manual_data?: unknown;
 }
 
 /**
@@ -627,7 +627,7 @@ export class ReplicationRACClient {
    * @param request Conflict resolution request
    * @returns Resolution result
    */
-  async resolveReplicationConflict(request: ResolveConflictRequest): Promise<any> {
+  async resolveReplicationConflict(request: ResolveConflictRequest): Promise<unknown> {
     const response = await this.client.post(
       '/api/v1/replication/resolve-conflict',
       request
@@ -681,7 +681,7 @@ export class ReplicationRACClient {
    * Trigger cluster rebalance
    * @returns Rebalance result
    */
-  async triggerClusterRebalance(): Promise<any> {
+  async triggerClusterRebalance(): Promise<unknown> {
     const response = await this.client.post('/api/v1/rac/cluster/rebalance');
     return response.data;
   }
@@ -728,7 +728,7 @@ export class ReplicationRACClient {
    * @param request Cache flush options
    * @returns Flush result
    */
-  async flushCacheFusion(request: CacheFlushRequest): Promise<any> {
+  async flushCacheFusion(request: CacheFlushRequest): Promise<unknown> {
     const response = await this.client.post('/api/v1/rac/cache-fusion/flush', request);
     return response.data;
   }
@@ -760,7 +760,7 @@ export class ReplicationRACClient {
    * @param request Remaster options
    * @returns Remaster result
    */
-  async triggerGRDRemaster(request: RemasterRequest): Promise<any> {
+  async triggerGRDRemaster(request: RemasterRequest): Promise<unknown> {
     const response = await this.client.post('/api/v1/rac/grd/remaster', request);
     return response.data;
   }
@@ -864,8 +864,8 @@ export class ReplicationRACClient {
    * Get cluster configuration
    * @returns Cluster configuration
    */
-  async getClusterConfig(): Promise<Record<string, any>> {
-    const response = await this.client.get<Record<string, any>>('/api/v1/cluster/config');
+  async getClusterConfig(): Promise<Record<string, unknown>> {
+    const response = await this.client.get<Record<string, unknown>>('/api/v1/cluster/config');
     return response.data;
   }
 
@@ -873,7 +873,7 @@ export class ReplicationRACClient {
    * Update cluster configuration
    * @param config New configuration settings
    */
-  async updateClusterConfig(config: Record<string, any>): Promise<void> {
+  async updateClusterConfig(config: Record<string, unknown>): Promise<void> {
     await this.client.put('/api/v1/cluster/config', config);
   }
 
@@ -895,7 +895,7 @@ export class ReplicationRACClient {
       nodes?: string[];
       timeout?: number;
     }
-  ): Promise<any> {
+  ): Promise<unknown> {
     // This would typically integrate with the query execution API
     // and leverage RAC cluster capabilities for parallel execution
     const response = await this.client.post('/api/v1/query/execute', {

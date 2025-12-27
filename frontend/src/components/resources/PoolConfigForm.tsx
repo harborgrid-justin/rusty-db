@@ -40,7 +40,7 @@ export function PoolConfigForm({
 
   const [errors, setErrors] = useState<Partial<Record<keyof PoolConfig, string>>>({});
 
-  const handleChange = (field: keyof PoolConfig, value: any) => {
+  const handleChange = (field: keyof PoolConfig, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {

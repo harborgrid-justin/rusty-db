@@ -40,7 +40,7 @@ export const QueryEditor: React.FC = () => {
   // Hooks for active tab
   const { executeQuery, cancelQuery, isExecuting } = useQueryExecution(activeTabId || '');
   const { formatSql, isFormatting } = useSqlFormatter();
-  const { explainPlan, explain, clearPlan } = useExplainPlan();
+  const { explainPlan, explain } = useExplainPlan();
   const {
     history,
     isLoading: historyLoading,
@@ -114,8 +114,9 @@ export const QueryEditor: React.FC = () => {
     try {
       await saveQuery(name, activeTab.sql);
       alert('Query saved successfully!');
-    } catch (error: any) {
-      alert(`Failed to save query: ${error.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      alert(`Failed to save query: ${message}`);
     }
   }, [activeTab, saveQuery]);
 

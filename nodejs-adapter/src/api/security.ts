@@ -13,7 +13,7 @@
  * @module security
  */
 
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 // ============================================================================
 // Encryption Types
@@ -535,7 +535,7 @@ export interface SamlMetadata {
 export interface TestConnectionResult {
     success: boolean;
     message: string;
-    details?: any;
+    details?: unknown;
     response_time_ms: number;
 }
 
@@ -1010,7 +1010,7 @@ export class RustyDBSecurityClient {
      * Get audit statistics
      * @returns Audit statistics
      */
-    async getAuditStats(): Promise<any> {
+    async getAuditStats(): Promise<unknown> {
         const response = await this.client.get('/api/v1/security/audit/stats');
         return response.data;
     }
@@ -1019,7 +1019,7 @@ export class RustyDBSecurityClient {
      * Verify audit log integrity
      * @returns Integrity verification result
      */
-    async verifyAuditIntegrity(): Promise<any> {
+    async verifyAuditIntegrity(): Promise<unknown> {
         const response = await this.client.post('/api/v1/security/audit/verify');
         return response.data;
     }

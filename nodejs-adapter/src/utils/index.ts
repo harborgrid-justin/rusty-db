@@ -52,7 +52,7 @@ export function getErrorMessage(error: unknown): string {
 /**
  * Wrap a function with error handling
  */
-export function withErrorHandling<T extends (...args: any[]) => any>(
+export function withErrorHandling<T extends (...args: unknown[]) => unknown>(
   fn: T,
   errorHandler?: (error: unknown) => void
 ): T {
@@ -512,8 +512,9 @@ export interface Logger {
  * Create a simple console logger
  */
 export function createLogger(prefix: string = 'RustyDB'): Logger {
-  const log = (level: string, message: string, ...args: unknown[]) => {
+  const log = (level: string, message: string, ...args: unknown[]): void => {
     const timestamp = new Date().toISOString();
+    // eslint-disable-next-line no-console
     console.log(`[${timestamp}] [${prefix}] [${level}] ${message}`, ...args);
   };
 

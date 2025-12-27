@@ -19,7 +19,7 @@ import { configService } from '../services/configService';
 import type { CreateScheduleConfig } from '../services/backupService';
 import type { BackupSchedule } from '../types';
 import { useUIStore } from '../stores/uiStore';
-import { formatCronExpression, formatDate, formatRelativeTime } from '../utils/format';
+import { formatCronExpression, formatRelativeTime } from '../utils/format';
 import clsx from 'clsx';
 
 // ============================================================================

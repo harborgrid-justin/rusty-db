@@ -7,16 +7,16 @@ import { LoadingSpinner } from './LoadingScreen';
 // Data table with sorting, selection, and pagination
 // ============================================================================
 
-export interface Column<T = any> {
+export interface Column<T = Record<string, unknown>> {
   key: string;
   header: string | ReactNode;
-  render?: (value: any, row: T, index: number) => ReactNode;
+  render?: (value: unknown, row: T, index: number) => ReactNode;
   sortable?: boolean;
   width?: string;
   align?: 'left' | 'center' | 'right';
 }
 
-export interface TableProps<T = any> {
+export interface TableProps<T = Record<string, unknown>> {
   columns: Column<T>[];
   data: T[];
   loading?: boolean;
@@ -36,7 +36,7 @@ export interface TableProps<T = any> {
   compact?: boolean;
 }
 
-export function Table<T extends Record<string, any>>({
+export function Table<T extends Record<string, unknown>>({
   columns,
   data,
   loading = false,

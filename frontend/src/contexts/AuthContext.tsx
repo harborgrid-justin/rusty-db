@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const interval = setInterval(checkSession, SESSION_CHECK_INTERVAL);
     return () => clearInterval(interval);
-  }, [state.isAuthenticated, state.session]);
+  }, [state.isAuthenticated, state.session, refreshSession, logout]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
@@ -301,6 +301,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuthContext(): AuthContextType {
   const context = useContext(AuthContext);
 

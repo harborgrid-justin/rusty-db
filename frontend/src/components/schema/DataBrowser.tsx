@@ -3,7 +3,7 @@
 // Browse and edit table data with pagination
 // ============================================================================
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ChevronLeftIcon,

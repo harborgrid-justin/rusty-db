@@ -13,13 +13,13 @@
 export type DateTime = string;
 
 /** Arbitrary JSON value */
-export type Json = any;
+export type Json = unknown;
 
 /** Base64-encoded binary data */
 export type Binary = string;
 
 /** Large integer as string to prevent precision loss */
-export type BigInt = string;
+export type BigIntString = string;
 
 /** GraphQL ID type */
 export type ID = string;
@@ -175,8 +175,8 @@ export interface TableType {
   name: string;
   schema: string;
   columns: ColumnType[];
-  rowCount: BigInt;
-  sizeBytes: BigInt;
+  rowCount: BigIntStringString;
+  sizeBytes: BigIntStringString;
   createdAt: DateTime;
   updatedAt?: DateTime | null;
   createdBy: string;
@@ -226,7 +226,7 @@ export interface IndexInfo {
   columns: string[];
   unique: boolean;
   indexType: string;
-  sizeBytes: BigInt;
+  sizeBytes: BigIntStringString;
   createdAt: DateTime;
 }
 
@@ -239,17 +239,17 @@ export interface ConstraintInfo {
 }
 
 export interface TableStatistics {
-  rowCount: BigInt;
-  sizeBytes: BigInt;
-  indexSizeBytes: BigInt;
+  rowCount: BigIntStringString;
+  sizeBytes: BigIntStringString;
+  indexSizeBytes: BigIntStringString;
   avgRowSize: number;
   lastAnalyzed?: DateTime | null;
   lastModified?: DateTime | null;
 }
 
 export interface ColumnStatistics {
-  distinctCount: BigInt;
-  nullCount: BigInt;
+  distinctCount: BigIntStringString;
+  nullCount: BigIntStringString;
   avgLength?: number | null;
   minValue?: string | null;
   maxValue?: string | null;
@@ -259,7 +259,7 @@ export interface ColumnStatistics {
 export interface HistogramBucket {
   rangeStart: string;
   rangeEnd: string;
-  count: BigInt;
+  count: BigIntStringString;
   frequency: number;
 }
 
@@ -272,7 +272,7 @@ export type QueryResult = QuerySuccess | QueryError;
 export interface QuerySuccess {
   __typename: 'QuerySuccess';
   rows: RowType[];
-  totalCount: BigInt;
+  totalCount: BigIntStringString;
   executionTimeMs: number;
   hasMore: boolean;
 }
@@ -286,7 +286,7 @@ export interface QueryError {
 
 export interface SearchResult {
   results: SearchMatch[];
-  totalCount: BigInt;
+  totalCount: BigIntStringString;
   executionTimeMs: number;
 }
 
@@ -300,7 +300,7 @@ export interface SearchMatch {
 export interface QueryPlan {
   planText: string;
   estimatedCost: number;
-  estimatedRows: BigInt;
+  estimatedRows: BigIntStringString;
   operations: PlanOperation[];
 }
 
@@ -308,7 +308,7 @@ export interface PlanOperation {
   operationType: string;
   description: string;
   cost: number;
-  rows: BigInt;
+  rows: BigIntStringString;
   children: PlanOperation[];
 }
 
@@ -485,7 +485,7 @@ export interface PageInfo {
   hasPreviousPage: boolean;
   startCursor?: string | null;
   endCursor?: string | null;
-  totalCount: BigInt;
+  totalCount: BigIntStringString;
 }
 
 export interface RowEdge {
@@ -496,7 +496,7 @@ export interface RowEdge {
 export interface RowConnection {
   edges: RowEdge[];
   pageInfo: PageInfo;
-  totalCount: BigInt;
+  totalCount: BigIntStringString;
 }
 
 // ============================================================================
@@ -550,7 +550,7 @@ export interface AggregateChange {
 export interface QueryChange {
   table: string;
   rows: RowType[];
-  totalCount: BigInt;
+  totalCount: BigIntStringString;
   timestamp: DateTime;
 }
 
@@ -565,11 +565,11 @@ export interface Heartbeat {
 
 export interface MetricsResponse {
   cpuUsage: number;
-  memoryUsed: BigInt;
-  memoryTotal: BigInt;
+  memoryUsed: BigIntStringString;
+  memoryTotal: BigIntStringString;
   memoryPercent: number;
-  diskUsed: BigInt;
-  diskTotal: BigInt;
+  diskUsed: BigIntStringString;
+  diskTotal: BigIntStringString;
   diskPercent: number;
   activeConnections: number;
   totalConnections: number;
@@ -588,9 +588,9 @@ export interface SessionStats {
 }
 
 export interface QueryStats {
-  totalQueries: BigInt;
-  successfulQueries: BigInt;
-  failedQueries: BigInt;
+  totalQueries: BigIntStringString;
+  successfulQueries: BigIntStringString;
+  failedQueries: BigIntStringString;
   avgExecutionTimeMs: number;
   medianExecutionTimeMs: number;
   p95ExecutionTimeMs: number;
@@ -602,10 +602,10 @@ export interface QueryStats {
 export interface PerformanceData {
   cpuUsage: number;
   memoryUsage: number;
-  diskReadBps: BigInt;
-  diskWriteBps: BigInt;
-  networkRxBps: BigInt;
-  networkTxBps: BigInt;
+  diskReadBps: BigIntStringString;
+  diskWriteBps: BigIntStringString;
+  networkRxBps: BigIntStringString;
+  networkTxBps: BigIntStringString;
   activeQueries: number;
   waitingQueries: number;
   bufferHitRatio: number;
@@ -621,20 +621,20 @@ export interface ActiveQuery {
   sqlText: string;
   state: string;
   startTime: DateTime;
-  durationMs: BigInt;
-  rowsProcessed: BigInt;
+  durationMs: BigIntStringString;
+  rowsProcessed: BigIntStringString;
   waitEvent?: string | null;
 }
 
 export interface SlowQuery {
   queryId: string;
   sqlText: string;
-  executionTimeMs: BigInt;
+  executionTimeMs: BigIntStringString;
   startTime: DateTime;
   endTime: DateTime;
   username: string;
   database: string;
-  rowsReturned: BigInt;
+  rowsReturned: BigIntStringString;
 }
 
 // ============================================================================
@@ -648,8 +648,8 @@ export interface ClusterNode {
   status: string;
   address: string;
   lastHeartbeat: DateTime;
-  uptimeSeconds: BigInt;
-  term: BigInt;
+  uptimeSeconds: BigIntStringString;
+  term: BigIntStringString;
   isLeader: boolean;
   cpuUsage: number;
   memoryUsage: number;
@@ -659,7 +659,7 @@ export interface ClusterTopology {
   totalNodes: number;
   healthyNodes: number;
   leaderId?: string | null;
-  currentTerm: BigInt;
+  currentTerm: BigIntStringString;
   hasQuorum: boolean;
   nodes: ClusterNode[];
   timestamp: DateTime;
@@ -668,8 +668,8 @@ export interface ClusterTopology {
 export interface ReplicationStatus {
   mode: string;
   state: string;
-  lagMs: BigInt;
-  bytesBehind: BigInt;
+  lagMs: BigIntStringString;
+  bytesBehind: BigIntStringString;
   lastWalReceived: string;
   lastWalApplied: string;
   timestamp: DateTime;
@@ -690,29 +690,29 @@ export interface ClusterConfig {
 // ============================================================================
 
 export interface StorageStatus {
-  totalBytes: BigInt;
-  usedBytes: BigInt;
-  availableBytes: BigInt;
+  totalBytes: BigIntStringString;
+  usedBytes: BigIntStringString;
+  availableBytes: BigIntStringString;
   usagePercent: number;
   dataFiles: number;
-  dataSize: BigInt;
+  dataSize: BigIntStringString;
   indexFiles: number;
-  indexSize: BigInt;
-  walSize: BigInt;
+  indexSize: BigIntStringString;
+  walSize: BigIntStringString;
   timestamp: DateTime;
 }
 
 export interface BufferPoolStats {
-  sizeBytes: BigInt;
+  sizeBytes: BigIntStringString;
   totalPages: number;
   freePages: number;
   dirtyPages: number;
   hitRatio: number;
-  totalReads: BigInt;
-  totalWrites: BigInt;
-  cacheHits: BigInt;
-  cacheMisses: BigInt;
-  evictions: BigInt;
+  totalReads: BigIntStringString;
+  totalWrites: BigIntStringString;
+  cacheHits: BigIntStringString;
+  cacheMisses: BigIntStringString;
+  evictions: BigIntStringString;
   timestamp: DateTime;
 }
 
@@ -720,22 +720,22 @@ export interface Tablespace {
   id: string;
   name: string;
   location: string;
-  sizeBytes: BigInt;
-  usedBytes: BigInt;
+  sizeBytes: BigIntStringString;
+  usedBytes: BigIntStringString;
   tableCount: number;
   isDefault: boolean;
   createdAt: DateTime;
 }
 
 export interface IoStats {
-  reads: BigInt;
-  writes: BigInt;
-  bytesRead: BigInt;
-  bytesWritten: BigInt;
+  reads: BigIntStringString;
+  writes: BigIntStringString;
+  bytesRead: BigIntStringString;
+  bytesWritten: BigIntStringString;
   avgReadLatencyUs: number;
   avgWriteLatencyUs: number;
-  readThroughputBps: BigInt;
-  writeThroughputBps: BigInt;
+  readThroughputBps: BigIntStringString;
+  writeThroughputBps: BigIntStringString;
   timestamp: DateTime;
 }
 
@@ -750,9 +750,9 @@ export interface ActiveTransaction {
   state: string;
   isolationLevel: string;
   startTime: DateTime;
-  durationMs: BigInt;
+  durationMs: BigIntStringString;
   queryCount: number;
-  rowsModified: BigInt;
+  rowsModified: BigIntStringString;
 }
 
 export interface Lock {
@@ -764,7 +764,7 @@ export interface Lock {
   tableName?: string | null;
   rowId?: string | null;
   grantedAt: DateTime;
-  waitTimeMs?: BigInt | null;
+  waitTimeMs?: BigIntString | null;
 }
 
 export interface Deadlock {
@@ -780,8 +780,8 @@ export interface MvccStatus {
   currentSnapshotId: string;
   oldestTransactionId?: string | null;
   activeSnapshots: number;
-  totalVersions: BigInt;
-  deadVersions: BigInt;
+  totalVersions: BigIntStringString;
+  deadVersions: BigIntStringString;
   lastVacuum?: DateTime | null;
   timestamp: DateTime;
 }
@@ -794,12 +794,12 @@ export interface ServerConfig {
   version: string;
   port: number;
   maxConnections: number;
-  bufferPoolSize: BigInt;
-  walBufferSize: BigInt;
+  bufferPoolSize: BigIntStringString;
+  walBufferSize: BigIntStringString;
   dataDirectory: string;
   logLevel: string;
   sslEnabled: boolean;
-  uptimeSeconds: BigInt;
+  uptimeSeconds: BigIntStringString;
   startTime: DateTime;
 }
 
@@ -857,17 +857,17 @@ export interface ConnectionPool {
 
 export interface PoolStats {
   poolId: string;
-  connectionsCreated: BigInt;
-  connectionsDestroyed: BigInt;
-  connectionsAcquired: BigInt;
-  connectionsReleased: BigInt;
-  acquireSuccesses: BigInt;
-  acquireFailures: BigInt;
-  acquireTimeouts: BigInt;
+  connectionsCreated: BigIntStringString;
+  connectionsDestroyed: BigIntStringString;
+  connectionsAcquired: BigIntStringString;
+  connectionsReleased: BigIntStringString;
+  acquireSuccesses: BigIntStringString;
+  acquireFailures: BigIntStringString;
+  acquireTimeouts: BigIntStringString;
   avgAcquireTimeMs: number;
-  validationFailures: BigInt;
-  creationFailures: BigInt;
-  leaksDetected: BigInt;
+  validationFailures: BigIntStringString;
+  creationFailures: BigIntStringString;
+  leaksDetected: BigIntStringString;
   timestamp: DateTime;
 }
 
@@ -881,8 +881,8 @@ export interface Connection {
   connectedAt: DateTime;
   lastActivity: DateTime;
   currentQuery?: string | null;
-  queriesExecuted: BigInt;
-  transactionsCount: BigInt;
+  queriesExecuted: BigIntStringString;
+  transactionsCount: BigIntStringString;
 }
 
 export interface Session {
@@ -895,8 +895,8 @@ export interface Session {
   startedAt: DateTime;
   lastCommand?: string | null;
   lastCommandAt?: DateTime | null;
-  queriesExecuted: BigInt;
-  idleSeconds: BigInt;
+  queriesExecuted: BigIntStringString;
+  idleSeconds: BigIntStringString;
 }
 
 export interface Partition {
@@ -906,8 +906,8 @@ export interface Partition {
   partitionType: string;
   partitionKey: string;
   partitionValue: string;
-  rowCount: BigInt;
-  sizeBytes: BigInt;
+  rowCount: BigIntStringString;
+  sizeBytes: BigIntStringString;
   isDefault: boolean;
   createdAt: DateTime;
 }
@@ -929,19 +929,19 @@ export interface Alert {
   resolvedAt?: DateTime | null;
   acknowledgedBy?: string | null;
   escalationLevel: number;
-  occurrenceCount: BigInt;
+  occurrenceCount: BigIntStringString;
 }
 
 export interface ServerInfo {
   version: string;
   buildDate: string;
   gitCommit?: string | null;
-  uptimeSeconds: BigInt;
+  uptimeSeconds: BigIntStringString;
   startTime: DateTime;
   hostname: string;
   os: string;
   arch: string;
   cpuCores: number;
-  totalMemory: BigInt;
+  totalMemory: BigIntStringString;
   pageSize: number;
 }

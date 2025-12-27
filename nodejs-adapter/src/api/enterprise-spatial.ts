@@ -327,8 +327,10 @@ export class EnterpriseSpatialClient {
       const error = await response.json().catch(() => ({ message: response.statusText }));
       throw new Error(`[${response.status}] ${error.message}`);
     }
-    if (response.status === 204) return undefined as T;
-    return await response.json();
+    if (response.status === 204) {
+      return undefined as T;
+    }
+    return response.json();
   }
 
   // ============================================================================

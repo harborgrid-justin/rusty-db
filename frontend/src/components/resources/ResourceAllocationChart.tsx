@@ -144,7 +144,7 @@ export function ResourceAllocationChart({
             />
 
             {/* Segments */}
-            {chartData.segments.map((segment, index) => {
+            {chartData.segments.map((segment) => {
               const segmentLength = (segment.percentage / 100) * circumference;
               const path = (
                 <circle

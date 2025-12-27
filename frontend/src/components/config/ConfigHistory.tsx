@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { ConfigHistoryEntry, ConfigChange } from '../../services/configService';
+import type { ConfigHistoryEntry } from '../../services/configService';
 
 // ============================================================================
 // ConfigHistory Component - Timeline of changes with rollback capability
@@ -17,7 +17,6 @@ export function ConfigHistory({
   loading = false,
 }: ConfigHistoryProps) {
   const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set());
-  const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
 
   const toggleExpanded = (id: string) => {
     setExpandedEntries((prev) => {
@@ -120,13 +119,12 @@ export function ConfigHistory({
       <div className="config-history-timeline">
         {history.map((entry, index) => {
           const isExpanded = expandedEntries.has(entry.id);
-          const isSelected = selectedEntry === entry.id;
           const requiresRestartCount = entry.changes.filter((c) => c.requiresRestart).length;
 
           return (
             <div
               key={entry.id}
-              className={`config-history-entry ${isSelected ? 'selected' : ''}`}
+              className="config-history-entry"
             >
               {/* Timeline connector */}
               {index < history.length - 1 && (

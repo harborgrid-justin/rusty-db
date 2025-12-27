@@ -3,7 +3,7 @@ import { QueryResult, QueryHistoryItem, SavedQuery, ExplainPlan } from '../store
 
 export interface ExecuteQueryRequest {
   sql: string;
-  params?: Record<string, any>;
+  params?: Record<string, unknown>;
   limit?: number;
   timeout?: number;
 }

@@ -35,8 +35,6 @@ export interface TabsProps {
   defaultTab?: string;
   value?: string;
   onChange?: (tabId: string) => void;
-  variant?: 'default' | 'pills' | 'underline';
-  fullWidth?: boolean;
   className?: string;
 }
 
@@ -45,8 +43,6 @@ export function Tabs({
   defaultTab,
   value,
   onChange,
-  variant = 'default',
-  fullWidth = false,
   className = '',
 }: TabsProps) {
   const [internalActiveTab, setInternalActiveTab] = useState(defaultTab || '');

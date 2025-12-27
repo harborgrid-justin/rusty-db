@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export interface QueryResult {
   columns: string[];
-  rows: any[][];
+  rows: unknown[][];
   rowCount: number;
   executionTime: number;
   affected?: number;
@@ -56,7 +56,7 @@ export interface PlanNode {
   actualRows?: number;
   time?: number;
   children: PlanNode[];
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   warning?: string;
 }
 
@@ -116,7 +116,7 @@ interface QueryState {
   updatePreferences: (updates: Partial<EditorPreferences>) => void;
 }
 
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = (): string => `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
 export const useQueryStore = create<QueryState>()(
   persist(
