@@ -40,6 +40,17 @@ RustyDB v0.5.1 represents a major enterprise release of a high-performance, ACID
 #### Getting Started
 - **[QUICK_START.md](./QUICK_START.md)** - Installation, configuration, and first steps
 - **[RELEASE_NOTES.md](./RELEASE_NOTES.md)** - Version 0.5.1 release notes and changelog
+- **[DOC_MASTER_INDEX.md](./DOC_MASTER_INDEX.md)** - Enterprise documentation master index and learning paths
+
+#### Administration Guides
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Enterprise deployment procedures (single-node, HA cluster, DR)
+- **[SECURITY_GUIDE.md](./SECURITY_GUIDE.md)** - Security administration and compliance configuration
+- **[MONITORING_GUIDE.md](./MONITORING_GUIDE.md)** - Monitoring, metrics, ASH, AWR, and diagnostics
+- **[TROUBLESHOOTING_GUIDE.md](./TROUBLESHOOTING_GUIDE.md)** - Common issues, diagnostics, and solutions
+
+#### Reference Documentation
+- **[API_REFERENCE_SUMMARY.md](./API_REFERENCE_SUMMARY.md)** - REST and GraphQL API reference
+- **[SQL_REFERENCE.md](./SQL_REFERENCE.md)** - SQL syntax, DDL, DML, functions, and data types
 
 #### Architecture and Design
 - **[../../docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md)** - Complete system architecture
@@ -98,11 +109,15 @@ RustyDB v0.5.1 represents a major enterprise release of a high-performance, ACID
 |------|---------|---------------|
 | Install RustyDB | See [QUICK_START.md](./QUICK_START.md) | Installation section |
 | Start server | `cargo run --bin rusty-db-server` | [QUICK_START.md](./QUICK_START.md) |
+| Production deployment | Multi-step process | [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) |
+| Security setup | Configure authentication, TDE, RBAC | [SECURITY_GUIDE.md](./SECURITY_GUIDE.md) |
+| Setup monitoring | Configure metrics and alerts | [MONITORING_GUIDE.md](./MONITORING_GUIDE.md) |
+| Troubleshooting | Diagnose and fix issues | [TROUBLESHOOTING_GUIDE.md](./TROUBLESHOOTING_GUIDE.md) |
 | Run tests | `cargo test` | [DEVELOPMENT.md](../../docs/DEVELOPMENT.md) |
 | Build release | `cargo build --release` | [CLAUDE.md](../../CLAUDE.md) |
-| Security modules | Review security config | [SECURITY_ARCHITECTURE.md](../../docs/SECURITY_ARCHITECTURE.md) |
-| GraphQL API | `http://localhost:8080/graphql` | [README.md](../../docs/README.md) |
-| Transaction API | See GraphQL mutations | [RELEASE_NOTES.md](./RELEASE_NOTES.md) |
+| GraphQL API | `http://localhost:8080/graphql` | [API_REFERENCE_SUMMARY.md](./API_REFERENCE_SUMMARY.md) |
+| REST API | `http://localhost:8080/api/v1/` | [API_REFERENCE_SUMMARY.md](./API_REFERENCE_SUMMARY.md) |
+| SQL queries | Standard SQL syntax | [SQL_REFERENCE.md](./SQL_REFERENCE.md) |
 
 ### Architecture Layers
 
@@ -152,6 +167,7 @@ RustyDB v0.5.1 represents a major enterprise release of a high-performance, ACID
 
 #### Security
 - **Primary**: [SECURITY_ARCHITECTURE.md](../../docs/SECURITY_ARCHITECTURE.md) - Complete security design
+- **Administration**: [SECURITY_GUIDE.md](./SECURITY_GUIDE.md) - Security setup and configuration
 - **Supporting**: [ARCHITECTURE.md](../../docs/ARCHITECTURE.md) - Security layer integration
 - **Reference**: [DEVELOPMENT.md](../../docs/DEVELOPMENT.md) - Security coding guidelines
 
@@ -166,9 +182,29 @@ RustyDB v0.5.1 represents a major enterprise release of a high-performance, ACID
 - **Reference**: [README.md](../../docs/README.md) - SQL support overview
 
 #### API Interfaces
-- **Primary**: [README.md](../../docs/README.md) - GraphQL API documentation
+- **Primary**: [API_REFERENCE_SUMMARY.md](./API_REFERENCE_SUMMARY.md) - REST and GraphQL API reference
 - **Supporting**: [ARCHITECTURE.md](../../docs/ARCHITECTURE.md) - Network architecture
 - **Reference**: [QUICK_START.md](./QUICK_START.md) - API testing examples
+
+#### SQL and Query Language
+- **Primary**: [SQL_REFERENCE.md](./SQL_REFERENCE.md) - SQL syntax and features
+- **Supporting**: [QUERY_PROCESSING.md](../../docs/ARCHITECTURE.md) - Query processing internals
+- **Reference**: [QUICK_START.md](./QUICK_START.md) - SQL examples
+
+#### Deployment and Operations
+- **Primary**: [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Enterprise deployment procedures
+- **Supporting**: [QUICK_START.md](./QUICK_START.md) - Quick installation
+- **Reference**: [ENTERPRISE_CHECKLIST.md](./ENTERPRISE_CHECKLIST.md) - Production readiness
+
+#### Monitoring and Diagnostics
+- **Primary**: [MONITORING_GUIDE.md](./MONITORING_GUIDE.md) - Comprehensive monitoring guide
+- **Supporting**: [TROUBLESHOOTING_GUIDE.md](./TROUBLESHOOTING_GUIDE.md) - Diagnostic procedures
+- **Reference**: [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) - Known limitations
+
+#### Troubleshooting
+- **Primary**: [TROUBLESHOOTING_GUIDE.md](./TROUBLESHOOTING_GUIDE.md) - Problem diagnosis and resolution
+- **Supporting**: [MONITORING_GUIDE.md](./MONITORING_GUIDE.md) - Monitoring for early detection
+- **Reference**: [KNOWN_ISSUES.md](./KNOWN_ISSUES.md) - Known issues and workarounds
 
 #### Development and Contributing
 - **Primary**: [DEVELOPMENT.md](../../docs/DEVELOPMENT.md) - Development guidelines
@@ -292,12 +328,37 @@ RustyDB v0.5.1 represents a major enterprise release of a high-performance, ACID
 
 ### Documentation Links
 
+#### Essential Documentation
+
 | Resource | Location | Purpose |
 |----------|----------|---------|
+| Master Index | [DOC_MASTER_INDEX.md](./DOC_MASTER_INDEX.md) | Complete documentation index with learning paths |
+| Main Index | [INDEX.md](./INDEX.md) | This document - navigation hub |
 | Quick Start | [QUICK_START.md](./QUICK_START.md) | Installation and first steps |
 | Release Notes | [RELEASE_NOTES.md](./RELEASE_NOTES.md) | Version 0.5.1 changes |
+
+#### Administration Guides
+
+| Resource | Location | Purpose |
+|----------|----------|---------|
+| Deployment Guide | [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) | Enterprise deployment procedures |
+| Security Guide | [SECURITY_GUIDE.md](./SECURITY_GUIDE.md) | Security administration |
+| Monitoring Guide | [MONITORING_GUIDE.md](./MONITORING_GUIDE.md) | Monitoring and diagnostics |
+| Troubleshooting | [TROUBLESHOOTING_GUIDE.md](./TROUBLESHOOTING_GUIDE.md) | Problem resolution |
+
+#### Reference Documentation
+
+| Resource | Location | Purpose |
+|----------|----------|---------|
+| API Reference | [API_REFERENCE_SUMMARY.md](./API_REFERENCE_SUMMARY.md) | REST and GraphQL APIs |
+| SQL Reference | [SQL_REFERENCE.md](./SQL_REFERENCE.md) | SQL syntax and features |
+
+#### Architecture Documentation
+
+| Resource | Location | Purpose |
+|----------|----------|---------|
 | Architecture | [../../docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md) | System design |
-| Security | [../../docs/SECURITY_ARCHITECTURE.md](../../docs/SECURITY_ARCHITECTURE.md) | Security design |
+| Security Architecture | [../../docs/SECURITY_ARCHITECTURE.md](../../docs/SECURITY_ARCHITECTURE.md) | Security design |
 | Development | [../../docs/DEVELOPMENT.md](../../docs/DEVELOPMENT.md) | Developer guide |
 | Project Info | [../../docs/README.md](../../docs/README.md) | Project overview |
 | AI Assistant | [../../CLAUDE.md](../../CLAUDE.md) | Claude Code guidance |
@@ -325,9 +386,13 @@ RustyDB v0.5.1 represents a major enterprise release of a high-performance, ACID
 ## Index Maintenance
 
 **Document Owner**: RustyDB Documentation Team
-**Last Updated**: December 25, 2025
-**Next Review**: March 25, 2026
+**Last Updated**: December 27, 2025
+**Next Review**: March 27, 2026
 **Change History**:
+- 2025-12-27: Added administration guides (Security, Monitoring, Troubleshooting, SQL Reference)
+- 2025-12-27: Added DOC_MASTER_INDEX.md with learning paths for different roles
+- 2025-12-27: Enhanced cross-reference section with new guide mappings
+- 2025-12-27: Updated support resources section with categorized documentation links
 - 2025-12-25: Initial v0.5.1 documentation index created
 - 2025-12-11: Architecture documentation updated to v0.1.0
 - 2025-12-09: Development guide and project status updated
