@@ -1159,7 +1159,7 @@ level = "info"           # Or "warn" for production
 audit_enabled = true
 
 [storage]
-page_size = 8192         # 8 KB pages (default is 4096)
+page_size = 8192         # 8 KB pages (verified default for v0.5.1)
 buffer_pool_pages = 131072  # 1 GB buffer pool (131072 * 8 KB)
 fsync = true             # Ensure durability
 

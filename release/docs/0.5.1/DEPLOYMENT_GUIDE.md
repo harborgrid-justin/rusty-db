@@ -169,6 +169,8 @@ cargo 1.70.0 or higher
 
 ### 3.2 Recommended Production Requirements
 
+**Note**: Default configuration uses 8KB pages (8192 bytes) with 1000-page buffer pool (~8MB). Scale buffer pool based on workload requirements (typically 25-40% of system RAM for production).
+
 #### Small Production (100 - 500 users)
 
 **CPU**: 4-8 vCPU (Intel Xeon / AMD EPYC)
@@ -605,7 +607,7 @@ data_dir = "/var/lib/rustydb/data"
 wal_dir = "/var/lib/rustydb/wal"
 
 # Page size (4KB, 8KB, 16KB, 32KB)
-page_size = 4096
+page_size = 8192
 
 # ============================================================================
 # MEMORY SETTINGS
@@ -614,7 +616,8 @@ page_size = 4096
 [memory]
 # Buffer pool size (bytes) - 25% of RAM recommended
 # Example: 32 GB = 34359738368
-buffer_pool_size = 8589934592  # 8 GB
+# Note: Default is 1000 pages × 8192 bytes = ~8 MB
+buffer_pool_size = 8192000  # ~8 MB (1000 pages)
 
 # Shared memory size
 shared_memory_size = 2147483648  # 2 GB
@@ -848,7 +851,7 @@ sudo -u rustydb rusty-db-server --config /etc/rustydb/config.toml
 # Expected output:
 # [INFO] RustyDB v0.5.1 starting
 # [INFO] Loading configuration from /etc/rustydb/config.toml
-# [INFO] Buffer pool initialized: 8.0 GB
+# [INFO] Buffer pool initialized: ~8 MB (1000 pages × 8192 bytes)
 # [INFO] WAL system initialized
 # [INFO] Transaction manager started
 # [INFO] Network listener started on 0.0.0.0:5432

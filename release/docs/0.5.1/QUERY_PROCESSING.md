@@ -34,7 +34,7 @@ SQL Text → Parser → Planner → Optimizer → Executor → Results
 
 ### Key Features
 
-- **Oracle-Compatible SQL**: Comprehensive SQL support via sqlparser-rs
+- **Oracle-Compatible SQL**: Comprehensive SQL support via sqlparser 0.60.0
 - **Cost-Based Optimization**: Multi-cost model with CPU, I/O, network, and memory costs
 - **Adaptive Execution**: Runtime plan correction and cardinality feedback
 - **Parallel Execution**: Multi-threaded query execution with work stealing
@@ -141,7 +141,7 @@ SQL Text → Parser → Planner → Optimizer → Executor → Results
 
 ### Overview
 
-RustyDB uses the **sqlparser-rs** library for SQL parsing, wrapped with enterprise-grade security features. The parser converts SQL text into an Abstract Syntax Tree (AST) and then into RustyDB's internal `SqlStatement` representation.
+RustyDB uses the **sqlparser** library (version 0.60.0) for SQL parsing, wrapped with enterprise-grade security features. The parser converts SQL text into an Abstract Syntax Tree (AST) and then into RustyDB's internal `SqlStatement` representation.
 
 **Location**: `/home/user/rusty-db/src/parser/mod.rs`
 
@@ -163,7 +163,7 @@ The parser implements **6-layer SQL injection prevention**:
 3. **Syntax Validation**: Quotes, parentheses, identifiers
 4. **Escape Validation**: Proper escape sequence handling
 5. **Whitelist Validation**: Allowed character sets
-6. **AST Parsing**: Final parsing with sqlparser-rs
+6. **AST Parsing**: Final parsing with sqlparser
 
 ```rust
 let safe_sql = self.injection_guard.validate_and_sanitize(sql)?;

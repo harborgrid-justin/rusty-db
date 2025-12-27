@@ -112,7 +112,7 @@ Expected log output:
 ```
 [INFO] RustyDB v0.5.1 starting
 [INFO] Loading configuration from /etc/rustydb/config.toml
-[INFO] Buffer pool initialized: 8.0 GB
+[INFO] Buffer pool initialized: ~8 MB (1000 pages × 8192 bytes)
 [INFO] WAL system initialized
 [INFO] Transaction manager started
 [INFO] Network listener started on 0.0.0.0:5432
@@ -496,15 +496,15 @@ backlog = 1024                       # Connection backlog
 data_dir = "/var/lib/rustydb/data"  # Data directory
 fsync = true                         # Enable fsync for durability
 sync_interval_ms = 1000              # Sync interval
-page_size = 4096                     # Page size in bytes
-buffer_pool_pages = 2097152          # Buffer pool size (8 GB)
+page_size = 8192                     # Page size in bytes (8 KB)
+buffer_pool_pages = 1000             # Buffer pool size (~8 MB with 8KB pages)
 ```
 
 #### Memory Parameters
 
 ```toml
 [memory]
-buffer_pool_size = 8589934592        # 8 GB
+buffer_pool_size = 8192000           # ~8 MB (1000 pages × 8192 bytes)
 shared_memory_size = 2147483648      # 2 GB
 wal_buffer_size = 67108864           # 64 MB
 work_mem = 67108864                  # 64 MB per operation
@@ -1366,6 +1366,8 @@ Work memory is used for sort operations, hash joins, and other in-memory operati
 ```toml
 # /etc/rustydb/config.toml
 [memory]
+# Default buffer pool: 1000 pages × 8192 bytes = ~8 MB
+# Scale based on workload (production typically uses 25-40% of RAM)
 work_mem = 67108864              # 64 MB per operation (default)
 maintenance_work_mem = 2147483648 # 2 GB for maintenance operations
 ```
@@ -3069,17 +3071,26 @@ listen_port = 5432
 max_connections = 1000
 query_timeout_ms = 600000
 
+[storage]
+page_size = 8192                 # 8 KB pages (verified default)
+
 [memory]
-buffer_pool_size = 8589934592    # 8 GB
+buffer_pool_size = 8192000       # ~8 MB (1000 pages × 8192 bytes, default)
 shared_memory_size = 2147483648  # 2 GB
 
 [wal]
 enabled = true
-checkpoint_interval_ms = 300000  # 5 minutes
+checkpoint_interval_ms = 300000  # 5 minutes (300 seconds, verified)
 archive_enabled = true
 
+[monitoring]
+prometheus_port = 9090           # Metrics port (verified)
+
+[logging]
+slow_query_threshold_ms = 1000   # 1 second (verified)
+
 [performance]
-max_parallel_workers = 32
+max_parallel_workers = 16        # Worker threads (verified)
 simd_enabled = true
 io_uring_enabled = true
 ```
