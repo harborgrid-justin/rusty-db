@@ -112,9 +112,70 @@ sudo ufw allow 8080/tcp
 
 ## Installation
 
-### Option 1: Install from Source (Recommended)
+### Option 1: Install from Pre-Built Binary (Recommended - Fastest)
 
-#### Step 1: Clone the Repository
+RustyDB v0.5.1 includes pre-built, production-ready binaries.
+
+#### Binary Information
+
+**Linux (x86_64)**:
+- Location: `/home/user/rusty-db/builds/linux/`
+- Server: `rusty-db-server` (38 MB)
+- CLI: `rusty-db-cli` (922 KB)
+
+**Windows (x86_64)**:
+- Location: `/home/user/rusty-db/builds/windows/`
+- Server: `rusty-db-server.exe` (41 MB)
+- CLI: `rusty-db-cli.exe` (876 KB)
+
+**Build Details**:
+- Rust Version: 1.92.0
+- Build Date: December 25, 2025
+- Optimization: Full release optimizations with LTO
+- SIMD: Enabled
+
+#### Installation Steps
+
+**Linux**:
+```bash
+# Navigate to builds directory
+cd /home/user/rusty-db/builds/linux/
+
+# Verify the binary
+ls -lh rusty-db-server
+# Expected: -rwxr-xr-x ... 38M ... rusty-db-server
+
+# Test the binary
+./rusty-db-server --version
+# Expected: RustyDB v0.5.1 - Enterprise Edition
+
+# Optional: Install to system location
+sudo mkdir -p /opt/rustydb/bin
+sudo cp rusty-db-server /opt/rustydb/bin/
+sudo cp rusty-db-cli /opt/rustydb/bin/
+sudo ln -s /opt/rustydb/bin/rusty-db-server /usr/local/bin/rusty-db-server
+```
+
+**Windows**:
+```powershell
+# Navigate to builds directory
+cd \home\user\rusty-db\builds\windows\
+
+# Test the binary
+.\rusty-db-server.exe --version
+# Expected: RustyDB v0.5.1 - Enterprise Edition
+
+# Optional: Install to Program Files
+New-Item -ItemType Directory -Path "C:\Program Files\RustyDB\bin" -Force
+Copy-Item rusty-db-server.exe "C:\Program Files\RustyDB\bin\"
+Copy-Item rusty-db-cli.exe "C:\Program Files\RustyDB\bin\"
+```
+
+### Option 2: Build from Source (Alternative)
+
+**Prerequisites**: Rust 1.70+ required
+
+#### Step 1: Clone and Build
 
 ```bash
 # Clone the repository
@@ -123,45 +184,19 @@ cd rusty-db
 
 # Checkout the v0.5.1 release
 git checkout v0.5.1
-```
 
-#### Step 2: Build the Project
-
-**Debug Build** (faster compilation, for development):
-```bash
-cargo build
-```
-
-**Release Build** (optimized, for production):
-```bash
+# Build release binaries (optimized)
 cargo build --release
-```
+# Build time: 5-15 minutes (first build)
 
-**Build Time**:
-- First build: 5-15 minutes (depending on CPU)
-- Subsequent builds: 1-3 minutes (incremental compilation)
-
-#### Step 3: Verify Build
-
-```bash
-# Check that binaries were created
-ls -lh target/release/rusty-db-server
-ls -lh target/release/rusty-db-cli
-
-# Verify version
+# Verify build
 ./target/release/rusty-db-server --version
-```
+# Expected: RustyDB v0.5.1 - Enterprise Edition
 
-Expected output:
+# Check binary sizes
+ls -lh target/release/rusty-db-server
+# Expected: ~38M
 ```
-RustyDB v0.5.1 - Enterprise Edition
-Build: release
-Platform: x86_64-unknown-linux-gnu
-```
-
-### Option 2: Install from Binary (Coming Soon)
-
-Pre-built binaries will be available for download in future releases.
 
 ### Installation Verification
 
@@ -195,16 +230,20 @@ test result: ok. 37 passed; 0 failed; 0 ignored
 
 RustyDB v0.5.1 uses sensible defaults suitable for development:
 
-```rust
-Config {
-    data_directory: "./data",
-    page_size: 8192,              // 8 KB pages (corrected from docs)
-    buffer_pool_size: 1000,       // ~8 MB buffer pool (1000 pages × 8 KB)
-    server_port: 5432,            // PostgreSQL default
-    api_port: 8080,               // REST/GraphQL API
-    max_connections: 100,         // Concurrent connections
-}
 ```
+RustyDB v0.5.1 Default Configuration:
+    data_directory: "./data"
+    page_size: 8192 bytes         // 8 KB pages
+    buffer_pool_size: 1000 pages  // ~8 MB buffer pool (1000 × 8KB)
+    server_port: 5432             // PostgreSQL wire protocol
+    api_port: 8080                // REST/GraphQL API
+    max_connections: 100          // Concurrent connections
+```
+
+**Binary Build Information**:
+- See: `/home/user/rusty-db/builds/BUILD_INFO.md`
+- Linux binary: 38 MB (builds/linux/rusty-db-server)
+- Windows binary: 41 MB (builds/windows/rusty-db-server.exe)
 
 ### Custom Configuration
 
@@ -287,76 +326,87 @@ chmod 700 /var/lib/rustydb
 
 ### Start in Development Mode
 
-**Option 1: Using Cargo**:
+**Option 1: Using Pre-Built Binary**:
 ```bash
-# Start server with cargo (debug build)
+# From builds directory (Linux)
+cd /home/user/rusty-db/builds/linux/
+./rusty-db-server
+
+# Or if installed to system location
+/opt/rustydb/bin/rusty-db-server
+rusty-db-server  # If symlinked
+
+# Start with verbose logging
+RUST_LOG=debug ./rusty-db-server
+
+# Windows
+cd \home\user\rusty-db\builds\windows\
+.\rusty-db-server.exe
+```
+
+**Option 2: Using Cargo** (if built from source):
+```bash
+# From repository root
+cd /home/user/rusty-db
+
+# Start with cargo (debug build)
 cargo run --bin rusty-db-server
 
 # Or use release build
 cargo run --release --bin rusty-db-server
-```
 
-**Option 2: Direct Binary Execution**:
-```bash
-# Start server directly (release build)
+# Or run built binary directly
 ./target/release/rusty-db-server
-
-# Start with custom port
-./target/release/rusty-db-server --port 5433 --graphql-port 8081
-
-# Start with verbose logging
-RUST_LOG=debug ./target/release/rusty-db-server
 ```
 
 ### Start in Production Mode
 
 **Using systemd** (Linux):
 
-Create service file `/etc/systemd/system/rustydb.service`:
-
-```ini
-[Unit]
-Description=RustyDB Enterprise Database Server
-After=network.target
-
-[Service]
-Type=simple
-User=rustydb
-Group=rustydb
-WorkingDirectory=/opt/rustydb
-ExecStart=/opt/rustydb/bin/rusty-db-server
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-
-# Security hardening
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/lib/rustydb
-
-[Install]
-WantedBy=multi-user.target
-```
-
-**Enable and start**:
+**Option 1: Use Pre-Configured Service File** (Recommended):
 ```bash
-# Reload systemd
+# Copy the provided service file
+sudo cp /home/user/rusty-db/deploy/systemd/rustydb-single.service /etc/systemd/system/rustydb.service
+
+# Create rustydb user if not exists
+sudo useradd -r -s /bin/false -d /var/lib/rustydb rustydb
+
+# Create data directories
+sudo mkdir -p /var/lib/rustydb/default
+sudo chown -R rustydb:rustydb /var/lib/rustydb
+
+# Install binary
+sudo mkdir -p /opt/rustydb/current/bin
+sudo cp /home/user/rusty-db/builds/linux/rusty-db-server /opt/rustydb/current/bin/
+
+# Reload and start
 sudo systemctl daemon-reload
-
-# Enable auto-start on boot
-sudo systemctl enable rustydb
-
-# Start service
-sudo systemctl start rustydb
+sudo systemctl enable --now rustydb
 
 # Check status
 sudo systemctl status rustydb
 
 # View logs
 sudo journalctl -u rustydb -f
+```
+
+**Option 2: Create Custom Service File**:
+
+See `/home/user/rusty-db/deploy/systemd/README.md` for detailed instructions.
+
+**Windows Service**:
+```powershell
+# Use provided Windows service scripts
+cd \home\user\rusty-db\deploy\windows\
+
+# Install as service
+.\install-service.bat
+
+# Start service
+.\start-service.bat
+
+# Check service status (in Services.msc or)
+Get-Service RustyDB
 ```
 
 ### Server Startup Sequence

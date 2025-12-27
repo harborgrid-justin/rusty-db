@@ -467,7 +467,60 @@ min_tls_version = "1.3"
 
 ## Installation Procedures
 
-### 5.1 Installing from Source (Recommended)
+### 5.1 Installing from Pre-Built Binaries (Recommended for Production)
+
+**Binary Locations and Sizes:**
+
+RustyDB v0.5.1 includes pre-built binaries for Linux and Windows:
+
+- **Linux (x86_64)**: `/home/user/rusty-db/builds/linux/`
+  - `rusty-db-server`: 38 MB
+  - `rusty-db-cli`: 922 KB
+- **Windows (x86_64)**: `/home/user/rusty-db/builds/windows/`
+  - `rusty-db-server.exe`: 41 MB
+  - `rusty-db-cli.exe`: 876 KB
+
+**Step 1: Verify Binary Integrity**
+
+```bash
+# Linux - Check binary sizes and type
+ls -lh /home/user/rusty-db/builds/linux/rusty-db-server
+# Expected: -rwxr-xr-x ... 38M ... rusty-db-server
+
+file /home/user/rusty-db/builds/linux/rusty-db-server
+# Expected: ELF 64-bit LSB executable, x86-64
+
+# Verify dependencies
+ldd /home/user/rusty-db/builds/linux/rusty-db-server
+```
+
+**Step 2: Install Binaries to System Location**
+
+```bash
+# Create installation directory
+sudo mkdir -p /opt/rustydb/bin
+
+# Copy binaries from builds directory
+sudo cp /home/user/rusty-db/builds/linux/rusty-db-server /opt/rustydb/bin/
+sudo cp /home/user/rusty-db/builds/linux/rusty-db-cli /opt/rustydb/bin/
+
+# Set ownership
+sudo chown rustydb:rustydb /opt/rustydb/bin/*
+
+# Ensure executable permissions
+sudo chmod 755 /opt/rustydb/bin/rusty-db-server
+sudo chmod 755 /opt/rustydb/bin/rusty-db-cli
+
+# Create symlinks for convenience (optional)
+sudo ln -s /opt/rustydb/bin/rusty-db-server /usr/local/bin/rusty-db-server
+sudo ln -s /opt/rustydb/bin/rusty-db-cli /usr/local/bin/rusty-db-cli
+
+# Verify installation
+/opt/rustydb/bin/rusty-db-server --version
+# Expected: RustyDB v0.5.1 - Enterprise Edition
+```
+
+### 5.2 Installing from Source (Alternative)
 
 **Step 1: Install Rust Toolchain**
 
@@ -499,30 +552,31 @@ git checkout v0.5.1
 cargo build --release
 
 # This will take 10-30 minutes depending on hardware
-# Output binary: target/release/rusty-db-server
+# Output binaries: target/release/rusty-db-server (38MB)
+#                  target/release/rusty-db-cli (922KB)
 
 # Verify build
 ./target/release/rusty-db-server --version
-# Expected: RustyDB 0.5.1
+# Expected: RustyDB v0.5.1 - Enterprise Edition
 ```
 
-**Step 4: Install Binaries**
+**Step 4: Install Built Binaries**
 
 ```bash
 # Copy binaries to system location
-sudo cp target/release/rusty-db-server /usr/local/bin/
-sudo cp target/release/rusty-db-cli /usr/local/bin/
+sudo cp target/release/rusty-db-server /opt/rustydb/bin/
+sudo cp target/release/rusty-db-cli /opt/rustydb/bin/
 
-# Make executable
-sudo chmod +x /usr/local/bin/rusty-db-server
-sudo chmod +x /usr/local/bin/rusty-db-cli
+# Set ownership and permissions
+sudo chown rustydb:rustydb /opt/rustydb/bin/*
+sudo chmod 755 /opt/rustydb/bin/*
 
 # Verify installation
-rusty-db-server --version
-rusty-db-cli --version
+/opt/rustydb/bin/rusty-db-server --version
+/opt/rustydb/bin/rusty-db-cli --version
 ```
 
-### 5.2 Directory Structure Setup
+### 5.3 Directory Structure Setup
 
 **Create Required Directories**:
 
@@ -573,11 +627,12 @@ sudo chmod 700 /var/lib/rustydb/backup
 └── replication.log # Replication logs
 ```
 
-### 5.3 Configuration
+### 5.4 Configuration
 
-**Create Configuration File** (`/etc/rustydb/config.toml`):
+**Create Configuration File** (`/etc/rustydb/rustydb.toml`):
 
 ```toml
+# /etc/rustydb/rustydb.toml
 # RustyDB v0.5.1 Configuration File
 
 # ============================================================================
@@ -822,13 +877,13 @@ stats_enabled = true
 stats_retention_days = 30
 ```
 
-### 5.4 Initialize Database
+### 5.5 Initialize Database
 
 **Run Initialization**:
 
 ```bash
 # Initialize database cluster (first time only)
-sudo -u rustydb rusty-db-server --init --config /etc/rustydb/config.toml
+sudo -u rustydb /opt/rustydb/bin/rusty-db-server --init --config /etc/rustydb/rustydb.toml
 
 # Expected output:
 # [INFO] Initializing RustyDB v0.5.1
@@ -840,17 +895,17 @@ sudo -u rustydb rusty-db-server --init --config /etc/rustydb/config.toml
 # [INFO] Initialization complete
 ```
 
-### 5.5 Start Database Server
+### 5.6 Start Database Server
 
 **Start Manually** (for testing):
 
 ```bash
 # Start server
-sudo -u rustydb rusty-db-server --config /etc/rustydb/config.toml
+sudo -u rustydb /opt/rustydb/bin/rusty-db-server --config /etc/rustydb/rustydb.toml
 
 # Expected output:
 # [INFO] RustyDB v0.5.1 starting
-# [INFO] Loading configuration from /etc/rustydb/config.toml
+# [INFO] Loading configuration from /etc/rustydb/rustydb.toml
 # [INFO] Buffer pool initialized: ~8 MB (1000 pages × 8192 bytes)
 # [INFO] WAL system initialized
 # [INFO] Transaction manager started
@@ -860,14 +915,27 @@ sudo -u rustydb rusty-db-server --config /etc/rustydb/config.toml
 # [INFO] RustyDB ready for connections
 ```
 
-### 5.6 Systemd Service (Production)
+### 5.7 Systemd Service (Production)
 
-**Create Systemd Service** (`/etc/systemd/system/rustydb.service`):
+**Use Pre-Configured Service File** (Recommended):
+
+RustyDB includes a production-ready systemd service file in `/home/user/rusty-db/deploy/systemd/`.
+
+```bash
+# Copy the single-instance service file
+sudo cp /home/user/rusty-db/deploy/systemd/rustydb-single.service /etc/systemd/system/rustydb.service
+
+# Edit if needed to customize paths
+sudo nano /etc/systemd/system/rustydb.service
+```
+
+**Or Create Custom Service File** (`/etc/systemd/system/rustydb.service`):
 
 ```ini
 [Unit]
 Description=RustyDB v0.5.1 Database Server
-After=network.target
+After=network.target network-online.target
+Wants=network-online.target
 Documentation=https://github.com/harborgrid-justin/rusty-db
 
 [Service]
@@ -879,7 +947,7 @@ Group=rustydb
 WorkingDirectory=/var/lib/rustydb
 
 # Binary and configuration
-ExecStart=/usr/local/bin/rusty-db-server --config /etc/rustydb/config.toml
+ExecStart=/opt/rustydb/bin/rusty-db-server --config /etc/rustydb/rustydb.toml
 
 # Restart policy
 Restart=on-failure
@@ -924,7 +992,7 @@ sudo systemctl status rustydb
 sudo journalctl -u rustydb -f
 ```
 
-### 5.7 Verify Installation
+### 5.8 Verify Installation
 
 **Test Connection**:
 
@@ -1058,7 +1126,7 @@ rustydb> CREATE USER readonly WITH PASSWORD 'Re@d0nlyP@ss789';
 rustydb> GRANT SELECT ON ALL TABLES TO readonly;
 ```
 
-**Password Policy** (configure in config.toml):
+**Password Policy** (configure in rustydb.toml):
 
 ```toml
 [security.password_policy]
@@ -1083,7 +1151,7 @@ openssl rand -out /etc/rustydb/secrets/master.key 32
 sudo chown rustydb:rustydb /etc/rustydb/secrets/master.key
 sudo chmod 400 /etc/rustydb/secrets/master.key
 
-# Enable TDE in config.toml
+# Enable TDE in rustydb.toml
 [security]
 tde_enabled = true
 tde_master_key_file = "/etc/rustydb/secrets/master.key"
@@ -1096,7 +1164,7 @@ sudo systemctl restart rustydb
 **TLS/SSL Hardening**:
 
 ```toml
-# config.toml - enforce strong TLS
+# rustydb.toml - enforce strong TLS
 [network]
 tls_enabled = true
 min_tls_version = "1.3"  # TLS 1.3 only
@@ -1159,7 +1227,7 @@ CREATE POLICY user_data_policy ON customer_data
 **Enable Comprehensive Audit Logging**:
 
 ```toml
-# config.toml
+# rustydb.toml
 [security]
 audit_log_enabled = true
 audit_log_file = "/var/log/rustydb/security.log"
@@ -1247,7 +1315,7 @@ tcp_syncookies = true
 **Primary Node Setup**:
 
 ```toml
-# /etc/rustydb/config.toml on primary (10.0.1.10)
+# /etc/rustydb/rustydb.toml on primary (10.0.1.10)
 
 [replication]
 replication_mode = "sync"  # or "async"
@@ -1260,7 +1328,7 @@ replication_port = 7433
 **Standby Node Setup**:
 
 ```toml
-# /etc/rustydb/config.toml on standby (10.0.1.11)
+# /etc/rustydb/rustydb.toml on standby (10.0.1.11)
 
 [replication]
 replication_mode = "standby"
@@ -1332,7 +1400,7 @@ echo "10.0.1.100:/export/rustydb-shared /var/lib/rustydb/shared nfs defaults 0 0
 **Cluster Configuration** (Node 1):
 
 ```toml
-# /etc/rustydb/config.toml on node1 (10.0.1.10)
+# /etc/rustydb/rustydb.toml on node1 (10.0.1.10)
 
 [clustering]
 cluster_enabled = true
@@ -1980,7 +2048,7 @@ ls -la /var/lib/rustydb/data
 
 # 3. Corrupted data files
 # Restore from backup or run recovery:
-sudo -u rustydb rusty-db-server --recovery --config /etc/rustydb/config.toml
+sudo -u rustydb /opt/rustydb/bin/rusty-db-server --recovery --config /etc/rustydb/rustydb.toml
 ```
 
 **Issue: High CPU Usage**
@@ -2104,7 +2172,7 @@ curl -s http://localhost:8080/api/v1/metrics | jq '.data.storage'
 **Enable Debug Logging**:
 
 ```toml
-# config.toml (temporary, for debugging)
+# rustydb.toml (temporary, for debugging)
 [logging]
 log_level = "DEBUG"  # Change back to "INFO" in production
 
@@ -2147,7 +2215,7 @@ heaptrack_gui heaptrack.rusty-db-server.*.gz
 
 ### Appendix A: Configuration File Reference
 
-See Section 5.3 for complete `config.toml` reference.
+See Section 5.4 for complete `rustydb.toml` reference.
 
 ### Appendix B: Port Reference
 
@@ -2166,7 +2234,7 @@ See Section 5.3 for complete `config.toml` reference.
 # RustyDB environment variables
 
 # Configuration file location
-export RUSTYDB_CONFIG="/etc/rustydb/config.toml"
+export RUSTYDB_CONFIG="/etc/rustydb/rustydb.toml"
 
 # Data directory
 export RUSTYDB_DATA_DIR="/var/lib/rustydb/data"
