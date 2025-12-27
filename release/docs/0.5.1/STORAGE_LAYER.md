@@ -32,7 +32,7 @@ The RustyDB Storage Layer provides enterprise-grade data persistence with high p
 
 ### Key Features
 
-- **8KB Page-Based Storage**: Standard database page model with slotted page architecture
+- **4KB Page-Based Storage**: Standard database page model with slotted page architecture
 - **High-Performance Buffer Pool**: Lock-free page table, per-core frame pools, multiple eviction policies
 - **Advanced I/O**: Windows IOCP and Linux io_uring support for async operations
 - **Multi-Tier Storage**: Hot/Warm/Cold tiers with automatic data migration
@@ -182,19 +182,19 @@ The storage layer follows a strict layered architecture with clear separation of
 
 ### Page Overview
 
-RustyDB uses fixed 8KB pages as the fundamental unit of storage, compatible with most modern disk and memory subsystems.
+RustyDB uses fixed 4KB pages as the fundamental unit of storage, compatible with most modern disk and memory subsystems.
 
 **Page Structure:**
 ```rust
 pub struct Page {
     pub id: PageId,           // 8 bytes - Unique page identifier
-    pub data: Vec<u8>,        // 8192 bytes - Page data
+    pub data: Vec<u8>,        // 4096 bytes - Page data
     pub is_dirty: bool,       // 1 byte - Modification flag
     pub pin_count: usize,     // 8 bytes - Reference count
 }
 ```
 
-**Total Size:** 8KB data + ~24 bytes metadata
+**Total Size:** 4KB data + ~24 bytes metadata
 
 ### Page Header Layout
 
@@ -400,7 +400,7 @@ The Disk Manager handles all persistent storage I/O with advanced optimizations 
 
 ### Core Responsibilities
 
-1. **Page I/O**: Read and write 8KB pages
+1. **Page I/O**: Read and write 4KB pages
 2. **Read-Ahead**: Prefetch sequential pages
 3. **Write-Behind**: Batch and coalesce writes
 4. **I/O Scheduling**: Priority-based operation ordering
@@ -468,7 +468,7 @@ fn predict_next_pages(&self) -> Vec<PageId> {
 **Performance:**
 - Hit rate: 15-25% for sequential scans
 - Prefetch latency: Hidden by computation
-- Memory overhead: 512KB (64 pages × 8KB)
+- Memory overhead: 256KB (64 pages × 4KB)
 
 ### Write-Behind Buffer
 
@@ -617,8 +617,8 @@ Current implementation uses sequential I/O per page. Future optimization will us
 ```rust
 pub struct DirectIoConfig {
     pub enabled: bool,
-    pub alignment: usize,    // 8192 bytes
-    pub min_size: usize,     // 8192 bytes
+    pub alignment: usize,    // 4096 bytes
+    pub min_size: usize,     // 4096 bytes
 }
 ```
 
@@ -628,9 +628,9 @@ pub struct DirectIoConfig {
 - Better control over I/O timing
 
 **Requirements:**
-- All buffers must be 8KB-aligned
-- All I/O offsets must be 8KB-aligned
-- All I/O sizes must be 8KB multiples
+- All buffers must be 4KB-aligned
+- All I/O offsets must be 4KB-aligned
+- All I/O sizes must be 4KB multiples
 
 **Platform Support:**
 - Linux: `O_DIRECT` flag
@@ -653,14 +653,14 @@ pub fn select_adaptive_page_size(&self, data_size: usize, access_pattern: &str) 
    - Better for OLAP queries
 
 2. **Random/Point Workloads:**
-   - Use standard 8KB pages
+   - Use standard 4KB pages
    - Minimizes read amplification
    - Better for OLTP queries
 
 **Configuration:**
 ```rust
 adaptive_page_size: bool,
-min_page_size: 8192,
+min_page_size: 4096,
 max_page_size: 2 * 1024 * 1024,  // 2MB
 ```
 
@@ -741,7 +741,7 @@ The Buffer Pool Manager is the heart of RustyDB's storage layer, providing high-
 │  │  ┌──────┬──────┬──────┬──────┬──────┬──────┐       │   │
 │  │  │Frame0│Frame1│Frame2│Frame3│ ... │Frame9999│     │   │
 │  │  └──────┴──────┴──────┴──────┴──────┴──────┘       │   │
-│  │     Each frame: 8KB data + metadata                 │   │
+│  │     Each frame: 4KB data + metadata                 │   │
 │  └──────────────────────────────────────────────────────┘   │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
@@ -764,7 +764,7 @@ The Buffer Pool Manager is the heart of RustyDB's storage layer, providing high-
 **Default Configuration:**
 ```rust
 pub struct BufferPoolConfig {
-    num_frames: 10000,                  // ~80MB buffer pool
+    num_frames: 10000,                  // ~40MB buffer pool (at 4KB/page)
     eviction_policy: EvictionPolicyType::Clock,
     page_table_partitions: 16,
     enable_per_core_pools: true,
@@ -783,10 +783,10 @@ pub struct BufferPoolConfig {
 
 | System RAM | Buffer Pool Size | Num Frames | Workload Type |
 |------------|------------------|------------|---------------|
-| 8 GB       | 80 MB            | 10,000     | Small OLTP    |
-| 32 GB      | 800 MB           | 100,000    | Medium OLTP   |
-| 128 GB     | 4 GB             | 500,000    | Large OLTP    |
-| 512 GB     | 16 GB            | 2,000,000  | Enterprise    |
+| 8 GB       | 40 MB            | 10,000     | Small OLTP    |
+| 32 GB      | 400 MB           | 100,000    | Medium OLTP   |
+| 128 GB     | 2 GB             | 500,000    | Large OLTP    |
+| 512 GB     | 8 GB             | 2,000,000  | Enterprise    |
 
 **General Rule:** Use 25-50% of system RAM for OLTP, 50-75% for OLAP.
 
@@ -832,15 +832,15 @@ pub struct BufferFrame {
     pin_count: AtomicU32,            // Reference count
     dirty: AtomicBool,               // Modified flag
     io_in_progress: AtomicBool,      // I/O lock
-    data: RwLock<PageBuffer>,        // 8KB aligned data
+    data: RwLock<PageBuffer>,        // 4KB aligned data
 }
 ```
 
 **PageBuffer:**
 ```rust
-#[repr(C, align(8192))]
+#[repr(C, align(4096))]
 pub struct PageBuffer {
-    data: [u8; PAGE_SIZE],  // PAGE_SIZE = 8192
+    data: [u8; PAGE_SIZE],  // PAGE_SIZE = 4096
 }
 ```
 
@@ -1240,7 +1240,7 @@ The memory management layer provides:
 - 512 bytes
 - 1024 bytes
 - 2048 bytes
-- 8192 bytes (page size)
+- 4096 bytes (page size)
 
 **Per-Thread Magazine:**
 
@@ -1548,11 +1548,11 @@ pub fn poll_completions(&self, timeout_ms: u32) -> Result<Vec<IocpCompletion>>
 
 **Aligned Buffers:**
 
-All I/O buffers are 8KB-aligned for Direct I/O:
+All I/O buffers are 4KB-aligned for Direct I/O:
 ```rust
-#[repr(C, align(8192))]
+#[repr(C, align(4096))]
 pub struct PageBuffer {
-    data: [u8; PAGE_SIZE],  // PAGE_SIZE = 8192
+    data: [u8; PAGE_SIZE],  // PAGE_SIZE = 4096
 }
 ```
 
@@ -1569,7 +1569,7 @@ pub struct BufferPool {
 
 **Configuration:**
 ```rust
-buffer_pool_size: 1024,  // 1024 pre-allocated 8KB buffers
+buffer_pool_size: 1024,  // 1024 pre-allocated 4KB buffers
 ```
 
 **Benefits:**
@@ -2355,7 +2355,7 @@ pub struct PartitionStatsManager {
 |--------|-----|------|-------|
 | Sequential read | 400-600 MB/s | 2-4 GB/s | Full bandwidth |
 | Sequential write | 300-500 MB/s | 1-3 GB/s | Vectored I/O |
-| Random read IOPS | 50K-100K | 300K-500K | 8KB pages |
+| Random read IOPS | 50K-100K | 300K-500K | 4KB pages |
 | Random write IOPS | 30K-50K | 200K-400K | With write-behind |
 
 ### Buffer Pool Hit Rates
@@ -2371,7 +2371,7 @@ pub struct PartitionStatsManager {
 
 | Component | Per-Frame Overhead | Notes |
 |-----------|-------------------|-------|
-| Page data | 8192 bytes | Actual page content |
+| Page data | 4096 bytes | Actual page content |
 | Frame metadata | ~48 bytes | PageId, pin_count, dirty, etc. |
 | CLOCK policy | 0 bytes | Uses frame metadata |
 | LRU policy | 16 bytes | Linked list pointers |
@@ -2380,13 +2380,13 @@ pub struct PartitionStatsManager {
 | ARC policy | 64 bytes | Ghost lists |
 | LIRS policy | 96 bytes | Stack + queue |
 
-**Total per frame:** 8KB + 48 bytes + eviction overhead
+**Total per frame:** 4KB + 48 bytes + eviction overhead
 
 **For 10,000 frames:**
-- CLOCK: ~80.5 MB
-- LRU: ~80.6 MB
-- 2Q: ~80.8 MB
-- ARC: ~81.1 MB
+- CLOCK: ~40.5 MB
+- LRU: ~40.6 MB
+- 2Q: ~40.8 MB
+- ARC: ~41.1 MB
 
 ### Scalability
 
@@ -2415,7 +2415,7 @@ pub struct PartitionStatsManager {
 ```rust
 let storage = StorageEngine::new(
     "./data",      // Data directory
-    8192,          // Page size (8KB)
+    4096,          // Page size (4KB)
     10000          // Buffer pool frames
 )?;
 ```
@@ -2445,13 +2445,13 @@ let pool = BufferPoolManager::new(config);
 ```rust
 let dio_config = DirectIoConfig {
     enabled: true,
-    alignment: 8192,
-    min_size: 8192,
+    alignment: 4096,
+    min_size: 4096,
 };
 
 let disk_mgr = DiskManager::with_config(
     "./data",
-    8192,
+    4096,
     dio_config
 )?;
 ```
@@ -2481,7 +2481,7 @@ init_io_engine(io_config)?;
 **For OLTP Workloads:**
 ```rust
 BufferPoolConfig {
-    num_frames: <25-50% of RAM / 8192>,
+    num_frames: <25-50% of RAM / 4096>,
     eviction_policy: EvictionPolicyType::Clock,  // Fast
     enable_per_core_pools: true,                 // Reduce contention
     page_table_partitions: 32,                   // High concurrency
@@ -2495,7 +2495,7 @@ BufferPoolConfig {
 **For OLAP Workloads:**
 ```rust
 BufferPoolConfig {
-    num_frames: <50-75% of RAM / 8192>,
+    num_frames: <50-75% of RAM / 4096>,
     eviction_policy: EvictionPolicyType::LruK(2), // Scan resistant
     enable_per_core_pools: false,                 // Not critical
     page_table_partitions: 16,                    // Moderate concurrency
@@ -2510,7 +2510,7 @@ BufferPoolConfig {
 **For Mixed Workloads:**
 ```rust
 BufferPoolConfig {
-    num_frames: <35-50% of RAM / 8192>,
+    num_frames: <35-50% of RAM / 4096>,
     eviction_policy: EvictionPolicyType::TwoQ,    // Balanced
     enable_per_core_pools: true,
     page_table_partitions: 24,
@@ -2671,7 +2671,7 @@ println!("Queue depth: {}", io_stats.queue_depth);
 
 **Copy #1** - Read-Ahead Buffer (disk.rs:669):
 ```rust
-// TODO: Page::from_bytes copies 8KB
+// TODO: Page::from_bytes copies 4KB
 return Ok(Page::from_bytes(page_id, data));
 ```
 
@@ -2689,7 +2689,7 @@ pages.push(Page::from_bytes(page_id, bufs[idx].clone()));
 
 **Copy #4** - Async Write (disk.rs:868):
 ```rust
-// TODO: page.data.clone() copies 8KB per async write
+// TODO: page.data.clone() copies 4KB per async write
 write_behind.add(page.id, page.data.clone());
 ```
 
@@ -2700,7 +2700,7 @@ let op = IoUringOp::write(page.id, offset, page.data.clone());
 ```
 
 **Impact:**
-- 8KB copy per operation
+- 4KB copy per operation
 - 400-800 CPU cycles per copy
 - Reduced cache efficiency
 
@@ -2887,18 +2887,18 @@ The RustyDB Storage Layer provides a solid foundation for enterprise database wo
 
 **Storage Core:**
 - `src/storage/mod.rs` - Storage engine API
-- `src/storage/page.rs` - Page structure (692 lines)
-- `src/storage/disk.rs` - Disk manager (1224 lines)
+- `src/storage/page.rs` - Page structure (691 lines)
+- `src/storage/disk.rs` - Disk manager (1223 lines)
 - `src/storage/checksum.rs` - CRC32C checksums
 - `src/storage/buffer.rs` - Legacy buffer pool (deprecated)
-- `src/storage/lsm.rs` - LSM tree (756 lines)
+- `src/storage/lsm.rs` - LSM tree (755 lines)
 - `src/storage/columnar.rs` - Columnar storage (800+ lines)
 - `src/storage/tiered.rs` - Multi-tier storage
 - `src/storage/json.rs` - JSON storage
 
 **Buffer Pool:**
 - `src/buffer/mod.rs` - Buffer module exports (567 lines)
-- `src/buffer/manager.rs` - Buffer pool manager (1835 lines)
+- `src/buffer/manager.rs` - Buffer pool manager (1834 lines)
 - `src/buffer/eviction.rs` - Eviction policies (300+ lines)
 - `src/buffer/page_cache.rs` - Frame management
 - `src/buffer/page_table.rs` - Lock-free page table

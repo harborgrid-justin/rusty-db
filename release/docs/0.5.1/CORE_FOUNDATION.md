@@ -75,15 +75,18 @@ The `DbError` enum is the unified error type used across all RustyDB modules. It
 #### Type Signature
 
 ```rust
-#[derive(Error, Debug, Clone)]
+#[derive(Error, Debug)]
 pub enum DbError { /* ... */ }
+
+// Note: Clone is implemented manually (not derived) to handle Arc<std::io::Error>
+impl Clone for DbError { /* ... */ }
 
 pub type Result<T> = std::result::Result<T, DbError>;
 ```
 
 #### Key Characteristics
 
-- **Cloneable**: Implements `Clone` for error propagation across threads
+- **Cloneable**: Manually implements `Clone` (not derived) for error propagation across threads
 - **Thread-Safe**: `Send + Sync` for concurrent error handling
 - **Arc-Wrapped I/O**: `std::io::Error` wrapped in `Arc` for cheap cloning
 - **String Messages**: Most variants use `String` for detailed context
@@ -2001,9 +2004,9 @@ use rusty_db::{Result, DbError, Value, IsolationLevel};
 
 | Component | File Path | Lines |
 |-----------|-----------|-------|
-| Error types | `/home/user/rusty-db/src/error.rs` | 281 |
-| Common types | `/home/user/rusty-db/src/common/mod.rs` | 1,243 |
-| Library root | `/home/user/rusty-db/src/lib.rs` | 1,198 |
+| Error types | `/home/user/rusty-db/src/error.rs` | 280 |
+| Common types | `/home/user/rusty-db/src/common/mod.rs` | 1,242 |
+| Library root | `/home/user/rusty-db/src/lib.rs` | 1,197 |
 
 ### Related Documentation
 

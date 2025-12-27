@@ -22,6 +22,12 @@
 11. [Best Practices](#best-practices)
 12. [Troubleshooting](#troubleshooting)
 13. [Appendices](#appendices)
+    - [Appendix A: Backup Command Reference](#appendix-a-backup-command-reference)
+    - [Appendix B: Configuration Reference](#appendix-b-configuration-reference)
+    - [Appendix C: Backup Size Estimator](#appendix-c-backup-size-estimator)
+    - [Appendix D: Disaster Recovery Checklist](#appendix-d-disaster-recovery-checklist)
+    - [Appendix E: Known Limitations & Considerations](#appendix-e-known-limitations--considerations)
+    - [Appendix F: Support Resources](#appendix-f-support-resources)
 
 ---
 
@@ -42,11 +48,11 @@ This comprehensive guide covers all backup and recovery operations for RustyDB v
 
 **Backup Capabilities**:
 - Block-level change tracking for efficient incrementals
-- Compression (LZ4, Snappy, Zstd) with 40-70% size reduction
-- AES-256-GCM encryption for data at rest
-- Parallel backup streams (up to 32 concurrent)
-- Backup verification and integrity checks
-- Cloud backup with bandwidth throttling
+- Compression support (configurable algorithms including LZ4, Snappy, Zstd) with typical 40-70% size reduction
+- AES-256-GCM encryption for data at rest with key rotation
+- Parallel backup streams (configurable, up to 32 concurrent workers)
+- Comprehensive backup verification and integrity checks (checksum-based)
+- Multi-cloud backup support (AWS S3, Azure Blob, Google Cloud Storage) with bandwidth throttling
 
 **Recovery Capabilities**:
 - Recovery to specific SCN, timestamp, or transaction ID
@@ -207,7 +213,7 @@ COMMIT;
 EOF
 ```
 
-**REST API**:
+**REST API** (Management Interface):
 ```bash
 curl -X POST http://localhost:8080/api/v1/admin/backup \
   -H "Content-Type: application/json" \
@@ -220,6 +226,8 @@ curl -X POST http://localhost:8080/api/v1/admin/backup \
     "parallel_streams": 8
   }'
 ```
+
+**Note**: REST API endpoints provide a programmatic interface for backup operations. Consult the API documentation for complete endpoint specifications and authentication requirements.
 
 **Configuration File** (`/etc/rustydb/backup.toml`):
 ```toml
@@ -2479,7 +2487,26 @@ print(f"\nTotal Weekly Storage: {weekly_total:.1f} GB")
 - [ ] Conduct post-mortem review
 - [ ] Implement preventive measures
 
-### Appendix E: Support Resources
+### Appendix E: Known Limitations & Considerations
+
+**Current Limitations (v0.5.1)**:
+
+1. **WAL Archive Growth**: WAL archive logs can grow unbounded if not properly managed. Implement regular cleanup based on retention policies and monitor archive disk usage. See `wal_retention_hours` configuration.
+
+2. **STONITH Fencing**: The current disaster recovery implementation does not include STONITH (Shoot The Other Node In The Head) fencing mechanisms. For production deployments requiring split-brain protection, consider implementing external fencing coordination or using a cluster manager with quorum support.
+
+3. **Performance Metrics**: Performance numbers shown in examples (e.g., backup throughput, parallel stream efficiency) are typical values and may vary based on hardware, network, and workload characteristics. Always benchmark in your specific environment.
+
+4. **Compression Library Integration**: While the backup system supports compression configuration, specific compression algorithm performance depends on the underlying implementation and available system libraries.
+
+**Best Practices to Address Limitations**:
+
+- **WAL Management**: Set appropriate `wal_retention_hours` and implement automated cleanup jobs
+- **DR Setup**: For critical systems, use external cluster management tools (Pacemaker, Patroni) for quorum-based failover
+- **Performance**: Conduct thorough testing and tuning for your specific workload and infrastructure
+- **Monitoring**: Implement comprehensive monitoring for disk usage, replication lag, and backup completion
+
+### Appendix F: Support Resources
 
 **Documentation**:
 - RustyDB Architecture: `/home/user/rusty-db/docs/ARCHITECTURE.md`

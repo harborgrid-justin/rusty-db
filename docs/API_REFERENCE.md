@@ -1,8 +1,11 @@
 # RustyDB API Reference
 
-**Version**: 1.0.0
-**Last Updated**: 2025-12-11
+**Product Version**: RustyDB 0.5.1
+**API Version**: 1.0.0 (stable)
+**Last Updated**: 2025-12-27
 **Base URL**: `http://localhost:8080/api/v1`
+
+> **Note**: The API version (1.0.0) follows semantic versioning independently from the product version (0.5.1) to maintain backward compatibility. API v1.0 is the stable public API supported in RustyDB 0.4.0+.
 
 ## Table of Contents
 
