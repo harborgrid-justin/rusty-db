@@ -286,7 +286,7 @@ let page_id: PageId = calculate_page_id(table_id, offset);
 | Type | Size | Max Value | Notes |
 |------|------|-----------|-------|
 | `TransactionId` | 64-bit | 18,446,744,073,709,551,615 | ~584 billion years at 1M TPS |
-| `PageId` | 64-bit | 18,446,744,073,709,551,615 | 64 exabytes with 4KB pages |
+| `PageId` | 64-bit | 18,446,744,073,709,551,615 | 128 exabytes with 8KB pages |
 | `TableId` | 32-bit | 4,294,967,295 | 4.2 billion tables |
 | `IndexId` | 32-bit | 4,294,967,295 | 4.2 billion indexes |
 | `ColumnId` | 16-bit | 65,535 | Limited by MAX_COLUMNS_PER_TABLE (1024) |

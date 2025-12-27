@@ -2924,7 +2924,7 @@ use rusty_db::Config;
 let config = Config {
     // Storage
     data_dir: "./data".to_string(),
-    page_size: 4096,
+    page_size: 8192,
     buffer_pool_size: 1000,
 
     // Network
@@ -2992,7 +2992,7 @@ export RUSTYDB_INMEMORY_COMPRESSION=true
 
 [storage]
 data_dir = "/var/lib/rustydb"
-page_size = 4096
+page_size = 8192
 buffer_pool_size = 10000
 
 [network]
