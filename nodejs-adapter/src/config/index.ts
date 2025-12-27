@@ -57,10 +57,11 @@ export const DEFAULT_WS_CONFIG: Required<WebSocketConfig> = {
 
 /**
  * Default binary paths
+ * Updated for v0.5.1 enterprise deployment - Dec 27, 2025
  */
 export const DEFAULT_BINARY_PATHS = {
-  server: 'target/release/rusty-db-server',
-  cli: 'target/release/rusty-db-cli',
+  server: 'builds/linux/rusty-db-server',
+  cli: 'builds/linux/rusty-db-cli',
 };
 
 // ============================================================================
