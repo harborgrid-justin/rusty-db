@@ -1195,3 +1195,40 @@ pub mod api;
 //
 // **Target LOC:** 1,000+ lines
 pub mod websocket;
+
+// ============================================================================
+// FFI/DLL Layer - C Interoperability
+// ============================================================================
+
+// FFI Layer for C/C++ Interoperability
+//
+// Provides a C-compatible API for RustyDB, enabling the database to be used
+// from C, C++, and other languages that support C FFI.
+//
+// **Key Components:**
+// - `types`: C-compatible type definitions and opaque handles
+// - `error`: C-compatible error handling and reporting
+// - `c_api`: Core C API functions for database operations
+//
+// **API Functions:**
+// - Connection Management: `rustydb_connect`, `rustydb_disconnect`
+// - Query Execution: `rustydb_query`, `rustydb_free_result`
+// - Transaction Control: `rustydb_begin`, `rustydb_commit`, `rustydb_rollback`
+// - Error Handling: `rustydb_error_message`, `rustydb_error_code`
+//
+// **Features:**
+// - Thread-safe design with handle-based error storage
+// - Opaque pointers for memory safety
+// - Clear ownership semantics
+// - Comprehensive error reporting
+// - Cross-platform support (Linux, Windows, macOS)
+//
+// **Build Targets:**
+// - Linux: `librustydb.so`
+// - Windows: `rustydb.dll`
+// - macOS: `librustydb.dylib`
+//
+// **Header File:** `include/rustydb.h`
+//
+// **Target LOC:** 1,500+ lines
+pub mod ffi;

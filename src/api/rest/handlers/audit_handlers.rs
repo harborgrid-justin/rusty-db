@@ -12,11 +12,12 @@ use axum::{
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use utoipa::ToSchema;
 
 // Request/Response Types
 
 /// Query parameters for audit log filtering
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AuditQueryParams {
     /// Start timestamp (Unix timestamp)
     pub start_time: Option<i64>,
@@ -37,7 +38,7 @@ pub struct AuditQueryParams {
 }
 
 /// Audit entry response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct AuditEntry {
     pub id: u64,
     pub timestamp: i64,
@@ -53,7 +54,7 @@ pub struct AuditEntry {
 }
 
 /// Audit export configuration
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct AuditExportConfig {
     /// Export format (json, csv, xml)
     pub format: String,
@@ -68,7 +69,7 @@ pub struct AuditExportConfig {
 }
 
 /// Export result
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ExportResult {
     pub success: bool,
     pub records_exported: usize,
@@ -78,7 +79,7 @@ pub struct ExportResult {
 }
 
 /// Compliance report parameters
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct ComplianceParams {
     /// Regulation type (SOX, HIPAA, GDPR, PCI_DSS)
     pub regulation: String,
@@ -91,7 +92,7 @@ pub struct ComplianceParams {
 }
 
 /// Compliance report response
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ComplianceReportResponse {
     pub regulation: String,
     pub period_start: i64,
@@ -104,7 +105,7 @@ pub struct ComplianceReportResponse {
 }
 
 /// Compliance violation
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ComplianceViolation {
     pub violation_type: String,
     pub severity: String,
@@ -142,6 +143,25 @@ fn get_or_init_vault() -> Result<Arc<SecurityVaultManager>, ApiError> {
 /// GET /api/v1/security/audit/logs
 ///
 /// Query audit logs with filtering and pagination.
+#[utoipa::path(
+    get,
+    path = "/api/v1/security/audit/logs",
+    tag = "audit",
+    params(
+        ("start_time" = Option<i64>, Query, description = "Start timestamp (Unix timestamp)"),
+        ("end_time" = Option<i64>, Query, description = "End timestamp (Unix timestamp)"),
+        ("user_id" = Option<String>, Query, description = "Filter by user ID"),
+        ("action" = Option<String>, Query, description = "Filter by action type"),
+        ("object_name" = Option<String>, Query, description = "Filter by object name"),
+        ("session_id" = Option<String>, Query, description = "Filter by session ID"),
+        ("limit" = Option<usize>, Query, description = "Maximum number of records"),
+        ("offset" = Option<usize>, Query, description = "Offset for pagination"),
+    ),
+    responses(
+        (status = 200, description = "Audit log entries", body = Vec<AuditEntry>),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn query_audit_logs(
     State(_state): State<Arc<ApiState>>,
     Query(params): Query<AuditQueryParams>,
@@ -214,6 +234,16 @@ pub async fn query_audit_logs(
 /// POST /api/v1/security/audit/export
 ///
 /// Export audit logs to a file in the specified format.
+#[utoipa::path(
+    post,
+    path = "/api/v1/security/audit/export",
+    tag = "audit",
+    request_body = AuditExportConfig,
+    responses(
+        (status = 200, description = "Export result", body = ExportResult),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn export_audit_logs(
     State(_state): State<Arc<ApiState>>,
     Json(config): Json<AuditExportConfig>,
@@ -251,6 +281,21 @@ pub async fn export_audit_logs(
 /// GET /api/v1/security/audit/compliance
 ///
 /// Generate a compliance report for a specific regulation.
+#[utoipa::path(
+    get,
+    path = "/api/v1/security/audit/compliance",
+    tag = "audit",
+    params(
+        ("regulation" = String, Query, description = "Regulation type (SOX, HIPAA, GDPR, PCI_DSS)"),
+        ("start_date" = i64, Query, description = "Start date (Unix timestamp)"),
+        ("end_date" = i64, Query, description = "End date (Unix timestamp)"),
+        ("include_recommendations" = Option<bool>, Query, description = "Include recommendations"),
+    ),
+    responses(
+        (status = 200, description = "Compliance report", body = ComplianceReportResponse),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn compliance_report(
     State(_state): State<Arc<ApiState>>,
     Query(params): Query<ComplianceParams>,
@@ -313,6 +358,15 @@ pub async fn compliance_report(
 /// GET /api/v1/security/audit/stats
 ///
 /// Get audit statistics and metrics.
+#[utoipa::path(
+    get,
+    path = "/api/v1/security/audit/stats",
+    tag = "audit",
+    responses(
+        (status = 200, description = "Audit statistics", body = serde_json::Value),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn get_audit_stats(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<Json<serde_json::Value>> {
@@ -330,6 +384,15 @@ pub async fn get_audit_stats(
 /// POST /api/v1/security/audit/verify
 ///
 /// Verify audit log integrity (blockchain verification).
+#[utoipa::path(
+    post,
+    path = "/api/v1/security/audit/verify",
+    tag = "audit",
+    responses(
+        (status = 200, description = "Integrity verification result", body = serde_json::Value),
+        (status = 500, description = "Internal server error", body = ApiError),
+    )
+)]
 pub async fn verify_audit_integrity(
     State(_state): State<Arc<ApiState>>,
 ) -> ApiResult<Json<serde_json::Value>> {

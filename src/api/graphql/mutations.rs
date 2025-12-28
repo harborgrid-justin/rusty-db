@@ -1200,6 +1200,165 @@ impl MutationRoot {
             execution_time_ms: execution_time,
         })
     }
+
+    // ========================================================================
+    // Security Vault Mutations
+    // ========================================================================
+
+    /// Enable transparent data encryption for a tablespace
+    async fn enable_tablespace_encryption(
+        &self,
+        ctx: &Context<'_>,
+        input: super::security_vault_graphql::EnableTablespaceEncryptionInput,
+    ) -> GqlResult<super::security_vault_graphql::TablespaceEncryptionGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.enable_tablespace_encryption(ctx, input).await
+    }
+
+    /// Enable column-level encryption
+    async fn enable_column_encryption(
+        &self,
+        ctx: &Context<'_>,
+        input: super::security_vault_graphql::EnableColumnEncryptionInput,
+    ) -> GqlResult<super::security_vault_graphql::ColumnEncryptionGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.enable_column_encryption(ctx, input).await
+    }
+
+    /// Generate a new encryption key
+    async fn generate_encryption_key(
+        &self,
+        ctx: &Context<'_>,
+        input: super::security_vault_graphql::GenerateKeyInput,
+    ) -> GqlResult<super::security_vault_graphql::DataEncryptionKeyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.generate_encryption_key(ctx, input).await
+    }
+
+    /// Rotate an encryption key
+    async fn rotate_encryption_key(
+        &self,
+        ctx: &Context<'_>,
+        key_id: String,
+    ) -> GqlResult<super::security_vault_graphql::DataEncryptionKeyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.rotate_encryption_key(ctx, key_id).await
+    }
+
+    /// Create a new VPD (Virtual Private Database) policy
+    async fn create_vpd_policy(
+        &self,
+        ctx: &Context<'_>,
+        input: super::security_vault_graphql::CreateVpdPolicyInput,
+    ) -> GqlResult<super::security_vault_graphql::VpdPolicyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.create_vpd_policy(ctx, input).await
+    }
+
+    /// Update a VPD policy
+    async fn update_vpd_policy(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+        enabled: Option<bool>,
+        predicate: Option<String>,
+    ) -> GqlResult<super::security_vault_graphql::VpdPolicyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.update_vpd_policy(ctx, name, enabled, predicate).await
+    }
+
+    /// Delete a VPD policy
+    async fn delete_vpd_policy(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+    ) -> GqlResult<bool> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.delete_vpd_policy(ctx, name).await
+    }
+
+    /// Enable a VPD policy
+    async fn enable_vpd_policy(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+    ) -> GqlResult<super::security_vault_graphql::VpdPolicyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.enable_vpd_policy(ctx, name).await
+    }
+
+    /// Disable a VPD policy
+    async fn disable_vpd_policy(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+    ) -> GqlResult<super::security_vault_graphql::VpdPolicyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.disable_vpd_policy(ctx, name).await
+    }
+
+    /// Create a new data masking policy
+    async fn create_masking_policy(
+        &self,
+        ctx: &Context<'_>,
+        input: super::security_vault_graphql::CreateMaskingPolicyInput,
+    ) -> GqlResult<super::security_vault_graphql::MaskingPolicyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.create_masking_policy(ctx, input).await
+    }
+
+    /// Update a masking policy
+    async fn update_masking_policy(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+        enabled: Option<bool>,
+        priority: Option<i32>,
+    ) -> GqlResult<super::security_vault_graphql::MaskingPolicyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.update_masking_policy(ctx, name, enabled, priority).await
+    }
+
+    /// Delete a masking policy
+    async fn delete_masking_policy(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+    ) -> GqlResult<bool> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.delete_masking_policy(ctx, name).await
+    }
+
+    /// Enable a masking policy
+    async fn enable_masking_policy(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+    ) -> GqlResult<super::security_vault_graphql::MaskingPolicyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.enable_masking_policy(ctx, name).await
+    }
+
+    /// Disable a masking policy
+    async fn disable_masking_policy(
+        &self,
+        ctx: &Context<'_>,
+        name: String,
+    ) -> GqlResult<super::security_vault_graphql::MaskingPolicyGql> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.disable_masking_policy(ctx, name).await
+    }
+
+    /// Test masking on sample values
+    async fn test_masking(
+        &self,
+        ctx: &Context<'_>,
+        policy_name: String,
+        test_values: Vec<String>,
+    ) -> GqlResult<Vec<super::security_vault_graphql::MaskingTestResultGql>> {
+        let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
+        vault_mutation.test_masking(ctx, policy_name, test_values).await
+    }
 }
 
 // Transaction result
