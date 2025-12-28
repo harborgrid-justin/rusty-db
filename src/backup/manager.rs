@@ -620,6 +620,62 @@ impl BackupManager {
         Ok(())
     }
 
+    // Create an archive log backup (transaction logs only)
+    pub fn create_archive_log_backup(&self, database_name: &str) -> Result<String> {
+        let backup_id = self.generate_backup_id("ARCH");
+        let mut metadata = BackupMetadata::new(
+            backup_id.clone(),
+            BackupType::ArchiveLog,
+            database_name.to_string(),
+        );
+
+        metadata.scn = self.generate_scn();
+        metadata.backup_path = self.config.backup_dir.join(&backup_id);
+
+        // Mark as active
+        self.active_backups.write().insert(backup_id.clone());
+
+        create_dir_all(&metadata.backup_path)
+            .map_err(|e| DbError::BackupError(format!("Failed to create backup path: {}", e)))?;
+
+        metadata.status = BackupStatus::Running { progress_pct: 0.0 };
+
+        // Perform archive log backup
+        self.perform_archive_log_backup(&mut metadata)?;
+
+        metadata.end_time = Some(SystemTime::now());
+        metadata.status = BackupStatus::Completed {
+            duration_secs: metadata.duration().unwrap_or_default().as_secs(),
+        };
+
+        self.backups.write().insert(backup_id.clone(), metadata);
+        self.active_backups.write().remove(&backup_id);
+
+        Ok(backup_id)
+    }
+
+    fn perform_archive_log_backup(&self, metadata: &mut BackupMetadata) -> Result<()> {
+        // Archive log backup contains only transaction logs
+        // Simulating archiving WAL/redo logs
+        let num_log_files = 5; // Simulate 5 log files
+        let log_file_size = 1024 * 1024 * 50; // 50MB per log file
+        let total_size = num_log_files as u64 * log_file_size;
+
+        metadata.size_bytes = total_size;
+        metadata.compressed_size_bytes = if self.config.compression_enabled {
+            (total_size as f64 * 0.5) as u64 // Logs compress well
+        } else {
+            total_size
+        };
+        metadata.compression_ratio =
+            metadata.size_bytes as f64 / metadata.compressed_size_bytes as f64;
+        metadata.num_files = num_log_files;
+        metadata.encryption_enabled = self.config.encryption_enabled;
+        metadata.compression_enabled = self.config.compression_enabled;
+
+        Ok(())
+    }
+
     // Apply retention policy and remove obsolete backups
     pub fn apply_retention_policy(&self) -> Result<Vec<String>> {
         let mut backups = self.backups.write();

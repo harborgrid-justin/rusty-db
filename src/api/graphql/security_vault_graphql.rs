@@ -222,7 +222,7 @@ pub struct SecurityVaultQuery;
 #[Object]
 impl SecurityVaultQuery {
     /// Get current encryption status
-    async fn encryption_status(&self, ctx: &Context<'_>) -> GqlResult<EncryptionStatusGql> {
+    pub async fn encryption_status(&self, ctx: &Context<'_>) -> GqlResult<EncryptionStatusGql> {
         // In a real implementation, this would fetch from the vault manager
         // For now, return mock data
         Ok(EncryptionStatusGql {
@@ -239,43 +239,43 @@ impl SecurityVaultQuery {
     }
 
     /// List all encryption keys
-    async fn encryption_keys(&self, ctx: &Context<'_>) -> GqlResult<Vec<DataEncryptionKeyGql>> {
+    pub async fn encryption_keys(&self, ctx: &Context<'_>) -> GqlResult<Vec<DataEncryptionKeyGql>> {
         // Mock implementation
         Ok(vec![])
     }
 
     /// Get specific encryption key by ID
-    async fn encryption_key(&self, ctx: &Context<'_>, id: String) -> GqlResult<Option<DataEncryptionKeyGql>> {
+    pub async fn encryption_key(&self, ctx: &Context<'_>, id: String) -> GqlResult<Option<DataEncryptionKeyGql>> {
         // Mock implementation
         Ok(None)
     }
 
     /// List all VPD policies
-    async fn vpd_policies(&self, ctx: &Context<'_>) -> GqlResult<Vec<VpdPolicyGql>> {
+    pub async fn vpd_policies(&self, ctx: &Context<'_>) -> GqlResult<Vec<VpdPolicyGql>> {
         // Mock implementation
         Ok(vec![])
     }
 
     /// Get specific VPD policy by name
-    async fn vpd_policy(&self, ctx: &Context<'_>, name: String) -> GqlResult<Option<VpdPolicyGql>> {
+    pub async fn vpd_policy(&self, ctx: &Context<'_>, name: String) -> GqlResult<Option<VpdPolicyGql>> {
         // Mock implementation
         Ok(None)
     }
 
     /// Get VPD policies for a specific table
-    async fn table_vpd_policies(&self, ctx: &Context<'_>, table_name: String) -> GqlResult<Vec<VpdPolicyGql>> {
+    pub async fn table_vpd_policies(&self, ctx: &Context<'_>, table_name: String) -> GqlResult<Vec<VpdPolicyGql>> {
         // Mock implementation
         Ok(vec![])
     }
 
     /// List all data masking policies
-    async fn masking_policies(&self, ctx: &Context<'_>) -> GqlResult<Vec<MaskingPolicyGql>> {
+    pub async fn masking_policies(&self, ctx: &Context<'_>) -> GqlResult<Vec<MaskingPolicyGql>> {
         // Mock implementation
         Ok(vec![])
     }
 
     /// Get specific masking policy by name
-    async fn masking_policy(&self, ctx: &Context<'_>, name: String) -> GqlResult<Option<MaskingPolicyGql>> {
+    pub async fn masking_policy(&self, ctx: &Context<'_>, name: String) -> GqlResult<Option<MaskingPolicyGql>> {
         // Mock implementation
         Ok(None)
     }
@@ -291,7 +291,7 @@ pub struct SecurityVaultMutation;
 #[Object]
 impl SecurityVaultMutation {
     /// Enable transparent data encryption for a tablespace
-    async fn enable_tablespace_encryption(
+    pub async fn enable_tablespace_encryption(
         &self,
         ctx: &Context<'_>,
         input: EnableTablespaceEncryptionInput,
@@ -308,7 +308,7 @@ impl SecurityVaultMutation {
     }
 
     /// Enable column-level encryption
-    async fn enable_column_encryption(
+    pub async fn enable_column_encryption(
         &self,
         ctx: &Context<'_>,
         input: EnableColumnEncryptionInput,
@@ -324,7 +324,7 @@ impl SecurityVaultMutation {
     }
 
     /// Generate a new encryption key
-    async fn generate_encryption_key(
+    pub async fn generate_encryption_key(
         &self,
         ctx: &Context<'_>,
         input: GenerateKeyInput,
@@ -343,7 +343,7 @@ impl SecurityVaultMutation {
     }
 
     /// Rotate an encryption key
-    async fn rotate_encryption_key(
+    pub async fn rotate_encryption_key(
         &self,
         ctx: &Context<'_>,
         key_id: String,
@@ -362,7 +362,7 @@ impl SecurityVaultMutation {
     }
 
     /// Create a new VPD (Virtual Private Database) policy
-    async fn create_vpd_policy(
+    pub async fn create_vpd_policy(
         &self,
         ctx: &Context<'_>,
         input: CreateVpdPolicyInput,
@@ -381,7 +381,7 @@ impl SecurityVaultMutation {
     }
 
     /// Update a VPD policy
-    async fn update_vpd_policy(
+    pub async fn update_vpd_policy(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -402,7 +402,7 @@ impl SecurityVaultMutation {
     }
 
     /// Delete a VPD policy
-    async fn delete_vpd_policy(
+    pub async fn delete_vpd_policy(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -412,7 +412,7 @@ impl SecurityVaultMutation {
     }
 
     /// Enable a VPD policy
-    async fn enable_vpd_policy(
+    pub async fn enable_vpd_policy(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -431,7 +431,7 @@ impl SecurityVaultMutation {
     }
 
     /// Disable a VPD policy
-    async fn disable_vpd_policy(
+    pub async fn disable_vpd_policy(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -450,7 +450,7 @@ impl SecurityVaultMutation {
     }
 
     /// Create a new data masking policy
-    async fn create_masking_policy(
+    pub async fn create_masking_policy(
         &self,
         ctx: &Context<'_>,
         input: CreateMaskingPolicyInput,
@@ -468,7 +468,7 @@ impl SecurityVaultMutation {
     }
 
     /// Update a masking policy
-    async fn update_masking_policy(
+    pub async fn update_masking_policy(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -488,7 +488,7 @@ impl SecurityVaultMutation {
     }
 
     /// Delete a masking policy
-    async fn delete_masking_policy(
+    pub async fn delete_masking_policy(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -498,7 +498,7 @@ impl SecurityVaultMutation {
     }
 
     /// Enable a masking policy
-    async fn enable_masking_policy(
+    pub async fn enable_masking_policy(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -516,7 +516,7 @@ impl SecurityVaultMutation {
     }
 
     /// Disable a masking policy
-    async fn disable_masking_policy(
+    pub async fn disable_masking_policy(
         &self,
         ctx: &Context<'_>,
         name: String,
@@ -534,7 +534,7 @@ impl SecurityVaultMutation {
     }
 
     /// Test masking on sample values
-    async fn test_masking(
+    pub async fn test_masking(
         &self,
         ctx: &Context<'_>,
         policy_name: String,

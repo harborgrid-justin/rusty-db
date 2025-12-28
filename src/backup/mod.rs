@@ -9,6 +9,7 @@ pub mod cloud;
 pub mod disaster_recovery;
 pub mod manager;
 pub mod pitr;
+pub mod scheduler;
 pub mod snapshots;
 pub mod verification;
 
@@ -53,6 +54,11 @@ pub use catalog::{
     CatalogStatistics, DatabaseRegistration, ReportType,
 };
 
+pub use scheduler::{
+    BackupExecution, BackupScheduler, BackupWindow, CronField, CronSchedule, ExecutionStatus,
+    ScheduledBackup,
+};
+
 use crate::Result;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -67,6 +73,7 @@ pub struct BackupSystem {
     dr_manager: Arc<DisasterRecoveryManager>,
     verification_manager: Arc<VerificationManager>,
     catalog: Arc<BackupCatalog>,
+    scheduler: Option<Arc<BackupScheduler>>,
 }
 
 impl BackupSystem {
@@ -115,6 +122,7 @@ impl BackupSystem {
             dr_manager,
             verification_manager,
             catalog,
+            scheduler: None,
         })
     }
 
@@ -161,6 +169,18 @@ impl BackupSystem {
     // Access backup catalog
     pub fn catalog(&self) -> Arc<BackupCatalog> {
         Arc::clone(&self.catalog)
+    }
+
+    // Enable backup scheduler
+    pub fn enable_scheduler(&mut self, config_path: std::path::PathBuf) -> Result<()> {
+        let scheduler = BackupScheduler::new(Arc::clone(&self.backup_manager), config_path)?;
+        self.scheduler = Some(Arc::new(scheduler));
+        Ok(())
+    }
+
+    // Access backup scheduler
+    pub fn scheduler(&self) -> Option<Arc<BackupScheduler>> {
+        self.scheduler.as_ref().map(Arc::clone)
     }
 
     // Perform a complete backup workflow

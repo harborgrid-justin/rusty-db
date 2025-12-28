@@ -283,49 +283,49 @@ impl QueryRoot {
     /// Get current encryption status
     async fn encryption_status(&self, ctx: &Context<'_>) -> GqlResult<super::security_vault_graphql::EncryptionStatusGql> {
         let vault_query = super::security_vault_graphql::SecurityVaultQuery;
-        vault_query.encryption_status(ctx).await
+        vault_query.encryption_status(ctx).await?
     }
 
     /// List all encryption keys
     async fn encryption_keys(&self, ctx: &Context<'_>) -> GqlResult<Vec<super::security_vault_graphql::DataEncryptionKeyGql>> {
         let vault_query = super::security_vault_graphql::SecurityVaultQuery;
-        vault_query.encryption_keys(ctx).await
+        vault_query.encryption_keys(ctx).await?
     }
 
     /// Get specific encryption key by ID
     async fn encryption_key(&self, ctx: &Context<'_>, id: String) -> GqlResult<Option<super::security_vault_graphql::DataEncryptionKeyGql>> {
         let vault_query = super::security_vault_graphql::SecurityVaultQuery;
-        vault_query.encryption_key(ctx, id).await
+        vault_query.encryption_key(ctx, id).await?
     }
 
     /// List all VPD policies
     async fn vpd_policies(&self, ctx: &Context<'_>) -> GqlResult<Vec<super::security_vault_graphql::VpdPolicyGql>> {
         let vault_query = super::security_vault_graphql::SecurityVaultQuery;
-        vault_query.vpd_policies(ctx).await
+        vault_query.vpd_policies(ctx).await?
     }
 
     /// Get specific VPD policy by name
     async fn vpd_policy(&self, ctx: &Context<'_>, name: String) -> GqlResult<Option<super::security_vault_graphql::VpdPolicyGql>> {
         let vault_query = super::security_vault_graphql::SecurityVaultQuery;
-        vault_query.vpd_policy(ctx, name).await
+        vault_query.vpd_policy(ctx, name).await?
     }
 
     /// Get VPD policies for a specific table
     async fn table_vpd_policies(&self, ctx: &Context<'_>, table_name: String) -> GqlResult<Vec<super::security_vault_graphql::VpdPolicyGql>> {
         let vault_query = super::security_vault_graphql::SecurityVaultQuery;
-        vault_query.table_vpd_policies(ctx, table_name).await
+        vault_query.table_vpd_policies(ctx, table_name).await?
     }
 
     /// List all data masking policies
     async fn masking_policies(&self, ctx: &Context<'_>) -> GqlResult<Vec<super::security_vault_graphql::MaskingPolicyGql>> {
         let vault_query = super::security_vault_graphql::SecurityVaultQuery;
-        vault_query.masking_policies(ctx).await
+        vault_query.masking_policies(ctx).await?
     }
 
     /// Get specific masking policy by name
     async fn masking_policy(&self, ctx: &Context<'_>, name: String) -> GqlResult<Option<super::security_vault_graphql::MaskingPolicyGql>> {
         let vault_query = super::security_vault_graphql::SecurityVaultQuery;
-        vault_query.masking_policy(ctx, name).await
+        vault_query.masking_policy(ctx, name).await?
     }
 }
 

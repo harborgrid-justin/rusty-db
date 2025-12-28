@@ -55,8 +55,11 @@
 // }
 // ```
 
+pub mod advanced_pool; // Advanced pooling features
 pub mod connection; // Connection pool submodules
 pub mod connection_pool;
+pub mod pool_metrics; // Pool monitoring and metrics
+pub mod pool_policies; // Pool policies engine
 pub mod session; // New refactored session module
 pub mod session_manager; // Legacy - being migrated
 pub mod sessions; // Session management submodules
@@ -116,4 +119,52 @@ pub use connection_pool::{
 
     // Wait queue
     WaitQueue,
+};
+
+// Re-export advanced pool types
+pub use advanced_pool::{
+    AffinityManager,
+    AffinityStats,
+    AffinityStatsSnapshot,
+    ConnectionTag,
+    HealthCheckConfig,
+    HealthCheckStats,
+    HealthStatus,
+    HealthTracker,
+    RecyclingTriggers,
+    TagSet,
+    UsageStats,
+    UsageTracker,
+    WorkloadType,
+};
+
+// Re-export pool metrics types
+pub use pool_metrics::{
+    ErrorMetrics,
+    ErrorSnapshot,
+    LatencyMetrics,
+    LatencySnapshot,
+    LifecycleMetrics,
+    LifecycleSnapshot,
+    MetricsHistory,
+    PoolMetricsCollector,
+    PoolMetricsSnapshot,
+    SizingRecommendation,
+    UtilizationMetrics,
+    UtilizationSnapshot,
+};
+
+// Re-export pool policies types
+pub use pool_policies::{
+    EnforcementStatsSnapshot,
+    IdlePolicy,
+    IdleStrategy,
+    MaintenancePolicy,
+    OverflowPolicy,
+    OverflowStrategy,
+    PolicyEngine,
+    PoolPolicies,
+    PoolPoliciesBuilder,
+    SizePolicy,
+    TimeoutPolicy,
 };
