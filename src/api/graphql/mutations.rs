@@ -1212,7 +1212,7 @@ impl MutationRoot {
         input: super::security_vault_graphql::EnableTablespaceEncryptionInput,
     ) -> GqlResult<super::security_vault_graphql::TablespaceEncryptionGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.enable_tablespace_encryption(ctx, input).await
+        vault_mutation.enable_tablespace_encryption(ctx, input).await?
     }
 
     /// Enable column-level encryption
@@ -1222,7 +1222,7 @@ impl MutationRoot {
         input: super::security_vault_graphql::EnableColumnEncryptionInput,
     ) -> GqlResult<super::security_vault_graphql::ColumnEncryptionGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.enable_column_encryption(ctx, input).await
+        vault_mutation.enable_column_encryption(ctx, input).await?
     }
 
     /// Generate a new encryption key
@@ -1232,7 +1232,7 @@ impl MutationRoot {
         input: super::security_vault_graphql::GenerateKeyInput,
     ) -> GqlResult<super::security_vault_graphql::DataEncryptionKeyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.generate_encryption_key(ctx, input).await
+        vault_mutation.generate_encryption_key(ctx, input).await?
     }
 
     /// Rotate an encryption key
@@ -1242,7 +1242,7 @@ impl MutationRoot {
         key_id: String,
     ) -> GqlResult<super::security_vault_graphql::DataEncryptionKeyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.rotate_encryption_key(ctx, key_id).await
+        vault_mutation.rotate_encryption_key(ctx, key_id).await?
     }
 
     /// Create a new VPD (Virtual Private Database) policy
@@ -1252,7 +1252,7 @@ impl MutationRoot {
         input: super::security_vault_graphql::CreateVpdPolicyInput,
     ) -> GqlResult<super::security_vault_graphql::VpdPolicyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.create_vpd_policy(ctx, input).await
+        vault_mutation.create_vpd_policy(ctx, input).await?
     }
 
     /// Update a VPD policy
@@ -1264,7 +1264,7 @@ impl MutationRoot {
         predicate: Option<String>,
     ) -> GqlResult<super::security_vault_graphql::VpdPolicyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.update_vpd_policy(ctx, name, enabled, predicate).await
+        vault_mutation.update_vpd_policy(ctx, name, enabled, predicate).await?
     }
 
     /// Delete a VPD policy
@@ -1274,7 +1274,7 @@ impl MutationRoot {
         name: String,
     ) -> GqlResult<bool> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.delete_vpd_policy(ctx, name).await
+        vault_mutation.delete_vpd_policy(ctx, name).await?
     }
 
     /// Enable a VPD policy
@@ -1284,7 +1284,7 @@ impl MutationRoot {
         name: String,
     ) -> GqlResult<super::security_vault_graphql::VpdPolicyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.enable_vpd_policy(ctx, name).await
+        vault_mutation.enable_vpd_policy(ctx, name).await?
     }
 
     /// Disable a VPD policy
@@ -1294,7 +1294,7 @@ impl MutationRoot {
         name: String,
     ) -> GqlResult<super::security_vault_graphql::VpdPolicyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.disable_vpd_policy(ctx, name).await
+        vault_mutation.disable_vpd_policy(ctx, name).await?
     }
 
     /// Create a new data masking policy
@@ -1304,7 +1304,7 @@ impl MutationRoot {
         input: super::security_vault_graphql::CreateMaskingPolicyInput,
     ) -> GqlResult<super::security_vault_graphql::MaskingPolicyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.create_masking_policy(ctx, input).await
+        vault_mutation.create_masking_policy(ctx, input).await?
     }
 
     /// Update a masking policy
@@ -1316,7 +1316,7 @@ impl MutationRoot {
         priority: Option<i32>,
     ) -> GqlResult<super::security_vault_graphql::MaskingPolicyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.update_masking_policy(ctx, name, enabled, priority).await
+        vault_mutation.update_masking_policy(ctx, name, enabled, priority).await?
     }
 
     /// Delete a masking policy
@@ -1326,7 +1326,7 @@ impl MutationRoot {
         name: String,
     ) -> GqlResult<bool> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.delete_masking_policy(ctx, name).await
+        vault_mutation.delete_masking_policy(ctx, name).await?
     }
 
     /// Enable a masking policy
@@ -1336,7 +1336,7 @@ impl MutationRoot {
         name: String,
     ) -> GqlResult<super::security_vault_graphql::MaskingPolicyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.enable_masking_policy(ctx, name).await
+        vault_mutation.enable_masking_policy(ctx, name).await?
     }
 
     /// Disable a masking policy
@@ -1346,7 +1346,7 @@ impl MutationRoot {
         name: String,
     ) -> GqlResult<super::security_vault_graphql::MaskingPolicyGql> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.disable_masking_policy(ctx, name).await
+        vault_mutation.disable_masking_policy(ctx, name).await?
     }
 
     /// Test masking on sample values
@@ -1357,7 +1357,7 @@ impl MutationRoot {
         test_values: Vec<String>,
     ) -> GqlResult<Vec<super::security_vault_graphql::MaskingTestResultGql>> {
         let vault_mutation = super::security_vault_graphql::SecurityVaultMutation;
-        vault_mutation.test_masking(ctx, policy_name, test_values).await
+        vault_mutation.test_masking(ctx, policy_name, test_values).await?
     }
 }
 

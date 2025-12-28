@@ -3,10 +3,13 @@
 
 use std::time::SystemTime;
 pub mod alerts;
+pub mod alerting;
 pub mod ash;
 pub mod dashboard;
+pub mod dashboard_api;
 pub mod diagnostics;
 pub mod metrics;
+pub mod metrics_aggregator;
 pub mod profiler;
 pub mod resource_manager;
 pub mod statistics;
@@ -51,6 +54,21 @@ pub use dashboard::{
     ConnectionPoolStats, DashboardDataAggregator, DashboardMessage, DashboardSnapshot,
     DashboardStreamer, MetricDataPoint, PerformanceSummary, ReplicationLag, ResourceSnapshot,
     TimeSeriesMetric, TopQuery,
+};
+
+pub use dashboard_api::{
+    AggregationFunction, DashboardApi, MetricQuery, MetricQueryResult, QueryDataPoint,
+    RealtimeDashboardSnapshot, TimeRange, WidgetConfig, WidgetData, WidgetType,
+};
+
+pub use alerting::{
+    AlertDestination, AlertRoutingRule, AlertingEngine, EscalationLevel, EscalationPolicy,
+    ProcessedAlert, SuppressionRule,
+};
+
+pub use metrics_aggregator::{
+    AggregatedDataPoint, AggregationInterval, AggregationMethod, MetricsAggregator,
+    RetentionPolicy, RollupPolicy,
 };
 
 use parking_lot::RwLock;

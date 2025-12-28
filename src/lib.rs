@@ -256,6 +256,26 @@ pub mod parser;
 // **Target LOC:** 3,000+ lines
 pub mod execution;
 
+// Query result caching system
+//
+// Enterprise-grade query caching with LRU eviction, TTL expiration, and fine-grained invalidation.
+//
+// **Key Components:**
+// - `QueryCache`: LRU-based cache with memory limits and TTL
+// - `CacheInvalidator`: Table and row-level invalidation engine
+// - `CacheStatistics`: Comprehensive performance metrics and monitoring
+//
+// **Features:**
+// - LRU eviction policy for memory-bounded cache
+// - TTL-based expiration for automatic cache refresh
+// - Table-level and row-level invalidation
+// - Dependency tracking between queries and tables
+// - Real-time hit/miss ratio and performance metrics
+// - Thread-safe concurrent access
+//
+// **Target LOC:** 1,000+ lines
+pub mod cache;
+
 // ============================================================================
 // Network Layer - Client/server communication
 // ============================================================================
@@ -318,6 +338,51 @@ pub mod security;
 // **Target LOC:** 3,000+ lines
 pub mod security_vault;
 
+// Enterprise Audit Trail System
+//
+// SOC2/HIPAA compliant audit logging for comprehensive security event tracking.
+// Provides tamper-evident audit trails, advanced querying, and compliance reporting.
+//
+// **Key Components:**
+// - `AuditLogger`: High-performance async audit logger with buffering
+// - `AuditEvent`: Comprehensive event types (DDL, DML, DCL, authentication)
+// - `AuditQueryEngine`: Advanced query and filtering capabilities
+// - `IntegrityVerification`: Checksum-based tamper detection
+//
+// **Features:**
+// - Multiple output destinations (file, database, syslog)
+// - Tamper-evident logging with SHA-256 checksums
+// - Time-range, user, and object-based filtering
+// - Export to JSON, CSV, and XML formats
+// - SOC2 and HIPAA compliance support
+//
+// **Target LOC:** 1,000+ lines
+pub mod audit;
+
+// Compliance Reporting Engine
+//
+// Enterprise-grade compliance validation and reporting for regulatory frameworks.
+// Provides automated compliance scanning, violation tracking, and remediation guidance.
+//
+// **Key Components:**
+// - `ComplianceRulesEngine`: Rule definitions for GDPR, HIPAA, SOC2, PCI-DSS
+// - `ComplianceScanner`: Automated schema, data, and configuration scanning
+// - `ComplianceReportGenerator`: Score calculation, reporting, and trend analysis
+// - `ComplianceEngine`: Integrated compliance management system
+//
+// **Features:**
+// - Multi-framework compliance checking (GDPR, HIPAA, SOC2, PCI-DSS)
+// - Automated compliance scanning with configurable scope
+// - Data classification detection (PII, PHI, PCI)
+// - Encryption verification and access control auditing
+// - Compliance score calculation with risk level assessment
+// - Executive summaries and detailed violation reports
+// - Remediation recommendations with priority and effort estimates
+// - Compliance trend analysis over time
+//
+// **Target LOC:** 1,050+ lines
+pub mod compliance;
+
 // Monitoring, metrics, and profiling
 //
 // Real-time performance metrics, query profiling, and resource governance.
@@ -330,6 +395,27 @@ pub mod security_vault;
 //
 // **Target LOC:** 3,000+ lines
 pub mod monitoring;
+
+// Data Quality Framework
+//
+// Enterprise-grade data quality management with profiling, rules, and monitoring.
+//
+// **Key Components:**
+// - `QualityRulesEngine`: Comprehensive data validation rules (completeness, uniqueness, format, range, referential integrity)
+// - `DataProfiler`: Column statistics, value distribution, pattern detection, and anomaly detection
+// - `QualityMonitor`: Quality score calculation, trend tracking, and alert generation
+// - `DataQualityFramework`: Main entry point for quality management
+//
+// **Features:**
+// - Multi-dimensional quality scoring (completeness, accuracy, consistency, validity, uniqueness, timeliness)
+// - Pattern recognition (email, phone, SSN, credit card, URL, IP, UUID)
+// - Statistical anomaly detection using z-scores and IQR
+// - Historical trend analysis with linear regression
+// - Automated alert generation with severity levels
+// - Quality dashboards and visualization data
+//
+// **Target LOC:** 1,050+ lines
+pub mod quality;
 
 // Backup and recovery
 //
@@ -375,6 +461,27 @@ pub mod constraints;
 //
 // **Target LOC:** 3,000+ lines
 pub mod analytics;
+
+// Data Lineage Tracking
+//
+// Comprehensive data lineage tracking for data governance, impact analysis, and root cause analysis.
+//
+// **Key Components:**
+// - `LineageGraph`: Directed acyclic graph (DAG) for lineage representation
+// - `LineageTracker`: Core tracking engine for tables, columns, and transforms
+// - `LineageQuery`: Forward/backward lineage queries and impact analysis
+// - `LineageVisualizer`: DOT format export for Graphviz visualization
+//
+// **Features:**
+// - Table-level lineage tracking
+// - Column-level lineage with transformations
+// - ETL/transform operation tracking
+// - Impact analysis (forward lineage)
+// - Root cause analysis (backward lineage)
+// - Lineage visualization and export
+//
+// **Target LOC:** 1,000+ lines
+pub mod lineage;
 
 // In-Memory Column Store
 //
@@ -830,6 +937,28 @@ pub mod blockchain;
 // **Target LOC:** 3,000+ lines
 pub mod workload;
 
+// Query Governance System
+//
+// Comprehensive query governance with resource limits, complexity analysis,
+// throttling, queuing, and policy-based access control.
+//
+// **Key Components:**
+// - `QueryGovernor`: Core governance engine with complexity analysis
+// - `QuotaManager`: Resource quota management (user, session, query)
+// - `PolicyEngine`: Policy definition, evaluation, and inheritance
+//
+// **Features:**
+// - Query complexity analysis and estimation
+// - Resource limits (CPU, memory, execution time)
+// - Query throttling and priority-based queuing
+// - Query cancellation
+// - Per-user, per-session, and per-query quotas
+// - Policy inheritance (user -> role -> global)
+// - Violation tracking and reporting
+//
+// **Target LOC:** 1,100+ lines
+pub mod governance;
+
 // ============================================================================
 // Spatial Database Engine
 // ============================================================================
@@ -1001,6 +1130,32 @@ pub mod resource_manager;
 //
 // **Target LOC:** 6,000+ lines (3,000+ session management, 3,000+ connection pooling)
 pub mod pool;
+
+// ============================================================================
+// Session Management - Advanced Session Lifecycle & Analytics
+// ============================================================================
+
+// Advanced Session Management System
+//
+// Enterprise-grade session management providing comprehensive lifecycle management,
+// security controls, and analytics for RustyDB.
+//
+// **Key Components:**
+// - `session_manager`: Session lifecycle and state management
+// - `session_security`: Token management and security controls
+// - `session_analytics`: Performance tracking and behavior analytics
+//
+// **Features:**
+// - Session state persistence and recovery
+// - Multi-node session migration
+// - Token-based authentication with IP binding
+// - Hijacking prevention and concurrent session limits
+// - Comprehensive activity logging and metrics
+// - User behavior pattern analysis
+// - Resource usage tracking per session
+//
+// **Target LOC:** 1,100+ lines (400 manager, 350 security, 300 analytics)
+pub mod session;
 
 // ============================================================================
 // I/O Layer - High-Performance I/O Engine
