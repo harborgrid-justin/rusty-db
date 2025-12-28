@@ -20,6 +20,7 @@ pub mod queries;
 pub mod query_subscriptions;
 pub mod schema;
 pub mod security_subscriptions;
+pub mod security_vault_graphql;
 pub mod session_subscriptions;
 pub mod subscriptions;
 pub mod transaction_subscriptions;
@@ -55,6 +56,12 @@ pub use security_subscriptions::{
     MemoryEventType, MemoryHardeningEvent, RateLimitEvent,
     SecurityMetrics as SecurityMetricsSubscription, SecurityPosture, SecuritySubscriptionRoot,
     ThreatLevel, ThreatType,
+};
+pub use security_vault_graphql::{
+    ColumnEncryptionGql, CreateMaskingPolicyInput, CreateVpdPolicyInput,
+    DataEncryptionKeyGql, EnableColumnEncryptionInput, EnableTablespaceEncryptionInput,
+    EncryptionStatusGql, GenerateKeyInput, MaskingPolicyGql, MaskingTestResultGql,
+    SecurityVaultMutation, SecurityVaultQuery, TablespaceEncryptionGql, VpdPolicyGql,
 };
 pub use subscriptions::{
     AggregateChange, ChangeType, Heartbeat, MetricType, QueryChange, QueryExecutionEvent,

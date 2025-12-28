@@ -1,9 +1,34 @@
 {
   "name": "@rustydb/adapter",
-  "version": "0.2.640",
+  "version": "0.6.0",
   "description": "Node.js adapter for RustyDB - Enterprise-grade database with Oracle compatibility",
+  "type": "module",
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./native": {
+      "types": "./dist/native/index.d.ts",
+      "import": "./dist/native/index.js"
+    },
+    "./prepared-statements": {
+      "types": "./dist/prepared-statements.d.ts",
+      "import": "./dist/prepared-statements.js"
+    },
+    "./streaming": {
+      "types": "./dist/streaming.d.ts",
+      "import": "./dist/streaming.js"
+    },
+    "./connection-pool": {
+      "types": "./dist/connection-pool.d.ts",
+      "import": "./dist/connection-pool.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -27,7 +52,12 @@
     "rest",
     "mvcc",
     "transaction",
-    "typescript"
+    "typescript",
+    "napi",
+    "native",
+    "streaming",
+    "connection-pool",
+    "prepared-statements"
   ],
   "author": "RustyDB Team",
   "license": "MIT",

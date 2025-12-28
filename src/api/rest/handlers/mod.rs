@@ -261,6 +261,18 @@ pub use cluster_websocket_handlers::{
 // Cluster event types
 pub use replication_websocket_types::*;
 
+// Audit handlers
+pub use audit_handlers::{
+    compliance_report, export_audit_logs, get_audit_stats, query_audit_logs,
+    verify_audit_integrity,
+};
+
+// Backup handlers
+pub use backup_handlers::{
+    create_full_backup, create_incremental_backup, delete_backup, get_backup,
+    get_backup_schedule, list_backups, restore_backup, update_backup_schedule,
+};
+
 // Diagnostics handlers
 pub use diagnostics_handlers::{
     create_dump, download_dump, get_active_session_history, get_dump_status, get_incidents,

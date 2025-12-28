@@ -203,6 +203,54 @@ export * from './api/index-memory';
 export * from './api/enterprise-spatial';
 
 // ============================================================================
+// Version 0.6.0 - New Features
+// ============================================================================
+
+// Native bindings
+export {
+  NativeBindingConfig,
+  NativeConnection,
+  NativeQueryOptions,
+  NativeQueryResult,
+  NativePreparedStatement,
+  RustyDBNativeBindings,
+  NativeBindingsWrapper,
+  getNativeBindings,
+  initializeNativeBindings,
+  shutdownNativeBindings,
+} from './native';
+
+// Prepared statements
+export {
+  PreparedStatement,
+  PreparedStatementManager,
+  PreparedStatementParam,
+  PreparedStatementMetadata,
+  PreparedStatementExecuteOptions,
+} from './prepared-statements';
+
+// Streaming
+export {
+  QueryResultStream,
+  StreamManager,
+  streamQuery,
+  StreamOptions,
+  StreamStats,
+  StreamEvents,
+} from './streaming';
+
+// Connection pooling
+export {
+  ConnectionPool,
+  ConnectionPoolConfig,
+  PooledConnection,
+  PoolStats,
+  PoolEvents,
+  ConnectionState,
+  ConnectionFactory,
+} from './connection-pool';
+
+// ============================================================================
 // Factory Functions
 // ============================================================================
 

@@ -250,13 +250,18 @@ pub async fn generate_key(
     let mut key_store_guard = key_store.lock().await;
 
     match key_store_guard.generate_dek(&request.key_name, &request.algorithm) {
-        Ok(_key_bytes) => Ok(Json(KeyResult {
-            success: true,
-            key_id: request.key_name.clone(),
-            key_version: 1,
-            algorithm: request.algorithm.clone(),
-            created_at: chrono::Utc::now().timestamp(),
-        })),
+        Ok(_key_bytes) => {
+            // Get metadata for the newly created DEK
+            let metadata = key_store_guard.get_dek_metadata(&request.key_name);
+
+            Ok(Json(KeyResult {
+                success: true,
+                key_id: request.key_name.clone(),
+                key_version: metadata.as_ref().map(|m| m.version).unwrap_or(1),
+                algorithm: metadata.as_ref().map(|m| m.algorithm.clone()).unwrap_or(request.algorithm.clone()),
+                created_at: metadata.as_ref().map(|m| m.created_at).unwrap_or_else(|| chrono::Utc::now().timestamp()),
+            }))
+        }
         Err(e) => Err(ApiError::new("KEY_GENERATION_ERROR", e.to_string())),
     }
 }
@@ -287,12 +292,15 @@ pub async fn rotate_key(
 
     match key_store_guard.rotate_dek(&key_id) {
         Ok(_new_key_bytes) => {
+            // Get updated metadata after rotation
+            let metadata = key_store_guard.get_dek_metadata(&key_id);
+
             Ok(Json(KeyResult {
                 success: true,
                 key_id: key_id.clone(),
-                key_version: 2, // Incremented version after rotation
-                algorithm: "AES-256-GCM".to_string(),
-                created_at: chrono::Utc::now().timestamp(),
+                key_version: metadata.as_ref().map(|m| m.version).unwrap_or(2),
+                algorithm: metadata.as_ref().map(|m| m.algorithm.clone()).unwrap_or_else(|| "AES-256-GCM".to_string()),
+                created_at: metadata.as_ref().map(|m| m.created_at).unwrap_or_else(|| chrono::Utc::now().timestamp()),
             }))
         }
         Err(e) => Err(ApiError::new("KEY_ROTATION_ERROR", e.to_string())),
@@ -319,14 +327,20 @@ pub async fn list_keys(State(_state): State<Arc<ApiState>>) -> ApiResult<Json<Ve
     // list_deks returns Vec<String> of key IDs
     let key_ids = key_store_guard.list_deks();
     let timestamp = chrono::Utc::now().timestamp();
+
     let key_results: Vec<KeyResult> = key_ids
         .into_iter()
-        .map(|key_id| KeyResult {
-            success: true,
-            key_id,
-            key_version: 1,
-            algorithm: "AES-256-GCM".to_string(),
-            created_at: timestamp,
+        .map(|key_id| {
+            // Try to get metadata for each key
+            let metadata = key_store_guard.get_dek_metadata(&key_id);
+
+            KeyResult {
+                success: true,
+                key_id: key_id.clone(),
+                key_version: metadata.as_ref().map(|m| m.version).unwrap_or(1),
+                algorithm: metadata.as_ref().map(|m| m.algorithm.clone()).unwrap_or_else(|| "AES-256-GCM".to_string()),
+                created_at: metadata.as_ref().map(|m| m.created_at).unwrap_or(timestamp),
+            }
         })
         .collect();
 
